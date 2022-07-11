@@ -1,0 +1,36 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{27CEBA2A-AF03-442F-8F46-C9C97592F242}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="Demos\Clients\Vircess.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="Vircess">
+        <MSBuild Projects="Demos\Clients\Vircess.dproj"/>
+    </Target>
+    <Target Name="Vircess:Clean">
+        <MSBuild Projects="Demos\Clients\Vircess.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Vircess:Make">
+        <MSBuild Projects="Demos\Clients\Vircess.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="Vircess"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="Vircess:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="Vircess:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

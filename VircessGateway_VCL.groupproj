@@ -1,0 +1,36 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{CF6FFA54-05AC-4B40-8539-783C5ECF5539}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="Demos\Gateway\VircessGateway.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="VircessGateway">
+        <MSBuild Projects="Demos\Gateway\VircessGateway.dproj"/>
+    </Target>
+    <Target Name="VircessGateway:Clean">
+        <MSBuild Projects="Demos\Gateway\VircessGateway.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="VircessGateway:Make">
+        <MSBuild Projects="Demos\Gateway\VircessGateway.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="VircessGateway"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="VircessGateway:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="VircessGateway:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

@@ -1,0 +1,86 @@
+object rdFileTransferLog: TrdFileTransferLog
+  Left = 0
+  Top = 0
+  Caption = 'File transferring log'
+  ClientHeight = 292
+  ClientWidth = 419
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  Position = poScreenCenter
+  OnClose = FormClose
+  OnCloseQuery = FormCloseQuery
+  PixelsPerInch = 96
+  TextHeight = 13
+  object Memo1: TMemo
+    Left = 0
+    Top = 0
+    Width = 419
+    Height = 251
+    Align = alClient
+    ReadOnly = True
+    TabOrder = 0
+  end
+  object pBottom: TPanel
+    Left = 0
+    Top = 251
+    Width = 419
+    Height = 41
+    Align = alBottom
+    BevelOuter = bvNone
+    TabOrder = 1
+    object pBtnOK: TPanel
+      Left = 150
+      Top = 6
+      Width = 107
+      Height = 29
+      BevelKind = bkFlat
+      BevelOuter = bvNone
+      BevelWidth = 2
+      Color = clWhite
+      ParentBackground = False
+      TabOrder = 0
+      object bOK: TSpeedButton
+        Tag = 1
+        Left = 0
+        Top = 0
+        Width = 103
+        Height = 25
+        Align = alClient
+        Caption = 'Close'
+        Flat = True
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = cl3DDkShadow
+        Font.Height = -13
+        Font.Name = 'Arial'
+        Font.Style = [fsBold]
+        ParentFont = False
+        OnClick = bOKClick
+        ExplicitLeft = -6
+        ExplicitTop = 2
+      end
+    end
+  end
+  object myUI: TRtcPFileTransferUI
+    OnInit = myUIInit
+    OnOpen = myUIOpen
+    OnClose = myUIClose
+    OnError = myUIError
+    OnLogOut = myUILogOut
+    OnSendStart = myUISend
+    OnSend = myUISend
+    OnSendUpdate = myUISend
+    OnSendStop = myUISend
+    OnSendCancel = myUISendCancel
+    OnRecvStart = myUIRecv
+    OnRecv = myUIRecv
+    OnRecvStop = myUIRecv
+    OnRecvCancel = myUIRecvCancel
+    Left = 12
+    Top = 22
+  end
+end
