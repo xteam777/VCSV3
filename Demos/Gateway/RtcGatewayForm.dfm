@@ -41,6 +41,10 @@ object MainForm: TMainForm
       TabStop = False
       object Page_Setup: TTabSheet
         Caption = 'Setup'
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object Label3: TLabel
           Left = 8
           Top = 103
@@ -232,6 +236,10 @@ object MainForm: TMainForm
       object Page_Active: TTabSheet
         Caption = 'Active'
         ImageIndex = 1
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object Label5: TLabel
           Left = 8
           Top = 200
@@ -713,7 +721,7 @@ object MainForm: TMainForm
     ModuleFileName = '/$rdgate'
     OnSessionClosing = Gateway1SessionClosing
     Left = 478
-    Top = 130
+    Top = 132
   end
   object HttpServer4: TRtcHttpServer
     MultiThreaded = True

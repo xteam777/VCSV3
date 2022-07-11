@@ -1457,6 +1457,10 @@ begin
     for i := 0 to GatewaysList.Count - 1 do
     begin
       UserCount := 0;
+
+      if GatewaysInfo.Child[GatewaysList.FieldName[i]] = nil then
+        Continue;
+
       for j := 0 to GatewaysInfo.Child[GatewaysList.FieldName[i]].asRecord['Users'].Count - 1 do
         if GatewaysInfo.Child[GatewaysList.FieldName[i]].asRecord['Users'].is_Type[GatewaysInfo.Child[GatewaysList.FieldName[i]].asRecord['Users'].FieldName[j]] <> rtc_Null then
           UserCount := UserCount + 1;
