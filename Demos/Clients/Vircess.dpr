@@ -11,7 +11,7 @@
 {$R *.dres}
 
 uses
-  FastMM4,
+//  FastMM4,
   rtcLog,
   SysUtils,
   rtcInfo,

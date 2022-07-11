@@ -3,7 +3,7 @@ object MainForm: TMainForm
   Top = 309
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'Vircess'
-  ClientHeight = 490
+  ClientHeight = 492
   ClientWidth = 840
   Color = clBtnFace
   DoubleBuffered = True
@@ -48,7 +48,7 @@ object MainForm: TMainForm
     Left = 0
     Top = 0
     Width = 840
-    Height = 490
+    Height = 492
     Margins.Left = 0
     Margins.Top = 0
     Margins.Right = 0
@@ -61,10 +61,10 @@ object MainForm: TMainForm
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
-    ExplicitHeight = 446
+    ExplicitHeight = 470
     DesignSize = (
       840
-      490)
+      492)
     object lblStatus: TLabel
       AlignWithMargins = True
       Left = 71
@@ -6042,7 +6042,7 @@ object MainForm: TMainForm
     Left = 11
     Top = 44
     Bitmap = {
-      494C010102001400740508000800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C010102001400780508000800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000200000000800000001002000000000000004
       000000000000000000000000000000000000846BEF006B63E700635AE7006B5A
       EF006B5AEF006B63EF006B63E7007B6BEF00C6B52900BDAD1800BDAD1800BDAD
