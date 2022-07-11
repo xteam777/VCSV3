@@ -1128,7 +1128,6 @@ begin
 //  FImageCatcher := TImageCatcher.Create;
   FDesktopDuplicator := TDesktopDuplicationWrapper.Create;
 
-  xLog('Get first screenshot START');
   while not ScrCap.HaveScreen do
   begin
     fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
@@ -1143,10 +1142,7 @@ begin
     if fRes then
     begin
       if FDesktopDuplicator.DrawFrame(FNewImage) then
-      begin
         ScrCap.HaveScreen := True;
-        xLog('Get first screenshot SUCCESS');
-      end;
     end
     else
     begin
@@ -1156,7 +1152,6 @@ begin
 //    Sleep(1);
     Application.ProcessMessages;
   end;
-  xLog('Get first screenshot END');
 end;
 
 destructor TRtcScreenEncoder.Destroy;
@@ -2453,7 +2448,7 @@ var
   BlockTop: integer;
   DW: HWND;
   SDC: HDC;
-  fNeedRecreate: Boolean;
+  fNeedRecreate, fHaveScreen: Boolean;
 
   function CaptureNow: boolean;
   var
@@ -2544,48 +2539,32 @@ var
 //          end;
 //          ScrCap.HaveScreen := FDesktopDuplicator.IsScreenshotReady;
 
-          if FDesktopDuplicator.GetFrame(fNeedRecreate) then
+          fHaveScreen := False;
+          while not fHaveScreen do
           begin
-//            capTime := GetTickCount;
+            fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
+            while fNeedRecreate do
+            begin
+              FDesktopDuplicator.Free;
+              FDesktopDuplicator := TDesktopDuplicationWrapper.Create;
+              fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
 
-            if FDesktopDuplicator.DrawFrame(FNewImage) then
-              ScrCap.HaveScreen := True;
+              Application.ProcessMessages;
+            end;
+            if fRes then
+            begin
+              if FDesktopDuplicator.DrawFrame(FNewImage) then
+                fHaveScreen := True;
+            end
+            else
+            begin
+              //Memo1.Lines.Add('no frame ' + IntToHex(FDuplication.Error));
+            end;
 
-//            // draw Dirty rectangles
-//            with FNewImage.Canvas do
-//            begin
-//              Pen.Color := clRed;
-//              Brush.Style := bsClear;
-//              for i := 0 to FDesktopDuplicator.DirtyCount - 1 do
-//              begin
-//              {$POINTERMATH ON}
-//                with FDesktopDuplicator.DirtyRects[i] do
-//                  Rectangle(Left, Top, Right, Bottom);
-//              end;
-//            end;
-
-//            Image1.Picture.Graphic := FBitmap;
-
-//            capTime := GetTickCount - capTime;
-
-            //Memo1.Lines.Add(Format('Moves %d, Dirty %d', [FDuplication.MoveCount, FDuplication.DirtyCount]));
-          end
-          else
-          begin
-            //Memo1.Lines.Add('no frame ' + IntToHex(FDuplication.Error));
-//            ScrCap.HaveScreen := False;
+        //    Sleep(1);
+            Application.ProcessMessages;
           end;
-//          if fNeedRecreate then
-//          begin
-//            FDesktopDuplicator.Free;
-//            FDesktopDuplicator.Create;
-//
-//            if FDesktopDuplicator.GetFrame(fNeedRecreate) then
-//            begin
-//              FDesktopDuplicator.DrawFrame(FNewImage);
-//              ScrCap.HaveScreen := True;
-//            end;
-//          end;
+          ScrCap.HaveScreen := True;
         finally
 //          ReleaseDC(DW, SDC);
         end;
