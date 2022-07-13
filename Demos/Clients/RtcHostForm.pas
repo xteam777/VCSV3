@@ -258,6 +258,7 @@ type
     ApplicationEvents: TApplicationEvents;
     tCleanConnections: TTimer;
     Button3: TButton;
+    Memo1: TMemo;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -692,7 +693,7 @@ var
   BlockInputHook_Keyboard, BlockInputHook_Mouse, BlockZOrderHook: HHOOK;
   CurConnectionsPendingMinuteCount: Cardinal;
   DateAllowConnectionPending: TDateTime;
-  PowerStateSaved: Boolean;
+  PowerStateSaved, ActivationInProcess: Boolean;
   LowPowerState, PowerOffState, ScreenSaverState: Integer;
   UseConnectionsLimit: Boolean = False;
   ChangedDragFullWindows: Boolean = False;
@@ -2381,6 +2382,8 @@ var
 begin
   XLog('FormCreate');
 
+  ActivationInProcess := False;
+
   CurStatus := 0;
   FStatusUpdateThread := TStatusUpdateThread.Create(False, UpdateStatus);
 
@@ -2718,11 +2721,13 @@ begin
 //      for i := 0 to GatewayClientsList.Count - 1 do
 //      begin
 //        PClient.Disconnect;
-        PClient.Active := False;
+        if PClient.LoginUserName <> '' then
+          PClient.Active := False;
         PClient.Gate_Proxy := ProxyEnabled;
         PClient.Gate_ProxyAddr := CurProxy;
   //      PClient.GParamsLoaded:=True;
-        PClient.Active := True;
+        if PClient.LoginUserName <> '' then
+          PClient.Active := True;
 //      end;
 //    finally
 //      CS_GW.Release;
@@ -2921,7 +2926,7 @@ begin
       lblStatus.Caption := lblStatus.Caption + sDots;
     end
     else if CurStatus = STATUS_NO_CONNECTION then
-      lblStatus.Caption := 'Не подключено'
+      lblStatus.Caption := 'Отсутствует сетевое подключение'
     else if CurStatus = STATUS_ACTIVATING_ON_MAIN_GATE then
     begin
       sDots := AddDotsToString(lblStatus.Caption);
@@ -4493,7 +4498,8 @@ procedure TMainForm.tActivateHostTimer(Sender: TObject);
 begin
   xLog('tActivateHostTimer');
 
-  ActivateHost;
+  if not ActivationInProcess then
+    ActivateHost;
 
   tActivateHost.Enabled := False;
 end;
@@ -5092,11 +5098,17 @@ begin
 //    CS_GW.Release;
 //  end;
 
-  PClient.Disconnect;
-  PClient.Active := False;
-  PClient.Active := True;
+  if PClient.LoginUserName <> '' then
+  begin
+    //PClient.Disconnect;
+    PClient.Active := False;
+    PClient.Active := True;
 
-  tPClientReconnect.Enabled := False;
+    tPClientReconnect.Enabled := False;
+  end
+  else
+    tPClientReconnect.Enabled := True;
+
 
 //  if not PClient.Active then
 ////    and not PClient.Connected then
@@ -5694,6 +5706,7 @@ begin
 // Changing "LoginUserName" will clear all LoginUserInfo parameters,
 // so we should reflect this on the user interface as well ...
 //  eRealName.Text:='';
+  Memo1.Lines.Add(eUserName.Text);
 end;
 
 procedure TMainForm.eUserNameDblClick(Sender: TObject);
@@ -7122,9 +7135,12 @@ begin
 //    finally
 //      CS_GW.Release;
 //    end;
-    PClient.Disconnect;
-    PClient.Active := False;
-    tPClientReconnect.Enabled := True;
+    if PClient.LoginUserName <> '' then
+    begin
+      PClient.Disconnect;
+      PClient.Active := False;
+      tPClientReconnect.Enabled := True;
+    end;
 //    CloseAllActiveUI;
 //
 //    for i := 0 to GatewayClientsList.Count - 1 do
@@ -7546,6 +7562,8 @@ begin
     and (not isClosing) then
     tHcAccountsReconnect.Enabled := True;
   SetConnectedState(False);
+
+  ActivationInProcess := False;
 end;
 
 procedure TMainForm.ActivateHost;
@@ -7553,6 +7571,8 @@ var
   HWID : THardwareId;
 begin
   xLog('ActivateHost');
+
+  ActivationInProcess := True;
 
   CS_ActivateHost.Acquire;
   try
@@ -7636,8 +7656,7 @@ procedure TMainForm.rActivateReturn(Sender: TRtcConnection; Data,
 var
   i: Integer;
   PassRec: TRtcRecord;
-  ConsoleName: String;
-  CurPass: String;
+  ConsoleName, CurPass, sUserName, sConsoleName: String;
 begin
   xLog('rActivateReturn');
 //  if LoggedIn then  //Доделать. Зачем это?
@@ -7672,8 +7691,8 @@ begin
       if asBoolean['Result'] = True then
       begin
         tHcAccountsReconnect.Enabled := False;
-        eUserName.Text := '';
-        eConsoleID.Text := '';
+        sUserName := '';
+        sConsoleName := '';
 
         if IsWinServer then
         begin
@@ -7683,17 +7702,20 @@ begin
           for i := 1 to Length(RealName) do
             if (i <> 1)
               and ((i - 1) mod 3 = 0) then
-              eUserName.Text := eUserName.Text + ' ' + RealName[i]
+              sUserName := sUserName + ' ' + RealName[i]
             else
-              eUserName.Text := eUserName.Text + RealName[i];
+              sUserName := sUserName + RealName[i];
 
           ConsoleName := IntToStr(asInteger['ID_Console']);
           for i := 1 to Length(ConsoleName) do
             if (i <> 1)
               and ((i - 1) mod 3 = 0) then
-              eConsoleID.Text := eConsoleID.Text + ' ' + ConsoleName[i]
+              sConsoleName := sConsoleName + ' ' + ConsoleName[i]
             else
-              eConsoleID.Text := eConsoleID.Text + ConsoleName[i];
+              sConsoleName := sConsoleName + ConsoleName[i];
+
+          eUserName.Text := sUserName;
+          eConsoleID.Text := sConsoleName;
         end
         else
         if IsServiceStarting(RTC_HOSTSERVICE_NAME)
@@ -7706,9 +7728,11 @@ begin
           for i := 1 to Length(ConsoleName) do
             if (i <> 1)
               and ((i - 1) mod 3 = 0) then
-              eUserName.Text := eUserName.Text + ' ' + ConsoleName[i]
+              sUserName := sUserName + ' ' + ConsoleName[i]
             else
-              eUserName.Text := eUserName.Text + ConsoleName[i];
+              sUserName := sUserName + ConsoleName[i];
+
+          eUserName.Text := sUserName;
         end
         else
         begin
@@ -7719,12 +7743,14 @@ begin
           for i := 1 to Length(ConsoleName) do
             if (i <> 1)
               and ((i - 1) mod 3 = 0) then
-              eUserName.Text := eUserName.Text + ' ' + RealName[i]
+              sUserName := sUserName + ' ' + RealName[i]
             else
-              eUserName.Text := eUserName.Text + RealName[i];
+              sUserName := sUserName + RealName[i];
+
+          eUserName.Text := sUserName;
         end;
 
-          PClient.Disconnect;
+          //PClient.Disconnect;
           PClient.Active := False;
 
           PClient.LoginUserName := RealName;
@@ -7815,6 +7841,8 @@ begin
         SetStatus(STATUS_ACTIVATING_ON_MAIN_GATE);
         SetConnectedState(False);
       end;
+
+  ActivationInProcess := False;
 end;
 
 procedure TMainForm.SendPasswordsToGateway();
