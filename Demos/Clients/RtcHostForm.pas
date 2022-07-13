@@ -739,36 +739,36 @@ end;
 
 procedure TMainform.ChangePort(AClient: TRtcHttpClient);
 begin
-//  if AClient.ServerPort = '80' then
-//    AClient.ServerPort := '8080'
-//  else
-//  if AClient.ServerPort = '8080' then
-//    AClient.ServerPort := '443'
-//  else
-//  if AClient.ServerPort = '443' then
-//    AClient.ServerPort := '5938'
-//  else
-//  if AClient.ServerPort = '5938' then
-//    AClient.ServerPort := '80';
+  if AClient.ServerPort = '80' then
+    AClient.ServerPort := '8080'
+  else
+  if AClient.ServerPort = '8080' then
+    AClient.ServerPort := '443'
+  else
+  if AClient.ServerPort = '443' then
+    AClient.ServerPort := '5938'
+  else
+  if AClient.ServerPort = '5938' then
+    AClient.ServerPort := '80';
 
-    AClient.ServerPort := '5938';
+//    AClient.ServerPort := '5938';
 end;
 
 procedure TMainform.ChangePortP(AClient: TRtcHttpPortalClient);
 begin
-//  if AClient.GatePort = '80' then
-//    AClient.GatePort := '8080'
-//  else
-//  if AClient.GatePort = '8080' then
-//    AClient.GatePort := '443'
-//  else
-//  if AClient.GatePort = '443' then
-//    AClient.GatePort := '5938'
-//  else
-//  if AClient.GatePort = '5938' then
-//    AClient.GatePort := '80';
+  if AClient.GatePort = '80' then
+    AClient.GatePort := '8080'
+  else
+  if AClient.GatePort = '8080' then
+    AClient.GatePort := '443'
+  else
+  if AClient.GatePort = '443' then
+    AClient.GatePort := '5938'
+  else
+  if AClient.GatePort = '5938' then
+    AClient.GatePort := '80';
 
-    AClient.GatePort := '5938';
+//    AClient.GatePort := '5938';
 end;
 
 constructor TPortalThread.Create(CreateSuspended: Boolean; AUserName, AAction, AGateway: String);
