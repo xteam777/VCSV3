@@ -491,7 +491,7 @@ type
     function GetUserDescription(aUserName: String): String;
     function GetUserPassword(aUserName: String): String;
     function UIIsPending(username: String): Boolean;
-    function AddPendingRequest(uname, action, gateway: String; ThreadID: Cardinal): PPendingRequestItem;
+    function AddPendingRequest(uname, action: String): PPendingRequestItem;
     procedure DeletePendingRequest(uname, action: String);
     function GetPendingItemByUserName(uname, action: String): PPendingRequestItem;
     function PartnerIsPending(uname, action, gateway: String): Boolean; overload;
@@ -6607,6 +6607,13 @@ begin
     Exit;
   end;
 
+  AddPendingRequest(user, action);
+
+  DoGetDeviceState(eAccountUserName.Text,
+    LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll])),
+    eAccountPassword.Text,
+    user);
+
   with cmAccounts do
   try
     with Data.NewFunction('Host.GetUserInfo') do
@@ -6668,6 +6675,10 @@ begin
   else
   with Result.asRecord do
   begin
+    PRItem := GetPendingItemByUserName(asWideString['user'], asString['action']);
+    if PRItem = nil then
+      Exit;
+
     if asString['Result'] = 'IS_OFFLINE' then
     begin
 //      MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'VIRCESS', MB_ICONWARNING or MB_OK);
@@ -6686,8 +6697,9 @@ begin
 
       if not PartnerIsPending(asWideString['user'], asString['action'], asString['Address']) then
       begin
-        PRItem := AddPendingRequest(asWideString['user'], asString['action'], asString['Address'] + ':' +  asString['Port'], 0);
+//        AddPendingRequest(asWideString['user'], asString['action'], asString['Address'] + ':' +  asString['Port'], 0);
         PortalThread := TPortalThread.Create(False, asWideString['user'], asWideString['action'], asString['Address']); //Для каждого соединения новый клиент
+        PRItem^.Gateway := asString['Address'] + ':' +  asString['Port'];
         PRItem^.ThreadID := PortalThread.ThreadID;
 //        New(PRItem);
 //        PRItem.UserName := asWideString['user'];
@@ -6910,11 +6922,6 @@ begin
           SetStatusString('Готов к подключению');
       end;
     end;
-
-    DoGetDeviceState(eAccountUserName.Text,
-      LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll])),
-      eAccountPassword.Text,
-      asWideString['user']);
   end;
 end;
 
@@ -9245,7 +9252,7 @@ begin
   end;
 end;
 
-function TMainForm.AddPendingRequest(uname, action, gateway: String; ThreadID: Cardinal): PPendingRequestItem;
+function TMainForm.AddPendingRequest(uname, action: String): PPendingRequestItem;
 var
   PRItem: PPendingRequestItem;
 begin
@@ -9256,8 +9263,8 @@ begin
     New(PRItem);
     PRItem.UserName := uname;
     PRItem.Action := action;
-    PRItem.Gateway := gateway;
-    ThreadID := ThreadID;
+//    PRItem.Gateway := gateway;
+//    ThreadID := ThreadID;
     PendingRequests.Add(PRItem);
   finally
     CS_Pending.Release;
