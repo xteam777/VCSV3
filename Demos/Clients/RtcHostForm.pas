@@ -4498,10 +4498,11 @@ procedure TMainForm.tActivateHostTimer(Sender: TObject);
 begin
   xLog('tActivateHostTimer');
 
-  if not ActivationInProcess then
+  if (CurStatus < STATUS_CONNECTING_TO_GATE)
+    and (not ActivationInProcess) then
     ActivateHost;
 
-  tActivateHost.Enabled := False;
+//  tActivateHost.Enabled := False;
 end;
 
 (* Minimize and Close buttons *)

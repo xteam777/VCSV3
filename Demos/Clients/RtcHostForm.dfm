@@ -6108,7 +6108,6 @@ object MainForm: TMainForm
     Top = 43
   end
   object tActivateHost: TTimer
-    Enabled = False
     Interval = 100
     OnTimer = tActivateHostTimer
     Left = 178
