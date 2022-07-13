@@ -6699,7 +6699,7 @@ begin
       begin
 //        AddPendingRequest(asWideString['user'], asString['action'], asString['Address'] + ':' +  asString['Port'], 0);
         PortalThread := TPortalThread.Create(False, asWideString['user'], asWideString['action'], asString['Address']); //Для каждого соединения новый клиент
-        PRItem^.Gateway := asString['Address'] + ':' +  asString['Port'];
+        PRItem^.Gateway := asString['Address'];
         PRItem^.ThreadID := PortalThread.ThreadID;
 //        New(PRItem);
 //        PRItem.UserName := asWideString['user'];
