@@ -4355,6 +4355,9 @@ begin
   Result := False;
 
   sSymbols := '0123456789abcdefghiklmnopqrstuvwxyz';
+  if Length(LowerCase(eAccountUserName.Text)) = 0 then
+    Exit;
+
   if Length(LowerCase(eAccountUserName.Text)) < 6 then
   begin
     //bhMain.Description := 'Адрес электронной почты должен состоять из 6 и более символов';
