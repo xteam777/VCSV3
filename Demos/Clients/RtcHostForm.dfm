@@ -4162,15 +4162,6 @@ object MainForm: TMainForm
         Text = '-'
         OnDblClick = eConsoleIDDblClick
       end
-      object Memo1: TMemo
-        Left = 15
-        Top = 162
-        Width = 223
-        Height = 134
-        Lines.Strings = (
-          'Memo1')
-        TabOrder = 3
-      end
     end
     object pRight: TPanel
       Left = 278
@@ -5968,8 +5959,8 @@ object MainForm: TMainForm
   object tCheckLockedState: TTimer
     Interval = 100
     OnTimer = tCheckLockedStateTimer
-    Left = 206
-    Top = 42
+    Left = 494
+    Top = 44
   end
   object rGetHostLockedState: TRtcResult
     OnReturn = rGetHostLockedStateReturn
@@ -5980,15 +5971,15 @@ object MainForm: TMainForm
   object tConnLimit: TTimer
     Interval = 60000
     OnTimer = tConnLimitTimer
-    Left = 234
+    Left = 262
     Top = 42
   end
   object tStatus: TTimer
     Enabled = False
     Interval = 250
     OnTimer = tStatusTimer
-    Left = 262
-    Top = 42
+    Left = 550
+    Top = 44
   end
   object tIconRefresh: TTimer
     OnTimer = tIconRefreshTimer
@@ -6102,9 +6093,9 @@ object MainForm: TMainForm
     Top = 43
   end
   object tPClientReconnect: TTimer
-    Enabled = False
+    Interval = 100
     OnTimer = tPClientReconnectTimer
-    Left = 492
+    Left = 208
     Top = 43
   end
   object tActivateHost: TTimer

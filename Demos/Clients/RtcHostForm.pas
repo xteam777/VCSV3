@@ -258,7 +258,6 @@ type
     ApplicationEvents: TApplicationEvents;
     tCleanConnections: TTimer;
     Button3: TButton;
-    Memo1: TMemo;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -2926,7 +2925,11 @@ begin
       lblStatus.Caption := lblStatus.Caption + sDots;
     end
     else if CurStatus = STATUS_NO_CONNECTION then
-      lblStatus.Caption := 'Отсутствует сетевое подключение'
+    begin
+      sDots := AddDotsToString(lblStatus.Caption);
+      lblStatus.Caption := 'Проверка подключения';
+      lblStatus.Caption := lblStatus.Caption + sDots;
+    end
     else if CurStatus = STATUS_ACTIVATING_ON_MAIN_GATE then
     begin
       sDots := AddDotsToString(lblStatus.Caption);
@@ -3062,24 +3065,24 @@ begin
       DeleteAllPendingRequests;
       CloseAllActiveUI;
 
-      SetStatusString('Проверка подключения к интернету...');
+//      SetStatusString('Проверка подключения к интернету...');
+//
+//      SetStatus(STATUS_NO_CONNECTION);
+//
+//      StartAccountLogin;
 
-      SetStatus(STATUS_NO_CONNECTION);
-
-      if IsInternetConnected then
-      begin
-//        SetStatus(0);
-        SetStatusString('Отсутствует сетевое подключение');
-
-  //      if ProxyOption = 'Automatic' then
-  //      begin
-  //        SetStatusString('Определение прокси-сервера', True);
-  //        SetProxyFromIE;
-  //      end;
-        Exit;
-      end;
-      SetStatus(STATUS_ACTIVATING_ON_MAIN_GATE);
-      SetStatusString('Подключение к серверу...');
+//      if not IsInternetConnected then
+//      begin
+////        SetStatus(0);
+//        SetStatusString('Отсутствует сетевое подключение');
+//
+//  //      if ProxyOption = 'Automatic' then
+//  //      begin
+//  //        SetStatusString('Определение прокси-сервера', True);
+//  //        SetProxyFromIE;
+//  //      end;
+//        Exit;
+//      end;
 
   //    ePartnerID.Enabled := False;
 
@@ -3333,6 +3336,7 @@ begin
     and (not SettingsFormOpened) then
   begin
     SetStatusString('Сервер недоступен');
+    SetStatus(STATUS_NO_CONNECTION);
     SetConnectedState(False);
     if not isClosing then
       tHcAccountsReconnect.Enabled := True;
@@ -5707,7 +5711,6 @@ begin
 // Changing "LoginUserName" will clear all LoginUserInfo parameters,
 // so we should reflect this on the user interface as well ...
 //  eRealName.Text:='';
-  Memo1.Lines.Add(eUserName.Text);
 end;
 
 procedure TMainForm.eUserNameDblClick(Sender: TObject);
@@ -7579,13 +7582,13 @@ begin
   try
   //  StartHostLogin;
 
-    SetStatus(STATUS_NO_CONNECTION);
-
-    xLog('ActivateHost IsInternetConnected 1');
-
-    if not IsInternetConnected then
-      Exit
-    else
+//    SetStatus(STATUS_NO_CONNECTION);
+//
+//    xLog('ActivateHost IsInternetConnected 1');
+//
+//    if not IsInternetConnected then
+//      Exit
+//    else
       SetStatus(STATUS_ACTIVATING_ON_MAIN_GATE);
 
     xLog('ActivateHost IsInternetConnected 2');
