@@ -60,6 +60,17 @@ type
     procedure ProcessMessage(MSG: TMSG);
   end;
 
+  TStatusUpdateProc = procedure of Object;
+
+  TStatusUpdateThread = class(TThread)
+  private
+    FStatusUpdateProc: TStatusUpdateProc;
+  protected
+    constructor Create(CreateSuspended: Boolean;
+      StatusUpdateProc: TStatusUpdateProc); overload;
+    procedure Execute; override;
+  end;
+
   {TPolygon class represents a polygon. It containes points that define a polygon and
   caches fill range list for fast polygon filling.}
 {  TPolygon = class
@@ -137,7 +148,6 @@ type
     iStatus2: TImage;
     iStatus3: TImage;
     iStatus4: TImage;
-    iStatus5: TImage;
     pLeft: TPanel;
     Bevel1: TBevel;
     Label3: TLabel;
@@ -468,6 +478,7 @@ type
 //    fReg: TRegistrationForm;
     FScreenLockedState: Integer;
     DelayedStatus: String;
+    FStatusUpdateThread: TStatusUpdateThread;
 
 //    GatewayClientsList: TList;
 
@@ -475,11 +486,12 @@ type
 //    ActiveUIList: TList;
     PortalConnectionsList: TList;
 
+    function ConnectedToMainGateway: Boolean;
     function GetUniqueString: String;
     function GetUserDescription(aUserName: String): String;
     function GetUserPassword(aUserName: String): String;
     function UIIsPending(username: String): Boolean;
-    procedure AddPendingRequest(uname, action, gateway: String; ThreadID: Cardinal);
+    function AddPendingRequest(uname, action, gateway: String; ThreadID: Cardinal): PPendingRequestItem;
     procedure DeletePendingRequest(uname, action: String);
     function GetPendingItemByUserName(uname, action: String): PPendingRequestItem;
     function PartnerIsPending(uname, action, gateway: String): Boolean; overload;
@@ -528,7 +540,7 @@ type
     LoggedIn: Boolean;
 
     ReqCnt1, ReqCnt2: Integer;
-    CurStatus: Integer;
+    FCurStatus: Integer;
     TaskBarIcon: Boolean;
     DevicesPanelVisible: Boolean;
 
@@ -600,8 +612,10 @@ type
     function GetSelectedGroup(): PVirtualNode;
     function GetGroupByUID(UID: String): PVirtualNode;
     procedure SetProxyFromIE;
-    procedure SetStatus(Status: Integer);
     function GetStatus: Integer;
+    procedure SetStatus(Status: Integer);
+    procedure UpdateStatus;
+    function AddDotsToString(sCurString: String): String;
     procedure ShowDevicesPanel;
     procedure ShowSettingsForm(APage: String);
 //    procedure SettingsFormOnResult(sett: TrdClientSettings);
@@ -628,7 +642,7 @@ type
     procedure EnableDragFullWindows;
     procedure RestoreDragFullWindows;
 
-    procedure SetStatusStringDelayed(AStatus: string; AInterval: Integer);
+    procedure SetStatusStringDelayed(AStatus: string; AInterval: Integer = 2000);
 
     procedure ShowMessageBox(AText, ACaption, AType, AUID: string);
     procedure ShowAboutForm;
@@ -641,6 +655,8 @@ type
     procedure ChangePortP(AClient: TRtcHttpPortalClient);
 
     //procedure SetServiceMenuAttributes;
+
+    property CurStatus: Integer read GetStatus write SetStatus;
   end;
 
     {Returns fill range list for specified Y coordinate. It calculates intersection
@@ -666,6 +682,11 @@ const
   VCS_MAGIC_NUMBER = 777;
   MAX_CONNECTIONS_PENDING_IN_MIMUTE = 20;
 
+  STATUS_NO_CONNECTION = 0;
+  STATUS_ACTIVATING_ON_MAIN_GATE = 1;
+  STATUS_CONNECTING_TO_GATE = 2;
+  STATUS_READY = 3;
+
 var
   MainForm: TMainForm;
   BlockInputHook_Keyboard, BlockInputHook_Mouse, BlockZOrderHook: HHOOK;
@@ -676,7 +697,7 @@ var
   UseConnectionsLimit: Boolean = False;
   ChangedDragFullWindows: Boolean = False;
   OriginalDragFullWindows: LongBool = True;
-  ConnectedToMainGateway: Boolean;
+//  ConnectedToMainGateway: Boolean;
   RealName, DisplayName: String;
 //  FInputThread: TInputThread;
   CS_GW, CS_Status, CS_Pending, CS_ActivateHost: TCriticalSection; //CS_SetConnectedState
@@ -686,34 +707,68 @@ implementation
 
 {$R *.dfm}
 
+function TMainForm.ConnectedToMainGateway: Boolean;
+begin
+  CS_Status.Acquire;
+  try
+    Result := CurStatus >= 2;
+  finally
+    CS_Status.Release;
+  end;
+end;
+
+constructor TStatusUpdateThread.Create(CreateSuspended: Boolean;
+  StatusUpdateProc: TStatusUpdateProc);
+begin
+  inherited Create(CreateSuspended);
+
+  FreeOnTerminate := True;
+  FStatusUpdateProc := StatusUpdateProc;
+end;
+
+procedure TStatusUpdateThread.Execute;
+begin
+  while (not Terminated) do
+  begin
+    if Assigned(FStatusUpdateProc) then
+      Synchronize(FStatusUpdateProc);
+
+    Sleep(200);
+  end;
+end;
+
 procedure TMainform.ChangePort(AClient: TRtcHttpClient);
 begin
-  if AClient.ServerPort = '80' then
-    AClient.ServerPort := '8080'
-  else
-  if AClient.ServerPort = '8080' then
-    AClient.ServerPort := '443'
-  else
-  if AClient.ServerPort = '443' then
-    AClient.ServerPort := '5938'
-  else
-  if AClient.ServerPort = '5938' then
-    AClient.ServerPort := '80';
+//  if AClient.ServerPort = '80' then
+//    AClient.ServerPort := '8080'
+//  else
+//  if AClient.ServerPort = '8080' then
+//    AClient.ServerPort := '443'
+//  else
+//  if AClient.ServerPort = '443' then
+//    AClient.ServerPort := '5938'
+//  else
+//  if AClient.ServerPort = '5938' then
+//    AClient.ServerPort := '80';
+
+    AClient.ServerPort := '5938';
 end;
 
 procedure TMainform.ChangePortP(AClient: TRtcHttpPortalClient);
 begin
-  if AClient.GatePort = '80' then
-    AClient.GatePort := '8080'
-  else
-  if AClient.GatePort = '8080' then
-    AClient.GatePort := '443'
-  else
-  if AClient.GatePort = '443' then
-    AClient.GatePort := '5938'
-  else
-  if AClient.GatePort = '5938' then
-    AClient.GatePort := '80';
+//  if AClient.GatePort = '80' then
+//    AClient.GatePort := '8080'
+//  else
+//  if AClient.GatePort = '8080' then
+//    AClient.GatePort := '443'
+//  else
+//  if AClient.GatePort = '443' then
+//    AClient.GatePort := '5938'
+//  else
+//  if AClient.GatePort = '5938' then
+//    AClient.GatePort := '80';
+
+    AClient.GatePort := '5938';
 end;
 
 constructor TPortalThread.Create(CreateSuspended: Boolean; AUserName, AAction, AGateway: String);
@@ -1084,7 +1139,7 @@ begin
   Close;
 end;
 
-procedure TMainForm.SetStatusStringDelayed(AStatus: string; AInterval: Integer);
+procedure TMainForm.SetStatusStringDelayed(AStatus: string; AInterval: Integer = 2000);
 begin
   XLog('SetStatusStringDelayed');
 
@@ -1303,24 +1358,24 @@ end;
 
 procedure TMainForm.SetStatusString(AStatus: String; AEnableTimer: Boolean = False);
 begin
-  XLog('SetStatusString');
-
-  CS_Status.Acquire;
-  try
-    tStatus.Enabled := AEnableTimer;
-
-    lblStatus.Caption := AStatus;
-    lblStatus.Update;
-
-    if (AStatus = 'Готов к подключению')
-      and (GetPendingRequestsCount = 0) then
-    begin
-      btnViewDesktop.Caption := 'ПОДКЛЮЧИТЬСЯ';
-      btnViewDesktop.Color := $00A39323;
-    end;
-  finally
-    CS_Status.Release;
-  end;
+//  XLog('SetStatusString');
+//
+//  CS_Status.Acquire;
+//  try
+//    tStatus.Enabled := AEnableTimer;
+//
+//    lblStatus.Caption := AStatus;
+//    lblStatus.Update;
+//
+//    if (AStatus = 'Готов к подключению')
+//      and (GetPendingRequestsCount = 0) then
+//    begin
+//      btnViewDesktop.Caption := 'ПОДКЛЮЧИТЬСЯ';
+//      btnViewDesktop.Color := $00A39323;
+//    end;
+//  finally
+//    CS_Status.Release;
+//  end;
 end;
 
 //procedure TMainForm.CreateParams(var Params: TCreateParams);
@@ -1588,112 +1643,6 @@ begin
 //    else
 //      strReason := 'WTS_Unknown';
   end;
-end;
-
-procedure TMainForm.SetConnectedState(fConnected: Boolean);
-var
-  i: Integer;
-begin
-//  CS_SetConnectedState.Acquire;
-//  try
-    if isClosing then
-      Exit;
-
-    if fConnected then
-      XLog('SetConnectedState: Connected')
-    else
-      XLog('SetConnectedState: Not Connected');
-
-    if fConnected then
-    begin
-      HostPingTimer.Enabled := True;
-
-  //    ePartnerID.Enabled := True;
-
-  //    rbDesktopControl.Enabled := True;
-  //    rbFileTrans.Enabled := True;
-
-  //    btnViewDesktop.Enabled := True;
-  //    btnRegistration.Enabled := True;
-  //    btnAccountLogin.Enabled := True;
-
-  //    btnViewDesktop.Font.Color := clWhite;
-  //    btnRegistration.Font.Color := clWhite;
-  //    btnAccountLogin.Font.Color := clWhite;
-
-  //    if not isClosing then
-  //      for i := 0 to Length(GatewayClients) - 1 do
-  //      begin
-  //        if not GatewayClients[i].GatewayClient.Active then
-  //          GatewayClients[i].GatewayClient.Active := True;
-  //      end;
-    end
-    else
-    begin
-      HostPingTimer.Enabled := False;
-
-      DeleteAllPendingRequests;
-      CloseAllActiveUI;
-
-      SetStatusString('Проверка подключения к интернету...');
-
-      SetStatus(0);
-
-      if IsInternetConnected then
-      begin
-        SetStatus(1);
-        SetStatusString('Отсутствует сетевое подключение');
-
-  //      if ProxyOption = 'Automatic' then
-  //      begin
-  //        SetStatusString('Определение прокси-сервера', True);
-  //        SetProxyFromIE;
-  //      end;
-      end;
-      SetStatus(2);
-      SetStatusString('Подключение к серверу...');
-
-  //    ePartnerID.Enabled := False;
-
-  //    rbDesktopControl.Enabled := False;
-  //    rbFileTrans.Enabled := False;
-
-  //    btnViewDesktop.Font.Color := clBlack; //$00DDDDDD;;
-  //    btnRegistration.Font.Color :=  clBlack; //$00DDDDDD;
-  //    btnAccountLogin.Font.Color :=  clBlack; //$00DDDDDD;
-  //
-  //    btnViewDesktop.Enabled := False;
-  //    btnRegistration.Enabled := False;
-  //    btnAccountLogin.Enabled := False;
-
-      eConsoleID.Text := '-';
-      eUserName.Text := '-';
-      ePassword.Text := '-';
-
-      LoggedIn := False;
-      ShowDevicesPanel;
-
-  //    for i := 0 to Length(ActiveUIList) - 1 do
-  //      if ActiveUIList[i] <> nil then
-  //      begin
-  //        PostMessage(ActiveUIList[i].Handle, WM_CLOSE, 0, 0);
-  //        RemoveActiveUIRecByHandle(ActiveUIList[i].Handle);
-  //      end;
-  //    SetLength(ActiveUIList, 0);
-  //
-  //    AccountLogOut(nil);
-  //
-  //    if not isClosing then
-  //      for i := 0 to Length(GatewayClients) - 1 do
-  //      begin
-  //        if GatewayClients[i].GatewayClient.Active then
-  //          GatewayClients[i].GatewayClient.Active := False;
-  //        GatewayClients[i].GatewayClient.Stop;
-  //      end;
-    end;
-//  finally
-//    CS_SetConnectedState.Release;
-//  end;
 end;
 
 procedure EliminateListViewBeep;
@@ -2432,6 +2381,9 @@ var
 begin
   XLog('FormCreate');
 
+  CurStatus := 0;
+  FStatusUpdateThread := TStatusUpdateThread.Create(False, UpdateStatus);
+
   OpenedModalForm := nil;
   SettingsFormOpened := False;
 
@@ -2588,6 +2540,8 @@ var
   i: Integer;
 begin
   XLog('FormDestroy');
+
+  FStatusUpdateThread.Terminate;
 
 //  RestoreAero;
 
@@ -2814,7 +2768,27 @@ begin
   end;
 end;
 
+function TMainForm.GetStatus: Integer;
+begin
+  CS_Status.Acquire;
+  try
+    Result := FCurStatus;
+  finally
+    CS_Status.Release;
+  end;
+end;
+
 procedure TMainForm.SetStatus(Status: Integer);
+begin
+  CS_Status.Acquire;
+  try
+    FCurStatus := Status;
+  finally
+    CS_Status.Release;
+  end;
+end;
+
+{procedure TMainForm.SetStatus(Status: Integer);
 var
   bmp: TBitmap;
 begin
@@ -2887,16 +2861,255 @@ begin
   finally
     CS_Status.Release;
   end;
+end;}
+
+function TMainForm.AddDotsToString(sCurString: String): String;
+var
+  i: Integer;
+  sDots: String;
+begin
+  i := Length(sCurString);
+  sDots := '';
+  while (i > 1) do
+  begin
+    if (Copy(sCurString, i, 1) = '.') then
+    begin
+      i := i - 1;
+      Continue;
+    end
+    else
+    if (Copy(sCurString, i, 1) <> '.') then
+    begin
+      sDots := Copy(sCurString, i + 1, Length(sCurString) - i);
+      Break;
+    end;
+
+    i := i - 1;
+  end;
+
+  if Length(sDots) = 0 then
+    Result := '.'
+  else
+  if Length(sDots) = 1 then
+    Result := '..'
+  else
+  if Length(sDots) = 2 then
+    Result := '...'
+  else
+  if Length(sDots) = 3 then
+    Result := '....'
+  else
+  if Length(sDots) = 4 then
+    Result := '.'
 end;
 
-function TMainForm.GetStatus: Integer;
+procedure TMainForm.UpdateStatus;
+var
+  bmp: TBitmap;
+  sDots: String;
 begin
+  XLog('SetStatus: ' + IntToStr(CurStatus));
+
   CS_Status.Acquire;
   try
-    Result := CurStatus;
+    if DelayedStatus <> '' then
+      lblStatus.Caption := DelayedStatus
+    else if GetPendingRequestsCount > 0 then
+    begin
+      sDots := AddDotsToString(lblStatus.Caption);
+      lblStatus.Caption := 'Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName);
+      lblStatus.Caption := lblStatus.Caption + sDots;
+    end
+    else if CurStatus = STATUS_NO_CONNECTION then
+      lblStatus.Caption := 'Не подключено'
+    else if CurStatus = STATUS_ACTIVATING_ON_MAIN_GATE then
+    begin
+      sDots := AddDotsToString(lblStatus.Caption);
+      lblStatus.Caption := 'Активация устройства';
+      lblStatus.Caption := lblStatus.Caption + sDots;
+    end
+    else if CurStatus = STATUS_CONNECTING_TO_GATE then
+    begin
+      sDots := AddDotsToString(lblStatus.Caption);
+      lblStatus.Caption := 'Подключение к серверу';
+      lblStatus.Caption := lblStatus.Caption + sDots;
+    end
+    else if CurStatus = STATUS_READY then
+      lblStatus.Caption := 'Готов к подключению';
+
+    if GetPendingRequestsCount > 0 then
+    begin
+      btnViewDesktop.Caption := 'ПРЕРВАТЬ';
+      btnViewDesktop.Color := RGB(232, 17, 35);
+    end
+    else
+    begin
+      btnViewDesktop.Caption := 'ПОДКЛЮЧИТЬСЯ';
+      btnViewDesktop.Color := $00A39323;
+    end;
+
+    bmp := TBitmap.Create;
+    if CurStatus >= 0 then
+      ilStatus.GetBitmap(1, bmp)
+    else
+      ilStatus.GetBitmap(0, bmp);
+    iStatus1.Picture.Bitmap.Assign(bmp);
+    iStatus1.Update;
+    bmp.Free;
+
+    bmp := TBitmap.Create;
+    if CurStatus >= 1 then
+      ilStatus.GetBitmap(1, bmp)
+    else
+      ilStatus.GetBitmap(0, bmp);
+    iStatus2.Picture.Bitmap.Assign(bmp);
+    iStatus2.Update;
+    bmp.Free;
+
+    bmp := TBitmap.Create;
+    if CurStatus >= 2 then
+      ilStatus.GetBitmap(1, bmp)
+    else
+      ilStatus.GetBitmap(0, bmp);
+    iStatus3.Picture.Bitmap.Assign(bmp);
+    iStatus3.Update;
+    bmp.Free;
+
+    bmp := TBitmap.Create;
+    if CurStatus >= 3 then
+      ilStatus.GetBitmap(1, bmp)
+    else
+      ilStatus.GetBitmap(0, bmp);
+    iStatus4.Picture.Bitmap.Assign(bmp);
+    iStatus4.Update;
+    bmp.Free;
+
+    // bmp := TBitmap.Create;
+    // if CurStatus > 4 then
+    // begin
+    // ilStatus.GetBitmap(1, bmp);
+    // CurIconState := 'ONLINE';
+    // TaskBarIconUpdate(CurIconState);
+    // end
+    // else
+    // begin
+    // ilStatus.GetBitmap(0, bmp);
+    // CurIconState := 'OFFLINE';
+    // TaskBarIconUpdate(CurIconState);
+    // end;
+    // iStatus5.Picture.Bitmap.Assign(bmp);
+    // iStatus5.Update;
+    // bmp.Free;
   finally
     CS_Status.Release;
   end;
+end;
+
+procedure TMainForm.SetConnectedState(fConnected: Boolean);
+var
+  i: Integer;
+begin
+//  CS_SetConnectedState.Acquire;
+//  try
+    if isClosing then
+      Exit;
+
+    if fConnected then
+      XLog('SetConnectedState: Connected')
+    else
+      XLog('SetConnectedState: Not Connected');
+
+    if fConnected then
+    begin
+      HostPingTimer.Enabled := True;
+
+  //    ePartnerID.Enabled := True;
+
+  //    rbDesktopControl.Enabled := True;
+  //    rbFileTrans.Enabled := True;
+
+  //    btnViewDesktop.Enabled := True;
+  //    btnRegistration.Enabled := True;
+  //    btnAccountLogin.Enabled := True;
+
+  //    btnViewDesktop.Font.Color := clWhite;
+  //    btnRegistration.Font.Color := clWhite;
+  //    btnAccountLogin.Font.Color := clWhite;
+
+  //    if not isClosing then
+  //      for i := 0 to Length(GatewayClients) - 1 do
+  //      begin
+  //        if not GatewayClients[i].GatewayClient.Active then
+  //          GatewayClients[i].GatewayClient.Active := True;
+  //      end;
+    end
+    else
+    begin
+      HostPingTimer.Enabled := False;
+
+      eConsoleID.Text := '-';
+      eUserName.Text := '-';
+      ePassword.Text := '-';
+
+      LoggedIn := False;
+      ShowDevicesPanel;
+
+      DeleteAllPendingRequests;
+      CloseAllActiveUI;
+
+      SetStatusString('Проверка подключения к интернету...');
+
+      SetStatus(STATUS_NO_CONNECTION);
+
+      if IsInternetConnected then
+      begin
+//        SetStatus(0);
+        SetStatusString('Отсутствует сетевое подключение');
+
+  //      if ProxyOption = 'Automatic' then
+  //      begin
+  //        SetStatusString('Определение прокси-сервера', True);
+  //        SetProxyFromIE;
+  //      end;
+        Exit;
+      end;
+      SetStatus(STATUS_ACTIVATING_ON_MAIN_GATE);
+      SetStatusString('Подключение к серверу...');
+
+  //    ePartnerID.Enabled := False;
+
+  //    rbDesktopControl.Enabled := False;
+  //    rbFileTrans.Enabled := False;
+
+  //    btnViewDesktop.Font.Color := clBlack; //$00DDDDDD;;
+  //    btnRegistration.Font.Color :=  clBlack; //$00DDDDDD;
+  //    btnAccountLogin.Font.Color :=  clBlack; //$00DDDDDD;
+  //
+  //    btnViewDesktop.Enabled := False;
+  //    btnRegistration.Enabled := False;
+  //    btnAccountLogin.Enabled := False;
+
+  //    for i := 0 to Length(ActiveUIList) - 1 do
+  //      if ActiveUIList[i] <> nil then
+  //      begin
+  //        PostMessage(ActiveUIList[i].Handle, WM_CLOSE, 0, 0);
+  //        RemoveActiveUIRecByHandle(ActiveUIList[i].Handle);
+  //      end;
+  //    SetLength(ActiveUIList, 0);
+  //
+  //    AccountLogOut(nil);
+  //
+  //    if not isClosing then
+  //      for i := 0 to Length(GatewayClients) - 1 do
+  //      begin
+  //        if GatewayClients[i].GatewayClient.Active then
+  //          GatewayClients[i].GatewayClient.Active := False;
+  //        GatewayClients[i].GatewayClient.Stop;
+  //      end;
+    end;
+//  finally
+//    CS_SetConnectedState.Release;
+//  end;
 end;
 
 procedure TMainForm.FormResize(Sender: TObject);
@@ -3628,8 +3841,8 @@ begin
   if AUser = PClient.LoginUserName then
   begin
 //      MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'VIRCESS', MB_ICONWARNING or MB_OK);
-    SetStatusString('Подключение к своему компьютеру невозможно');
-    SetStatusStringDelayed('Готов к подключению', 2000);
+    SetStatusStringDelayed('Подключение к своему компьютеру невозможно');
+//    SetStatusStringDelayed('Готов к подключению', 2000);
     Exit;
   end;
 //    if DData.StateIndex = MSG_STATUS_OFFLINE then
@@ -4044,8 +4257,8 @@ begin
 
     if user = PClient.LoginUserName then
     begin
-      SetStatusString('Подключение к своему компьютеру невозможно');
-      SetStatusStringDelayed('Готов к подключению', 2000);
+      SetStatusStringDelayed('Подключение к своему компьютеру невозможно');
+//      SetStatusStringDelayed('Готов к подключению', 2000);
       Exit;
     end;
 //    if DData.StateIndex = MSG_STATUS_OFFLINE then
@@ -4153,8 +4366,8 @@ begin
 //      eAccountUserName.SelectAll;
 //    end;
 //    MessageBox(Handle, 'Адрес электронной почты должен состоять из 6 и более символов', 'VIRCESS', MB_ICONWARNING or MB_OK);
-    SetStatusString('Адрес электронной почты должен состоять из 6 и более символов');
-    SetStatusStringDelayed('Готов к подключению', 2000);
+    SetStatusStringDelayed('Адрес электронной почты должен состоять из 6 и более символов');
+//    SetStatusStringDelayed('Готов к подключению', 2000);
     Result := False;
     Exit;
   end;
@@ -4172,8 +4385,8 @@ begin
 //        eAccountUserName.SelectAll;
 //      end;
 //      MessageBox(Handle, 'Адрес электронной почты должен содержать только буквы и цифры', 'VIRCESS', MB_ICONWARNING or MB_OK);
-      SetStatusString('Адрес электронной почты должен состоять из 6 и более символов');
-      SetStatusStringDelayed('Готов к подключению', 2000);
+      SetStatusStringDelayed('Адрес электронной почты должен состоять из 6 и более символов');
+//      SetStatusStringDelayed('Готов к подключению', 2000);
       Result := False;
       Exit;
     end;
@@ -4197,8 +4410,8 @@ begin
 //      eAccountUserName.SelectAll;
 //    end;
 //    MessageBox(Handle, 'Неверно указан адрес электронной почты', 'VIRCESS', MB_ICONWARNING or MB_OK);
-    SetStatusString('Неверно указан адрес электронной почты');
-    SetStatusStringDelayed('Готов к подключению', 2000);
+    SetStatusStringDelayed('Неверно указан адрес электронной почты');
+//    SetStatusStringDelayed('Готов к подключению', 2000);
     Result := False;
     Exit;
   end;
@@ -5342,8 +5555,8 @@ begin
       if user = PClient.LoginUserName then
       begin
 //        MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'VIRCESS', MB_ICONWARNING or MB_OK);
-        SetStatusString('Подключение к своему компьютеру невозможно');
-        SetStatusStringDelayed('Готов к подключению', 2000);
+        SetStatusStringDelayed('Подключение к своему компьютеру невозможно');
+//        SetStatusStringDelayed('Готов к подключению', 2000);
         Exit;
       end;
 
@@ -6304,8 +6517,8 @@ begin
   if user = '' then
   begin
 //    MessageBox(Handle, 'Введите ID компьютера, к которому хотите подключиться', 'VIRCESS', MB_ICONWARNING or MB_OK);
-    SetStatusString('Введите ID компьютера, к которому хотите подключиться');
-    SetStatusStringDelayed('Готов к подключению', 2000);
+    SetStatusStringDelayed('Введите ID компьютера, к которому хотите подключиться');
+//    SetStatusStringDelayed('Готов к подключению', 2000);
 //    bhMain.ShowHint(ePartnerID);
 
     if Visible then
@@ -6319,8 +6532,8 @@ begin
   if not IsValidDeviceID(user) then
   begin
 //    MessageBox(Handle, 'ID компьютера может содержать только цифры', 'VIRCESS', MB_ICONWARNING or MB_OK);
-    SetStatusString('ID компьютера может содержать только цифры');
-    SetStatusStringDelayed('Готов к подключению', 2000);
+    SetStatusStringDelayed('ID компьютера может содержать только цифры');
+//    SetStatusStringDelayed('Готов к подключению', 2000);
 
     if Visible then
     begin
@@ -6333,8 +6546,8 @@ begin
   if user = PClient.LoginUserInfo.asText['RealName'] then
   begin
 //    MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'VIRCESS', MB_ICONWARNING or MB_OK);
-    SetStatusString('Подключение к своему компьютеру невозможно');
-    SetStatusStringDelayed('Готов к подключению', 2000);
+    SetStatusStringDelayed('Подключение к своему компьютеру невозможно');
+//    SetStatusStringDelayed('Готов к подключению', 2000);
     Exit;
   end;
 //  if GetDeviceStatus(user) = MSG_STATUS_OFFLINE then
@@ -6356,8 +6569,8 @@ begin
       end;
       DateTimeToString(s, 'dd.mm.yyyy hh:nn:ss', DateAllowConnectionPending);
 //      MessageBox(Handle, PWideChar('Превышен лимит попыток. Следующая попытка не ранее ' + s), 'VIRCESS', MB_OK);
-      SetStatusString('Превышен лимит попыток. Следующая попытка не ранее ' + s);
-      SetStatusStringDelayed('Готов к подключению', 2000);
+      SetStatusStringDelayed('Превышен лимит попыток. Следующая попытка не ранее ' + s);
+//      SetStatusStringDelayed('Готов к подключению', 2000);
       Exit;
     end;
   end;
@@ -6418,6 +6631,7 @@ var
   PortalThread: TPortalThread;
   mResult: TModalResult;
   PassForm: TfIdentification;
+  PRItem: PPendingRequestItem;
 begin
   xLog('rGetPartnerInfoReturn');
 
@@ -6437,8 +6651,8 @@ begin
     if asString['Result'] = 'IS_OFFLINE' then
     begin
 //      MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'VIRCESS', MB_ICONWARNING or MB_OK);
-      SetStatusString('Партнер не в сети. Подключение невозможно');
-      SetStatusStringDelayed('Готов к подключению', 2000);
+      SetStatusStringDelayed('Партнер не в сети. Подключение невозможно');
+//      SetStatusStringDelayed('Готов к подключению', 2000);
 
       DoGetDeviceState(eAccountUserName.Text,
         PClient.LoginUserName,
@@ -6452,8 +6666,9 @@ begin
 
       if not PartnerIsPending(asWideString['user'], asString['action'], asString['Address']) then
       begin
+        PRItem := AddPendingRequest(asWideString['user'], asString['action'], asString['Address'] + ':' +  asString['Port'], 0);
         PortalThread := TPortalThread.Create(False, asWideString['user'], asWideString['action'], asString['Address']); //Для каждого соединения новый клиент
-        AddPendingRequest(asWideString['user'], asString['action'], asString['Address'] + ':' +  asString['Port'], PortalThread.ThreadID);
+        PRItem^.ThreadID := PortalThread.ThreadID;
 //        New(PRItem);
 //        PRItem.UserName := asWideString['user'];
 //        PRItem.Gateway := asString['Address'] + ':' + asString['Port'];
@@ -7340,14 +7555,14 @@ begin
   try
   //  StartHostLogin;
 
-    SetStatus(0);
+    SetStatus(STATUS_NO_CONNECTION);
 
     xLog('ActivateHost IsInternetConnected 1');
 
     if not IsInternetConnected then
       Exit
     else
-      SetStatus(1);
+      SetStatus(STATUS_ACTIVATING_ON_MAIN_GATE);
 
     xLog('ActivateHost IsInternetConnected 2');
 
@@ -7356,7 +7571,7 @@ begin
   //    SetStatusString('Определение прокси-сервера', True);
   //    SetProxyFromIE;
   //  end;
-    SetStatus(2);
+//    SetStatus(2);
 
     xLog('ActivateHost SetStatus 2');
 
@@ -7512,7 +7727,7 @@ begin
           PClient.LoginUserName := RealName;
           PClient.LoginUserInfo.asText['RealName'] := DisplayName;
           PClient.GateAddr := asString['Gateway'];
-          PClient.GatePort := '443';
+          PClient.GatePort := '5938';
 //          PClient.GParamsLoaded := True;
           PClient.Active := True;
 
@@ -7523,16 +7738,16 @@ begin
         SetStatusString('Подключение к серверу...', True);
 
         SetConnectedState(True);
-        SetStatus(3);
+        SetStatus(STATUS_CONNECTING_TO_GATE);
   //      LoggedIn := True;
 
   //      ConnectToGateway;
-        if cbRememberAccount.Checked then
-          btnAccountLoginClick(nil);
+//        if cbRememberAccount.Checked then
+//          btnAccountLoginClick(nil);
 
-        SetStatusString('Готов к подключению');
+//        SetStatusString('Готов к подключению');
 
-        SetStatus(4);
+//        SetStatus(4);
 
 //        pingTimer.Enabled := True;
 //        HostPingTimer.Enabled := True;
@@ -7594,7 +7809,7 @@ begin
       else
       begin
         SetStatusString('Сервер Vircess не найден');
-        SetStatus(1);
+        SetStatus(STATUS_ACTIVATING_ON_MAIN_GATE);
         SetConnectedState(False);
       end;
 end;
@@ -8213,8 +8428,13 @@ begin
   DragAcceptFiles(Handle, False);
 
   if (Sender = PClient)
-    and (GetStatus = 4) then
-    SetStatus(5);
+    and (GetStatus = STATUS_CONNECTING_TO_GATE) then
+  begin
+    SetStatus(STATUS_READY);
+
+    if cbRememberAccount.Checked then
+      btnAccountLoginClick(nil);
+  end;
 
 //  lblStatus.Caption := 'Подключен как "' + eUserName.Text + '".';
 //  lblStatus.Update;
@@ -8338,8 +8558,8 @@ begin
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': PClientLogOut'));
 
   if (Sender = PClient)
-    and (GetStatus = 5) then
-    SetStatus(4);
+    and (GetStatus = STATUS_READY) then
+    SetStatus(STATUS_CONNECTING_TO_GATE);
 
 //  SetStatusStringDelayed('Готов к подключению', 2000);
 
@@ -8990,7 +9210,7 @@ begin
   end;
 end;
 
-procedure TMainForm.AddPendingRequest(uname, action, gateway: String; ThreadID: Cardinal);
+function TMainForm.AddPendingRequest(uname, action, gateway: String; ThreadID: Cardinal): PPendingRequestItem;
 var
   PRItem: PPendingRequestItem;
 begin
@@ -9009,6 +9229,8 @@ begin
   end;
 
   UpdatePendingStatus;
+
+  Result := PRItem;
 end;
 
 function TMainForm.GetCurrentPendingItemUserName: String;

@@ -2,7 +2,7 @@
 Coordinates=701,610,88,36
 
 []
-Coordinates=479,365,101,36
+Coordinates=400,527,61,58
 Visible=True
 LayerNames=
 
@@ -115,9 +115,6 @@ Coordinates=1113,276,98,36
 
 [iStatus4]
 Coordinates=396,309,61,58
-
-[iStatus5]
-Coordinates=400,527,61,58
 
 [N1]
 Coordinates=0,233,40,36
