@@ -3,7 +3,7 @@ object MainForm: TMainForm
   Top = 309
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'Vircess'
-  ClientHeight = 470
+  ClientHeight = 489
   ClientWidth = 840
   Color = clBtnFace
   DoubleBuffered = True
@@ -48,7 +48,7 @@ object MainForm: TMainForm
     Left = 0
     Top = 0
     Width = 840
-    Height = 470
+    Height = 489
     Margins.Left = 0
     Margins.Top = 0
     Margins.Right = 0
@@ -61,9 +61,10 @@ object MainForm: TMainForm
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
+    ExplicitHeight = 470
     DesignSize = (
       840
-      470)
+      489)
     object lblStatus: TLabel
       AlignWithMargins = True
       Left = 60
@@ -4110,7 +4111,7 @@ object MainForm: TMainForm
         Font.Color = clWindowText
         Font.Height = -21
         Font.Name = 'Bahnschrift'
-        Font.Style = []
+        Font.Style = [fsBold]
         ParentFont = False
         ReadOnly = True
         TabOrder = 0
@@ -5485,7 +5486,6 @@ object MainForm: TMainForm
     MultiThreaded = True
     GatePort = '443'
     Gate_Timeout = 300
-    Gate_WinHttp = True
     OnStatusGet = PClientStatusGet
     OnStatusPut = PClientStatusPut
     Left = 38
@@ -5651,7 +5651,6 @@ object MainForm: TMainForm
     OnConnectError = hcAccountsConnectError
     OnReconnect = hcAccountsReconnect
     AutoConnect = True
-    UseWinHTTP = True
     MaxResponseSize = 128000
     MaxHeaderSize = 16000
     TimeoutsOfAPI.ConnectTimeout = 5
@@ -5815,7 +5814,6 @@ object MainForm: TMainForm
     ReconnectOn.ConnectLost = True
     ReconnectOn.ConnectFail = True
     OnConnectError = TimerClientConnectError
-    UseWinHTTP = True
     MaxResponseSize = 128000
     MaxHeaderSize = 16000
     TimeoutsOfAPI.ConnectTimeout = 5
@@ -5873,7 +5871,6 @@ object MainForm: TMainForm
     ReconnectOn.ConnectLost = True
     ReconnectOn.ConnectFail = True
     AutoConnect = True
-    UseWinHTTP = True
     MaxResponseSize = 128000
     MaxHeaderSize = 16000
     TimeoutsOfAPI.ConnectTimeout = 5

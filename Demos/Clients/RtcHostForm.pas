@@ -750,8 +750,6 @@ begin
   else
   if AClient.ServerPort = '5938' then
     AClient.ServerPort := '80';
-
-//    AClient.ServerPort := '5938';
 end;
 
 procedure TMainform.ChangePortP(AClient: TRtcHttpPortalClient);
@@ -767,8 +765,6 @@ begin
   else
   if AClient.GatePort = '5938' then
     AClient.GatePort := '80';
-
-//    AClient.GatePort := '5938';
 end;
 
 constructor TPortalThread.Create(CreateSuspended: Boolean; AUserName, AAction, AGateway: String);
@@ -920,7 +916,7 @@ end;
 
 destructor TPortalThread.Destroy;
 begin
-//  FGatewayClient.Disconnect;
+  FGatewayClient.Disconnect;
   FGatewayClient.Active := False;
   FGatewayClient.Stop;
 
@@ -2719,13 +2715,15 @@ begin
 //    try
 //      for i := 0 to GatewayClientsList.Count - 1 do
 //      begin
-//        PClient.Disconnect;
-        if PClient.LoginUserName <> '' then
+        PClient.Disconnect;
+        if (PClient.LoginUserName <> '')
+          and (PClient.LoginUserName <> '') then
           PClient.Active := False;
         PClient.Gate_Proxy := ProxyEnabled;
         PClient.Gate_ProxyAddr := CurProxy;
   //      PClient.GParamsLoaded:=True;
-        if PClient.LoginUserName <> '' then
+        if (PClient.LoginUserName <> '')
+          and (PClient.LoginUserName <> '') then
           PClient.Active := True;
 //      end;
 //    finally
@@ -3336,6 +3334,7 @@ begin
     and (not SettingsFormOpened) then
   begin
     SetStatusString('Сервер недоступен');
+    ActivationInProcess := False;
     SetStatus(STATUS_NO_CONNECTION);
     SetConnectedState(False);
     if not isClosing then
@@ -3573,13 +3572,13 @@ begin
       begin
         ProxyOption := info.asString['ProxyOption'];
         if ProxyOption = 'Automatic' then
-        begin
-          PClient.Gate_WinHttp := True;
-          hcAccounts.UseWinHTTP := True;
-          TimerClient.UseWinHTTP := True;
-          HostTimerClient.UseWinHTTP := True;
-        end
-        else
+//        begin
+//          PClient.Gate_WinHttp := True;
+//          hcAccounts.UseWinHTTP := True;
+//          TimerClient.UseWinHTTP := True;
+//          HostTimerClient.UseWinHTTP := True;
+//        end
+//        else
         begin
           PClient.Gate_WinHttp := False;
           hcAccounts.UseWinHTTP := False;
@@ -5103,9 +5102,10 @@ begin
 //    CS_GW.Release;
 //  end;
 
-  if PClient.LoginUserName <> '' then
+  if (PClient.LoginUserName <> '')
+    and (PClient.LoginUserName <> '') then
   begin
-    //PClient.Disconnect;
+    PClient.Disconnect;
     PClient.Active := False;
     PClient.Active := True;
 
@@ -5226,7 +5226,8 @@ begin
       ItemRect.Left := 20 + 38;
 
     Name := DData.Name;
-    if PClient.LoginUserName <> '' then
+    if (PClient.LoginUserName <> '')
+      and (PClient.LoginUserName <> '') then
       if DData.ID = StrToInt(PClient.LoginUserInfo.asText['RealName']) then
         if Name <> '' then
           Name := Name + ' (этот компьютер)'
@@ -7146,7 +7147,8 @@ begin
 //    finally
 //      CS_GW.Release;
 //    end;
-    if PClient.LoginUserName <> '' then
+    if (PClient.LoginUserName <> '')
+      and (PClient.LoginUserName <> '') then
     begin
       PClient.Disconnect;
       PClient.Active := False;
@@ -7562,21 +7564,6 @@ begin
   Result := Node;//Should Return Nil if the index is not reached.
 end;
 
-procedure TMainForm.rActivateRequestAborted(Sender: TRtcConnection; Data,
-  Result: TRtcValue);
-begin
-  xLog('rActivateRequestAborted');
-//   lblStatus.Caption := Result.asException;
-
-  SetStatusString('Сервер недоступен');
-  if (not tHcAccountsReconnect.Enabled)
-    and (not isClosing) then
-    tHcAccountsReconnect.Enabled := True;
-  SetConnectedState(False);
-
-  ActivationInProcess := False;
-end;
-
 procedure TMainForm.ActivateHost;
 var
   HWID : THardwareId;
@@ -7662,6 +7649,25 @@ begin
   end;
 end;
 
+procedure TMainForm.rActivateRequestAborted(Sender: TRtcConnection; Data,
+  Result: TRtcValue);
+begin
+  xLog('rActivateRequestAborted');
+
+  if not ActivationInProcess then
+    Exit;
+
+//   lblStatus.Caption := Result.asException;
+
+  SetStatusString('Сервер недоступен');
+  if (not tHcAccountsReconnect.Enabled)
+    and (not isClosing) then
+    tHcAccountsReconnect.Enabled := True;
+  SetConnectedState(False);
+
+  ActivationInProcess := False;
+end;
+
 procedure TMainForm.rActivateReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 var
@@ -7670,6 +7676,10 @@ var
   ConsoleName, CurPass, sUserName, sConsoleName: String;
 begin
   xLog('rActivateReturn');
+
+  if not ActivationInProcess then
+    Exit;
+
 //  if LoggedIn then  //Доделать. Зачем это?
 //    Exit
 //  else
@@ -7761,13 +7771,13 @@ begin
           eUserName.Text := sUserName;
         end;
 
-          //PClient.Disconnect;
+          PClient.Disconnect;
           PClient.Active := False;
 
           PClient.LoginUserName := RealName;
           PClient.LoginUserInfo.asText['RealName'] := DisplayName;
           PClient.GateAddr := asString['Gateway'];
-          PClient.GatePort := '5938';
+          PClient.GatePort := '443';
 //          PClient.GParamsLoaded := True;
           PClient.Active := True;
 
@@ -8574,10 +8584,11 @@ begin
     CS_GW.Release;
   end;
 
-  if (OpenedModalForm <> nil) then
+  if (OpenedModalForm <> nil)
+    and OpenedModalForm.Showing then
   begin
     xLog('OpenedModalForm Close Start');
-    OpenedModalForm.Hide;
+    OpenedModalForm.Close;
     OpenedModalForm := nil;
     xLog('OpenedModalForm Close End');
   end;

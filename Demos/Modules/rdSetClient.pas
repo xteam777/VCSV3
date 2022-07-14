@@ -34,10 +34,6 @@ type
     rbManual: TRadioButton;
     eProxyPort: TEdit;
     Label2: TLabel;
-    pBtnOK: TPanel;
-    bOK: TSpeedButton;
-    pBtnClose: TPanel;
-    bClose: TSpeedButton;
     cbOnlyAdminChanges: TCheckBox;
     ApplicationEvents1: TApplicationEvents;
     cbAutoRun: TCheckBox;
@@ -48,6 +44,10 @@ type
     Label6: TLabel;
     ePassword: TEdit;
     ePasswordConfirm: TEdit;
+    bOK: TButton;
+    bClose: TButton;
+    Label3: TLabel;
+    cbProxyType: TComboBox;
 
     procedure xSSLClick(Sender: TObject);
     procedure btnCancelClick(Sender: TObject);
@@ -214,13 +214,19 @@ begin
   end;
   if ProxyOption = 'Manual' then
   begin
-    if Trim(eProxyAddr.Text) = ''then
+    if cbProxyType.ItemIndex = -1 then
+    begin
+      MessageBox(Handle, 'Не указан тип прокси-сервера', 'VIRCESS', MB_ICONWARNING or MB_OK);
+      cbProxyType.SetFocus;
+      Exit;
+    end;
+    if Trim(eProxyAddr.Text) = '' then
     begin
       MessageBox(Handle, 'Не указан адрес прокси-сервера', 'VIRCESS', MB_ICONWARNING or MB_OK);
       eProxyAddr.SetFocus;
       Exit;
     end;
-    if Trim(eProxyPort.Text) = ''then
+    if Trim(eProxyPort.Text) = '' then
     begin
       MessageBox(Handle, 'Не указан порт прокси-сервера', 'VIRCESS', MB_ICONWARNING or MB_OK);
       eProxyPort.SetFocus;
@@ -546,7 +552,7 @@ procedure TrdClientSettings.FormShow(Sender: TObject);
 //var
 //  IsAdmin: Boolean;
 begin
-//  IsAdmin := RunedAsAdmin;
+//  IsAdmin := RunedAsAdmineProxyAddr;
 //  if IsAdmin then
 //    cbOnlyAdminChanges.Enabled := True
 //  else
@@ -596,7 +602,7 @@ begin
   xProxyClick(nil);
 
   if Visible then
-    eProxyAddr.SetFocus;
+    cbProxyType.SetFocus;
 end;
 
 procedure TrdClientSettings.rbNoProxyClick(Sender: TObject);
@@ -612,11 +618,13 @@ procedure TrdClientSettings.xProxyClick(Sender: TObject);
   begin
   if CurProxyOption = 'Manual' then
   begin
+    cbProxyType.Color := clWindow;
     eProxyAddr.Color := clWindow;
     eProxyPort.Color := clWindow;
     eProxyUsername.Color := clWindow;
     eProxyPassword.Color := clWindow;
 
+    cbProxyType.Enabled := True;
     eProxyAddr.Enabled := True;
     eProxyPort.Enabled := True;
     eProxyUsername.Enabled := True;
@@ -624,11 +632,13 @@ procedure TrdClientSettings.xProxyClick(Sender: TObject);
   end
   else
   begin
+    cbProxyType.Color := clMenu;
     eProxyAddr.Color := clMenu;
     eProxyPort.Color := clMenu;
     eProxyUsername.Color := clMenu;
     eProxyPassword.Color := clMenu;
 
+    cbProxyType.Enabled := False;
     eProxyAddr.Enabled := False;
     eProxyPort.Enabled := False;
     eProxyUsername.Enabled := False;
