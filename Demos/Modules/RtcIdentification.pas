@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Imaging.jpeg, uVircessTypes,
-  Vcl.ExtCtrls, Vcl.Buttons, Vcl.AppEvnts;
+  Vcl.ExtCtrls, Vcl.Buttons, Vcl.AppEvnts, Vcl.Imaging.pngimage;
 
 type
   TfIdentification = class(TForm)
@@ -13,11 +13,9 @@ type
     Label4: TLabel;
     Label6: TLabel;
     ePassword: TEdit;
-    pBtnClose: TPanel;
-    bClose: TSpeedButton;
-    pBtnOK: TPanel;
-    bOK: TSpeedButton;
     ApplicationEvents1: TApplicationEvents;
+    bOK: TButton;
+    bClose: TButton;
     procedure FormShow(Sender: TObject);
     procedure bCloseClick(Sender: TObject);
     procedure bOKClick(Sender: TObject);

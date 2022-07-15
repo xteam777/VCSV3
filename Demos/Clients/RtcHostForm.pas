@@ -1079,11 +1079,11 @@ begin
 
   DData := twDevices.GetNodeData(twDevices.FocusedNode);
   if twDevices.GetNodeLevel(twDevices.FocusedNode) = 0 then
-//    Res := MessageBox(Handle, PWideChar('Удалить группу "' + DData.Name + '" и все компьютеры в ней?'), PWideChar('VIRCESS'), MB_ICONWARNING or MB_YESNO)
-    ShowMessageBox('Удалить группу "' + DData.Name + '" и все компьютеры в ней?', 'VIRCESS', 'DeleteDeviceGroup', DData.UID)
+//    Res := MessageBox(Handle, PWideChar('Удалить группу "' + DData.Name + '" и все компьютеры в ней?'), PWideChar('Remox'), MB_ICONWARNING or MB_YESNO)
+    ShowMessageBox('Удалить группу "' + DData.Name + '" и все устройства в ней?', 'Remox', 'DeleteDeviceGroup', DData.UID)
   else
-//    Res := MessageBox(Handle, PWideChar('Удалить компьютер "' + DData.Name + '"?'), PWideChar('VIRCESS'), MB_ICONWARNING or MB_YESNO);
-    ShowMessageBox('Удалить компьютер "' + DData.Name + '"?', 'VIRCESS', 'DeleteDeviceGroup', DData.UID);
+//    Res := MessageBox(Handle, PWideChar('Удалить компьютер "' + DData.Name + '"?'), PWideChar('Remox'), MB_ICONWARNING or MB_YESNO);
+    ShowMessageBox('Удалить компьютер "' + DData.Name + '"?', 'Remox', 'DeleteDeviceGroup', DData.UID);
 
 //  if Res = mrNo then
 //    Exit;
@@ -1119,7 +1119,7 @@ begin
   XLog('miExitClick');
 
 //  if ActiveUIList.Count > 0 then
-//    ShowMessageBox('Имеются открытые подключения. Закрыть Vircess?', 'VIRCESS', 'Exit', '')
+//    ShowMessageBox('Имеются открытые подключения. Закрыть Remox?', 'Remox', 'Exit', '')
 //  else
 //  begin
     isClosing := True;
@@ -1999,12 +1999,12 @@ var
 begin
   XLog('aFeedBackExecute');
 
-//  ShellExecute(Handle, 'Open', 'mailto:support@vircess.com', nil, nil, SW_RESTORE);
+//  ShellExecute(Handle, 'Open', 'mailto:support@Remox.com', nil, nil, SW_RESTORE);
 //  if LoggedIn then
 //    pAccUserName := eAccountUserName.Text
 //  else
-//    pAccUserName := '';                    //PChar('mailto:support@vircess.com?body=<BR><BR><BR>Account:' + AccountName + '<BR>Device ID:' + PClient.LoginUserInfo.asText['RealName'])
-  ShellExecute(Application.Handle, 'open', 'mailto:support@vircess.com', nil, nil, SW_SHOW);
+//    pAccUserName := '';                    //PChar('mailto:support@remox.com?body=<BR><BR><BR>Account:' + AccountName + '<BR>Device ID:' + PClient.LoginUserInfo.asText['RealName'])
+  ShellExecute(Application.Handle, 'open', 'mailto:support@remox.com', nil, nil, SW_SHOW);
 end;
 
 procedure TMainForm.aMinimizeExecute(Sender: TObject);
@@ -2163,9 +2163,9 @@ begin
     HostLogOut;
 //  end
 //  else
-////  if MessageDlg('Вы действительно хотите закрыть Vircess?'#13#10+
+////  if MessageDlg('Вы действительно хотите закрыть Remox?'#13#10+
 ////    'Имеются подключенные к Вам пользователи.'#13#10 +
-////    'Закрытие Vircess их отключит.',
+////    'Закрытие Remox их отключит.',
 ////    mtWarning, [mbNo, mbYes], 0) = mrYes then
 //  begin
 //    TaskBarRemoveIcon;
@@ -2292,13 +2292,13 @@ begin
   begin
     pDevAcc.Visible := True;
     ClientWidth := 840;
-    bDevices.Caption := 'Компьютеры <<';
+    bDevices.Caption := 'Устройства <<';
   end
   else
   begin
     pDevAcc.Visible := False;
     ClientWidth := 550;
-    bDevices.Caption := 'Компьютеры >>';
+    bDevices.Caption := 'Устройства >>';
     Constraints.MaxWidth := Width;
   end;
 
@@ -3440,7 +3440,7 @@ begin
 //    reg := TRegistry.Create;
 //    try
 //      reg.RootKey := HKEY_CURRENT_USER;
-//      if reg.OpenKeyReadOnly('\Software\Vircess') then
+//      if reg.OpenKeyReadOnly('\Software\Remox') then
 //      try
 ////        reg.ReadMultiSz('Data', s);
 //        //  s := reg.ReadBinaryDataToString('Data');
@@ -3463,13 +3463,13 @@ begin
 //      reg.Free;
 //    end;
 
-    CfgFileName:= GetDOSEnvVar('APPDATA') + '\Vircess\Profile.dat';
+    CfgFileName:= GetDOSEnvVar('APPDATA') + '\Remox\Profile.dat';
     s := Read_File(CfgFileName, rtc_ShareDenyNone);
 
     if s <> '' then
     begin
-      DeCrypt(s, 'Vircess');
-//      s := DecryptStr(s, 'Vircess');
+      DeCrypt(s, 'Remox');
+//      s := DecryptStr(s, 'Remox');
       try
         info := TRtcRecord.FromCode(s);
       except
@@ -3554,7 +3554,7 @@ begin
 
     if s <> '' then
     begin
-      DeCrypt(s, 'Vircess');
+      DeCrypt(s, 'Remox');
       try
         info:=TRtcRecord.FromCode(s);
       except
@@ -3690,23 +3690,23 @@ begin
 //    info.asInteger['Priority']:=cPriority.ItemIndex;
 
     infos := info.toCode;
-    Crypt(infos, 'Vircess');
-//    infos := EncryptStr(infos, 'Vircess');
+    Crypt(infos, 'Remox');
+//    infos := EncryptStr(infos, 'Remox');
   finally
     info.Free;
   end;
 
-  if not DirectoryExists(GetDOSEnvVar('APPDATA') + '\Vircess') then
-    CreateDir(GetDOSEnvVar('APPDATA') + '\Vircess');
-  CfgFileName := GetDOSEnvVar('APPDATA') + '\Vircess\Profile.dat';
+  if not DirectoryExists(GetDOSEnvVar('APPDATA') + '\Remox') then
+    CreateDir(GetDOSEnvVar('APPDATA') + '\Remox');
+  CfgFileName := GetDOSEnvVar('APPDATA') + '\Remox\Profile.dat';
   Write_File(CfgFileName, infos);
 
 //  reg := TRegistry.Create;
 //  try
 //    reg.RootKey := HKEY_CURRENT_USER;
-////    if not reg.KeyExists('\Software\Vircess\Settings\' + GetSystemUserName) then
-////      reg.CreateKey('\Software\Vircess\Settings\' + GetSystemUserName);
-//    if reg.OpenKey('\Software\Vircess', True) then
+////    if not reg.KeyExists('\Software\Remox\Settings\' + GetSystemUserName) then
+////      reg.CreateKey('\Software\Remox\Settings\' + GetSystemUserName);
+//    if reg.OpenKey('\Software\Remox', True) then
 //    try
 //      infos_a := AnsiString(infos);
 //      reg.WriteBinaryData('Settings', infos_a[1], Length(infos_a) * SizeOf(AnsiChar));
@@ -3748,7 +3748,7 @@ begin
 //    info.asInteger['Priority']:=cPriority.ItemIndex;
 
     infos := info.toCode;
-    Crypt(infos, 'Vircess');
+    Crypt(infos, 'Remox');
   finally
     info.Free;
   end;
@@ -3848,14 +3848,14 @@ begin
 
   if AUser = PClient.LoginUserName then
   begin
-//      MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'VIRCESS', MB_ICONWARNING or MB_OK);
+//      MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'Remox', MB_ICONWARNING or MB_OK);
     SetStatusStringDelayed('Подключение к своему компьютеру невозможно');
 //    SetStatusStringDelayed('Готов к подключению', 2000);
     Exit;
   end;
 //    if DData.StateIndex = MSG_STATUS_OFFLINE then
 //    begin
-//      MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'VIRCESS', MB_ICONWARNING or MB_OK);
+//      MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'Remox', MB_ICONWARNING or MB_OK);
 //      SetStatusString('Готов к подключению');
 //      Exit;
 //    end;
@@ -3984,7 +3984,7 @@ procedure TMainForm.miWebSiteClick(Sender: TObject);
 begin
   XLog('miWebSiteClick');
 
-  ShellExecute(0, 'open', PChar('http://vircess.com'), '', nil, SW_SHOW);
+  ShellExecute(0, 'open', PChar('http://remox.com'), '', nil, SW_SHOW);
 end;
 
 procedure TMainForm.miAccLogOutClick(Sender: TObject);
@@ -4271,7 +4271,7 @@ begin
     end;
 //    if DData.StateIndex = MSG_STATUS_OFFLINE then
 //    begin
-//      MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'VIRCESS', MB_ICONWARNING or MB_OK);
+//      MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'Remox', MB_ICONWARNING or MB_OK);
 //      SetStatusString('Готов к подключению');
 //      Exit;
 //    end;
@@ -4342,7 +4342,7 @@ begin
 
   if not ConnectedToMainGateway then
   begin
-//    MessageBox(Handle, 'Нет подключения к серверу', 'VIRCESS', MB_ICONWARNING or MB_OK);
+//    MessageBox(Handle, 'Нет подключения к серверу', 'Remox', MB_ICONWARNING or MB_OK);
     SetStatusString('Нет подключения к серверу');
     Exit;
   end;
@@ -4376,7 +4376,7 @@ begin
 //      eAccountUserName.SetFocus;
 //      eAccountUserName.SelectAll;
 //    end;
-//    MessageBox(Handle, 'Адрес электронной почты должен состоять из 6 и более символов', 'VIRCESS', MB_ICONWARNING or MB_OK);
+//    MessageBox(Handle, 'Адрес электронной почты должен состоять из 6 и более символов', 'Remox', MB_ICONWARNING or MB_OK);
     SetStatusStringDelayed('Адрес электронной почты должен состоять из 6 и более символов');
 //    SetStatusStringDelayed('Готов к подключению', 2000);
     Result := False;
@@ -4395,7 +4395,7 @@ begin
 //        eAccountUserName.SetFocus;
 //        eAccountUserName.SelectAll;
 //      end;
-//      MessageBox(Handle, 'Адрес электронной почты должен содержать только буквы и цифры', 'VIRCESS', MB_ICONWARNING or MB_OK);
+//      MessageBox(Handle, 'Адрес электронной почты должен содержать только буквы и цифры', 'Remox', MB_ICONWARNING or MB_OK);
       SetStatusStringDelayed('Адрес электронной почты должен состоять из 6 и более символов');
 //      SetStatusStringDelayed('Готов к подключению', 2000);
       Result := False;
@@ -4420,7 +4420,7 @@ begin
 //      eAccountUserName.SetFocus;
 //      eAccountUserName.SelectAll;
 //    end;
-//    MessageBox(Handle, 'Неверно указан адрес электронной почты', 'VIRCESS', MB_ICONWARNING or MB_OK);
+//    MessageBox(Handle, 'Неверно указан адрес электронной почты', 'Remox', MB_ICONWARNING or MB_OK);
     SetStatusStringDelayed('Неверно указан адрес электронной почты');
 //    SetStatusStringDelayed('Готов к подключению', 2000);
     Result := False;
@@ -4613,9 +4613,9 @@ begin
 //    CanClose := True;
 //  end
 //  else
-////  if MessageDlg('Вы действительно хотите закрыть Vircess?'#13#10+
+////  if MessageDlg('Вы действительно хотите закрыть Remox?'#13#10+
 ////    'Имеются подключенные к Вам пользователи.'#13#10 +
-////    'Закрытие Vircess их отключит.',
+////    'Закрытие Remox их отключит.',
 ////    mtWarning, [mbNo, mbYes], 0) = mrYes then
 //  begin
 //    TaskBarRemoveIcon;
@@ -4773,9 +4773,9 @@ begin
       hIcon := Application.Icon.Handle;
     end;
 //    if eUserName.Text = '' then
-    StrCopy(tnid.szTip, 'Vircess');
+    StrCopy(tnid.szTip, 'Remox');
 //    else
-//      StrCopy(tnid.szTip, PChar('Vircess - ' + eUserName.Text));
+//      StrCopy(tnid.szTip, PChar('Remox - ' + eUserName.Text));
     Shell_NotifyIcon(NIM_ADD, @tnid);
 
 //    xOwner:=GetWindow(self.Handle,GW_OWNER);
@@ -4813,9 +4813,9 @@ begin
     else
       tnid.hIcon := iAppIconOffline.Picture.Icon.Handle;
     if eUserName.Text <> '-' then
-      StrCopy(tnid.szTip, PChar('Vircess - ' + eUserName.Text))
+      StrCopy(tnid.szTip, PChar('Remox - ' + eUserName.Text))
     else
-      StrCopy(tnid.szTip, PChar('Vircess'));
+      StrCopy(tnid.szTip, PChar('Remox'));
     Shell_NotifyIcon(NIM_MODIFY, @tnid);
  //   Ic.Destroy;
   //    xOwner:=GetWindow(self.Handle,GW_OWNER);
@@ -4948,7 +4948,7 @@ begin
 
 //  if not PClient.Connected then
 //  begin
-//    SetStatusString('Активация Vircess', True);
+//    SetStatusString('Активация Remox', True);
 //
 ////    LogOut;
 //    PClient.Active := True
@@ -4957,7 +4957,7 @@ begin
 //    PClient.SendPing(Sender);
 //    if not PClient.Connected then
 //    begin
-//      SetStatusString('Активация Vircess', True);
+//      SetStatusString('Активация Remox', True);
 //      PClient.Active := True
 //    end else
 //      tConnect.Enabled := False;
@@ -5575,7 +5575,7 @@ begin
 
       if user = PClient.LoginUserName then
       begin
-//        MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'VIRCESS', MB_ICONWARNING or MB_OK);
+//        MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'Remox', MB_ICONWARNING or MB_OK);
         SetStatusStringDelayed('Подключение к своему компьютеру невозможно');
 //        SetStatusStringDelayed('Готов к подключению', 2000);
         Exit;
@@ -5887,7 +5887,7 @@ end;
 ////  if Sender=nil then
 // //   lblStatus.Caption:=lblStatus.Caption+#13#10+'Making a new Login attempt ...'
 ////  else
-////  lblStatus.Caption:='Активация Vircess', True;
+////  lblStatus.Caption:='Активация Remox', True;
 ////  lblStatus.Update;
 //
 //  ReqCnt1:=0;
@@ -6032,12 +6032,12 @@ begin
 
   if not ConnectedToMainGateway then
   begin
-//    MessageBox(Handle, 'Нет подключения к серверу', 'VIRCESS', MB_ICONWARNING or MB_OK);
+//    MessageBox(Handle, 'Нет подключения к серверу', 'Remox', MB_ICONWARNING or MB_OK);
     SetStatusString('Нет подключения к серверу');
     Exit;
   end;
 
-  ShellExecute(0, 'open', PChar('http://vircess.com/register'), '', nil, SW_SHOW);
+  ShellExecute(0, 'open', PChar('http://remox.com/register'), '', nil, SW_SHOW);
 
 //  if Assigned(fReg) then
 //  begin
@@ -6099,7 +6099,7 @@ procedure TMainForm.lRestorePasswordClick(Sender: TObject);
 begin
   XLog('lRestorePasswordClick');
 
-  ShellExecute(0, 'open', PChar('http://vircess.com/lostpassword'), '', nil, SW_SHOW);
+  ShellExecute(0, 'open', PChar('http://remox.com/lostpassword'), '', nil, SW_SHOW);
 end;
 
 procedure TMainForm.xForceCursorClick(Sender: TObject);
@@ -6221,7 +6221,7 @@ procedure TMainForm.btnShowMyDesktopClick(Sender: TObject);
 //  end;
 //  {$ELSE}
 //  begin
-//  //ShowMessage('This option is not available in Vircess.');
+//  //ShowMessage('This option is not available in Remox.');
   end;
 //  {$ENDIF}
 
@@ -6381,7 +6381,7 @@ begin
 
   if not ConnectedToMainGateway then
   begin
-//    MessageBox(Handle, 'Нет подключения к серверу', 'VIRCESS', MB_ICONWARNING or MB_OK);
+//    MessageBox(Handle, 'Нет подключения к серверу', 'Remox', MB_ICONWARNING or MB_OK);
     SetStatusString('Нет подключения к серверу');
     Exit;
   end;
@@ -6537,7 +6537,7 @@ begin
 
   if user = '' then
   begin
-//    MessageBox(Handle, 'Введите ID компьютера, к которому хотите подключиться', 'VIRCESS', MB_ICONWARNING or MB_OK);
+//    MessageBox(Handle, 'Введите ID компьютера, к которому хотите подключиться', 'Remox', MB_ICONWARNING or MB_OK);
     SetStatusStringDelayed('Введите ID компьютера, к которому хотите подключиться');
 //    SetStatusStringDelayed('Готов к подключению', 2000);
 //    bhMain.ShowHint(ePartnerID);
@@ -6552,7 +6552,7 @@ begin
   end;
   if not IsValidDeviceID(user) then
   begin
-//    MessageBox(Handle, 'ID компьютера может содержать только цифры', 'VIRCESS', MB_ICONWARNING or MB_OK);
+//    MessageBox(Handle, 'ID компьютера может содержать только цифры', 'Remox', MB_ICONWARNING or MB_OK);
     SetStatusStringDelayed('ID компьютера может содержать только цифры');
 //    SetStatusStringDelayed('Готов к подключению', 2000);
 
@@ -6566,14 +6566,14 @@ begin
   end;
   if user = PClient.LoginUserInfo.asText['RealName'] then
   begin
-//    MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'VIRCESS', MB_ICONWARNING or MB_OK);
+//    MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'Remox', MB_ICONWARNING or MB_OK);
     SetStatusStringDelayed('Подключение к своему компьютеру невозможно');
 //    SetStatusStringDelayed('Готов к подключению', 2000);
     Exit;
   end;
 //  if GetDeviceStatus(user) = MSG_STATUS_OFFLINE then
 //  begin
-//    MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'VIRCESS', MB_ICONWARNING or MB_OK);
+//    MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'Remox', MB_ICONWARNING or MB_OK);
 //      SetStatusString('Готов к подключению');
 //    Exit;
 //  end;
@@ -6589,7 +6589,7 @@ begin
         SaveSetup;
       end;
       DateTimeToString(s, 'dd.mm.yyyy hh:nn:ss', DateAllowConnectionPending);
-//      MessageBox(Handle, PWideChar('Превышен лимит попыток. Следующая попытка не ранее ' + s), 'VIRCESS', MB_OK);
+//      MessageBox(Handle, PWideChar('Превышен лимит попыток. Следующая попытка не ранее ' + s), 'Remox', MB_OK);
       SetStatusStringDelayed('Превышен лимит попыток. Следующая попытка не ранее ' + s);
 //      SetStatusStringDelayed('Готов к подключению', 2000);
       Exit;
@@ -6682,7 +6682,7 @@ begin
 
     if asString['Result'] = 'IS_OFFLINE' then
     begin
-//      MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'VIRCESS', MB_ICONWARNING or MB_OK);
+//      MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'Remox', MB_ICONWARNING or MB_OK);
       SetStatusStringDelayed('Партнер не в сети. Подключение невозможно');
 //      SetStatusStringDelayed('Готов к подключению', 2000);
 
@@ -7596,7 +7596,7 @@ begin
 
     xLog('ActivateHost SetStatus 2');
 
-    SetStatusString('Активация Vircess', True);
+    SetStatusString('Активация Remox', True);
 
   //  if cmAccounts.Data = nil then
   //    Exit;
@@ -7858,7 +7858,7 @@ begin
       end
       else
       begin
-        SetStatusString('Сервер Vircess не найден');
+        SetStatusString('Сервер Remox не найден');
         SetStatus(STATUS_ACTIVATING_ON_MAIN_GATE);
         SetConnectedState(False);
       end;
@@ -8980,14 +8980,14 @@ end;}
 //  begin
 //    Reg.OpenKey('Software\Microsoft\Windows\CurrentVersion\Run', False);
 ////      else reg.OpenKey('SOFTWARE\Microsoft\Windows\CurrentVersion\Run',False);
-//    Reg.WriteString('Vircess', AppFileName + ' -SILENT');
+//    Reg.WriteString('Remox', AppFileName + ' -SILENT');
 //    Reg.CloseKey
 //  end
 //  else
 //  begin
 //     Reg.OpenKey('Software\Microsoft\Windows\CurrentVersion\Run', False);
 ////         else Reg.OpenKey('SOFTWARE\Microsoft\Windows\CurrentVersion\Run',False);
-//    Reg.DeleteValue('Vircess');
+//    Reg.DeleteValue('Remox');
 //  end;
 //  Reg.Free
 //end;

@@ -12,13 +12,11 @@ type
   TGroupForm = class(TForm)
     Label6: TLabel;
     eName: TEdit;
-    pBtnClose: TPanel;
-    bClose: TSpeedButton;
-    pBtnOK: TPanel;
-    bOK: TSpeedButton;
     rAddGroup: TRtcResult;
     rChangeGroup: TRtcResult;
     ApplicationEvents1: TApplicationEvents;
+    bOK: TButton;
+    bClose: TButton;
     procedure FormShow(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure bOKClick(Sender: TObject);
@@ -94,7 +92,7 @@ procedure TGroupForm.bOKClick(Sender: TObject);
 begin
   if Trim(eName.Text) = '' then
   begin
-    MessageBox(Handle, 'Не указано название группы', 'VIRCESS', MB_ICONWARNING or MB_OK);
+    MessageBox(Handle, 'Не указано название группы', 'Remox', MB_ICONWARNING or MB_OK);
     eName.SetFocus;
     Exit;
   end;

@@ -14,10 +14,6 @@ type
   TDeviceForm = class(TForm)
     Label6: TLabel;
     eID: TEdit;
-    pBtnClose: TPanel;
-    bClose: TSpeedButton;
-    pBtnOK: TPanel;
-    bOK: TSpeedButton;
     rAddDevice: TRtcResult;
     rChangeDevice: TRtcResult;
     Label1: TLabel;
@@ -29,6 +25,8 @@ type
     Label4: TLabel;
     mDescription: TMemo;
     ApplicationEvents1: TApplicationEvents;
+    bOK: TButton;
+    bClose: TButton;
     procedure bCloseClick(Sender: TObject);
     procedure bOKClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -114,7 +112,7 @@ begin
   eID.Text := StringReplace(eID.Text, ' ', '', [rfReplaceAll]);
   if eID.Text = '' then
   begin
-    MessageBox(Handle, 'Не указано ID компьютера', 'VIRCESS', MB_ICONWARNING or MB_OK);
+    MessageBox(Handle, 'Не указано ID компьютера', 'Remox', MB_ICONWARNING or MB_OK);
     eID.SetFocus;
     Exit;
   end;
@@ -124,7 +122,7 @@ begin
   try
     i := StrToInt(eID.Text);
   except
-    MessageBox(Handle, 'ID компьютера может содержать только цифры', 'VIRCESS', MB_ICONWARNING or MB_OK);
+    MessageBox(Handle, 'ID компьютера может содержать только цифры', 'Remox', MB_ICONWARNING or MB_OK);
     eID.SetFocus;
     Exit;
   end;
@@ -132,20 +130,20 @@ begin
   if DData <> nil then
     if DData.UID <> UID then
     begin
-      MessageBox(Handle, 'Компьютер с указанныс ID уже присутствует в списке', 'VIRCESS', MB_ICONWARNING or MB_OK);
+      MessageBox(Handle, 'Компьютер с указанныс ID уже присутствует в списке', 'Remox', MB_ICONWARNING or MB_OK);
       eID.SetFocus;
       Exit;
     end;
 
   if Trim(eName.Text) = '' then
   begin
-    MessageBox(Handle, 'Не указано имя компьютера', 'VIRCESS', MB_ICONWARNING or MB_OK);
+    MessageBox(Handle, 'Не указано имя компьютера', 'Remox', MB_ICONWARNING or MB_OK);
     eName.SetFocus;
     Exit;
   end;
   if cbGroup.ItemIndex = -1 then
   begin
-    MessageBox(Handle, 'Не указана группа', 'VIRCESS', MB_ICONWARNING or MB_OK);
+    MessageBox(Handle, 'Не указана группа', 'Remox', MB_ICONWARNING or MB_OK);
     cbGroup.SetFocus;
     Exit;
   end;
