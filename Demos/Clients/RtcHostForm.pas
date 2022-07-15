@@ -4121,7 +4121,7 @@ begin
 //  AutoScaleForm(GForm);
   try
     GForm.twDevices := twDevices;
-    GForm.CModule := cmAccounts;
+    GForm.CModule := @cmAccounts;
     GForm.AccountUID := AccountUID;
     GForm.Mode := 'Add';
 
@@ -4174,7 +4174,7 @@ begin
 //    AutoScaleForm(GForm);
     try
       GForm.twDevices := twDevices;
-      GForm.CModule := cmAccounts;
+      GForm.CModule := @cmAccounts;
       GForm.AccountUID := AccountUID;
       GForm.UID := DData.UID;
       GForm.eName.Text := DData.Name;

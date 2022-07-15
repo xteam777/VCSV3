@@ -9,7 +9,7 @@ interface
 {$INCLUDE rtcPortalDefs.inc}
 
 uses
-  Windows, Messages, Classes, SysUtils, Graphics, Controls, Forms, CommonData, BlackLayered,
+  Windows, Messages, Classes, SysUtils, Graphics, Controls, Forms, CommonData, BlackLayered, rtcBlankOutForm,
 {$IFNDEF IDE_1}
   Variants,
 {$ENDIF}
@@ -5067,6 +5067,7 @@ begin
 //    SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 0, 0);
 //    SendMessage(MainFormHandle, WM_DRAG_FULL_WINDOWS_MESSAGE, 0, 0);
 //    SetBlankMonitor(True);
+      BlankOutScreen(True);
     end;
 
 
@@ -5098,6 +5099,7 @@ begin
 //    SetBlankMonitor(False);
 //    SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 1, 0);
 //    SendMessage(MainFormHandle, WM_DRAG_FULL_WINDOWS_MESSAGE, 1, 0);
+      RestoreScreen;
     end;
 
 

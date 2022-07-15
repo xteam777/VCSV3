@@ -144,6 +144,8 @@ object DeviceForm: TDeviceForm
     Top = 97
     Width = 230
     Height = 22
+    BevelInner = bvNone
+    BevelOuter = bvNone
     Style = csOwnerDrawFixed
     Ctl3D = True
     DoubleBuffered = False
@@ -205,17 +207,19 @@ object DeviceForm: TDeviceForm
   end
   object rAddDevice: TRtcResult
     OnReturn = rAddDeviceReturn
-    Left = 6
-    Top = 280
+    RequestAborted = rAddDeviceRequestAborted
+    Left = 154
+    Top = 216
   end
   object rChangeDevice: TRtcResult
     OnReturn = rChangeDeviceReturn
-    Left = 33
-    Top = 280
+    RequestAborted = rChangeDeviceRequestAborted
+    Left = 217
+    Top = 220
   end
   object ApplicationEvents1: TApplicationEvents
     OnMessage = ApplicationEvents1Message
-    Left = 32
-    Top = 252
+    Left = 74
+    Top = 214
   end
 end

@@ -37,6 +37,10 @@ type
     procedure eIDKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormDestroy(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure rAddDeviceRequestAborted(Sender: TRtcConnection; Data,
+      Result: TRtcValue);
+    procedure rChangeDeviceRequestAborted(Sender: TRtcConnection; Data,
+      Result: TRtcValue);
   private
     { Private declarations }
     FOnCustomFormClose: TOnCustomFormEvent;
@@ -148,6 +152,8 @@ begin
     Exit;
   end;
 
+  bOK.Enabled := False;
+
   GroupUID := TDeviceGroup(cbGroup.Items.Objects[cbGroup.ItemIndex]).UID;
 
   if Mode = 'Add' then
@@ -179,10 +185,14 @@ begin
     end;
     CModule^.Call(rChangeDevice);
   end;
-  CModule^.WaitForCompletion(True, 1000, True);
+//  CModule^.WaitForCompletion(True, 1000, True);
 
-  ModalResult := mrOk;
-  Close;
+//  if (CModule^.LastResult.isType = rtc_String)
+//    and (CModule^.LastResult.asString = 'OK') then
+//  begin
+//    ModalResult := mrOk;
+//    Close;
+//  end;
 end;
 
 procedure TDeviceForm.eIDKeyDown(Sender: TObject; var Key: Word;
@@ -247,20 +257,42 @@ begin
   eID.SetFocus;
 end;
 
+procedure TDeviceForm.rAddDeviceRequestAborted(Sender: TRtcConnection; Data,
+  Result: TRtcValue);
+begin
+  bOK.Enabled := True;
+end;
+
 procedure TDeviceForm.rAddDeviceReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 begin
-  UID := Result.asString;
+  bOK.Enabled := True;
 
-  ModalResult := mrOk;
-  Close;
+  if (Result.isType = rtc_String) then
+  begin
+    UID := Result.asString;
+    ModalResult := mrOk;
+    Close;
+  end;
+end;
+
+procedure TDeviceForm.rChangeDeviceRequestAborted(Sender: TRtcConnection; Data,
+  Result: TRtcValue);
+begin
+  bOK.Enabled := True;
 end;
 
 procedure TDeviceForm.rChangeDeviceReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 begin
-  ModalResult := mrOk;
-  Close;
+  bOK.Enabled := True;
+
+  if (Result.isType = rtc_String)
+    and (Result.asString = 'OK') then
+  begin
+    ModalResult := mrOk;
+    Close;
+  end;
 end;
 
 

@@ -80,13 +80,15 @@ object GroupForm: TGroupForm
   end
   object rAddGroup: TRtcResult
     OnReturn = rAddGroupReturn
-    Left = 8
-    Top = 46
+    RequestAborted = rAddGroupRequestAborted
+    Left = 142
+    Top = 18
   end
   object rChangeGroup: TRtcResult
     OnReturn = rChangeGroupReturn
-    Left = 35
-    Top = 46
+    RequestAborted = rChangeGroupRequestAborted
+    Left = 205
+    Top = 8
   end
   object ApplicationEvents1: TApplicationEvents
     OnMessage = ApplicationEvents1Message
