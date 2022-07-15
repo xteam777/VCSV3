@@ -358,25 +358,25 @@ begin
 
     if CurProxyOption = 'Automatic' then
     begin
-      PClient^.Gate_WinHttp := True;
+      PClient^.Gate_WinHttp := False;
       PClient^.Gate_Proxy := False;
       PClient^.Gate_ProxyAddr := '';
       PClient^.Gate_ProxyUserName := '';
       PClient^.Gate_ProxyPassword := '';
 
-      HTTPClient^.UseWinHTTP := True;
+      HTTPClient^.UseWinHTTP := False;
       HTTPClient^.UseProxy := False;
       HTTPClient^.UserLogin.ProxyAddr := '';
       HTTPClient^.UserLogin.ProxyUserName := '';
       HTTPClient^.UserLogin.ProxyPassword := '';
 
-      TimerClient^.UseWinHTTP := True;
+      TimerClient^.UseWinHTTP := False;
       TimerClient^.UseProxy := False;
       TimerClient^.UserLogin.ProxyAddr := '';
       TimerClient^.UserLogin.ProxyUserName := '';
       TimerClient^.UserLogin.ProxyPassword := '';
 
-      TimerClient2^.UseWinHTTP := True;
+      TimerClient2^.UseWinHTTP := False;
       TimerClient2^.UseProxy := False;
       TimerClient2^.UserLogin.ProxyAddr := '';
       TimerClient2^.UserLogin.ProxyUserName := '';
