@@ -161,6 +161,10 @@
         <DCCReference Include="..\Modules\rdFileTransLog.pas">
             <Form>rdFileTransferLog</Form>
         </DCCReference>
+        <DCCReference Include="..\Modules\rtcBlankOutForm.pas">
+            <Form>fmBlankoutForm</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <RcItem Include="rmx_w32.exe">
             <ContainerId>ResourceItem</ContainerId>
             <ResourceType>RCDATA</ResourceType>
