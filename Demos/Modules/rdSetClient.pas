@@ -70,6 +70,7 @@ type
   public
     { Public declarations }
     ProxyOption, CurProxyOption: String;
+    CurProxyType: Integer;
     PClient: PRtcHTTPPortalClient;
     HTTPClient, TimerClient, TimerClient2: PRtcHTTPClient;
     NetParamsChanged: Boolean;
@@ -122,6 +123,12 @@ begin
     rbAutomatic.Checked := False;
     rbManual.Checked := True;
   end;
+
+  if Pos('socks=', PClient.Gate_ProxyAddr) = 0 then
+    cbProxyType.ItemIndex := 0
+  else
+    cbProxyType.ItemIndex := 1;
+  CurProxyType := cbProxyType.ItemIndex;
 
 //  eAddress.Text := String(HTTPClient^.ServerAddr);
 //  ePort.Text:=String(PClient.GatePort);
@@ -185,6 +192,7 @@ begin
   Result := //(HTTPClient^.ServerAddr <> Trim(eAddress.Text))
     //or
     (CurProxyOption <> ProxyOption)
+    or (CurProxyType <> cbProxyType.ItemIndex)
     or (PClient^.Gate_ProxyAddr <> s)
     or (PClient^.Gate_ProxyUserName <> Trim(eProxyUsername.Text))
     or (PClient^.Gate_ProxyPassword <> Trim(eProxyPassword.Text));
@@ -387,25 +395,41 @@ begin
     begin
       PClient^.Gate_WinHttp := False;
       PClient^.Gate_Proxy := True;
-      PClient^.Gate_ProxyAddr := Trim(eProxyAddr.Text) + ':' + Trim(eProxyPort.Text);
+      if cbProxyType.ItemIndex = 0 then
+        PClient^.Gate_ProxyAddr := Trim(eProxyAddr.Text) + ':' + Trim(eProxyPort.Text)
+      else
+      if cbProxyType.ItemIndex = 1 then
+        PClient^.Gate_ProxyAddr := 'socks=' + Trim(eProxyAddr.Text) + ':' + Trim(eProxyPort.Text);
       PClient^.Gate_ProxyUserName := Trim(eProxyUsername.Text);
       PClient^.Gate_ProxyPassword := Trim(eProxyPassword.Text);
 
       HTTPClient^.UseWinHTTP := False;
       HTTPClient^.UseProxy := True;
-      HTTPClient^.UserLogin.ProxyAddr := Trim(eProxyAddr.Text);
+      if cbProxyType.ItemIndex = 0 then
+        HTTPClient^.UserLogin.ProxyAddr := Trim(eProxyAddr.Text) + ':' + Trim(eProxyPort.Text)
+      else
+      if cbProxyType.ItemIndex = 1 then
+        HTTPClient^.UserLogin.ProxyAddr := 'socks=' + Trim(eProxyAddr.Text) + ':' + Trim(eProxyPort.Text);
       HTTPClient^.UserLogin.ProxyUserName := Trim(eProxyUsername.Text);
       HTTPClient^.UserLogin.ProxyPassword := Trim(eProxyPassword.Text);
 
       TimerClient^.UseWinHTTP := False;
       TimerClient^.UseProxy := True;
-      TimerClient^.UserLogin.ProxyAddr := Trim(eProxyAddr.Text);
+      if cbProxyType.ItemIndex = 0 then
+        TimerClient^.UserLogin.ProxyAddr := Trim(eProxyAddr.Text) + ':' + Trim(eProxyPort.Text)
+      else
+      if cbProxyType.ItemIndex = 1 then
+        TimerClient^.UserLogin.ProxyAddr := 'socks=' + Trim(eProxyAddr.Text) + ':' + Trim(eProxyPort.Text);
       TimerClient^.UserLogin.ProxyUserName := Trim(eProxyUsername.Text);
       TimerClient^.UserLogin.ProxyPassword := Trim(eProxyPassword.Text);
 
       TimerClient2^.UseWinHTTP := False;
       TimerClient2^.UseProxy := True;
-      TimerClient2^.UserLogin.ProxyAddr := Trim(eProxyAddr.Text);
+      if cbProxyType.ItemIndex = 0 then
+        TimerClient2^.UserLogin.ProxyAddr := Trim(eProxyAddr.Text) + ':' + Trim(eProxyPort.Text)
+      else
+      if cbProxyType.ItemIndex = 1 then
+        TimerClient2^.UserLogin.ProxyAddr := 'socks=' + Trim(eProxyAddr.Text) + ':' + Trim(eProxyPort.Text);
       TimerClient2^.UserLogin.ProxyUserName := Trim(eProxyUsername.Text);
       TimerClient2^.UserLogin.ProxyPassword := Trim(eProxyPassword.Text);
     end

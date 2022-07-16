@@ -8900,6 +8900,7 @@ begin
     sett.ePasswordConfirm.Text := RegularPassword;
     sett.cbStoreHistory.Checked := StoreHistory;
     sett.cbStorePasswords.Checked := StorePasswords;
+
   //    sett.cbOnlyAdminChanges.Checked := OnlyAdminChanges;
     for i := 0 to sett.tcSettings.PageCount - 1 do
       if sett.tcSettings.Pages[i].Name = APage then

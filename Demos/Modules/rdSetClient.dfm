@@ -38,7 +38,6 @@ object rdClientSettings: TrdClientSettings
     TabOrder = 0
     object tsNetwork: TTabSheet
       Caption = #1054#1089#1085#1086#1074#1085#1086#1077
-      ExplicitHeight = 206
       object gProxy: TGroupBox
         Left = 3
         Top = 26
@@ -49,7 +48,7 @@ object rdClientSettings: TrdClientSettings
         object Label1: TLabel
           Left = 10
           Top = 116
-          Width = 110
+          Width = 38
           Height = 16
           Caption = #1040#1076#1088#1077#1089
         end
@@ -63,7 +62,7 @@ object rdClientSettings: TrdClientSettings
         object Label5: TLabel
           Left = 9
           Top = 169
-          Width = 111
+          Width = 44
           Height = 16
           Caption = #1055#1072#1088#1086#1083#1100
         end
@@ -78,7 +77,7 @@ object rdClientSettings: TrdClientSettings
         object Label3: TLabel
           Left = 10
           Top = 89
-          Width = 111
+          Width = 65
           Height = 16
           Caption = #1058#1080#1087' '#1087#1088#1086#1082#1089#1080
         end
@@ -184,7 +183,6 @@ object rdClientSettings: TrdClientSettings
     object tsSequrity: TTabSheet
       Caption = #1041#1077#1079#1086#1087#1072#1089#1085#1086#1089#1090#1100
       ImageIndex = 1
-      ExplicitHeight = 206
       object cbOnlyAdminChanges: TCheckBox
         Left = 7
         Top = 147
