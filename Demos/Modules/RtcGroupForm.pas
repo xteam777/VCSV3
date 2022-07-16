@@ -107,22 +107,34 @@ begin
 
   if Mode = 'Add' then
   begin
-    with CModule^.Data.NewFunction('Account.AddGroup') do
-    begin
-      asWideString['Name'] := eName.Text;
-      asString['AccountUID'] := AccountUID;
+    with CModule^ do
+    try
+      with CModule^.Data.NewFunction('Account.AddGroup') do
+      begin
+        asWideString['Name'] := eName.Text;
+        asString['AccountUID'] := AccountUID;
+      end;
+      Call(rAddGroup);
+    except
+      on E: Exception do
+        Data.Clear;
     end;
-    CModule^.Call(rAddGroup);
   end
   else
   begin
-    with CModule^.Data.NewFunction('Account.ChangeGroup') do
-    begin
-      asWideString['Name'] := eName.Text;
-      asString['UID'] := UID;
-      asString['AccountUID'] := AccountUID;
-    end;
-    CModule^.Call(rChangeGroup);
+    with CModule^ do
+    try
+      with CModule^.Data.NewFunction('Account.ChangeGroup') do
+      begin
+        asWideString['Name'] := eName.Text;
+        asString['UID'] := UID;
+        asString['AccountUID'] := AccountUID;
+      end;
+      Call(rChangeGroup);
+      except
+        on E: Exception do
+          Data.Clear;
+      end;
   end;
 //  CModule^.WaitForCompletion(True, 1000, True);
 

@@ -158,32 +158,44 @@ begin
 
   if Mode = 'Add' then
   begin
-    with CModule^.Data.NewFunction('Account.AddDevice') do
-    begin
-      asString['User'] := user;
-      asWideString['Name'] := eName.Text;
-//      asString['UID'] := UID;
-      asString['AccountUID'] := AccountUID;
-      asString['GroupUID'] := GroupUID;
-      asInteger['DeviceID'] := StrToInt(eID.Text);
-      asWideString['Password'] := ePassword.Text;
-      asWideString['Description'] := mDescription.Lines.GetText;
+    with CModule^ do
+    try
+      with CModule^.Data.NewFunction('Account.AddDevice') do
+      begin
+        asString['User'] := user;
+        asWideString['Name'] := eName.Text;
+  //      asString['UID'] := UID;
+        asString['AccountUID'] := AccountUID;
+        asString['GroupUID'] := GroupUID;
+        asInteger['DeviceID'] := StrToInt(eID.Text);
+        asWideString['Password'] := ePassword.Text;
+        asWideString['Description'] := mDescription.Lines.GetText;
+      end;
+      Call(rAddDevice);
+    except
+      on E: Exception do
+        Data.Clear;
     end;
-    CModule^.Call(rAddDevice);
   end
   else
   begin
-    with CModule^.Data.NewFunction('Account.ChangeDevice') do
-    begin
-      asWideString['Name'] := eName.Text;
-      asString['UID'] := UID;
-      asString['AccountUID'] := AccountUID;
-      asString['GroupUID'] := GroupUID;
-      asInteger['DeviceID'] := StrToInt(eID.Text);
-      asWideString['Password'] := ePassword.Text;
-      asWideString['Description'] := mDescription.Lines.GetText;
+    with CModule^ do
+    try
+      with CModule^.Data.NewFunction('Account.ChangeDevice') do
+      begin
+        asWideString['Name'] := eName.Text;
+        asString['UID'] := UID;
+        asString['AccountUID'] := AccountUID;
+        asString['GroupUID'] := GroupUID;
+        asInteger['DeviceID'] := StrToInt(eID.Text);
+        asWideString['Password'] := ePassword.Text;
+        asWideString['Description'] := mDescription.Lines.GetText;
+      end;
+      Call(rChangeDevice);
+    except
+      on E: Exception do
+        Data.Clear;
     end;
-    CModule^.Call(rChangeDevice);
   end;
 //  CModule^.WaitForCompletion(True, 1000, True);
 

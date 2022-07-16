@@ -465,6 +465,8 @@ type
       Rect: TRect; State: TOwnerDrawState);
     procedure TimerClientConnectError(Sender: TRtcConnection; E: Exception);
     procedure Button3Click(Sender: TObject);
+    procedure resLoginRequestAborted(Sender: TRtcConnection; Data,
+      Result: TRtcValue);
 
   protected
 
@@ -4436,6 +4438,8 @@ var
 begin
   xLog('DoAccountLogin');
 
+  btnAccountLogin.Enabled := False;
+
   StartAccountLogin;
 
   with cmAccounts do
@@ -7964,6 +7968,12 @@ begin
   end;
 end;
 
+procedure TMainForm.resLoginRequestAborted(Sender: TRtcConnection; Data,
+  Result: TRtcValue);
+begin
+  btnAccountLogin.Enabled := True;
+end;
+
 procedure TMainForm.resLoginReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 var
@@ -8111,6 +8121,8 @@ begin
 
 //    HostPingTimer.Enabled := True;
   end;
+
+  btnAccountLogin.Enabled := True;
 end;
 
 procedure TMainForm.resLogoutReturn(Sender: TRtcConnection; Data,
