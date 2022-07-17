@@ -91,6 +91,8 @@ type
     property Locked: integer read FLocked write FLocked;
 
     //FileTrans+
+    procedure Call_Init(Sender: TObject); virtual; abstract;
+
     procedure Call_ReadStart(Sender: TObject; const fname, fromfolder: String;
       size: int64); virtual; abstract;
     procedure Call_Read(Sender: TObject; const fname, fromfolder: String;
