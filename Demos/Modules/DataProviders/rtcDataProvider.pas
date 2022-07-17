@@ -20,7 +20,7 @@ uses
   rtcConn, rtcDataSrv, uVircessTypes,
 
   rtcAccounts, Data.DB, Data.Win.ADODB, Variants, Vcl.ExtCtrls, Vcl.StdCtrls,
-  rtcSystem, rtcLog, SyncObjs, rtcDataCli, rtcCliModule;
+  rtcSystem, rtcLog, SyncObjs, rtcDataCli, rtcCliModule, rtcHttpCli;
 
 type
   TStartForceUserLogoutThread = procedure(AUserName: String) of Object;
@@ -73,7 +73,7 @@ type
     Module3: TRtcServerModule;
     Module4: TRtcServerModule;
     ServerLink4: TRtcDataServerLink;
-    GateServer: TRtcFunctionGroup;
+    GateServerGroup: TRtcFunctionGroup;
     GateServerModule: TRtcServerModule;
     GateClientModule: TRtcClientModule;
     GateServerLink: TRtcDataServerLink;
@@ -82,6 +82,7 @@ type
     GateLogout: TRtcFunction;
     rGateRelogin: TRtcResult;
     rGateLogOut: TRtcResult;
+    ClientDestroy: TRtcFunction;
     procedure DataModuleCreate(Sender: TObject);
     procedure DataModuleDestroy(Sender: TObject);
     procedure Module1SessionClose(Sender: TRtcConnection);

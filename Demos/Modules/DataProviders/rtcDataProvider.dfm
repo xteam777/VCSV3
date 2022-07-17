@@ -2,8 +2,8 @@ object Data_Provider: TData_Provider
   OldCreateOrder = False
   OnCreate = DataModuleCreate
   OnDestroy = DataModuleDestroy
-  Height = 447
-  Width = 617
+  Height = 441
+  Width = 1017
   object Module1: TRtcServerModule
     Link = ServerLink1
     Compression = cMax
@@ -262,9 +262,9 @@ object Data_Provider: TData_Provider
     Left = 150
     Top = 79
   end
-  object GateServer: TRtcFunctionGroup
-    Left = 509
-    Top = 26
+  object GateServerGroup: TRtcFunctionGroup
+    Left = 507
+    Top = 58
   end
   object GateServerModule: TRtcServerModule
     Link = GateServerLink
@@ -273,7 +273,7 @@ object Data_Provider: TData_Provider
     ForceEncryption = True
     AutoSessions = True
     ModuleFileName = '/gategroup'
-    FunctionGroup = GateServer
+    FunctionGroup = GateServerGroup
     Left = 445
     Top = 20
   end
@@ -299,14 +299,14 @@ object Data_Provider: TData_Provider
     Top = 84
   end
   object GateRelogin: TRtcFunction
-    Group = GateServer
+    Group = GateServerGroup
     FunctionName = 'Gateway.Relogin'
     OnExecute = GateReloginExecute
     Left = 328
     Top = 331
   end
   object GateLogout: TRtcFunction
-    Group = GateServer
+    Group = GateServerGroup
     FunctionName = 'Gateway.Logout'
     OnExecute = GateLogoutExecute
     Left = 412
@@ -321,5 +321,11 @@ object Data_Provider: TData_Provider
   object rGateLogOut: TRtcResult
     Left = 412
     Top = 390
+  end
+  object ClientDestroy: TRtcFunction
+    Group = GatewayFunctions
+    FunctionName = 'ClientDestroy'
+    Left = 206
+    Top = 381
   end
 end
