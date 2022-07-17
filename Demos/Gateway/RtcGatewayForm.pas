@@ -168,7 +168,7 @@ type
 
     procedure On_Error(const s:string);
 
-    procedure StartForceUserLogoutThreadInAllGateways(AUserName: String);
+    procedure StartForceUserLogoutThreadInAllGateways(AUserName: String; AAllConnectionsById: Boolean);
   end;
 
 var
@@ -355,12 +355,12 @@ begin
 //  eLog.Update;
 end;}
 
-procedure TMainForm.StartForceUserLogoutThreadInAllGateways(AUserName: String);
+procedure TMainForm.StartForceUserLogoutThreadInAllGateways(AUserName: String; AAllConnectionsById: Boolean);
 begin
-  Gateway1.StartForceUserLogoutThread(AUserName);
-  Gateway2.StartForceUserLogoutThread(AUserName);
-  Gateway3.StartForceUserLogoutThread(AUserName);
-  Gateway4.StartForceUserLogoutThread(AUserName);
+  Gateway1.StartForceUserLogoutThread(AUserName, AAllConnectionsById);
+  Gateway2.StartForceUserLogoutThread(AUserName, AAllConnectionsById);
+  Gateway3.StartForceUserLogoutThread(AUserName, AAllConnectionsById);
+  Gateway4.StartForceUserLogoutThread(AUserName, AAllConnectionsById);
 end;
 
 procedure TMainForm.btnLoginClick(Sender: TObject);
@@ -652,7 +652,7 @@ procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 procedure TMainForm.bLogoffUserClick(Sender: TObject);
 begin
 //  Gateway.ForceUserLogOut(eLogoff.Text);
-  StartForceUserLogoutThreadInAllGateways(eLogoff.Text);
+  StartForceUserLogoutThreadInAllGateways(eLogoff.Text, False);
 end;
 
 procedure TMainForm.btnCloseClick(Sender: TObject);
