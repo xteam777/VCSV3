@@ -995,6 +995,8 @@ begin
   rtcModule.Client := rtcClient;
   rtcModule.AutoRepost := 2;
   rtcModule.AutoSyncEvents := True;
+  rtcModule.ModuleFileName := '/portalgategroup';
+  rtcModule.SecureKey := '2240897';
 
   rtrRes := TRtcResult.Create(nil);
 
