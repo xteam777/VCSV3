@@ -4471,6 +4471,15 @@ object MainForm: TMainForm
         Text = '-'
         OnDblClick = eConsoleIDDblClick
       end
+      object Button4: TButton
+        Left = 140
+        Top = 66
+        Width = 75
+        Height = 25
+        Caption = 'Button4'
+        TabOrder = 3
+        OnClick = Button4Click
+      end
     end
     object pRight: TPanel
       Left = 278
