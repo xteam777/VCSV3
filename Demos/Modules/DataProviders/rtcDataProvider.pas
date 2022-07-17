@@ -157,8 +157,8 @@ type
 
     Users: TVircessUsers;
 //    LogMemo: TMemo;
-    tCDHThread, tCDGThread: TCheckDisconnectedThread;
-    tGRThread: TGatewayReloginThread;
+    tCDHostsThread, tCDGatewaysThread: TCheckDisconnectedThread;
+    tGWReloginThread: TGatewayReloginThread;
 
     FStartForceUserLogoutThread: TStartForceUserLogoutThread;
 
@@ -1174,21 +1174,21 @@ end;
 
 procedure TData_Provider.DataModuleCreate(Sender: TObject);
 begin
-  tGRThread := nil;
+  tGWReloginThread := nil;
 
   Data_Provider := self;
   Users := TVircessUsers.Create;
   Users.GetFriendList_Func := GetFriendList;
 
-  tCDHThread := TCheckDisconnectedThread.Create(True);
-  tCDHThread.FDoWork := Users.CheckDisconnectedHosts;
-  tCDHThread.FreeOnTerminate := True;
-  tCDHThread.Resume;
+  tCDHostsThread := TCheckDisconnectedThread.Create(True);
+  tCDHostsThread.FDoWork := Users.CheckDisconnectedHosts;
+  tCDHostsThread.FreeOnTerminate := True;
+  tCDHostsThread.Resume;
 
-  tCDGThread := TCheckDisconnectedThread.Create(True);
-  tCDGThread.FDoWork := Users.CheckDisconnectedGateways;
-  tCDGThread.FreeOnTerminate := True;
-  tCDGThread.Resume;
+  tCDGatewaysThread := TCheckDisconnectedThread.Create(True);
+  tCDGatewaysThread.FDoWork := Users.CheckDisconnectedGateways;
+  tCDGatewaysThread.FreeOnTerminate := True;
+  tCDGatewaysThread.Resume;
 end;
 
 procedure TData_Provider.SendGatewayRelogin;
@@ -1224,26 +1224,26 @@ end;
 
 procedure TData_Provider.GatewayReloginStart;
 begin
-  tGRThread := TGatewayReloginThread.Create(True);
-  tGRThread.FDoSendGatewayRelogin := SendGatewayRelogin;
-  tGRThread.FDoSendGatewayLogOut := SendGatewayLogOut;
-  tGRThread.FreeOnTerminate := True;
-  tGRThread.Resume;
+  tGWReloginThread := TGatewayReloginThread.Create(True);
+  tGWReloginThread.FDoSendGatewayRelogin := SendGatewayRelogin;
+  tGWReloginThread.FDoSendGatewayLogOut := SendGatewayLogOut;
+  tGWReloginThread.FreeOnTerminate := True;
+  tGWReloginThread.Resume;
 end;
 
 procedure TData_Provider.GatewayLogOutStart;
 begin
-  if Assigned(tGRThread) then
+  if Assigned(tGWReloginThread) then
   begin
-    tGRThread.Terminate;
-    tGRThread := nil;
+    tGWReloginThread.Terminate;
+    tGWReloginThread := nil;
   end;
 end;
 
 procedure TData_Provider.DataModuleDestroy(Sender: TObject);
 begin
-  tCDHThread.Terminate;
-  tCDGThread.Terminate;
+  tCDHostsThread.Terminate;
+  tCDGatewaysThread.Terminate;
 
   SQLConnection.Close;
   SQLConnection.Free;
