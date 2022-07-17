@@ -1201,7 +1201,7 @@ end;
 
 procedure TData_Provider.SendGatewayRelogin;
 begin
-  with GateClientModule do
+  with MainGateClientModule do
   try
     with Data.NewFunction('Gateway.Relogin') do
     begin
@@ -1217,7 +1217,7 @@ end;
 
 procedure TData_Provider.SendGatewayLogOut;
 begin
-  with GateClientModule do
+  with MainGateClientModule do
   try
     with Data.NewFunction('Gateway.LogOut') do
     begin

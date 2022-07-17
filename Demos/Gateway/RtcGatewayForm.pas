@@ -570,7 +570,8 @@ procedure TMainForm.btnLogoutClick(Sender: TObject);
     hsMain3.StopListen;
     hsMain4.StopListen;
 
-    GateServer.StopListenNow;
+    MainGateServer.StopListenNow;
+    PortalGateServer.StopListenNow;
 
    if GetDataProvider.SQLConnection.Connected then
       GetDataProvider.SQLConnection.Close;

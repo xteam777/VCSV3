@@ -784,7 +784,7 @@ object MainForm: TMainForm
     TimeoutsOfAPI.SendTimeout = 10
     TimeoutsOfAPI.ReceiveTimeout = 10
     TimeoutsOfAPI.ResponseTimeout = 10
-    Left = 332
-    Top = 243
+    Left = 364
+    Top = 245
   end
 end
