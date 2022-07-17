@@ -7860,7 +7860,6 @@ begin
     UpdateFiles.Clear;
     PrepareFiles.Clear;
     WantToSendFiles.Clear;
-    AmHost.Clear;
 
     File_Senders := 0;
     File_Sending := False;
