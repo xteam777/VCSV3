@@ -1430,9 +1430,12 @@ begin
   try
     for i := 0 to GatewaysList.Count - 1 do
     begin
-      GatewaysList.isNull[GatewaysList.FieldName[i]] := True;
-      GatewaysInfo.Child[GatewaysList.FieldName[i]].SetNil('Users');
-      GatewaysInfo.SetNil(GatewaysList.FieldName[i]);
+      if GatewaysInfo.Child[GatewaysList.FieldName[i]] <> nil then
+      begin
+        GatewaysList.isNull[GatewaysList.FieldName[i]] := True;
+        GatewaysInfo.Child[GatewaysList.FieldName[i]].SetNil('users');
+        GatewaysInfo.SetNil(GatewaysList.FieldName[i]);
+      end;
     end;
     GatewaysList.Clear;
     GatewaysInfo.Clear;
@@ -1461,14 +1464,14 @@ begin
       if GatewaysInfo.Child[GatewaysList.FieldName[i]] = nil then
         Continue;
 
-      for j := 0 to GatewaysInfo.Child[GatewaysList.FieldName[i]].asRecord['Users'].Count - 1 do
-        if GatewaysInfo.Child[GatewaysList.FieldName[i]].asRecord['Users'].is_Type[GatewaysInfo.Child[GatewaysList.FieldName[i]].asRecord['Users'].FieldName[j]] <> rtc_Null then
+      for j := 0 to GatewaysInfo.Child[GatewaysList.FieldName[i]].asRecord['users'].Count - 1 do
+        if GatewaysInfo.Child[GatewaysList.FieldName[i]].asRecord['users'].is_Type[GatewaysInfo.Child[GatewaysList.FieldName[i]].asRecord['users'].FieldName[j]] <> rtc_Null then
           UserCount := UserCount + 1;
 
-      if (((GatewaysInfo.Child[GatewaysList.FieldName[i]].asInteger['MaxUsers'] - UserCount) > MaxFreeUsers) or (Result = '')) then
+      if (((GatewaysInfo.Child[GatewaysList.FieldName[i]].asInteger['maxUsers'] - UserCount) > MaxFreeUsers) or (Result = '')) then
       begin
         Result := GatewaysList.FieldName[i];
-        MaxFreeUsers := GatewaysInfo.Child[GatewaysList.FieldName[i]].asInteger['MaxUsers'] - UserCount;
+        MaxFreeUsers := GatewaysInfo.Child[GatewaysList.FieldName[i]].asInteger['maxUsers'] - UserCount;
       end;
     end;
   finally
@@ -1487,7 +1490,7 @@ begin
         Continue;
 
       if GatewaysList[GatewaysList.FieldName[i]].Address = gateway then
-        GatewaysList[GatewaysList.FieldName[i]].Users[uname] := uname;
+        GatewaysList[GatewaysList.FieldName[i]].asRecord['users'].asString[uname] := uname;
   finally
     gatewayCS.Release;
   end;
@@ -1503,7 +1506,7 @@ begin
       if GatewaysList.isType[GatewaysList.FieldName[i]] <> rtc_Null then
         Continue;
       if GatewaysList[GatewaysList.FieldName[i]].Address = gateway then
-        GatewaysList[GatewaysList.FieldName[i]].Users.is_Null[uname] := True;
+        GatewaysList[GatewaysList.FieldName[i]].asRecord['users'].is_Null[uname] := True;
   finally
     gatewayCS.Release;
   end;
@@ -1521,8 +1524,8 @@ begin
         GatewaysList.NewRecord(address);
 
       GatewaysInfo.NewChild(address);
-      GatewaysInfo.Child[address].asInteger['MaxUsers'] := MaxUsers;
-      GatewaysInfo.Child[address].NewRecord('Users').AutoCreate := True;
+      GatewaysInfo.Child[address].asInteger['maxUsers'] := MaxUsers;
+      GatewaysInfo.Child[address].NewRecord('users').AutoCreate := True;
 
       FGatewaysCount := FGatewaysCount + 1;
     end;
@@ -1549,7 +1552,7 @@ begin
       if GatewaysList.isType[address] <> rtc_Null then
         GatewaysList.isNull[address] := True;
 
-      GatewaysInfo.Child[address].SetNil('Users');
+      GatewaysInfo.Child[address].SetNil('users');
       GatewaysInfo.SetNil(address);
       FGatewaysCount := FGatewaysCount - 1;
     end;
