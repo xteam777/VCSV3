@@ -402,15 +402,9 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
     GetDataProvider.ServerLink3.Server := hsMain3;
     GetDataProvider.ServerLink4.Server := hsMain4;
     GetDataProvider.MainGateServerLink.Server := MainGateServer;
-    GetDataProvider.PortalGateServerLink.Server := PortalGateServer;
   //  GetDataProvider.LogMemo := LogMemo;
   //  GetDataProvider.OnUserLogin := OnBillingUserLogin;
   //  GetDataProvider.OnUserLogOut := OnBillingUserLogOut;
-
-    GetDataProvider.Gateway1 := Gateway1;
-    GetDataProvider.Gateway2 := Gateway2;
-    GetDataProvider.Gateway3 := Gateway3;
-    GetDataProvider.Gateway4 := Gateway4;
 
     hsMain1.StopListenNow;
     hsMain2.StopListenNow;
@@ -454,6 +448,13 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
   begin
     GetDataProvider.GatewayLogOutStart;
 
+    GetDataProvider.Gateway1 := Gateway1;
+    GetDataProvider.Gateway2 := Gateway2;
+    GetDataProvider.Gateway3 := Gateway3;
+    GetDataProvider.Gateway4 := Gateway4;
+
+    GetDataProvider.PortalGateServerLink.Server := PortalGateServer;
+
     HttpServer1.StopListenNow;
     HttpServer2.StopListenNow;
     HttpServer3.StopListenNow;
@@ -482,7 +483,7 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
       HttpServer2.ServerAddr := '';
       HttpServer3.ServerAddr := '';
       HttpServer4.ServerAddr := '';
-      MainGateClient.ServerAddr := RtcString(Trim(eMainGate.Text));
+      MainGateClient.ServerAddr := '';
 
       PortalGateServer.ServerAddr := '';
     end;

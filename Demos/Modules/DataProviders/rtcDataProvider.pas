@@ -139,10 +139,6 @@ type
       Result: TRtcValue);
     procedure GateLogoutExecute(Sender: TRtcConnection; Param: TRtcFunctionInfo;
       Result: TRtcValue);
-    procedure rGateReloginRequestAborted(Sender: TRtcConnection; Data,
-      Result: TRtcValue);
-    procedure rGateReloginReturn(Sender: TRtcConnection; Data,
-      Result: TRtcValue);
     procedure ClientDestroyExecute(Sender: TRtcConnection;
       Param: TRtcFunctionInfo; Result: TRtcValue);
   private
@@ -1281,18 +1277,6 @@ begin
 //        if (Session['$MSG:HostLogin'] = 'OK') then
 //          Users.HostLogOut(Session['$MSG:User'], Session['$MSG:Gateway'], GetFriendList(Session['$MSG:User']), Session.ID);
 //    end;
-end;
-
-procedure TData_Provider.rGateReloginRequestAborted(Sender: TRtcConnection;
-  Data, Result: TRtcValue);
-begin
-  Tag := Tag;
-end;
-
-procedure TData_Provider.rGateReloginReturn(Sender: TRtcConnection; Data,
-  Result: TRtcValue);
-begin
-  Tag := Tag;
 end;
 
 procedure TData_Provider.AccountLoginExecute(Sender: TRtcConnection; Param: TRtcFunctionInfo; Result: TRtcValue);

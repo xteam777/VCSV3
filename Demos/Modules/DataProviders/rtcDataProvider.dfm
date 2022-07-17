@@ -313,8 +313,6 @@ object Data_Provider: TData_Provider
     Top = 333
   end
   object rGateRelogin: TRtcResult
-    OnReturn = rGateReloginReturn
-    RequestAborted = rGateReloginRequestAborted
     Left = 326
     Top = 388
   end
@@ -324,7 +322,7 @@ object Data_Provider: TData_Provider
   end
   object ClientDestroy: TRtcFunction
     Group = PortalGateServerGroup
-    FunctionName = 'ClientDestroy'
+    FunctionName = 'Clients.Destroy'
     OnExecute = ClientDestroyExecute
     Left = 672
     Top = 63
@@ -335,13 +333,14 @@ object Data_Provider: TData_Provider
   end
   object PortalGateServerModule: TRtcServerModule
     Link = PortalGateServerLink
+    Compression = cMax
     EncryptionKey = 16
     SecureKey = '2240897'
     ForceEncryption = True
     AutoSessions = True
     ModuleFileName = '/portalgategroup'
     FunctionGroup = PortalGateServerGroup
-    Left = 675
+    Left = 677
     Top = 16
   end
   object PortalGateServerGroup: TRtcFunctionGroup
