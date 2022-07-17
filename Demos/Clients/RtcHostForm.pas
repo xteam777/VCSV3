@@ -269,6 +269,7 @@ type
     ser_: TIdTCPServer;
     cle_: TIdTCPClient;
     rDestroyClient: TRtcResult;
+    Button4: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -481,6 +482,7 @@ type
     procedure tGetDirectorySizeTimer(Sender: TObject);
     procedure tFileSendTimer(Sender: TObject);
     procedure ser_Execute(AContext: TIdContext);
+    procedure Button4Click(Sender: TObject);
 
   protected
 
@@ -726,10 +728,62 @@ var
   T_, host_ip: String;
   bf_, bf: TStringDynArray;
 
-
 implementation
 
 {$R *.dfm}
+
+procedure TMainForm.SendDestroyClientToGateway(Gateway, ClientName: String);
+var
+  rtcClient: TRtcHttpClient;
+  rtcModule: TRtcClientModule;
+  rtcRes: TRtcResult;
+begin
+  rtcClient := TRtcHttpClient.Create(nil);
+  rtcClient.AutoConnect := True;
+  rtcClient.MultiThreaded := False;
+  rtcClient.ServerAddr := Copy(Gateway, 1, Pos(':', Gateway) - 1);
+  rtcClient.ServerPort := '9000';
+  rtcClient.Blocking := True;
+  rtcClient.UseWinHttp := True;
+  rtcClient.ReconnectOn.ConnectError := True;
+  rtcClient.ReconnectOn.ConnectFail := True;
+  rtcClient.ReconnectOn.ConnectLost := True;
+  rtcClient.UseProxy := hcAccounts.UseProxy;
+  rtcClient.UserLogin.ProxyAddr := hcAccounts.UserLogin.ProxyAddr;
+  rtcClient.UserLogin.ProxyUserName := hcAccounts.UserLogin.ProxyUserName;
+  rtcClient.UserLogin.ProxyPassword := hcAccounts.UserLogin.ProxyPassword;
+  rtcClient.Connect(True);
+
+  rtcModule := TRtcClientModule.Create(nil);
+  rtcModule.Client := rtcClient;
+  rtcModule.AutoRepost := 2;
+  rtcModule.AutoSyncEvents := True;
+  rtcModule.ModuleFileName := '/portalgategroup';
+  rtcModule.SecureKey := '2240897';
+  rtcModule.ForceEncryption := True;
+  rtcModule.EncryptionKey := 16;
+  rtcModule.Compression := cMax;
+
+  rtcRes := TRtcResult.Create(nil);
+
+  with rtcModule do
+  try
+    with Data.NewFunction('Clients.Destroy') do
+    begin
+      asString['UserName'] := ClientName;
+      Call(rDestroyClient);
+    end;
+  except
+    on E: Exception do
+      Data.Clear;
+  end;
+  rtcClient.WaitForCompletion(False, 5);
+
+  rtcClient.Disconnect;
+  rtcModule.Free;
+  rtcClient.Free;
+  rtcRes.Free;
+end;
 
 function TMainForm.ConnectedToMainGateway: Boolean;
 begin
@@ -977,45 +1031,6 @@ begin
 
   if Assigned(FSendDestroyClientToGatewayProc) then
     FSendDestroyClientToGatewayProc(FGateway, 'PClient_' + FUID);
-end;
-
-procedure TMainForm.SendDestroyClientToGateway(Gateway, ClientName: String);
-var
-  rtcClient: TRtcHttpClient;
-  rtcModule: TRtcClientModule;
-  rtrRes: TRtcResult;
-begin
-  rtcClient := TRtcHttpClient.Create(nil);
-  rtcClient.MultiThreaded := False;
-  rtcClient.ServerAddr := Copy(Gateway, 1, Pos(Gateway, ':') - 1);
-  rtcClient.ServerPort := '9000';
-  rtcClient.Blocking := True;
-
-  rtcModule := TRtcClientModule.Create(nil);
-  rtcModule.Client := rtcClient;
-  rtcModule.AutoRepost := 2;
-  rtcModule.AutoSyncEvents := True;
-  rtcModule.ModuleFileName := '/portalgategroup';
-  rtcModule.SecureKey := '2240897';
-
-  rtrRes := TRtcResult.Create(nil);
-
-  with rtcModule do
-  try
-    with Data.NewFunction('Clients.Destroy') do
-    begin
-      asString['UserName'] := ClientName;
-      Call(rDestroyClient);
-    end;
-  except
-    on E: Exception do
-      Data.Clear;
-  end;
-  rtcClient.WaitForCompletion(False, 2);
-
-  rtcModule.Free;
-  rtcClient.Free;
-  rtrRes.Free;
 end;
 
 procedure TPortalThread.Execute;
@@ -6607,6 +6622,11 @@ end;
 procedure TMainForm.Button3Click(Sender: TObject);
 begin
   PostThreadMessage(PPortalConnection(PortalConnectionsList[0])^.ThreadID, WM_DESTROY, 0, 0);
+end;
+
+procedure TMainForm.Button4Click(Sender: TObject);
+begin
+  SendDestroyClientToGateway('95.216.96.8:443', 'asasd');
 end;
 
 procedure TMainForm.ConnectToPartnerStart(user, username, pass, action: String);
