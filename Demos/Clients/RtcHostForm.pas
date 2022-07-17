@@ -44,7 +44,7 @@ uses
   IdCustomTCPServer, IdTCPServer;
 
 type
-  TSendDestroyClientToGatewayProc = procedure(Gateway, ClientName: String) of Object;
+  TSendDestroyClientToGatewayProc = procedure(Gateway, ClientName: String; AAllConnectionsById: Boolean) of Object;
   TPortalThread = class(TThread)
   private
     FUserName: String;
@@ -597,7 +597,7 @@ type
     procedure DoPowerPause;
     procedure DoPowerResume;
 
-    procedure SendDestroyClientToGateway(Gateway, ClientName: String);
+    procedure SendDestroyClientToGateway(Gateway, ClientName: String; AAllConnectionsById: Boolean);
 
 //    procedure AppMessage(var Msg: TMsg; var Handled: Boolean);
     procedure SetIDContolsVisible;
@@ -732,57 +732,58 @@ implementation
 
 {$R *.dfm}
 
-procedure TMainForm.SendDestroyClientToGateway(Gateway, ClientName: String);
+procedure TMainForm.SendDestroyClientToGateway(Gateway, ClientName: String; AAllConnectionsById: Boolean);
 var
   rtcClient: TRtcHttpClient;
   rtcModule: TRtcClientModule;
   rtcRes: TRtcResult;
 begin
-//  rtcClient := TRtcHttpClient.Create(nil);
-//  rtcClient.AutoConnect := True;
-//  rtcClient.MultiThreaded := False;
-//  rtcClient.ServerAddr := Copy(Gateway, 1, Pos(':', Gateway) - 1);
-//  rtcClient.ServerPort := '9000';
-//  rtcClient.Blocking := True;
-//  rtcClient.UseWinHttp := True;
-//  rtcClient.ReconnectOn.ConnectError := True;
-//  rtcClient.ReconnectOn.ConnectFail := True;
-//  rtcClient.ReconnectOn.ConnectLost := True;
-//  rtcClient.UseProxy := hcAccounts.UseProxy;
-//  rtcClient.UserLogin.ProxyAddr := hcAccounts.UserLogin.ProxyAddr;
-//  rtcClient.UserLogin.ProxyUserName := hcAccounts.UserLogin.ProxyUserName;
-//  rtcClient.UserLogin.ProxyPassword := hcAccounts.UserLogin.ProxyPassword;
-//  rtcClient.Connect(True);
-//
-//  rtcModule := TRtcClientModule.Create(nil);
-//  rtcModule.Client := rtcClient;
-//  rtcModule.AutoRepost := 2;
-//  rtcModule.AutoSyncEvents := True;
-//  rtcModule.ModuleFileName := '/portalgategroup';
-//  rtcModule.SecureKey := '2240897';
-//  rtcModule.ForceEncryption := True;
-//  rtcModule.EncryptionKey := 16;
-//  rtcModule.Compression := cMax;
-//
-//  rtcRes := TRtcResult.Create(nil);
-//
-//  with rtcModule do
-//  try
-//    with Data.NewFunction('Clients.Destroy') do
-//    begin
-//      asString['UserName'] := ClientName;
-//      Call(rDestroyClient);
-//    end;
-//  except
-//    on E: Exception do
-//      Data.Clear;
-//  end;
-//  rtcClient.WaitForCompletion(False, 5);
-//
-//  rtcClient.Disconnect;
-//  rtcModule.Free;
-//  rtcClient.Free;
-//  rtcRes.Free;
+  rtcClient := TRtcHttpClient.Create(nil);
+  rtcClient.AutoConnect := True;
+  rtcClient.MultiThreaded := False;
+  rtcClient.ServerAddr := Copy(Gateway, 1, Pos(':', Gateway) - 1);
+  rtcClient.ServerPort := '9000';
+  rtcClient.Blocking := True;
+  rtcClient.UseWinHttp := True;
+  rtcClient.ReconnectOn.ConnectError := True;
+  rtcClient.ReconnectOn.ConnectFail := True;
+  rtcClient.ReconnectOn.ConnectLost := True;
+  rtcClient.UseProxy := hcAccounts.UseProxy;
+  rtcClient.UserLogin.ProxyAddr := hcAccounts.UserLogin.ProxyAddr;
+  rtcClient.UserLogin.ProxyUserName := hcAccounts.UserLogin.ProxyUserName;
+  rtcClient.UserLogin.ProxyPassword := hcAccounts.UserLogin.ProxyPassword;
+  rtcClient.Connect(True);
+
+  rtcModule := TRtcClientModule.Create(nil);
+  rtcModule.Client := rtcClient;
+  rtcModule.AutoRepost := 2;
+  rtcModule.AutoSyncEvents := True;
+  rtcModule.ModuleFileName := '/portalgategroup';
+  rtcModule.SecureKey := '2240897';
+  rtcModule.ForceEncryption := True;
+  rtcModule.EncryptionKey := 16;
+  rtcModule.Compression := cMax;
+
+  rtcRes := TRtcResult.Create(nil);
+
+  with rtcModule do
+  try
+    with Data.NewFunction('Clients.DestroyAllById') do
+    begin
+      asString['UserName'] := ClientName;
+      asBoolean['AllConnectionsById'] := AAllConnectionsById;
+      Call(rDestroyClient);
+    end;
+  except
+    on E: Exception do
+      Data.Clear;
+  end;
+  rtcClient.WaitForCompletion(False, 5);
+
+  rtcClient.Disconnect;
+  rtcModule.Free;
+  rtcClient.Free;
+  rtcRes.Free;
 end;
 
 function TMainForm.ConnectedToMainGateway: Boolean;
@@ -862,7 +863,7 @@ begin
 
   FGatewayClient := TRtcHttpPortalClient.Create(nil);
   FGatewayClient.Name := 'PClient_' + FUID;
-  FGatewayClient.LoginUserName := MainForm.PClient.LoginUserName + '_' + FUserName + '_' + FUID; //IntToStr(GatewayClientsList.Count + 1);
+  FGatewayClient.LoginUserName := MainForm.PClient.LoginUserName + '_' + FUserName + '_' + FAction + '_' + FUID; //IntToStr(GatewayClientsList.Count + 1);
   FGatewayClient.LoginUserInfo.asText['RealName'] := MainForm.PClient.LoginUserInfo.asText['RealName'];
   FGatewayClient.LoginPassword := MainForm.PClient.LoginPassword;
   FGatewayClient.AutoSyncEvents := MainForm.PClient.AutoSyncEvents;
@@ -1030,7 +1031,7 @@ begin
   end;
 
   if Assigned(FSendDestroyClientToGatewayProc) then
-    FSendDestroyClientToGatewayProc(FGateway, 'PClient_' + FUID);
+    FSendDestroyClientToGatewayProc(FGateway, MainForm.PClient.LoginUserName + '_' + FUserName + '_' + FAction + '_' + FUID, False);
 end;
 
 procedure TPortalThread.Execute;
@@ -6626,7 +6627,7 @@ end;
 
 procedure TMainForm.Button4Click(Sender: TObject);
 begin
-  SendDestroyClientToGateway('95.216.96.8:443', 'asasd');
+  SendDestroyClientToGateway('95.216.96.8:443', 'asasd', False);
 end;
 
 procedure TMainForm.ConnectToPartnerStart(user, username, pass, action: String);
@@ -6803,6 +6804,7 @@ begin
       if not PartnerIsPending(asWideString['user'], asString['action'], asString['Address']) then
       begin
 //        AddPendingRequest(asWideString['user'], asString['action'], asString['Address'] + ':' +  asString['Port'], 0);
+        SendDestroyClientToGateway(asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['user'] + '_' + asWideString['action'] + '_', False);
         PortalThread := TPortalThread.Create(False, asWideString['user'], asWideString['action'], asString['Address'], SendDestroyClientToGateway); //Для каждого соединения новый клиент
         PRItem^.Gateway := asString['Address'];
         PRItem^.ThreadID := PortalThread.ThreadID;
@@ -7877,6 +7879,8 @@ begin
 
           PClient.Disconnect;
           PClient.Active := False;
+
+          SendDestroyClientToGateway(asString['Gateway'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]), True);
 
           PClient.LoginUserName := RealName;
           PClient.LoginUserInfo.asText['RealName'] := DisplayName;
