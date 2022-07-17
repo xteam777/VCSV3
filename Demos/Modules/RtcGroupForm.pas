@@ -9,16 +9,16 @@ uses
   rtcSystem;
 
 type
+  PRtcClientModule = ^TRtcClientModule;
+
   TGroupForm = class(TForm)
     Label6: TLabel;
     eName: TEdit;
-    pBtnClose: TPanel;
-    bClose: TSpeedButton;
-    pBtnOK: TPanel;
-    bOK: TSpeedButton;
     rAddGroup: TRtcResult;
     rChangeGroup: TRtcResult;
     ApplicationEvents1: TApplicationEvents;
+    bOK: TButton;
+    bClose: TButton;
     procedure FormShow(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure bOKClick(Sender: TObject);
@@ -28,12 +28,16 @@ type
       Result: TRtcValue);
     procedure ApplicationEvents1Message(var Msg: tagMSG; var Handled: Boolean);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure rAddGroupRequestAborted(Sender: TRtcConnection; Data,
+      Result: TRtcValue);
+    procedure rChangeGroupRequestAborted(Sender: TRtcConnection; Data,
+      Result: TRtcValue);
   private
     { Private declarations }
     FOnCustomFormClose: TOnCustomFormEvent;
   public
     { Public declarations }
-    CModule: TRtcClientModule;
+    CModule: PRtcClientModule;
     twDevices: TVirtualStringTree;
     Mode: String;
     UID: String;
@@ -94,33 +98,54 @@ procedure TGroupForm.bOKClick(Sender: TObject);
 begin
   if Trim(eName.Text) = '' then
   begin
-    MessageBox(Handle, 'Не указано название группы', 'VIRCESS', MB_ICONWARNING or MB_OK);
+    MessageBox(Handle, 'Не указано название группы', 'Remox', MB_ICONWARNING or MB_OK);
     eName.SetFocus;
     Exit;
   end;
 
+  bOK.Enabled := False;
+
   if Mode = 'Add' then
   begin
-    with CModule.Data.NewFunction('Account.AddGroup') do
-    begin
-      asWideString['Name'] := eName.Text;
-      asString['AccountUID'] := AccountUID;
+    with CModule^ do
+    try
+      with CModule^.Data.NewFunction('Account.AddGroup') do
+      begin
+        asWideString['Name'] := eName.Text;
+        asString['AccountUID'] := AccountUID;
+      end;
+      Call(rAddGroup);
+    except
+      on E: Exception do
+        Data.Clear;
     end;
-    CModule.Call(rAddGroup);
   end
   else
   begin
-    with CModule.Data.NewFunction('Account.ChangeGroup') do
-    begin
-      asWideString['Name'] := eName.Text;
-      asString['UID'] := UID;
-      asString['AccountUID'] := AccountUID;
-    end;
-    CModule.Call(rChangeGroup);
+    with CModule^ do
+    try
+      with CModule^.Data.NewFunction('Account.ChangeGroup') do
+      begin
+        asWideString['Name'] := eName.Text;
+        asString['UID'] := UID;
+        asString['AccountUID'] := AccountUID;
+      end;
+      Call(rChangeGroup);
+      except
+        on E: Exception do
+          Data.Clear;
+      end;
   end;
+//  CModule^.WaitForCompletion(True, 1000, True);
 
-  ModalResult := mrOk;
-  Close;
+  bOK.Enabled := True;
+
+//  if (CModule^.LastResult.isType = rtc_String)
+//    and (CModule^.LastResult.asString = 'OK') then
+//  begin
+//    Close;
+//    ModalResult := mrOk;
+//  end;
 end;
 
 procedure TGroupForm.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -149,19 +174,42 @@ begin
   eName.SetFocus;
 end;
 
+procedure TGroupForm.rAddGroupRequestAborted(Sender: TRtcConnection; Data,
+  Result: TRtcValue);
+begin
+  bOK.Enabled := True;
+end;
+
 procedure TGroupForm.rAddGroupReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 begin
-  UID := Result.asString;
-  ModalResult := mrOk;
-  Close;
+  bOK.Enabled := True;
+
+  if (Result.isType = rtc_String) then
+  begin
+    UID := Result.asString;
+    Close;
+    ModalResult := mrOk;
+  end;
+end;
+
+procedure TGroupForm.rChangeGroupRequestAborted(Sender: TRtcConnection; Data,
+  Result: TRtcValue);
+begin
+  bOK.Enabled := True;
 end;
 
 procedure TGroupForm.rChangeGroupReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 begin
-  ModalResult := mrOk;
-  Close;
+  bOK.Enabled := True;
+
+  if (Result.isType = rtc_String)
+    and (Result.asString = 'OK') then
+  begin
+    Close;
+    ModalResult := mrOk;
+  end;
 end;
 
 end.

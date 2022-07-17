@@ -2,8 +2,8 @@ object GroupForm: TGroupForm
   Left = 0
   Top = 0
   BorderStyle = bsDialog
-  Caption = #1043#1088#1091#1087#1087#1072' '#1082#1086#1084#1087#1100#1102#1090#1077#1088#1086#1074
-  ClientHeight = 84
+  Caption = #1043#1088#1091#1087#1087#1072' '#1091#1089#1090#1088#1086#1081#1089#1090#1074
+  ClientHeight = 78
   ClientWidth = 332
   Color = clWhite
   Font.Charset = DEFAULT_CHARSET
@@ -48,74 +48,47 @@ object GroupForm: TGroupForm
     TabOrder = 0
     OnKeyDown = FormKeyDown
   end
-  object pBtnClose: TPanel
-    Left = 216
-    Top = 49
+  object bOK: TButton
+    Left = 104
+    Top = 45
     Width = 107
     Height = 29
-    BevelKind = bkFlat
-    BevelOuter = bvNone
-    Color = clWhite
-    ParentBackground = False
+    Caption = #1054#1050
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'Arial'
+    Font.Style = []
+    ParentFont = False
     TabOrder = 1
-    object bClose: TSpeedButton
-      Tag = 1
-      Left = 0
-      Top = 0
-      Width = 103
-      Height = 25
-      Align = alClient
-      Caption = #1054#1058#1052#1045#1053#1040
-      Flat = True
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = cl3DDkShadow
-      Font.Height = -13
-      Font.Name = 'Arial'
-      Font.Style = [fsBold]
-      ParentFont = False
-      OnClick = bCloseClick
-      ExplicitLeft = 64
-    end
+    OnClick = bOKClick
   end
-  object pBtnOK: TPanel
-    Left = 96
-    Top = 49
+  object bClose: TButton
+    Left = 217
+    Top = 45
     Width = 107
     Height = 29
-    BevelKind = bkFlat
-    BevelOuter = bvNone
-    BevelWidth = 2
-    Color = clWhite
-    ParentBackground = False
+    Caption = #1054#1058#1052#1045#1053#1040
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'Arial'
+    Font.Style = []
+    ParentFont = False
     TabOrder = 2
-    object bOK: TSpeedButton
-      Tag = 1
-      Left = 0
-      Top = 0
-      Width = 103
-      Height = 25
-      Align = alClient
-      Caption = #1054#1050
-      Flat = True
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = cl3DDkShadow
-      Font.Height = -13
-      Font.Name = 'Arial'
-      Font.Style = [fsBold]
-      ParentFont = False
-      OnClick = bOKClick
-      ExplicitLeft = -2
-    end
+    OnClick = bCloseClick
   end
   object rAddGroup: TRtcResult
     OnReturn = rAddGroupReturn
-    Left = 8
-    Top = 46
+    RequestAborted = rAddGroupRequestAborted
+    Left = 142
+    Top = 18
   end
   object rChangeGroup: TRtcResult
     OnReturn = rChangeGroupReturn
-    Left = 35
-    Top = 46
+    RequestAborted = rChangeGroupRequestAborted
+    Left = 205
+    Top = 8
   end
   object ApplicationEvents1: TApplicationEvents
     OnMessage = ApplicationEvents1Message

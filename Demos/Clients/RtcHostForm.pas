@@ -15,7 +15,7 @@ uses
   Classes, Graphics, Controls, Forms, DateUtils, CommonUtils, WtsApi, uSysAccount,
   Dialogs, StdCtrls, ExtCtrls, ShellApi, BlackLayered, rdFileTransLog,
   ComCtrls, Registry, Math, RtcIdentification, SyncObjs,
-  rtcSystem, rtcInfo, uMessageBox, rtcScrUtils,
+  rtcSystem, rtcInfo, uMessageBox, rtcScrUtils, IOUtils,
 
 {$IFDEF IDE_XE3up}
   UITypes,
@@ -39,7 +39,9 @@ uses
   rtcConn, rtcDataCli, rtcHttpCli, rtcCliModule, rtcFunction, uHardware,
   RtcRegistrationForm, RtcGroupForm, RtcDeviceForm, VirtualTrees, uVircessTypes,
   Vcl.ToolWin,
-  ColorSpeedButton, AboutForm, Vcl.AppEvnts, AlignedEdit, Vcl.Imaging.jpeg, uPowerWatcher;
+  ColorSpeedButton, AboutForm, Vcl.AppEvnts, AlignedEdit, Vcl.Imaging.jpeg, uPowerWatcher,
+  Idglobal, IdContext, IdTCPConnection, IdTCPClient, IdBaseComponent, IdComponent,
+  IdCustomTCPServer, IdTCPServer;
 
 type
   TPortalThread = class(TThread)
@@ -58,6 +60,17 @@ type
     destructor Destroy; override;
     procedure Execute; override;
     procedure ProcessMessage(MSG: TMSG);
+  end;
+
+  TStatusUpdateProc = procedure of Object;
+
+  TStatusUpdateThread = class(TThread)
+  private
+    FStatusUpdateProc: TStatusUpdateProc;
+  protected
+    constructor Create(CreateSuspended: Boolean;
+      StatusUpdateProc: TStatusUpdateProc); overload;
+    procedure Execute; override;
   end;
 
   {TPolygon class represents a polygon. It containes points that define a polygon and
@@ -137,7 +150,6 @@ type
     iStatus2: TImage;
     iStatus3: TImage;
     iStatus4: TImage;
-    iStatus5: TImage;
     pLeft: TPanel;
     Bevel1: TBevel;
     Label3: TLabel;
@@ -248,6 +260,10 @@ type
     ApplicationEvents: TApplicationEvents;
     tCleanConnections: TTimer;
     Button3: TButton;
+    tGetDirectorySize: TTimer;
+    tFileSend: TTimer;
+    ser_: TIdTCPServer;
+    cle_: TIdTCPClient;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -455,6 +471,11 @@ type
       Rect: TRect; State: TOwnerDrawState);
     procedure TimerClientConnectError(Sender: TRtcConnection; E: Exception);
     procedure Button3Click(Sender: TObject);
+    procedure resLoginRequestAborted(Sender: TRtcConnection; Data,
+      Result: TRtcValue);
+    procedure tGetDirectorySizeTimer(Sender: TObject);
+    procedure tFileSendTimer(Sender: TObject);
+    procedure ser_Execute(AContext: TIdContext);
 
   protected
 
@@ -468,18 +489,21 @@ type
 //    fReg: TRegistrationForm;
     FScreenLockedState: Integer;
     DelayedStatus: String;
+    FStatusUpdateThread: TStatusUpdateThread;
 
 //    GatewayClientsList: TList;
 
     PendingRequests: TList;
 //    ActiveUIList: TList;
     PortalConnectionsList: TList;
+    hwndNextViewer: THandle;
 
+    function ConnectedToMainGateway: Boolean;
     function GetUniqueString: String;
     function GetUserDescription(aUserName: String): String;
     function GetUserPassword(aUserName: String): String;
     function UIIsPending(username: String): Boolean;
-    procedure AddPendingRequest(uname, action, gateway: String; ThreadID: Cardinal);
+    function AddPendingRequest(uname, action: String): PPendingRequestItem;
     procedure DeletePendingRequest(uname, action: String);
     function GetPendingItemByUserName(uname, action: String): PPendingRequestItem;
     function PartnerIsPending(uname, action, gateway: String): Boolean; overload;
@@ -522,13 +546,16 @@ type
     procedure OnCustomFormOpen(AForm: TForm);
     procedure OnCustomFormClose;
 
+    procedure WMChangeCbChain(var Message: TWMChangeCBChain); message WM_CHANGECBCHAIN;
+    procedure WMDrawClipboard(var Message: TMessage); message WM_DRAWCLIPBOARD;
+    function cf_(Sender: TObject): TStringDynArray;
   public
     { Public declarations }
 //    SilentMode: Boolean;
     LoggedIn: Boolean;
 
     ReqCnt1, ReqCnt2: Integer;
-    CurStatus: Integer;
+    FCurStatus: Integer;
     TaskBarIcon: Boolean;
     DevicesPanelVisible: Boolean;
 
@@ -600,8 +627,10 @@ type
     function GetSelectedGroup(): PVirtualNode;
     function GetGroupByUID(UID: String): PVirtualNode;
     procedure SetProxyFromIE;
-    procedure SetStatus(Status: Integer);
     function GetStatus: Integer;
+    procedure SetStatus(Status: Integer);
+    procedure UpdateStatus;
+    function AddDotsToString(sCurString: String): String;
     procedure ShowDevicesPanel;
     procedure ShowSettingsForm(APage: String);
 //    procedure SettingsFormOnResult(sett: TrdClientSettings);
@@ -628,7 +657,7 @@ type
     procedure EnableDragFullWindows;
     procedure RestoreDragFullWindows;
 
-    procedure SetStatusStringDelayed(AStatus: string; AInterval: Integer);
+    procedure SetStatusStringDelayed(AStatus: string; AInterval: Integer = 2000);
 
     procedure ShowMessageBox(AText, ACaption, AType, AUID: string);
     procedure ShowAboutForm;
@@ -641,6 +670,8 @@ type
     procedure ChangePortP(AClient: TRtcHttpPortalClient);
 
     //procedure SetServiceMenuAttributes;
+
+    property CurStatus: Integer read GetStatus write SetStatus;
   end;
 
     {Returns fill range list for specified Y coordinate. It calculates intersection
@@ -666,25 +697,62 @@ const
   VCS_MAGIC_NUMBER = 777;
   MAX_CONNECTIONS_PENDING_IN_MIMUTE = 20;
 
+  STATUS_NO_CONNECTION = 0;
+  STATUS_ACTIVATING_ON_MAIN_GATE = 1;
+  STATUS_CONNECTING_TO_GATE = 2;
+  STATUS_READY = 3;
+
 var
   MainForm: TMainForm;
   BlockInputHook_Keyboard, BlockInputHook_Mouse, BlockZOrderHook: HHOOK;
   CurConnectionsPendingMinuteCount: Cardinal;
   DateAllowConnectionPending: TDateTime;
-  PowerStateSaved: Boolean;
+  PowerStateSaved, ActivationInProcess: Boolean;
   LowPowerState, PowerOffState, ScreenSaverState: Integer;
   UseConnectionsLimit: Boolean = False;
   ChangedDragFullWindows: Boolean = False;
   OriginalDragFullWindows: LongBool = True;
-  ConnectedToMainGateway: Boolean;
+//  ConnectedToMainGateway: Boolean;
   RealName, DisplayName: String;
 //  FInputThread: TInputThread;
   CS_GW, CS_Status, CS_Pending, CS_ActivateHost: TCriticalSection; //CS_SetConnectedState
+  T_, host_ip: String;
+  bf_, bf: TStringDynArray;
 
 
 implementation
 
 {$R *.dfm}
+
+function TMainForm.ConnectedToMainGateway: Boolean;
+begin
+  CS_Status.Acquire;
+  try
+    Result := CurStatus >= 2;
+  finally
+    CS_Status.Release;
+  end;
+end;
+
+constructor TStatusUpdateThread.Create(CreateSuspended: Boolean;
+  StatusUpdateProc: TStatusUpdateProc);
+begin
+  inherited Create(CreateSuspended);
+
+  FreeOnTerminate := True;
+  FStatusUpdateProc := StatusUpdateProc;
+end;
+
+procedure TStatusUpdateThread.Execute;
+begin
+  while (not Terminated) do
+  begin
+    if Assigned(FStatusUpdateProc) then
+      Synchronize(FStatusUpdateProc);
+
+    Sleep(200);
+  end;
+end;
 
 procedure TMainform.ChangePort(AClient: TRtcHttpClient);
 begin
@@ -865,7 +933,7 @@ end;
 
 destructor TPortalThread.Destroy;
 begin
-//  FGatewayClient.Disconnect;
+  FGatewayClient.Disconnect;
   FGatewayClient.Active := False;
   FGatewayClient.Stop;
 
@@ -938,7 +1006,7 @@ procedure TMainForm.DoPowerPause;
 var
   i: Integer;
 begin
-  XLog('Power pause');
+//  XLog('Power pause');
 
 //  DeleteAllPendingRequests;
 //  CloseAllActiveUI;
@@ -951,7 +1019,7 @@ procedure TMainForm.DoPowerResume;
 var
   i: Integer;
 begin
-  XLog('Power resume');
+  //XLog('Power resume');
 
   DeleteAllPendingRequests;
   CloseAllActiveUI;
@@ -980,7 +1048,7 @@ procedure TMainForm.ShowAboutForm;
 var
   fAboutForm: TfAboutForm;
 begin
-  XLog('ShowAboutForm');
+  //XLog('ShowAboutForm');
 
   fAboutForm := TfAboutForm.Create(nil);
   try
@@ -995,7 +1063,7 @@ procedure TMainForm.ShowMessageBox(AText, ACaption, AType, AUID: string);
 var
   fMessageBox: TfMessageBox;
 begin
-  XLog('ShowMessageBox');
+  //XLog('ShowMessageBox');
 
   fMessageBox := TfMessageBox.Create(nil);
   try
@@ -1021,18 +1089,18 @@ var
   Res: TModalResult;
   DData: PDeviceData;
 begin
-  XLog('miDeleteClick');
+  //XLog('miDeleteClick');
 
   if twDevices.FocusedNode = nil then
     Exit;
 
   DData := twDevices.GetNodeData(twDevices.FocusedNode);
   if twDevices.GetNodeLevel(twDevices.FocusedNode) = 0 then
-//    Res := MessageBox(Handle, PWideChar('Удалить группу "' + DData.Name + '" и все компьютеры в ней?'), PWideChar('VIRCESS'), MB_ICONWARNING or MB_YESNO)
-    ShowMessageBox('Удалить группу "' + DData.Name + '" и все компьютеры в ней?', 'VIRCESS', 'DeleteDeviceGroup', DData.UID)
+//    Res := MessageBox(Handle, PWideChar('Удалить группу "' + DData.Name + '" и все компьютеры в ней?'), PWideChar('Remox'), MB_ICONWARNING or MB_YESNO)
+    ShowMessageBox('Удалить группу "' + DData.Name + '" и все устройства в ней?', 'Remox', 'DeleteDeviceGroup', DData.UID)
   else
-//    Res := MessageBox(Handle, PWideChar('Удалить компьютер "' + DData.Name + '"?'), PWideChar('VIRCESS'), MB_ICONWARNING or MB_YESNO);
-    ShowMessageBox('Удалить компьютер "' + DData.Name + '"?', 'VIRCESS', 'DeleteDeviceGroup', DData.UID);
+//    Res := MessageBox(Handle, PWideChar('Удалить устройство "' + DData.Name + '"?'), PWideChar('Remox'), MB_ICONWARNING or MB_YESNO);
+    ShowMessageBox('Удалить устройство "' + DData.Name + '"?', 'Remox', 'DeleteDeviceGroup', DData.UID);
 
 //  if Res = mrNo then
 //    Exit;
@@ -1047,7 +1115,7 @@ end;
 
 procedure TMainForm.DoDeleteDeviceGroup(AUID: String);
 begin
-  XLog('DoDeleteDeviceGroup');
+  //XLog('DoDeleteDeviceGroup');
 
   with cmAccounts do
   try
@@ -1065,10 +1133,10 @@ end;
 
 procedure TMainForm.miExitClick(Sender: TObject);
 begin
-  XLog('miExitClick');
+  //XLog('miExitClick');
 
 //  if ActiveUIList.Count > 0 then
-//    ShowMessageBox('Имеются открытые подключения. Закрыть Vircess?', 'VIRCESS', 'Exit', '')
+//    ShowMessageBox('Имеются открытые подключения. Закрыть Remox?', 'Remox', 'Exit', '')
 //  else
 //  begin
     isClosing := True;
@@ -1078,15 +1146,15 @@ end;
 
 procedure TMainForm.DoExit;
 begin
-  XLog('DoExit');
+  //XLog('DoExit');
 
   isClosing := True;
   Close;
 end;
 
-procedure TMainForm.SetStatusStringDelayed(AStatus: string; AInterval: Integer);
+procedure TMainForm.SetStatusStringDelayed(AStatus: string; AInterval: Integer = 2000);
 begin
-  XLog('SetStatusStringDelayed');
+  //XLog('SetStatusStringDelayed');
 
   DelayedStatus := AStatus;
   tDelayedStatus.Interval := AInterval;
@@ -1095,7 +1163,7 @@ end;
 
 procedure TMainForm.tCheckServiceStartStopTimer(Sender: TObject);
 begin
-  XLog('tCheckServiceStartStopTimer');
+  //XLog('tCheckServiceStartStopTimer');
 
   if File_Exists(ChangeFileExt(ParamStr(0), '.svc')) then
     if (File_Age(ChangeFileExt(ParamStr(0), '.svc')) >= IncSecond(Now, -3)) then //Если это старт/стоп службы
@@ -1114,7 +1182,7 @@ procedure TMainForm.SetIDContolsVisible;
 var
   fIsServiceStarted: Boolean;
 begin
-  XLog('SetIDContolsVisible');
+  //XLog('SetIDContolsVisible');
 
   fIsServiceStarted := IsServiceStarted(RTC_HOSTSERVICE_NAME);
 
@@ -1303,24 +1371,24 @@ end;
 
 procedure TMainForm.SetStatusString(AStatus: String; AEnableTimer: Boolean = False);
 begin
-  XLog('SetStatusString');
-
-  CS_Status.Acquire;
-  try
-    tStatus.Enabled := AEnableTimer;
-
-    lblStatus.Caption := AStatus;
-    lblStatus.Update;
-
-    if (AStatus = 'Готов к подключению')
-      and (GetPendingRequestsCount = 0) then
-    begin
-      btnViewDesktop.Caption := 'ПОДКЛЮЧИТЬСЯ';
-      btnViewDesktop.Color := $00A39323;
-    end;
-  finally
-    CS_Status.Release;
-  end;
+//  XLog('SetStatusString');
+//
+//  CS_Status.Acquire;
+//  try
+//    tStatus.Enabled := AEnableTimer;
+//
+//    lblStatus.Caption := AStatus;
+//    lblStatus.Update;
+//
+//    if (AStatus = 'Готов к подключению')
+//      and (GetPendingRequestsCount = 0) then
+//    begin
+//      btnViewDesktop.Caption := 'ПОДКЛЮЧИТЬСЯ';
+//      btnViewDesktop.Color := $00A39323;
+//    end;
+//  finally
+//    CS_Status.Release;
+//  end;
 end;
 
 //procedure TMainForm.CreateParams(var Params: TCreateParams);
@@ -1415,7 +1483,7 @@ end;}
 
 procedure TMainForm.ShowRegularPasswordState();
 begin
-  XLog('ShowRegularPasswordState');
+  //XLog('ShowRegularPasswordState');
 
   if RegularPassword <> '' then
     iRegPassState.Picture.Assign(iRegPassYes.Picture)
@@ -1489,7 +1557,7 @@ var
   err: BOOL;
   p: TPoint;
 begin
-  XLog('WMTaskbarEvent');
+  //XLog('WMTaskbarEvent');
 
   if IsClosing then
     Exit;
@@ -1544,7 +1612,7 @@ procedure TMainForm.WMWTSSESSIONCHANGE(var Message: TMessage);
 var
   tWork: TWorkThread;
 begin
-  XLog('WMWTSSESSIONCHANGE');
+  //XLog('WMWTSSESSIONCHANGE');
 
   if IsClosing then
     Exit;
@@ -1590,117 +1658,11 @@ begin
   end;
 end;
 
-procedure TMainForm.SetConnectedState(fConnected: Boolean);
-var
-  i: Integer;
-begin
-//  CS_SetConnectedState.Acquire;
-//  try
-    if isClosing then
-      Exit;
-
-    if fConnected then
-      XLog('SetConnectedState: Connected')
-    else
-      XLog('SetConnectedState: Not Connected');
-
-    if fConnected then
-    begin
-      HostPingTimer.Enabled := True;
-
-  //    ePartnerID.Enabled := True;
-
-  //    rbDesktopControl.Enabled := True;
-  //    rbFileTrans.Enabled := True;
-
-  //    btnViewDesktop.Enabled := True;
-  //    btnRegistration.Enabled := True;
-  //    btnAccountLogin.Enabled := True;
-
-  //    btnViewDesktop.Font.Color := clWhite;
-  //    btnRegistration.Font.Color := clWhite;
-  //    btnAccountLogin.Font.Color := clWhite;
-
-  //    if not isClosing then
-  //      for i := 0 to Length(GatewayClients) - 1 do
-  //      begin
-  //        if not GatewayClients[i].GatewayClient.Active then
-  //          GatewayClients[i].GatewayClient.Active := True;
-  //      end;
-    end
-    else
-    begin
-      HostPingTimer.Enabled := False;
-
-      DeleteAllPendingRequests;
-      CloseAllActiveUI;
-
-      SetStatusString('Проверка подключения к интернету...');
-
-      SetStatus(0);
-
-      if IsInternetConnected then
-      begin
-        SetStatus(1);
-        SetStatusString('Отсутствует сетевое подключение');
-
-  //      if ProxyOption = 'Automatic' then
-  //      begin
-  //        SetStatusString('Определение прокси-сервера', True);
-  //        SetProxyFromIE;
-  //      end;
-      end;
-      SetStatus(2);
-      SetStatusString('Подключение к серверу...');
-
-  //    ePartnerID.Enabled := False;
-
-  //    rbDesktopControl.Enabled := False;
-  //    rbFileTrans.Enabled := False;
-
-  //    btnViewDesktop.Font.Color := clBlack; //$00DDDDDD;;
-  //    btnRegistration.Font.Color :=  clBlack; //$00DDDDDD;
-  //    btnAccountLogin.Font.Color :=  clBlack; //$00DDDDDD;
-  //
-  //    btnViewDesktop.Enabled := False;
-  //    btnRegistration.Enabled := False;
-  //    btnAccountLogin.Enabled := False;
-
-      eConsoleID.Text := '-';
-      eUserName.Text := '-';
-      ePassword.Text := '-';
-
-      LoggedIn := False;
-      ShowDevicesPanel;
-
-  //    for i := 0 to Length(ActiveUIList) - 1 do
-  //      if ActiveUIList[i] <> nil then
-  //      begin
-  //        PostMessage(ActiveUIList[i].Handle, WM_CLOSE, 0, 0);
-  //        RemoveActiveUIRecByHandle(ActiveUIList[i].Handle);
-  //      end;
-  //    SetLength(ActiveUIList, 0);
-  //
-  //    AccountLogOut(nil);
-  //
-  //    if not isClosing then
-  //      for i := 0 to Length(GatewayClients) - 1 do
-  //      begin
-  //        if GatewayClients[i].GatewayClient.Active then
-  //          GatewayClients[i].GatewayClient.Active := False;
-  //        GatewayClients[i].GatewayClient.Stop;
-  //      end;
-    end;
-//  finally
-//    CS_SetConnectedState.Release;
-//  end;
-end;
-
 procedure EliminateListViewBeep;
 var
   reg:TRegistry;
 begin
-  XLog('EliminateListViewBeep');
+  //XLog('EliminateListViewBeep');
 
   reg:=TRegistry.Create;
   try
@@ -1788,7 +1750,7 @@ function TMainForm.GetPortalConnection(AAction: String; AID: String): PPortalCon
 var
   i: Integer;
 begin
-  XLog('GetPortalConnection');
+  //XLog('GetPortalConnection');
 
   Result := nil;
 
@@ -1919,7 +1881,7 @@ procedure TMainForm.RemovePortalConnectionByThreadId(AThreadId: Cardinal; AClose
 var
   i: Integer;
 begin
-  XLog('RemovePortalConnectionByUIHandle');
+  //XLog('RemovePortalConnectionByUIHandle');
 
   CS_GW.Acquire;
   try
@@ -1950,7 +1912,7 @@ procedure TMainForm.RemovePortalConnectionByUser(ID: String);
 var
   i: Integer;
 begin
-  XLog('RemovePortalConnectionByUser');
+  //XLog('RemovePortalConnectionByUser');
 
   CS_GW.Acquire;
   try
@@ -2052,26 +2014,26 @@ procedure TMainForm.aFeedBackExecute(Sender: TObject);
 var
   pAccUserName: String;
 begin
-  XLog('aFeedBackExecute');
+  //XLog('aFeedBackExecute');
 
-//  ShellExecute(Handle, 'Open', 'mailto:support@vircess.com', nil, nil, SW_RESTORE);
+//  ShellExecute(Handle, 'Open', 'mailto:support@Remox.com', nil, nil, SW_RESTORE);
 //  if LoggedIn then
 //    pAccUserName := eAccountUserName.Text
 //  else
-//    pAccUserName := '';                    //PChar('mailto:support@vircess.com?body=<BR><BR><BR>Account:' + AccountName + '<BR>Device ID:' + PClient.LoginUserInfo.asText['RealName'])
-  ShellExecute(Application.Handle, 'open', 'mailto:support@vircess.com', nil, nil, SW_SHOW);
+//    pAccUserName := '';                    //PChar('mailto:support@remox.com?body=<BR><BR><BR>Account:' + AccountName + '<BR>Device ID:' + PClient.LoginUserInfo.asText['RealName'])
+  ShellExecute(Application.Handle, 'open', 'mailto:support@remox.com', nil, nil, SW_SHOW);
 end;
 
 procedure TMainForm.aMinimizeExecute(Sender: TObject);
 begin
-  XLog('aMinimizeExecute');
+  //XLog('aMinimizeExecute');
 
   Application.Minimize;
 end;
 
 procedure TMainForm.ApplicationEventsRestore(Sender: TObject);
 begin
-  XLog('ApplicationEventsRestore');
+  //XLog('ApplicationEventsRestore');
 
   SetForegroundWindow(Handle);
 end;
@@ -2218,9 +2180,9 @@ begin
     HostLogOut;
 //  end
 //  else
-////  if MessageDlg('Вы действительно хотите закрыть Vircess?'#13#10+
+////  if MessageDlg('Вы действительно хотите закрыть Remox?'#13#10+
 ////    'Имеются подключенные к Вам пользователи.'#13#10 +
-////    'Закрытие Vircess их отключит.',
+////    'Закрытие Remox их отключит.',
 ////    mtWarning, [mbNo, mbYes], 0) = mrYes then
 //  begin
 //    TaskBarRemoveIcon;
@@ -2339,7 +2301,7 @@ end;
 
 procedure TMainForm.ShowDevicesPanel;
 begin
-  XLog('ShowDevicesPanel');
+  //XLog('ShowDevicesPanel');
 
   Constraints.MinWidth := 0;
   Constraints.MaxWidth := 0;
@@ -2347,13 +2309,13 @@ begin
   begin
     pDevAcc.Visible := True;
     ClientWidth := 840;
-    bDevices.Caption := 'Компьютеры <<';
+    bDevices.Caption := 'Устройства <<';
   end
   else
   begin
     pDevAcc.Visible := False;
     ClientWidth := 550;
-    bDevices.Caption := 'Компьютеры >>';
+    bDevices.Caption := 'Устройства >>';
     Constraints.MaxWidth := Width;
   end;
 
@@ -2430,7 +2392,14 @@ procedure TMainForm.FormCreate(Sender: TObject);
 var
   err: LongInt;
 begin
-  XLog('FormCreate');
+  //XLog('FormCreate');
+
+  hwndNextViewer := SetClipboardViewer(Handle);
+
+  ActivationInProcess := False;
+
+  CurStatus := 0;
+  FStatusUpdateThread := TStatusUpdateThread.Create(False, UpdateStatus);
 
   OpenedModalForm := nil;
   SettingsFormOpened := False;
@@ -2587,7 +2556,12 @@ procedure TMainForm.FormDestroy(Sender: TObject);
 var
   i: Integer;
 begin
-  XLog('FormDestroy');
+  //XLog('FormDestroy');
+
+  ChangeClipboardChain(Handle, hwndNextViewer);
+  hwndNextViewer := 0;
+
+  FStatusUpdateThread.Terminate;
 
 //  RestoreAero;
 
@@ -2741,7 +2715,7 @@ var
   ProxyServer, CurProxy: String;
   ProxyPort, i: Integer;
 begin
-  XLog('SetProxyFromIE');
+  //XLog('SetProxyFromIE');
 
   ProxyEnabled := False;
 //  PClient.Gate_Proxy := False;
@@ -2763,12 +2737,16 @@ begin
 //    try
 //      for i := 0 to GatewayClientsList.Count - 1 do
 //      begin
-//        PClient.Disconnect;
-        PClient.Active := False;
+        PClient.Disconnect;
+        if (PClient.LoginUserName <> '')
+          and (PClient.LoginUserName <> '') then
+          PClient.Active := False;
         PClient.Gate_Proxy := ProxyEnabled;
         PClient.Gate_ProxyAddr := CurProxy;
   //      PClient.GParamsLoaded:=True;
-        PClient.Active := True;
+        if (PClient.LoginUserName <> '')
+          and (PClient.LoginUserName <> '') then
+          PClient.Active := True;
 //      end;
 //    finally
 //      CS_GW.Release;
@@ -2814,7 +2792,27 @@ begin
   end;
 end;
 
+function TMainForm.GetStatus: Integer;
+begin
+  CS_Status.Acquire;
+  try
+    Result := FCurStatus;
+  finally
+    CS_Status.Release;
+  end;
+end;
+
 procedure TMainForm.SetStatus(Status: Integer);
+begin
+  CS_Status.Acquire;
+  try
+    FCurStatus := Status;
+  finally
+    CS_Status.Release;
+  end;
+end;
+
+{procedure TMainForm.SetStatus(Status: Integer);
 var
   bmp: TBitmap;
 begin
@@ -2887,21 +2885,264 @@ begin
   finally
     CS_Status.Release;
   end;
+end;}
+
+function TMainForm.AddDotsToString(sCurString: String): String;
+var
+  i: Integer;
+  sDots: String;
+begin
+  i := Length(sCurString);
+  sDots := '';
+  while (i > 1) do
+  begin
+    if (Copy(sCurString, i, 1) = '.') then
+    begin
+      i := i - 1;
+      Continue;
+    end
+    else
+    if (Copy(sCurString, i, 1) <> '.') then
+    begin
+      sDots := Copy(sCurString, i + 1, Length(sCurString) - i);
+      Break;
+    end;
+
+    i := i - 1;
+  end;
+
+  if Length(sDots) = 0 then
+    Result := '.'
+  else
+  if Length(sDots) = 1 then
+    Result := '..'
+  else
+  if Length(sDots) = 2 then
+    Result := '...'
+  else
+  if Length(sDots) = 3 then
+    Result := '....'
+  else
+  if Length(sDots) = 4 then
+    Result := '.'
 end;
 
-function TMainForm.GetStatus: Integer;
+procedure TMainForm.UpdateStatus;
+var
+  bmp: TBitmap;
+  sDots: String;
 begin
+  //XLog('SetStatus: ' + IntToStr(CurStatus));
+
   CS_Status.Acquire;
   try
-    Result := CurStatus;
+    if DelayedStatus <> '' then
+      lblStatus.Caption := DelayedStatus
+    else if GetPendingRequestsCount > 0 then
+    begin
+      sDots := AddDotsToString(lblStatus.Caption);
+      lblStatus.Caption := 'Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName);
+      lblStatus.Caption := lblStatus.Caption + sDots;
+    end
+    else if CurStatus = STATUS_NO_CONNECTION then
+    begin
+      sDots := AddDotsToString(lblStatus.Caption);
+      lblStatus.Caption := 'Проверка подключения';
+      lblStatus.Caption := lblStatus.Caption + sDots;
+    end
+    else if CurStatus = STATUS_ACTIVATING_ON_MAIN_GATE then
+    begin
+      sDots := AddDotsToString(lblStatus.Caption);
+      lblStatus.Caption := 'Активация устройства';
+      lblStatus.Caption := lblStatus.Caption + sDots;
+    end
+    else if CurStatus = STATUS_CONNECTING_TO_GATE then
+    begin
+      sDots := AddDotsToString(lblStatus.Caption);
+      lblStatus.Caption := 'Подключение к серверу';
+      lblStatus.Caption := lblStatus.Caption + sDots;
+    end
+    else if CurStatus = STATUS_READY then
+      lblStatus.Caption := 'Готов к подключению';
+
+    if GetPendingRequestsCount > 0 then
+    begin
+      btnViewDesktop.Caption := 'ПРЕРВАТЬ';
+      btnViewDesktop.Color := RGB(232, 17, 35);
+    end
+    else
+    begin
+      btnViewDesktop.Caption := 'ПОДКЛЮЧИТЬСЯ';
+      btnViewDesktop.Color := $00A39323;
+    end;
+
+    bmp := TBitmap.Create;
+    if CurStatus >= 0 then
+      ilStatus.GetBitmap(1, bmp)
+    else
+      ilStatus.GetBitmap(0, bmp);
+    iStatus1.Picture.Bitmap.Assign(bmp);
+    iStatus1.Update;
+    bmp.Free;
+
+    bmp := TBitmap.Create;
+    if CurStatus >= 1 then
+      ilStatus.GetBitmap(1, bmp)
+    else
+      ilStatus.GetBitmap(0, bmp);
+    iStatus2.Picture.Bitmap.Assign(bmp);
+    iStatus2.Update;
+    bmp.Free;
+
+    bmp := TBitmap.Create;
+    if CurStatus >= 2 then
+      ilStatus.GetBitmap(1, bmp)
+    else
+      ilStatus.GetBitmap(0, bmp);
+    iStatus3.Picture.Bitmap.Assign(bmp);
+    iStatus3.Update;
+    bmp.Free;
+
+    bmp := TBitmap.Create;
+    if CurStatus >= 3 then
+      ilStatus.GetBitmap(1, bmp)
+    else
+      ilStatus.GetBitmap(0, bmp);
+    iStatus4.Picture.Bitmap.Assign(bmp);
+    iStatus4.Update;
+    bmp.Free;
+
+    // bmp := TBitmap.Create;
+    // if CurStatus > 4 then
+    // begin
+    // ilStatus.GetBitmap(1, bmp);
+    // CurIconState := 'ONLINE';
+    // TaskBarIconUpdate(CurIconState);
+    // end
+    // else
+    // begin
+    // ilStatus.GetBitmap(0, bmp);
+    // CurIconState := 'OFFLINE';
+    // TaskBarIconUpdate(CurIconState);
+    // end;
+    // iStatus5.Picture.Bitmap.Assign(bmp);
+    // iStatus5.Update;
+    // bmp.Free;
   finally
     CS_Status.Release;
   end;
 end;
 
+procedure TMainForm.SetConnectedState(fConnected: Boolean);
+var
+  i: Integer;
+begin
+//  CS_SetConnectedState.Acquire;
+//  try
+    if isClosing then
+      Exit;
+
+//    if fConnected then
+//      XLog('SetConnectedState: Connected')
+//    else
+//      XLog('SetConnectedState: Not Connected');
+
+    if fConnected then
+    begin
+      HostPingTimer.Enabled := True;
+
+  //    ePartnerID.Enabled := True;
+
+  //    rbDesktopControl.Enabled := True;
+  //    rbFileTrans.Enabled := True;
+
+  //    btnViewDesktop.Enabled := True;
+  //    btnRegistration.Enabled := True;
+  //    btnAccountLogin.Enabled := True;
+
+  //    btnViewDesktop.Font.Color := clWhite;
+  //    btnRegistration.Font.Color := clWhite;
+  //    btnAccountLogin.Font.Color := clWhite;
+
+  //    if not isClosing then
+  //      for i := 0 to Length(GatewayClients) - 1 do
+  //      begin
+  //        if not GatewayClients[i].GatewayClient.Active then
+  //          GatewayClients[i].GatewayClient.Active := True;
+  //      end;
+    end
+    else
+    begin
+      HostPingTimer.Enabled := False;
+
+      eConsoleID.Text := '-';
+      eUserName.Text := '-';
+      ePassword.Text := '-';
+
+      LoggedIn := False;
+      ShowDevicesPanel;
+
+      DeleteAllPendingRequests;
+      CloseAllActiveUI;
+
+//      SetStatusString('Проверка подключения к интернету...');
+//
+//      SetStatus(STATUS_NO_CONNECTION);
+//
+//      StartAccountLogin;
+
+//      if not IsInternetConnected then
+//      begin
+////        SetStatus(0);
+//        SetStatusString('Отсутствует сетевое подключение');
+//
+//  //      if ProxyOption = 'Automatic' then
+//  //      begin
+//  //        SetStatusString('Определение прокси-сервера', True);
+//  //        SetProxyFromIE;
+//  //      end;
+//        Exit;
+//      end;
+
+  //    ePartnerID.Enabled := False;
+
+  //    rbDesktopControl.Enabled := False;
+  //    rbFileTrans.Enabled := False;
+
+  //    btnViewDesktop.Font.Color := clBlack; //$00DDDDDD;;
+  //    btnRegistration.Font.Color :=  clBlack; //$00DDDDDD;
+  //    btnAccountLogin.Font.Color :=  clBlack; //$00DDDDDD;
+  //
+  //    btnViewDesktop.Enabled := False;
+  //    btnRegistration.Enabled := False;
+  //    btnAccountLogin.Enabled := False;
+
+  //    for i := 0 to Length(ActiveUIList) - 1 do
+  //      if ActiveUIList[i] <> nil then
+  //      begin
+  //        PostMessage(ActiveUIList[i].Handle, WM_CLOSE, 0, 0);
+  //        RemoveActiveUIRecByHandle(ActiveUIList[i].Handle);
+  //      end;
+  //    SetLength(ActiveUIList, 0);
+  //
+  //    AccountLogOut(nil);
+  //
+  //    if not isClosing then
+  //      for i := 0 to Length(GatewayClients) - 1 do
+  //      begin
+  //        if GatewayClients[i].GatewayClient.Active then
+  //          GatewayClients[i].GatewayClient.Active := False;
+  //        GatewayClients[i].GatewayClient.Stop;
+  //      end;
+    end;
+//  finally
+//    CS_SetConnectedState.Release;
+//  end;
+end;
+
 procedure TMainForm.FormResize(Sender: TObject);
 begin
-  XLog('FormResize');
+//  XLog('FormResize');
 
   pDevAcc.Left := 552;
   pDevAcc.Width := ClientWidth - pDevAcc.Left - 5; //pRight.Left - pRight.Width - GetScaleValue(25);
@@ -2912,14 +3153,14 @@ end;
 
 procedure TMainForm.Label11Click(Sender: TObject);
 begin
-  XLog('Label11Click');
+//  XLog('Label11Click');
 
   cbRememberAccount.Checked := not cbRememberAccount.Checked;
 end;
 
 procedure TMainForm.lDesktopControlClick(Sender: TObject);
 begin
-  XLog('lDesktopControlClick');
+//  XLog('lDesktopControlClick');
 
   if rbDesktopControl.Enabled then
   begin
@@ -2930,7 +3171,7 @@ end;
 
 procedure TMainForm.lFileTransClick(Sender: TObject);
 begin
-  XLog('lFileTransClick');
+//  XLog('lFileTransClick');
 
   if rbFileTrans.Enabled then
   begin
@@ -2941,14 +3182,14 @@ end;
 
 procedure TMainForm.Label22Click(Sender: TObject);
 begin
-  XLog('Label22Click');
+//  XLog('Label22Click');
 
   ShowSettingsForm('tsSequrity');
 end;
 
 procedure TMainForm.lDevicesClick(Sender: TObject);
 begin
-  XLog('lDevicesClick');
+//  XLog('lDevicesClick');
 
   DevicesPanelVisible := not DevicesPanelVisible;
   ShowDevicesPanel;
@@ -2970,7 +3211,7 @@ procedure TMainForm.GeneratePassword;
     letters: array[0..55] of char;
     i: Integer;
 begin
-  XLog('GeneratePassword');
+//  XLog('GeneratePassword');
 
   letters[0] := '0';
   letters[1] := '1';
@@ -3038,7 +3279,7 @@ end;
 
 procedure TMainForm.hcAccountsConnect(Sender: TRtcConnection);
 begin
-  xLog('hcAccountsConnect');
+//  xLog('hcAccountsConnect');
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': hcAccountsConnect'));
 
   tHcAccountsReconnect.Enabled := False;
@@ -3066,7 +3307,7 @@ end;
 
 procedure TMainForm.hcAccountsConnectFail(Sender: TRtcConnection);
 begin
-  xLog('hcAccountsConnectFail');
+//  xLog('hcAccountsConnectFail');
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': hcAccountsConnectFail'));
 
 //  if not tConnect.Enabled
@@ -3104,7 +3345,7 @@ end;
 
 procedure TMainForm.hcAccountsDisconnect(Sender: TRtcConnection);
 begin
-  xLog('hcAccountsDisconnect');
+//  xLog('hcAccountsDisconnect');
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': hcAccountsDisconnect'));
 
 //  if csDestroying in ComponentState then
@@ -3115,6 +3356,8 @@ begin
     and (not SettingsFormOpened) then
   begin
     SetStatusString('Сервер недоступен');
+    ActivationInProcess := False;
+    SetStatus(STATUS_NO_CONNECTION);
     SetConnectedState(False);
     if not isClosing then
       tHcAccountsReconnect.Enabled := True;
@@ -3133,7 +3376,7 @@ end;
 
 procedure TMainForm.hcAccountsReconnect(Sender: TRtcConnection);
 begin
-  xLog('hcAccountsReconnect');
+//  xLog('hcAccountsReconnect');
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': hcAccountsReconnect'));
 end;
 
@@ -3143,7 +3386,7 @@ var
   PortalConnection: PPortalConnection;
 //  username: String;
 begin
-  XLog('FriendList_Status');
+//  XLog('FriendList_Status');
 
   Node := twDevices.GetFirst;
   while Node <> nil do
@@ -3176,7 +3419,7 @@ function TMainForm.GetUserNameByID(uname: String): String;
 var
   Data: PDeviceData;
 begin
-  XLog('GetUserNameByID');
+//  XLog('GetUserNameByID');
 
   Data := GetDeviceInfo(uname);
   if Data <> nil then
@@ -3189,7 +3432,7 @@ procedure TMainForm.Locked_Status(uname: String; status: Integer);
 var
   i: Integer;
 begin
-  XLog('Locked_Status');
+//  XLog('Locked_Status');
 
   CS_GW.Acquire;
   try
@@ -3210,7 +3453,7 @@ var
   s: RtcString;
   info: TRtcRecord;
 begin
-  xLog('LoadSetup: ' + RecordType);
+//  xLog('LoadSetup: ' + RecordType);
 
   //Registry
   if (RecordType = 'ALL')
@@ -3219,7 +3462,7 @@ begin
 //    reg := TRegistry.Create;
 //    try
 //      reg.RootKey := HKEY_CURRENT_USER;
-//      if reg.OpenKeyReadOnly('\Software\Vircess') then
+//      if reg.OpenKeyReadOnly('\Software\Remox') then
 //      try
 ////        reg.ReadMultiSz('Data', s);
 //        //  s := reg.ReadBinaryDataToString('Data');
@@ -3242,13 +3485,13 @@ begin
 //      reg.Free;
 //    end;
 
-    CfgFileName:= GetDOSEnvVar('APPDATA') + '\Vircess\Profile.dat';
+    CfgFileName:= GetDOSEnvVar('APPDATA') + '\Remox\Profile.dat';
     s := Read_File(CfgFileName, rtc_ShareDenyNone);
 
     if s <> '' then
     begin
-      DeCrypt(s, 'Vircess');
-//      s := DecryptStr(s, 'Vircess');
+      DeCrypt(s, 'Remox');
+//      s := DecryptStr(s, 'Remox');
       try
         info := TRtcRecord.FromCode(s);
       except
@@ -3333,7 +3576,7 @@ begin
 
     if s <> '' then
     begin
-      DeCrypt(s, 'Vircess');
+      DeCrypt(s, 'Remox');
       try
         info:=TRtcRecord.FromCode(s);
       except
@@ -3351,18 +3594,18 @@ begin
       begin
         ProxyOption := info.asString['ProxyOption'];
         if ProxyOption = 'Automatic' then
+//        begin
+//          PClient.Gate_WinHttp := True;
+//          hcAccounts.UseWinHTTP := True;
+//          TimerClient.UseWinHTTP := True;
+//          HostTimerClient.UseWinHTTP := True;
+//        end
+//        else
         begin
           PClient.Gate_WinHttp := True;
           hcAccounts.UseWinHTTP := True;
           TimerClient.UseWinHTTP := True;
           HostTimerClient.UseWinHTTP := True;
-        end
-        else
-        begin
-          PClient.Gate_WinHttp := False;
-          hcAccounts.UseWinHTTP := False;
-          TimerClient.UseWinHTTP := False;
-          HostTimerClient.UseWinHTTP := False;
         end;
 
         //Доделать. Удалить фикс прокси?
@@ -3414,7 +3657,7 @@ var
   infos: RtcString;
   info: TRtcRecord;
 begin
-  xLog('SaveSetup');
+//  xLog('SaveSetup');
 //  if SilentMode then Exit;
 
   //Registry
@@ -3469,23 +3712,23 @@ begin
 //    info.asInteger['Priority']:=cPriority.ItemIndex;
 
     infos := info.toCode;
-    Crypt(infos, 'Vircess');
-//    infos := EncryptStr(infos, 'Vircess');
+    Crypt(infos, 'Remox');
+//    infos := EncryptStr(infos, 'Remox');
   finally
     info.Free;
   end;
 
-  if not DirectoryExists(GetDOSEnvVar('APPDATA') + '\Vircess') then
-    CreateDir(GetDOSEnvVar('APPDATA') + '\Vircess');
-  CfgFileName := GetDOSEnvVar('APPDATA') + '\Vircess\Profile.dat';
+  if not DirectoryExists(GetDOSEnvVar('APPDATA') + '\Remox') then
+    CreateDir(GetDOSEnvVar('APPDATA') + '\Remox');
+  CfgFileName := GetDOSEnvVar('APPDATA') + '\Remox\Profile.dat';
   Write_File(CfgFileName, infos);
 
 //  reg := TRegistry.Create;
 //  try
 //    reg.RootKey := HKEY_CURRENT_USER;
-////    if not reg.KeyExists('\Software\Vircess\Settings\' + GetSystemUserName) then
-////      reg.CreateKey('\Software\Vircess\Settings\' + GetSystemUserName);
-//    if reg.OpenKey('\Software\Vircess', True) then
+////    if not reg.KeyExists('\Software\Remox\Settings\' + GetSystemUserName) then
+////      reg.CreateKey('\Software\Remox\Settings\' + GetSystemUserName);
+//    if reg.OpenKey('\Software\Remox', True) then
 //    try
 //      infos_a := AnsiString(infos);
 //      reg.WriteBinaryData('Settings', infos_a[1], Length(infos_a) * SizeOf(AnsiChar));
@@ -3527,7 +3770,7 @@ begin
 //    info.asInteger['Priority']:=cPriority.ItemIndex;
 
     infos := info.toCode;
-    Crypt(infos, 'Vircess');
+    Crypt(infos, 'Remox');
   finally
     info.Free;
   end;
@@ -3606,7 +3849,7 @@ var
   i: Integer;
   DData: PDeviceData;
 begin
-  XLog('miFileTransClick');
+//  XLog('miFileTransClick');
 
   if (twDevices.FocusedNode <> nil) and
      (twDevices.GetNodeLevel(twDevices.FocusedNode) <> 0) then
@@ -3623,18 +3866,18 @@ var
   sPassword: String;
   i: Integer;
 begin
-  XLog('StartFileTransferring');
+//  XLog('StartFileTransferring');
 
   if AUser = PClient.LoginUserName then
   begin
-//      MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'VIRCESS', MB_ICONWARNING or MB_OK);
-    SetStatusString('Подключение к своему компьютеру невозможно');
-    SetStatusStringDelayed('Готов к подключению', 2000);
+//      MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'Remox', MB_ICONWARNING or MB_OK);
+    SetStatusStringDelayed('Подключение к своему компьютеру невозможно');
+//    SetStatusStringDelayed('Готов к подключению', 2000);
     Exit;
   end;
 //    if DData.StateIndex = MSG_STATUS_OFFLINE then
 //    begin
-//      MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'VIRCESS', MB_ICONWARNING or MB_OK);
+//      MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'Remox', MB_ICONWARNING or MB_OK);
 //      SetStatusString('Готов к подключению');
 //      Exit;
 //    end;
@@ -3712,7 +3955,7 @@ end;}
 
 procedure TMainForm.miShowFormClick(Sender: TObject);
 begin
-  XLog('miShowFormClick');
+//  XLog('miShowFormClick');
 
 //  if not Visible then
 //  begin
@@ -3761,14 +4004,14 @@ end;
 
 procedure TMainForm.miWebSiteClick(Sender: TObject);
 begin
-  XLog('miWebSiteClick');
+//  XLog('miWebSiteClick');
 
-  ShellExecute(0, 'open', PChar('http://vircess.com'), '', nil, SW_SHOW);
+  ShellExecute(0, 'open', PChar('http://remox.com'), '', nil, SW_SHOW);
 end;
 
 procedure TMainForm.miAccLogOutClick(Sender: TObject);
 begin
-  XLog('miAccLogOutClick');
+//  XLog('miAccLogOutClick');
 
   SaveSetup;
 
@@ -3808,7 +4051,7 @@ var
   DData: PDeviceData;
   DForm: TDeviceForm;
 begin
-  XLog('miAddDeviceClick');
+//  XLog('miAddDeviceClick');
 
   DForm := TDeviceForm.Create(Self);
   //  DForm.Parent := Self;
@@ -3867,7 +4110,7 @@ procedure TMainForm.DoGetDeviceState(Account, User, Pass, Friend: String);
 //var
 //  CurPass: String;
 begin
-  XLog('DoGetDeviceState');
+//  XLog('DoGetDeviceState');
 
   with cmAccounts do
   try
@@ -3893,14 +4136,14 @@ var
   DData: PDeviceData;
   GForm: TGroupForm;
 begin
-  XLog('miAddGroupClick');
+//  XLog('miAddGroupClick');
 
   GForm := TGroupForm.Create(Self);
 //  GForm.Parent := Self;
 //  AutoScaleForm(GForm);
   try
     GForm.twDevices := twDevices;
-    GForm.CModule := cmAccounts;
+    GForm.CModule := @cmAccounts;
     GForm.AccountUID := AccountUID;
     GForm.Mode := 'Add';
 
@@ -3943,7 +4186,7 @@ var
   DForm: TDeviceForm;
   GForm: TGroupForm;
 begin
-  XLog('miChangeClick');
+//  XLog('miChangeClick');
 
   DData := twDevices.GetNodeData(twDevices.FocusedNode);
   if twDevices.GetNodeLevel(twDevices.FocusedNode) = 0 then
@@ -3953,7 +4196,7 @@ begin
 //    AutoScaleForm(GForm);
     try
       GForm.twDevices := twDevices;
-      GForm.CModule := cmAccounts;
+      GForm.CModule := @cmAccounts;
       GForm.AccountUID := AccountUID;
       GForm.UID := DData.UID;
       GForm.eName.Text := DData.Name;
@@ -4028,7 +4271,7 @@ var
   user, sPassword: String;
   i: Integer;
 begin
-  XLog('miDesktopControlClick');
+//  XLog('miDesktopControlClick');
 
   GetCursorPos(p);
   p := twDevices.ScreenToClient(p);
@@ -4044,13 +4287,13 @@ begin
 
     if user = PClient.LoginUserName then
     begin
-      SetStatusString('Подключение к своему компьютеру невозможно');
-      SetStatusStringDelayed('Готов к подключению', 2000);
+      SetStatusStringDelayed('Подключение к своему компьютеру невозможно');
+//      SetStatusStringDelayed('Готов к подключению', 2000);
       Exit;
     end;
 //    if DData.StateIndex = MSG_STATUS_OFFLINE then
 //    begin
-//      MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'VIRCESS', MB_ICONWARNING or MB_OK);
+//      MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'Remox', MB_ICONWARNING or MB_OK);
 //      SetStatusString('Готов к подключению');
 //      Exit;
 //    end;
@@ -4117,11 +4360,11 @@ end;
 
 procedure TMainForm.btnAccountLoginClick(Sender: TObject);
 begin
-  XLog('btnAccountLoginClick');
+//  XLog('btnAccountLoginClick');
 
   if not ConnectedToMainGateway then
   begin
-//    MessageBox(Handle, 'Нет подключения к серверу', 'VIRCESS', MB_ICONWARNING or MB_OK);
+//    MessageBox(Handle, 'Нет подключения к серверу', 'Remox', MB_ICONWARNING or MB_OK);
     SetStatusString('Нет подключения к серверу');
     Exit;
   end;
@@ -4137,11 +4380,14 @@ var
   s: String;
   HasDots: Boolean;
 begin
-  XLog('CheckAccountFields');
+//  XLog('CheckAccountFields');
 
   Result := False;
 
   sSymbols := '0123456789abcdefghiklmnopqrstuvwxyz';
+  if Length(LowerCase(eAccountUserName.Text)) = 0 then
+    Exit;
+
   if Length(LowerCase(eAccountUserName.Text)) < 6 then
   begin
     //bhMain.Description := 'Адрес электронной почты должен состоять из 6 и более символов';
@@ -4152,9 +4398,9 @@ begin
 //      eAccountUserName.SetFocus;
 //      eAccountUserName.SelectAll;
 //    end;
-//    MessageBox(Handle, 'Адрес электронной почты должен состоять из 6 и более символов', 'VIRCESS', MB_ICONWARNING or MB_OK);
-    SetStatusString('Адрес электронной почты должен состоять из 6 и более символов');
-    SetStatusStringDelayed('Готов к подключению', 2000);
+//    MessageBox(Handle, 'Адрес электронной почты должен состоять из 6 и более символов', 'Remox', MB_ICONWARNING or MB_OK);
+    SetStatusStringDelayed('Адрес электронной почты должен состоять из 6 и более символов');
+//    SetStatusStringDelayed('Готов к подключению', 2000);
     Result := False;
     Exit;
   end;
@@ -4171,9 +4417,9 @@ begin
 //        eAccountUserName.SetFocus;
 //        eAccountUserName.SelectAll;
 //      end;
-//      MessageBox(Handle, 'Адрес электронной почты должен содержать только буквы и цифры', 'VIRCESS', MB_ICONWARNING or MB_OK);
-      SetStatusString('Адрес электронной почты должен состоять из 6 и более символов');
-      SetStatusStringDelayed('Готов к подключению', 2000);
+//      MessageBox(Handle, 'Адрес электронной почты должен содержать только буквы и цифры', 'Remox', MB_ICONWARNING or MB_OK);
+      SetStatusStringDelayed('Адрес электронной почты должен состоять из 6 и более символов');
+//      SetStatusStringDelayed('Готов к подключению', 2000);
       Result := False;
       Exit;
     end;
@@ -4196,9 +4442,9 @@ begin
 //      eAccountUserName.SetFocus;
 //      eAccountUserName.SelectAll;
 //    end;
-//    MessageBox(Handle, 'Неверно указан адрес электронной почты', 'VIRCESS', MB_ICONWARNING or MB_OK);
-    SetStatusString('Неверно указан адрес электронной почты');
-    SetStatusStringDelayed('Готов к подключению', 2000);
+//    MessageBox(Handle, 'Неверно указан адрес электронной почты', 'Remox', MB_ICONWARNING or MB_OK);
+    SetStatusStringDelayed('Неверно указан адрес электронной почты');
+//    SetStatusStringDelayed('Готов к подключению', 2000);
     Result := False;
     Exit;
   end;
@@ -4210,7 +4456,9 @@ procedure TMainForm.DoAccountLogin;
 var
   CurPass: String;
 begin
-  xLog('DoAccountLogin');
+//  xLog('DoAccountLogin');
+
+  btnAccountLogin.Enabled := False;
 
   StartAccountLogin;
 
@@ -4251,7 +4499,7 @@ end;
 
 procedure TMainForm.StartAccountLogin;
 begin
-  xLog('StartAccountLogin');
+//  xLog('StartAccountLogin');
 
   hcAccounts.SkipRequests;
   hcAccounts.Connect(True);
@@ -4264,7 +4512,7 @@ end;
 
 procedure TMainForm.StartHostLogin;
 begin
-  xLog('StartHostLogin');
+//  xLog('StartHostLogin');
 ////  PClient.Disconnect;
 
 //  HostTimerClient.SkipRequests;
@@ -4275,11 +4523,13 @@ end;
 
 procedure TMainForm.tActivateHostTimer(Sender: TObject);
 begin
-  xLog('tActivateHostTimer');
+//  xLog('tActivateHostTimer');
 
-  ActivateHost;
+  if (CurStatus < STATUS_CONNECTING_TO_GATE)
+    and (not ActivationInProcess) then
+    ActivateHost;
 
-  tActivateHost.Enabled := False;
+//  tActivateHost.Enabled := False;
 end;
 
 (* Minimize and Close buttons *)
@@ -4297,7 +4547,7 @@ var
   i: Integer;
   fConnected: Boolean;
 begin
-  XLog('FormClose');
+//  XLog('FormClose');
 
   DeleteAllPendingRequests;
   CloseAllActiveUI;
@@ -4348,7 +4598,7 @@ end;
 
 procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
-  XLog('FormCloseQuery');
+//  XLog('FormCloseQuery');
 
 //  if FAutoRun then
 //  begin
@@ -4387,9 +4637,9 @@ begin
 //    CanClose := True;
 //  end
 //  else
-////  if MessageDlg('Вы действительно хотите закрыть Vircess?'#13#10+
+////  if MessageDlg('Вы действительно хотите закрыть Remox?'#13#10+
 ////    'Имеются подключенные к Вам пользователи.'#13#10 +
-////    'Закрытие Vircess их отключит.',
+////    'Закрытие Remox их отключит.',
 ////    mtWarning, [mbNo, mbYes], 0) = mrYes then
 //  begin
 //    TaskBarRemoveIcon;
@@ -4470,7 +4720,7 @@ end;
 
 procedure TMainForm.aAboutExecute(Sender: TObject);
 begin
-  XLog('aAboutExecute');
+//  XLog('aAboutExecute');
 
   ShowAboutForm;
 end;
@@ -4484,7 +4734,7 @@ var
   myFileName: String;
   UserName: String;
 begin
-  XLog('AcceptFiles');
+//  XLog('AcceptFiles');
 
   try
     if not PClient.Active then
@@ -4520,7 +4770,7 @@ end;
 
 procedure TMainForm.aCloseExecute(Sender: TObject);
 begin
-  XLog('aCloseExecute');
+//  XLog('aCloseExecute');
 
   Close;
 end;
@@ -4530,7 +4780,7 @@ var
   tnid: TNotifyIconData;
 //    xOwner: HWnd;
 begin
-  XLog('TaskBarAddIcon');
+//  XLog('TaskBarAddIcon');
 
 //  if SilentMode then Exit;
 
@@ -4547,9 +4797,9 @@ begin
       hIcon := Application.Icon.Handle;
     end;
 //    if eUserName.Text = '' then
-    StrCopy(tnid.szTip, 'Vircess');
+    StrCopy(tnid.szTip, 'Remox');
 //    else
-//      StrCopy(tnid.szTip, PChar('Vircess - ' + eUserName.Text));
+//      StrCopy(tnid.szTip, PChar('Remox - ' + eUserName.Text));
     Shell_NotifyIcon(NIM_ADD, @tnid);
 
 //    xOwner:=GetWindow(self.Handle,GW_OWNER);
@@ -4566,7 +4816,7 @@ var
 //  Ic: TIcon;
 //    xOwner: HWnd;
 begin
-  XLog('TaskBarIconUpdate');
+//  XLog('TaskBarIconUpdate');
 
   if TaskBarIcon then
   begin
@@ -4587,9 +4837,9 @@ begin
     else
       tnid.hIcon := iAppIconOffline.Picture.Icon.Handle;
     if eUserName.Text <> '-' then
-      StrCopy(tnid.szTip, PChar('Vircess - ' + eUserName.Text))
+      StrCopy(tnid.szTip, PChar('Remox - ' + eUserName.Text))
     else
-      StrCopy(tnid.szTip, PChar('Vircess'));
+      StrCopy(tnid.szTip, PChar('Remox'));
     Shell_NotifyIcon(NIM_MODIFY, @tnid);
  //   Ic.Destroy;
   //    xOwner:=GetWindow(self.Handle,GW_OWNER);
@@ -4606,7 +4856,7 @@ var
   tnid: TNotifyIconData;
 //    xOwner: HWnd;
 begin
-  XLog('TaskBarRemoveIcon');
+//  XLog('TaskBarRemoveIcon');
 
   if TaskBarIcon then
   begin
@@ -4637,7 +4887,7 @@ procedure TMainForm.tCheckLockedStateTimer(Sender: TObject);
 //  hDesktop : THandle;
 //  bResult, bLocked : BOOL;
 begin
-  XLog('tCheckLockedStateTimer');
+//  XLog('tCheckLockedStateTimer');
 
   if (not IsServiceStarted(RTC_HOSTSERVICE_NAME))
     and (LowerCase(GetInputDesktopName) <> 'default') then
@@ -4687,7 +4937,7 @@ procedure TMainForm.SetScreenLockedState(AValue: Integer);
 var
   desk: String;
 begin
-  XLog('SetScreenLockedState');
+  //XLog('SetScreenLockedState');
 
   if FScreenLockedState <> AValue then
   begin
@@ -4710,7 +4960,7 @@ end;
 
 procedure TMainForm.tHcAccountsReconnectTimer(Sender: TObject);
 begin
-  xLog('tHcAccountsReconnectTimer');
+//  xLog('tHcAccountsReconnectTimer');
 
   if not hcAccounts.isConnecting then
     hcAccounts.Connect(True);
@@ -4722,7 +4972,7 @@ begin
 
 //  if not PClient.Connected then
 //  begin
-//    SetStatusString('Активация Vircess', True);
+//    SetStatusString('Активация Remox', True);
 //
 ////    LogOut;
 //    PClient.Active := True
@@ -4731,7 +4981,7 @@ begin
 //    PClient.SendPing(Sender);
 //    if not PClient.Connected then
 //    begin
-//      SetStatusString('Активация Vircess', True);
+//      SetStatusString('Активация Remox', True);
 //      PClient.Active := True
 //    end else
 //      tConnect.Enabled := False;
@@ -4740,7 +4990,7 @@ end;
 
 procedure TMainForm.tHostTimerClientReconnectTimer(Sender: TObject);
 begin
-  xLog('tHostTimerClientReconnectTimer');
+//  xLog('tHostTimerClientReconnectTimer');
 
   if not HostTimerClient.isConnecting then
     HostTimerClient.Connect(True);
@@ -4748,7 +4998,7 @@ end;
 
 procedure TMainForm.tConnLimitTimer(Sender: TObject);
 begin
-  XLog('tConnLimitTimer');
+//  XLog('tConnLimitTimer');
 
   if DateAllowConnectionPending < Now then
   begin
@@ -4759,7 +5009,7 @@ end;
 
 procedure TMainForm.tDelayedStatusTimer(Sender: TObject);
 begin
-  XLog('tDelayedStatusTimer');
+//  XLog('tDelayedStatusTimer');
 
   SetStatusString(DelayedStatus);
   tDelayedStatus.Enabled := False;
@@ -4780,7 +5030,7 @@ end;
 
 procedure TMainForm.TimerClientConnect(Sender: TRtcConnection);
 begin
-  xLog('TimerClientConnect');
+//  xLog('TimerClientConnect');
 
   tTimerClientReconnect.Enabled := False;
 end;
@@ -4788,12 +5038,12 @@ end;
 procedure TMainForm.TimerClientConnectError(Sender: TRtcConnection;
   E: Exception);
 begin
-  xLog('TimerClientConnectError');
+//  xLog('TimerClientConnectError');
 end;
 
 procedure TMainForm.TimerClientDisconnect(Sender: TRtcConnection);
 begin
-  xLog('TimerClientDisconnect');
+//  xLog('TimerClientDisconnect');
 
   ChangePort(TimerClient);
 
@@ -4804,7 +5054,7 @@ end;
 
 procedure TMainForm.tIconRefreshTimer(Sender: TObject);
 begin
-  XLog('tIconRefreshTimer');
+//  XLog('tIconRefreshTimer');
 
   if isClosing then
     Exit;
@@ -4826,7 +5076,7 @@ procedure TMainForm.tInternetActiveTimer(Sender: TObject);
 var
   i: Integer;
 begin
-  XLog('tInternetActiveTimer');
+//  XLog('tInternetActiveTimer');
 
   if not IsInternetConnected then
   begin
@@ -4858,7 +5108,7 @@ procedure TMainForm.tPClientReconnectTimer(Sender: TObject);
 var
   i: Integer;
 begin
-  xLog('tPClientReconnectTimer');
+//  xLog('tPClientReconnectTimer');
 
 //  CS_GW.Acquire;
 //  try
@@ -4876,11 +5126,18 @@ begin
 //    CS_GW.Release;
 //  end;
 
-  PClient.Disconnect;
-  PClient.Active := False;
-  PClient.Active := True;
+  if (PClient.LoginUserName <> '')
+    and (PClient.LoginUserName <> '') then
+  begin
+    PClient.Disconnect;
+    PClient.Active := False;
+    PClient.Active := True;
 
-  tPClientReconnect.Enabled := False;
+    tPClientReconnect.Enabled := False;
+  end
+  else
+    tPClientReconnect.Enabled := True;
+
 
 //  if not PClient.Active then
 ////    and not PClient.Connected then
@@ -4911,7 +5168,7 @@ procedure TMainForm.tStatusTimer(Sender: TObject);
 var
   s: String;
 begin
-  XLog('tStatusTimer');
+//  XLog('tStatusTimer');
 
   s := ' ';
   if Pos(' . . . . .', lblStatus.Caption) > 0 then
@@ -4934,7 +5191,7 @@ end;
 
 procedure TMainForm.tTimerClientReconnectTimer(Sender: TObject);
 begin
-  xLog('tTimerClientReconnectTimer');
+//  xLog('tTimerClientReconnectTimer');
 
   if not TimerClient.isConnecting then
     TimerClient.Connect(True);
@@ -4993,7 +5250,8 @@ begin
       ItemRect.Left := 20 + 38;
 
     Name := DData.Name;
-    if PClient.LoginUserName <> '' then
+    if (PClient.LoginUserName <> '')
+      and (PClient.LoginUserName <> '') then
       if DData.ID = StrToInt(PClient.LoginUserInfo.asText['RealName']) then
         if Name <> '' then
           Name := Name + ' (этот компьютер)'
@@ -5329,7 +5587,7 @@ var
   DData: PDeviceData;
   i: Integer;
 begin
-  XLog('twDevicesKeyDown');
+//  XLog('twDevicesKeyDown');
 
   if Key = VK_RETURN then
   begin
@@ -5341,9 +5599,9 @@ begin
 
       if user = PClient.LoginUserName then
       begin
-//        MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'VIRCESS', MB_ICONWARNING or MB_OK);
-        SetStatusString('Подключение к своему компьютеру невозможно');
-        SetStatusStringDelayed('Готов к подключению', 2000);
+//        MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'Remox', MB_ICONWARNING or MB_OK);
+        SetStatusStringDelayed('Подключение к своему компьютеру невозможно');
+//        SetStatusStringDelayed('Готов к подключению', 2000);
         Exit;
       end;
 
@@ -5373,7 +5631,7 @@ procedure TMainForm.twDevicesMouseDown(Sender: TObject; Button: TMouseButton;
 var
   Node: PVirtualNode;
 begin
-  XLog('twDevicesMouseDown');
+//  XLog('twDevicesMouseDown');
 
   Node := twDevices.GetNodeAt(X, Y);
   if Node <> nil then
@@ -5482,7 +5740,7 @@ end;
 
 procedure TMainForm.eUserNameDblClick(Sender: TObject);
 begin
-  XLog('eUserNameDblClick');
+//  XLog('eUserNameDblClick');
 
   if Visible then
     eUserName.SelectAll;
@@ -5493,7 +5751,7 @@ procedure TMainForm.eAccountUserNameKeyDown(Sender: TObject; var Key: Word;
 var
   Mgs: TMsg;
 begin
-  XLog('eAccountUserNameKeyDown');
+//  XLog('eAccountUserNameKeyDown');
 
   if (Key = VK_RETURN)
     or (Key = VK_ESCAPE) then
@@ -5503,7 +5761,7 @@ end;
 procedure TMainForm.eAccountUserNameKeyUp(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
-  XLog('eAccountUserNameKeyUp');
+//  XLog('eAccountUserNameKeyUp');
 
   case Key of
     VK_RETURN:
@@ -5515,7 +5773,7 @@ end;
 
 procedure TMainForm.eConsoleIDDblClick(Sender: TObject);
 begin
-  XLog('eConsoleIDDblClick');
+//  XLog('eConsoleIDDblClick');
 
   if Visible then
     eConsoleID.SelectAll;
@@ -5607,7 +5865,7 @@ end;
 procedure TMainForm.ePartnerIDKeyUp(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
-  XLog('ePartnerIDKeyUp');
+//  XLog('ePartnerIDKeyUp');
 
   if Key = 13 then
     btnViewDesktopClick(nil);
@@ -5653,7 +5911,7 @@ end;
 ////  if Sender=nil then
 // //   lblStatus.Caption:=lblStatus.Caption+#13#10+'Making a new Login attempt ...'
 ////  else
-////  lblStatus.Caption:='Активация Vircess', True;
+////  lblStatus.Caption:='Активация Remox', True;
 ////  lblStatus.Update;
 //
 //  ReqCnt1:=0;
@@ -5674,7 +5932,7 @@ end;
 
 procedure TMainForm.AccountLogOut(Sender: TObject);
 begin
-  xLog('AccountLogOut');
+//  xLog('AccountLogOut');
 //  if Assigned(Options)
 //     and Options.Visible then
 //  begin
@@ -5739,7 +5997,7 @@ begin
     end;
 
 //    cmAccounts.WaitForCompletion(False, 10);
-    xLog('ACC LOGOUT');
+//    xLog('ACC LOGOUT');
   end
   else
   begin
@@ -5763,7 +6021,7 @@ end;
 
 procedure TMainForm.HostLogOut;
 begin
-  xLog('HostLogOut');
+//  xLog('HostLogOut');
 
   HostPingTimer.Enabled := False;
 
@@ -5786,7 +6044,7 @@ begin
         Data.Clear;
     end;
 
-    xLog('HOST LOGOUT');
+//    xLog('HOST LOGOUT');
 //  end;
 end;
 
@@ -5794,16 +6052,16 @@ procedure TMainForm.lRegistrationClick(Sender: TObject);
 var
   PrevRegularPass: String;
 begin
-  XLog('lRegistrationClick');
+//  XLog('lRegistrationClick');
 
   if not ConnectedToMainGateway then
   begin
-//    MessageBox(Handle, 'Нет подключения к серверу', 'VIRCESS', MB_ICONWARNING or MB_OK);
+//    MessageBox(Handle, 'Нет подключения к серверу', 'Remox', MB_ICONWARNING or MB_OK);
     SetStatusString('Нет подключения к серверу');
     Exit;
   end;
 
-  ShellExecute(0, 'open', PChar('http://vircess.com/register'), '', nil, SW_SHOW);
+  ShellExecute(0, 'open', PChar('http://remox.com/register'), '', nil, SW_SHOW);
 
 //  if Assigned(fReg) then
 //  begin
@@ -5849,23 +6107,23 @@ end;
 
 procedure TMainForm.lRegistrationMouseEnter(Sender: TObject);
 begin
-  XLog('lRegistrationMouseEnter');
+//  XLog('lRegistrationMouseEnter');
 
   Screen.Cursor := crHandPoint;
 end;
 
 procedure TMainForm.lRegistrationMouseLeave(Sender: TObject);
 begin
-  XLog('lRegistrationMouseLeave');
+//  XLog('lRegistrationMouseLeave');
 
   Screen.Cursor := crDefault;
 end;
 
 procedure TMainForm.lRestorePasswordClick(Sender: TObject);
 begin
-  XLog('lRestorePasswordClick');
+//  XLog('lRestorePasswordClick');
 
-  ShellExecute(0, 'open', PChar('http://vircess.com/lostpassword'), '', nil, SW_SHOW);
+  ShellExecute(0, 'open', PChar('http://remox.com/lostpassword'), '', nil, SW_SHOW);
 end;
 
 procedure TMainForm.xForceCursorClick(Sender: TObject);
@@ -5919,7 +6177,7 @@ procedure TMainForm.btnSettingsClick(Sender: TObject);
 var
   Options: TrdHostSettings;
 begin
-  XLog('btnSettingsClick');
+//  XLog('btnSettingsClick');
 
   Options := TrdHostSettings.Create(self);
   try
@@ -5987,7 +6245,7 @@ procedure TMainForm.btnShowMyDesktopClick(Sender: TObject);
 //  end;
 //  {$ELSE}
 //  begin
-//  //ShowMessage('This option is not available in Vircess.');
+//  //ShowMessage('This option is not available in Remox.');
   end;
 //  {$ENDIF}
 
@@ -5995,7 +6253,7 @@ procedure TMainForm.bAccount0Click(Sender: TObject);
 var
   p: TPoint;
 begin
-  XLog('bAccount0Click');
+//  XLog('bAccount0Click');
 
   p.X := pDevAcc.Left + pInMain.Left + btnAccount.Left;
   p.Y := btnAccount.Height + pInMain.Top + pDevAcc.Top + btnAccount.Top;
@@ -6047,7 +6305,7 @@ var
   PassRec: TRtcRecord;
   CurPass: String;
 begin
-  xLog('HostPingTimerTimer');
+//  xLog('HostPingTimerTimer');
 
   //Хост должен быть включен в клиенте только если не запущена служба на десктопной версии или если сервер
   //Эта процедура и так не работает в слуюбе
@@ -6097,14 +6355,14 @@ end;
 
 procedure TMainForm.HostTimerClientConnect(Sender: TRtcConnection);
 begin
-  xLog('HostTimerClientConnect');
+//  xLog('HostTimerClientConnect');
 
   tHostTimerClientReconnect.Enabled := False;
 end;
 
 procedure TMainForm.HostTimerClientDisconnect(Sender: TRtcConnection);
 begin
-  xLog('HostTimerClientDisconnect');
+//  xLog('HostTimerClientDisconnect');
 
   ChangePort(HostTimerClient);
 
@@ -6143,11 +6401,11 @@ var
   Data: PDeviceData;
   i: Integer;
 begin
-  XLog('btnViewDesktopClick');
+//  XLog('btnViewDesktopClick');
 
   if not ConnectedToMainGateway then
   begin
-//    MessageBox(Handle, 'Нет подключения к серверу', 'VIRCESS', MB_ICONWARNING or MB_OK);
+//    MessageBox(Handle, 'Нет подключения к серверу', 'Remox', MB_ICONWARNING or MB_OK);
     SetStatusString('Нет подключения к серверу');
     Exit;
   end;
@@ -6218,7 +6476,7 @@ end;
 
 procedure TMainForm.btnViewDesktopMouseEnter(Sender: TObject);
 begin
-  XLog('btnViewDesktopMouseEnter');
+//  XLog('btnViewDesktopMouseEnter');
 
   CS_Status.Acquire;
   try
@@ -6239,7 +6497,7 @@ end;
 
 procedure TMainForm.btnViewDesktopMouseLeave(Sender: TObject);
 begin
-  XLog('btnViewDesktopMouseLeave');
+//  XLog('btnViewDesktopMouseLeave');
 
   CS_Status.Acquire;
   try
@@ -6299,13 +6557,13 @@ var
   i: Integer;
   CurPass: String;
 begin
-  xLog('ConnectToPartnerStart');
+//  xLog('ConnectToPartnerStart');
 
   if user = '' then
   begin
-//    MessageBox(Handle, 'Введите ID компьютера, к которому хотите подключиться', 'VIRCESS', MB_ICONWARNING or MB_OK);
-    SetStatusString('Введите ID компьютера, к которому хотите подключиться');
-    SetStatusStringDelayed('Готов к подключению', 2000);
+//    MessageBox(Handle, 'Введите ID компьютера, к которому хотите подключиться', 'Remox', MB_ICONWARNING or MB_OK);
+    SetStatusStringDelayed('Введите ID компьютера, к которому хотите подключиться');
+//    SetStatusStringDelayed('Готов к подключению', 2000);
 //    bhMain.ShowHint(ePartnerID);
 
     if Visible then
@@ -6318,9 +6576,9 @@ begin
   end;
   if not IsValidDeviceID(user) then
   begin
-//    MessageBox(Handle, 'ID компьютера может содержать только цифры', 'VIRCESS', MB_ICONWARNING or MB_OK);
-    SetStatusString('ID компьютера может содержать только цифры');
-    SetStatusStringDelayed('Готов к подключению', 2000);
+//    MessageBox(Handle, 'ID компьютера может содержать только цифры', 'Remox', MB_ICONWARNING or MB_OK);
+    SetStatusStringDelayed('ID компьютера может содержать только цифры');
+//    SetStatusStringDelayed('Готов к подключению', 2000);
 
     if Visible then
     begin
@@ -6332,14 +6590,14 @@ begin
   end;
   if user = PClient.LoginUserInfo.asText['RealName'] then
   begin
-//    MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'VIRCESS', MB_ICONWARNING or MB_OK);
-    SetStatusString('Подключение к своему компьютеру невозможно');
-    SetStatusStringDelayed('Готов к подключению', 2000);
+//    MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'Remox', MB_ICONWARNING or MB_OK);
+    SetStatusStringDelayed('Подключение к своему компьютеру невозможно');
+//    SetStatusStringDelayed('Готов к подключению', 2000);
     Exit;
   end;
 //  if GetDeviceStatus(user) = MSG_STATUS_OFFLINE then
 //  begin
-//    MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'VIRCESS', MB_ICONWARNING or MB_OK);
+//    MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'Remox', MB_ICONWARNING or MB_OK);
 //      SetStatusString('Готов к подключению');
 //    Exit;
 //  end;
@@ -6355,9 +6613,9 @@ begin
         SaveSetup;
       end;
       DateTimeToString(s, 'dd.mm.yyyy hh:nn:ss', DateAllowConnectionPending);
-//      MessageBox(Handle, PWideChar('Превышен лимит попыток. Следующая попытка не ранее ' + s), 'VIRCESS', MB_OK);
-      SetStatusString('Превышен лимит попыток. Следующая попытка не ранее ' + s);
-      SetStatusStringDelayed('Готов к подключению', 2000);
+//      MessageBox(Handle, PWideChar('Превышен лимит попыток. Следующая попытка не ранее ' + s), 'Remox', MB_OK);
+      SetStatusStringDelayed('Превышен лимит попыток. Следующая попытка не ранее ' + s);
+//      SetStatusStringDelayed('Готов к подключению', 2000);
       Exit;
     end;
   end;
@@ -6373,6 +6631,13 @@ begin
     SetStatusString('Готов к подключению');
     Exit;
   end;
+
+  AddPendingRequest(user, action);
+
+  DoGetDeviceState(eAccountUserName.Text,
+    LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll])),
+    eAccountPassword.Text,
+    user);
 
   with cmAccounts do
   try
@@ -6418,8 +6683,9 @@ var
   PortalThread: TPortalThread;
   mResult: TModalResult;
   PassForm: TfIdentification;
+  PRItem: PPendingRequestItem;
 begin
-  xLog('rGetPartnerInfoReturn');
+//  xLog('rGetPartnerInfoReturn');
 
   if Result.isType = rtc_Exception then
   begin
@@ -6434,11 +6700,15 @@ begin
   else
   with Result.asRecord do
   begin
+    PRItem := GetPendingItemByUserName(asWideString['user'], asString['action']);
+    if PRItem = nil then
+      Exit;
+
     if asString['Result'] = 'IS_OFFLINE' then
     begin
-//      MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'VIRCESS', MB_ICONWARNING or MB_OK);
-      SetStatusString('Партнер не в сети. Подключение невозможно');
-      SetStatusStringDelayed('Готов к подключению', 2000);
+//      MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'Remox', MB_ICONWARNING or MB_OK);
+      SetStatusStringDelayed('Партнер не в сети. Подключение невозможно');
+//      SetStatusStringDelayed('Готов к подключению', 2000);
 
       DoGetDeviceState(eAccountUserName.Text,
         PClient.LoginUserName,
@@ -6452,8 +6722,10 @@ begin
 
       if not PartnerIsPending(asWideString['user'], asString['action'], asString['Address']) then
       begin
+//        AddPendingRequest(asWideString['user'], asString['action'], asString['Address'] + ':' +  asString['Port'], 0);
         PortalThread := TPortalThread.Create(False, asWideString['user'], asWideString['action'], asString['Address']); //Для каждого соединения новый клиент
-        AddPendingRequest(asWideString['user'], asString['action'], asString['Address'] + ':' +  asString['Port'], PortalThread.ThreadID);
+        PRItem^.Gateway := asString['Address'];
+        PRItem^.ThreadID := PortalThread.ThreadID;
 //        New(PRItem);
 //        PRItem.UserName := asWideString['user'];
 //        PRItem.Gateway := asString['Address'] + ':' + asString['Port'];
@@ -6675,18 +6947,13 @@ begin
           SetStatusString('Готов к подключению');
       end;
     end;
-
-    DoGetDeviceState(eAccountUserName.Text,
-      LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll])),
-      eAccountPassword.Text,
-      asWideString['user']);
   end;
 end;
 
 procedure TMainForm.rGetHostLockedStateRequestAborted(Sender: TRtcConnection;
   Data, Result: TRtcValue);
 begin
-  XLog('rGetHostLockedStateRequestAborted');
+//  XLog('rGetHostLockedStateRequestAborted');
 
 //  SendLockedStateToGateway();
 end;
@@ -6694,7 +6961,7 @@ end;
 procedure TMainForm.rGetHostLockedStateReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 begin
-  XLog('rGetHostLockedStateReturn');
+//  XLog('rGetHostLockedStateReturn');
 
   if Result.isType = rtc_Exception then
   begin
@@ -6726,7 +6993,7 @@ var
   ThisThreadID: DWORD;
   timeout: DWORD;
 begin
-  XLog('ForceForegroundWindow');
+//  XLog('ForceForegroundWindow');
 
   if IsIconic(hwnd) then
     ShowWindow(hwnd, SW_RESTORE);
@@ -6845,7 +7112,7 @@ end;
 procedure TMainForm.resHostLoginReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 begin
-  XLog('resHostLoginReturn');
+//  XLog('resHostLoginReturn');
 
   if Result.isType = rtc_Exception then
   begin
@@ -6872,7 +7139,7 @@ procedure TMainForm.resHostPingReturn(Sender: TRtcConnection; Data,
 var
   i: Integer;
 begin
-  XLog('resHostPingReturn');
+//  XLog('resHostPingReturn');
 
   if Result.isType = rtc_Exception then
   begin
@@ -6904,9 +7171,13 @@ begin
 //    finally
 //      CS_GW.Release;
 //    end;
-    PClient.Disconnect;
-    PClient.Active := False;
-    tPClientReconnect.Enabled := True;
+    if (PClient.LoginUserName <> '')
+      and (PClient.LoginUserName <> '') then
+    begin
+      PClient.Disconnect;
+      PClient.Active := False;
+      tPClientReconnect.Enabled := True;
+    end;
 //    CloseAllActiveUI;
 //
 //    for i := 0 to GatewayClientsList.Count - 1 do
@@ -6946,7 +7217,7 @@ var
   i: Integer;
   fname: String;
 begin
-  XLog('resHostTimerReturn');
+//  XLog('resHostTimerReturn');
 
   if Result.isType = rtc_Exception then
   begin
@@ -7254,7 +7525,7 @@ procedure TMainForm.N6Click(Sender: TObject);
 var
   Dir: String;
 begin
-  XLog('N6Click');
+//  XLog('N6Click');
 
   if DirectoryExists(ExtractFilePath(Application.ExeName) + RTC_LOG_FOLDER) then
   begin
@@ -7270,14 +7541,14 @@ end;
 
 procedure TMainForm.nCopyPassClick(Sender: TObject);
 begin
-  XLog('nCopyPassClick');
+//  XLog('nCopyPassClick');
 
   Clipboard.asText := ePassword.Text;
 end;
 
 procedure TMainForm.nNewRandomPassClick(Sender: TObject);
 begin
-  XLog('nNewRandomPassClick');
+//  XLog('nNewRandomPassClick');
 
   GeneratePassword;
   SendPasswordsToGateway;
@@ -7317,50 +7588,39 @@ begin
   Result := Node;//Should Return Nil if the index is not reached.
 end;
 
-procedure TMainForm.rActivateRequestAborted(Sender: TRtcConnection; Data,
-  Result: TRtcValue);
-begin
-  xLog('rActivateRequestAborted');
-//   lblStatus.Caption := Result.asException;
-
-  SetStatusString('Сервер недоступен');
-  if (not tHcAccountsReconnect.Enabled)
-    and (not isClosing) then
-    tHcAccountsReconnect.Enabled := True;
-  SetConnectedState(False);
-end;
-
 procedure TMainForm.ActivateHost;
 var
   HWID : THardwareId;
 begin
-  xLog('ActivateHost');
+//  xLog('ActivateHost');
+
+  ActivationInProcess := True;
 
   CS_ActivateHost.Acquire;
   try
   //  StartHostLogin;
 
-    SetStatus(0);
+//    SetStatus(STATUS_NO_CONNECTION);
+//
+//    xLog('ActivateHost IsInternetConnected 1');
+//
+//    if not IsInternetConnected then
+//      Exit
+//    else
+      SetStatus(STATUS_ACTIVATING_ON_MAIN_GATE);
 
-    xLog('ActivateHost IsInternetConnected 1');
-
-    if not IsInternetConnected then
-      Exit
-    else
-      SetStatus(1);
-
-    xLog('ActivateHost IsInternetConnected 2');
+//    xLog('ActivateHost IsInternetConnected 2');
 
   //  if ProxyOption = 'Automatic' then
   //  begin
   //    SetStatusString('Определение прокси-сервера', True);
   //    SetProxyFromIE;
   //  end;
-    SetStatus(2);
+//    SetStatus(2);
 
-    xLog('ActivateHost SetStatus 2');
+//    xLog('ActivateHost SetStatus 2');
 
-    SetStatusString('Активация Vircess', True);
+    SetStatusString('Активация Remox', True);
 
   //  if cmAccounts.Data = nil then
   //    Exit;
@@ -7413,15 +7673,37 @@ begin
   end;
 end;
 
+procedure TMainForm.rActivateRequestAborted(Sender: TRtcConnection; Data,
+  Result: TRtcValue);
+begin
+//  xLog('rActivateRequestAborted');
+
+  if not ActivationInProcess then
+    Exit;
+
+//   lblStatus.Caption := Result.asException;
+
+  SetStatusString('Сервер недоступен');
+  if (not tHcAccountsReconnect.Enabled)
+    and (not isClosing) then
+    tHcAccountsReconnect.Enabled := True;
+  SetConnectedState(False);
+
+  ActivationInProcess := False;
+end;
+
 procedure TMainForm.rActivateReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 var
   i: Integer;
   PassRec: TRtcRecord;
-  ConsoleName: String;
-  CurPass: String;
+  ConsoleName, CurPass, sUserName, sConsoleName: String;
 begin
-  xLog('rActivateReturn');
+//  xLog('rActivateReturn');
+
+  if not ActivationInProcess then
+    Exit;
+
 //  if LoggedIn then  //Доделать. Зачем это?
 //    Exit
 //  else
@@ -7454,8 +7736,8 @@ begin
       if asBoolean['Result'] = True then
       begin
         tHcAccountsReconnect.Enabled := False;
-        eUserName.Text := '';
-        eConsoleID.Text := '';
+        sUserName := '';
+        sConsoleName := '';
 
         if IsWinServer then
         begin
@@ -7465,17 +7747,20 @@ begin
           for i := 1 to Length(RealName) do
             if (i <> 1)
               and ((i - 1) mod 3 = 0) then
-              eUserName.Text := eUserName.Text + ' ' + RealName[i]
+              sUserName := sUserName + ' ' + RealName[i]
             else
-              eUserName.Text := eUserName.Text + RealName[i];
+              sUserName := sUserName + RealName[i];
 
           ConsoleName := IntToStr(asInteger['ID_Console']);
           for i := 1 to Length(ConsoleName) do
             if (i <> 1)
               and ((i - 1) mod 3 = 0) then
-              eConsoleID.Text := eConsoleID.Text + ' ' + ConsoleName[i]
+              sConsoleName := sConsoleName + ' ' + ConsoleName[i]
             else
-              eConsoleID.Text := eConsoleID.Text + ConsoleName[i];
+              sConsoleName := sConsoleName + ConsoleName[i];
+
+          eUserName.Text := sUserName;
+          eConsoleID.Text := sConsoleName;
         end
         else
         if IsServiceStarting(RTC_HOSTSERVICE_NAME)
@@ -7488,9 +7773,11 @@ begin
           for i := 1 to Length(ConsoleName) do
             if (i <> 1)
               and ((i - 1) mod 3 = 0) then
-              eUserName.Text := eUserName.Text + ' ' + ConsoleName[i]
+              sUserName := sUserName + ' ' + ConsoleName[i]
             else
-              eUserName.Text := eUserName.Text + ConsoleName[i];
+              sUserName := sUserName + ConsoleName[i];
+
+          eUserName.Text := sUserName;
         end
         else
         begin
@@ -7501,9 +7788,11 @@ begin
           for i := 1 to Length(ConsoleName) do
             if (i <> 1)
               and ((i - 1) mod 3 = 0) then
-              eUserName.Text := eUserName.Text + ' ' + RealName[i]
+              sUserName := sUserName + ' ' + RealName[i]
             else
-              eUserName.Text := eUserName.Text + RealName[i];
+              sUserName := sUserName + RealName[i];
+
+          eUserName.Text := sUserName;
         end;
 
           PClient.Disconnect;
@@ -7523,16 +7812,16 @@ begin
         SetStatusString('Подключение к серверу...', True);
 
         SetConnectedState(True);
-        SetStatus(3);
+        SetStatus(STATUS_CONNECTING_TO_GATE);
   //      LoggedIn := True;
 
   //      ConnectToGateway;
-        if cbRememberAccount.Checked then
-          btnAccountLoginClick(nil);
+//        if cbRememberAccount.Checked then
+//          btnAccountLoginClick(nil);
 
-        SetStatusString('Готов к подключению');
+//        SetStatusString('Готов к подключению');
 
-        SetStatus(4);
+//        SetStatus(4);
 
 //        pingTimer.Enabled := True;
 //        HostPingTimer.Enabled := True;
@@ -7593,10 +7882,12 @@ begin
       end
       else
       begin
-        SetStatusString('Сервер Vircess не найден');
-        SetStatus(1);
+        SetStatusString('Сервер Remox не найден');
+        SetStatus(STATUS_ACTIVATING_ON_MAIN_GATE);
         SetConnectedState(False);
       end;
+
+  ActivationInProcess := False;
 end;
 
 procedure TMainForm.SendPasswordsToGateway();
@@ -7604,7 +7895,7 @@ var
   PassRec: TRtcRecord;
   CurPass: String;
 begin
-  XLog('SendPasswordsToGateway');
+//  XLog('SendPasswordsToGateway');
 
   PassRec := TRtcRecord.Create;
   try
@@ -7635,9 +7926,27 @@ begin
   end;
 end;
 
+procedure TMainForm.ser_Execute(AContext: TIdContext);
+var
+  s, f, t: String;
+begin
+  s := AContext.Connection.Socket.ReadLn(IndyTextEncoding(IdTextEncodingType.encOSDefault));
+  try
+    if copy(s, 1, 7) = 'copy_f:' then
+    begin
+      delete(s, 1, 7);
+      T_ := s;
+      tFileSend.Enabled := True;
+    end;
+
+  finally
+    AContext.Connection.Disconnect;
+  end;
+end;
+
 procedure TMainForm.SendLockedStateToGateway;
 begin
-  XLog('SendLockedStateToGateway');
+//  XLog('SendLockedStateToGateway');
 
   //Хост должен быть включен в клиенте только если не запущена служба на десктопной версии или если сервер
   if IsWinServer
@@ -7670,7 +7979,7 @@ end;
 
 procedure TMainForm.rbDesktopControlClick(Sender: TObject);
 begin
-  XLog('rbDesktopControlClick');
+//  XLog('rbDesktopControlClick');
 
   rbFileTrans.Checked := False;
 //  rbChat.Checked := False;
@@ -7678,7 +7987,7 @@ end;
 
 procedure TMainForm.rbFileTransClick(Sender: TObject);
 begin
-  XLog('rbFileTransClick');
+//  XLog('rbFileTransClick');
 
   rbDesktopControl.Checked := False;
 //  rbChat.Checked := False;
@@ -7687,7 +7996,7 @@ end;
 procedure TMainForm.rDeleteDeviceReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 begin
-  XLog('rDeleteDeviceReturn');
+//  XLog('rDeleteDeviceReturn');
 
   if Result.asString = 'OK' then
   begin
@@ -7697,6 +8006,12 @@ begin
   end;
 end;
 
+procedure TMainForm.resLoginRequestAborted(Sender: TRtcConnection; Data,
+  Result: TRtcValue);
+begin
+  btnAccountLogin.Enabled := True;
+end;
+
 procedure TMainForm.resLoginReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 var
@@ -7704,7 +8019,7 @@ var
   GroupNode, Node: PVirtualNode;
   DData: PDeviceData;
 begin
-  xLog('resLoginReturn');
+//  xLog('resLoginReturn');
 
   if Result.isType = rtc_Exception then
   begin
@@ -7844,12 +8159,14 @@ begin
 
 //    HostPingTimer.Enabled := True;
   end;
+
+  btnAccountLogin.Enabled := True;
 end;
 
 procedure TMainForm.resLogoutReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 begin
-  xLog('resLogoutReturn');
+//  xLog('resLogoutReturn');
 
   AccountLogOut(nil);
 end;
@@ -7880,7 +8197,7 @@ var
   PassRec: TRtcRecord;
   CurPass: String;
 begin
-  XLog('msgHostTimerTimer');
+//  XLog('msgHostTimerTimer');
 
   //Хост должен быть включен в клиенте только если не запущена служба на десктопной версии или если сервер
   //Служба работате в другом модуле
@@ -7940,7 +8257,7 @@ end;
 procedure TMainForm.resTimerLoginReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 begin
-  xLog('resTimerLoginReturn');
+//  xLog('resTimerLoginReturn');
 
   if Result.isType = rtc_Exception then
     begin
@@ -7992,7 +8309,7 @@ var
   FWin: TrdFileTransfer;
 //  GatewayRec: PGatewayRec;
 begin
-  xLog('PFileTransExplorerNewUI');
+//  xLog('PFileTransExplorerNewUI');
 
   FWin := TrdFileTransfer.Create(nil);
   FWin.OnUIOpen := OnUIOpen;
@@ -8052,7 +8369,7 @@ var
   FWin: TrdFileTransferLog;
 //  GatewayRec: PGatewayRec;
 begin
-  xLog('PFileTransferLogUI');
+//  xLog('PFileTransferLogUI');
 
   FWin := TrdFileTransferLog.Create(nil);
   FWin.OnUIOpen := OnUIOpen;
@@ -8109,7 +8426,7 @@ end;
 
 procedure TMainForm.pingTimerTimer(Sender: TObject);
 begin
-  xLog('pingTimerTimer');
+//  xLog('pingTimerTimer');
 
 //  pingTimer.Enabled := False;
 
@@ -8130,7 +8447,7 @@ end;
 
 procedure TMainForm.pmIconMenuPopup(Sender: TObject);
 begin
-  xLog('pmIconMenuPopup');
+//  xLog('pmIconMenuPopup');
 
   // Hack to fix the "by design" behaviour of popups from notification area icons.
   // See: http://support.microsoft.com/kb/135788
@@ -8143,7 +8460,7 @@ var
   CWin: TrdChatForm;
 //  GatewayRec: PGatewayRec;
 begin
-  xLog('PChatNewUI');
+//  xLog('PChatNewUI');
 
   CWin := TrdChatForm.Create(nil);
   CWin.OnUIOpen := OnUIOpen;
@@ -8200,7 +8517,7 @@ end;
 // Called after a successful login (not after LoadGatewayParams)
 procedure TMainForm.PClientLogIn(Sender: TAbsPortalClient);
 begin
-  xLog('PClientLogIn: ' + Sender.Name);
+//  xLog('PClientLogIn: ' + Sender.Name);
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': PClientLogIn'));
 
 //  if assigned(Options) and Options.Visible then
@@ -8213,8 +8530,13 @@ begin
   DragAcceptFiles(Handle, False);
 
   if (Sender = PClient)
-    and (GetStatus = 4) then
-    SetStatus(5);
+    and (GetStatus = STATUS_CONNECTING_TO_GATE) then
+  begin
+    SetStatus(STATUS_READY);
+
+    if cbRememberAccount.Checked then
+      btnAccountLoginClick(nil);
+  end;
 
 //  lblStatus.Caption := 'Подключен как "' + eUserName.Text + '".';
 //  lblStatus.Update;
@@ -8227,7 +8549,7 @@ end;
 
 procedure TMainForm.PClientParams(Sender: TAbsPortalClient; const Data: TRtcValue);
   begin
-  xLog('PClientParams');
+//  xLog('PClientParams');
 
 //  if xAdvanced.Checked then
 //    begin
@@ -8254,7 +8576,7 @@ procedure TMainForm.PClientParams(Sender: TAbsPortalClient; const Data: TRtcValu
 
 procedure TMainForm.PClientStart(Sender: TAbsPortalClient; const Data: TRtcValue);
 begin
-  xLog('PClientStart: ' + Sender.Name);
+//  xLog('PClientStart: ' + Sender.Name);
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': PClientStart'));
 
 //  if Pages.ActivePage<>Page_Hosting then
@@ -8296,7 +8618,7 @@ procedure TMainForm.CloseAllActiveUI;
 var
   i: Integer;
 begin
-  xLog('CloseAllActiveUI');
+//  xLog('CloseAllActiveUI');
   CS_GW.Acquire;
   try
     i := PortalConnectionsList.Count - 1;
@@ -8312,12 +8634,15 @@ begin
     CS_GW.Release;
   end;
 
-  if (OpenedModalForm <> nil) then
+  if (OpenedModalForm <> nil)
+    and OpenedModalForm.Showing
+    and (not (OpenedModalForm is TrdClientSettings))
+      and (not (OpenedModalForm is TfAboutForm)) then
   begin
-    xLog('OpenedModalForm Close Start');
-    OpenedModalForm.Hide;
+//    xLog('OpenedModalForm Close Start');
+    OpenedModalForm.Close;
     OpenedModalForm := nil;
-    xLog('OpenedModalForm Close End');
+//    xLog('OpenedModalForm Close End');
   end;
 
 //  for i := 0 to Screen.Forms.cou - 1 do
@@ -8334,12 +8659,12 @@ end;
 
 procedure TMainForm.PClientLogOut(Sender: TAbsPortalClient);
 begin
-  xLog('PClientLogOut: ' + Sender.Name);
+//  xLog('PClientLogOut: ' + Sender.Name);
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': PClientLogOut'));
 
   if (Sender = PClient)
-    and (GetStatus = 5) then
-    SetStatus(4);
+    and (GetStatus = STATUS_READY) then
+    SetStatus(STATUS_CONNECTING_TO_GATE);
 
 //  SetStatusStringDelayed('Готов к подключению', 2000);
 
@@ -8379,7 +8704,7 @@ end;
 
 procedure TMainForm.PClientFatalError(Sender: TAbsPortalClient; const Msg:string);
 begin
-  xLog('PClientFatalError: ' + Sender.Name + ': ' + Msg);
+//  xLog('PClientFatalError: ' + Sender.Name + ': ' + Msg);
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': PClientFatalError ' + Msg));
 
   TRtcHttpPortalClient(Sender).Disconnect;
@@ -8426,7 +8751,7 @@ end;
 
 procedure TMainForm.PClientError(Sender: TAbsPortalClient; const Msg:string);
 begin
-  xLog('PClientError: ' + Sender.Name + ': ' + Msg);
+//  xLog('PClientError: ' + Sender.Name + ': ' + Msg);
 //  Memo1.Lines.Add('PClientError: ' + Sender.Name + ': ' + Msg);
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': PClientError ' + Msg));
 
@@ -8539,7 +8864,7 @@ procedure TMainForm.PModuleUserLeft(Sender: TRtcPModule; const user:string);
     a,i:integer;
 //    uinfo:TRtcRecord;
   begin
-  xLog('PModuleUserLeft');
+//  xLog('PModuleUserLeft');
 
   if Sender is TRtcPFileTransfer then
     s:='Передача файлов'
@@ -8600,7 +8925,7 @@ procedure TMainForm.PModuleUserLeft(Sender: TRtcPModule; const user:string);
 
 procedure TMainForm.btnGatewayClick(Sender: TObject);
 begin
-  xLog('btnGatewayClick');
+//  xLog('btnGatewayClick');
 
   ShowSettingsForm('tsNetwork');
 end;
@@ -8611,7 +8936,7 @@ var
   s: String;
   sett: TrdClientSettings;
 begin
-  xLog('ShowSettingsForm');
+//  xLog('ShowSettingsForm');
 
   sett := TrdClientSettings.Create(Self);
   try
@@ -8627,6 +8952,7 @@ begin
     sett.ePasswordConfirm.Text := RegularPassword;
     sett.cbStoreHistory.Checked := StoreHistory;
     sett.cbStorePasswords.Checked := StorePasswords;
+
   //    sett.cbOnlyAdminChanges.Checked := OnlyAdminChanges;
     for i := 0 to sett.tcSettings.PageCount - 1 do
       if sett.tcSettings.Pages[i].Name = APage then
@@ -8707,21 +9033,21 @@ end;}
 //  begin
 //    Reg.OpenKey('Software\Microsoft\Windows\CurrentVersion\Run', False);
 ////      else reg.OpenKey('SOFTWARE\Microsoft\Windows\CurrentVersion\Run',False);
-//    Reg.WriteString('Vircess', AppFileName + ' -SILENT');
+//    Reg.WriteString('Remox', AppFileName + ' -SILENT');
 //    Reg.CloseKey
 //  end
 //  else
 //  begin
 //     Reg.OpenKey('Software\Microsoft\Windows\CurrentVersion\Run', False);
 ////         else Reg.OpenKey('SOFTWARE\Microsoft\Windows\CurrentVersion\Run',False);
-//    Reg.DeleteValue('Vircess');
+//    Reg.DeleteValue('Remox');
 //  end;
 //  Reg.Free
 //end;
 
 procedure TMainForm.PClientStatusPut(Sender: TAbsPortalClient; Status: TRtcPHttpConnStatus);
 begin
-  xLog('PClientStatusPut');
+//  xLog('PClientStatusPut');
 
   if csDestroying in ComponentState then
     Exit;
@@ -8729,7 +9055,7 @@ begin
   case status of
     rtccClosed:
     begin
-      xLog('PClientStatusPut: ' + Sender.Name + ': rtccClosed');
+//      xLog('PClientStatusPut: ' + Sender.Name + ': rtccClosed');
       sStatus1.Brush.Color := clGray;
 //      if not isClosing then
 //      begin
@@ -8739,7 +9065,7 @@ begin
     end;
     rtccOpen:
     begin
-      xLog('PClientStatusPut: ' + Sender.Name + ': rtccOpen');
+//      xLog('PClientStatusPut: ' + Sender.Name + ': rtccOpen');
       sStatus1.Brush.Color := clNavy;
     end;
     rtccSending:
@@ -8777,7 +9103,7 @@ procedure TMainForm.PClientUserLoggedIn(Sender: TAbsPortalClient;
     // uinfo:TRtcRecord;
 //    UName:String;
 begin
-  xLog('PClientUserLoggedIn: ' + Sender.Name);
+//  xLog('PClientUserLoggedIn: ' + Sender.Name);
 //  if User = eUserName.Text then //LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]));
 //    Exit;
 
@@ -8834,7 +9160,7 @@ procedure TMainForm.PClientUserLoggedOut(Sender: TAbsPortalClient;
 //    // uinfo:TRtcRecord;
 //    UName:String;
 begin
-  xLog('PClientUserLoggedOut: ' + Sender.Name);
+//  xLog('PClientUserLoggedOut: ' + Sender.Name);
 //  UName:=User;
   {Read comments in the above (PClientUserLoggedIn) method
    for more information on using the "RemoteUserInfo" property.
@@ -8878,7 +9204,7 @@ end;
 
 procedure TMainForm.PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttpConnStatus);
   begin
-  xLog('PClientStatusGet');
+//  xLog('PClientStatusGet');
 
   if csDestroying in ComponentState then
     Exit;
@@ -8886,7 +9212,7 @@ procedure TMainForm.PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttp
   case status of
     rtccClosed:
       begin
-      xLog('PClientStatusGet: ' + Sender.Name + ': rtccClosed');
+//      xLog('PClientStatusGet: ' + Sender.Name + ': rtccClosed');
       sStatus2.Brush.Color:=clRed;
       sStatus2.Pen.Color:=clMaroon;
 //      if not isClosing then
@@ -8897,7 +9223,7 @@ procedure TMainForm.PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttp
       end;
     rtccOpen:
     begin
-      xLog('PClientStatusGet: ' + Sender.Name + ': rtccOpen');
+//      xLog('PClientStatusGet: ' + Sender.Name + ': rtccOpen');
       sStatus2.Brush.Color:=clNavy;
     end;
     rtccSending:
@@ -8929,7 +9255,7 @@ function TMainForm.GetPendingItemByUserName(uname, action: String): PPendingRequ
 var
   i: Integer;
 begin
-  xLog('GetPendingItemByUserName');
+//  xLog('GetPendingItemByUserName');
 
   Result := nil;
 
@@ -8951,7 +9277,7 @@ function TMainForm.PartnerIsPending(uname, action: String): Boolean;
 var
   i: Integer;
 begin
-  xLog('PartnerIsPending');
+//  xLog('PartnerIsPending');
 
   Result := False;
 
@@ -8973,7 +9299,7 @@ function TMainForm.UIIsPending(username: String): Boolean;
 var
   i: Integer;
 begin
-  xLog('UIIsPending');
+//  xLog('UIIsPending');
 
   Result := False;
 
@@ -8990,25 +9316,27 @@ begin
   end;
 end;
 
-procedure TMainForm.AddPendingRequest(uname, action, gateway: String; ThreadID: Cardinal);
+function TMainForm.AddPendingRequest(uname, action: String): PPendingRequestItem;
 var
   PRItem: PPendingRequestItem;
 begin
-  xLog('AddPendingRequest');
+//  xLog('AddPendingRequest');
 
   CS_Pending.Acquire;
   try
     New(PRItem);
     PRItem.UserName := uname;
     PRItem.Action := action;
-    PRItem.Gateway := gateway;
-    ThreadID := ThreadID;
+//    PRItem.Gateway := gateway;
+//    ThreadID := ThreadID;
     PendingRequests.Add(PRItem);
   finally
     CS_Pending.Release;
   end;
 
   UpdatePendingStatus;
+
+  Result := PRItem;
 end;
 
 function TMainForm.GetCurrentPendingItemUserName: String;
@@ -9040,7 +9368,7 @@ procedure TMainForm.DeletePendingRequest(uname, action: String);
 var
   i: Integer;
 begin
-  xLog('DeletePendingRequest');
+//  xLog('DeletePendingRequest');
 
   CS_Pending.Acquire;
   try
@@ -9067,7 +9395,7 @@ function TMainForm.PartnerIsPending(uname, action, gateway: String): Boolean;
 var
   i: Integer;
 begin
-  xLog('PartnerIsPending');
+//  xLog('PartnerIsPending');
 
   Result := False;
 
@@ -9090,7 +9418,7 @@ function TMainForm.PartnerIsPending(uname: String): Boolean;
 var
   i: Integer;
 begin
-  xLog('PartnerIsPending');
+//  xLog('PartnerIsPending');
 
   Result := False;
 
@@ -9111,7 +9439,7 @@ procedure TMainForm.DeletePendingRequestByItem(Item: PPendingRequestItem);
 var
   i: Integer;
 begin
-  xLog('DeletePendingRequestByItem');
+//  xLog('DeletePendingRequestByItem');
 
   CS_Pending.Acquire;
   try
@@ -9133,7 +9461,7 @@ procedure TMainForm.DeletePendingRequests(uname: String);
 var
   i: Integer;
 begin
-  xLog('DeletePendingRequests');
+//  xLog('DeletePendingRequests');
 
   CS_Pending.Acquire;
   try
@@ -9159,7 +9487,7 @@ procedure TMainForm.DeleteAllPendingRequests;
 var
   i: Integer;
 begin
-  xLog('DeleteAllPendingRequests');
+//  xLog('DeleteAllPendingRequests');
 
   CS_Pending.Acquire;
   try
@@ -9190,7 +9518,7 @@ end;
 
 procedure TMainForm.OnUIOpen(UserName, Action: String; var IsPending: Boolean);
 begin
-  xLog('OnUIOpen');
+//  xLog('OnUIOpen');
 
   if IsClosing then
     Exit;
@@ -9208,7 +9536,7 @@ end;
 
 procedure TMainForm.OnUIClose(AThreadId: Cardinal);
 begin
-  xLog('OnUIClose');
+  //xLog('OnUIClose');
 
 //  if IsClosing then
 //    Exit;
@@ -9220,7 +9548,7 @@ end;
 
 function TMainForm.GetPendingRequestsCount: Integer;
 begin
-  xLog('GetPendingRequestsCount');
+  //xLog('GetPendingRequestsCount');
 
   CS_Pending.Acquire;
   try
@@ -9232,7 +9560,7 @@ end;
 
 procedure TMainForm.UpdatePendingStatus;
 begin
-  xLog('UpdatePendingStatus');
+  //xLog('UpdatePendingStatus');
 
   CS_Status.Acquire;
   try
@@ -9291,7 +9619,7 @@ procedure TMainForm.PDesktopControlNewUI(Sender: TRtcPDesktopControl; const user
   CDesk: TrdDesktopViewer;
 //  GatewayRec: PGatewayRec;
 begin
-  xLog('PDesktopControlNewUI');
+  //xLog('PDesktopControlNewUI');
 
   CDesk := TrdDesktopViewer.Create(nil);
   CDesk.OnUIOpen := OnUIOpen;
@@ -9302,7 +9630,7 @@ begin
   if Assigned(CDesk) then
   begin
 //    GatewayRec := GetGatewayRecByDesktopControl(Sender);
-//    CDesk.PFileTrans := GatewayRec.FileTransfer^;
+//    CDesk.PFileTrans := GatewayRec^.FileTransfer^;
 //    CDesk.PChat := GatewayRec.Chat^;
 
     CDesk.UI.MapKeys := True;
@@ -9371,7 +9699,7 @@ end;
 
 procedure TMainForm.PDesktopHostHaveScreeenChanged(Sender: TObject);
 begin
-  xLog('PDesktopHostHaveScreeenChanged');
+  //xLog('PDesktopHostHaveScreeenChanged');
 
   tCheckLockedStateTimer(nil);
 end;
@@ -9386,7 +9714,7 @@ procedure TMainForm.FormShow(Sender: TObject);
 var
   i: Integer;
 begin
-  xLog('FormShow');
+  //xLog('FormShow');
 
 //  if not SilentMode then
 //  begin
@@ -9403,7 +9731,7 @@ procedure TMainForm.WMQueryEndSession(var Msg: TWMQueryEndSession);
 var
   i: Integer;
 begin
-  xLog('WMQueryEndSession');
+  //xLog('WMQueryEndSession');
 
  //  AccountLogOut(Self);
 //  HostLogOut;
@@ -9551,14 +9879,14 @@ end;
 
 procedure TMainForm.cbCloseClick(Sender: TObject);
 begin
-  xLog('cbCloseClick');
+  //xLog('cbCloseClick');
 
   Close;
 end;
 
 procedure TMainForm.cbMinClick(Sender: TObject);
 begin
-  xLog('cbMinClick');
+  //xLog('cbMinClick');
 
   Application.Minimize;
 end;
@@ -9672,7 +10000,7 @@ end;}
 
 procedure TMainForm.WMDragFullWindows_Message(var Message: TMessage);
 begin
-  xLog('WMDragFullWindows_Message');
+//  xLog('WMDragFullWindows_Message');
 
   if Message.WParam = 0 then
     EnableDragFullWindows
@@ -9686,7 +10014,7 @@ end;
 
 procedure DisablePowerChanges;
 begin
-  xLog('DisablePowerChanges');
+//  xLog('DisablePowerChanges');
 
   if not PowerStateSaved then
   begin
@@ -9706,7 +10034,7 @@ end;
 
 procedure RestorePowerChanges;
 begin
-  xLog('RestorePowerChanges');
+//  xLog('RestorePowerChanges');
 
   if PowerStateSaved then
   begin
@@ -9723,7 +10051,7 @@ procedure TMainForm.EnableDragFullWindows;
 var
   CurrentDragFullWindows, res: Boolean;
 begin
-  xLog('EnableDragFullWindows');
+//  xLog('EnableDragFullWindows');
 
   if not ChangedDragFullWindows then
   begin
@@ -9740,7 +10068,7 @@ procedure TMainForm.RestoreDragFullWindows;
 var
   res: Boolean;
 begin
-  xLog('RestoreDragFullWindows');
+//  xLog('RestoreDragFullWindows');
 
   if not ChangedDragFullWindows then
     Exit;
@@ -9751,6 +10079,182 @@ begin
   ChangedDragFullWindows := False;
 end;
 
+//+++++++++++++++++++++++++++++++++++++++++++++++CLIPBOARD COPYING+++++++++++++++++++++++++++++++++++++++++++++++//
+function GetFileSize(const FileName: String): LongInt;
+var
+  SearchRec: TSearchRec;
+begin
+  if FindFirst(ExpandFileName(FileName), faAnyFile, SearchRec) = 0 then
+    result := SearchRec.size
+  else
+    result := -1;
+  FindClose(SearchRec);
+end;
+
+procedure TMainForm.tGetDirectorySizeTimer(Sender: TObject);
+var s,_: string;
+    i: integer;
+
+ function getDirSize(d: String): Int64;
+ var
+    ff: TStringDynArray; s: String;
+ begin
+    result := 0;
+    ff := TDirectory.GetFiles(d, '*', TSearchOption.soAllDirectories);
+    for s in ff do
+    begin
+      Application.ProcessMessages;
+      result:= result + GetFileSize(s)
+    end;
+ end;
+
+begin
+  tGetDirectorySize.Enabled:= False;
+  try
+    s:= '';
+    for i:=0 to high(bf) do
+    begin
+      Application.ProcessMessages;
+
+      s:= s + bf[i];
+      if i < high(bf) then
+         s:= s + '|';
+
+      if directoryExists(bf[i]) then
+        _:= _ + bf[i] + '*' + getDirsize(bf[i]).tostring
+      else
+        _:= _ + bf[i] + '*' + getfilesize(bf[i]).tostring;
+
+      if i < high(bf) then
+         _:= _ + '|';
+    end;
+
+    cle_.Host := HOST_IP;
+    cle_.Connect;
+    try
+      cle_.Socket.WriteLn('f:' + s, IndyTextEncoding(IdTextEncodingType.encOSDefault));
+      cle_.Socket.WriteLn('s:' + _, IndyTextEncoding(IdTextEncodingType.encOSDefault));
+    finally
+      cle_.Disconnect;
+    end;
+  except
+  end;
+end;
+
+procedure TMainForm.tFileSendTimer(Sender: TObject);
+var ff: TStringList;
+  s: String;
+  cn, i: Integer;
+  h: HWND;
+begin
+  tFileSend.Enabled:= False;
+
+  if FindWindow('TrdFileBrowser', nil) <> 0 then
+  begin
+    ff := TStringList.Create;
+    for i := 0 to High(bf) do
+      ff.Add(bf[i]);
+
+    h := FindWindow('TrdFileTransfer',nil);
+    if h <> 0 then
+      SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE or SWP_NOMOVE);
+
+    for i := 0 to ff.count - 1 do
+//    if FileExists(ff[i]) or
+//      (DirectoryExists(ff[i])) then
+//      MyUI.Send(ff[i], T_);
+    ff.free;
+
+    if h <> 0 then
+      SetWindowPos(h, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE or SWP_NOMOVE);
+  end
+  else
+    MessageBox(Handle, PChar('Вначале включите режим передачи файлов "File Explorer"'), 'Remox', MB_TOPMOST + MB_ICONWARNING + MB_OK);
+end;
+
+procedure TMainForm.WMChangeCbChain(var Message: TWMChangeCBChain);
+begin
+  with Message do
+  begin
+    // If the next window is closing, repair the chain.
+    if Remove = hwndNextViewer then
+      hwndNextViewer := Next
+    // Otherwise, pass the message to the next link.
+    else
+      if hwndNextViewer <> 0 then
+        SendMessage(hwndNextViewer, Msg, Remove, Next);
+  end;
+end;
+
+procedure TMainForm.WMDrawClipboard(var Message: TMessage);
+var
+  i: Integer;
+begin
+  try
+    bf:= cf_(nil);
+    if high(bf)>-1 then
+    begin
+      setlength(bf_,length(bf));
+      for i:=0 to high(bf) do
+        bf_[i]:= bf[i];
+    end
+    else
+    begin
+      setlength(bf,length(bf_));
+      for i:=0 to high(bf_) do
+        bf[i]:= bf_[i];
+    end;
+  except
+  end;
+
+  with Message do
+   SendMessage(hwndNextViewer, Msg, WParam, LParam);
+end;
+
+function TMainForm.cf_(Sender: TObject): TStringDynArray;
+var
+  f: THandle;
+  buffer: array [0..MAX_PATH] of Char;
+  i, numFiles: Integer;
+begin
+  setLength(result, 0);
+
+  try
+    try
+      Clipboard.Open;
+    except
+    end;
+    try
+      f := Clipboard.GetAsHandle(CF_HDROP);
+      if f <> 0 then
+      begin
+        numFiles := DragQueryFile(f, $FFFFFFFF, nil, 0);
+        for i := 0 to numfiles - 1 do
+        begin
+          buffer[0] := #0;
+          DragQueryFile(f, i, buffer, SizeOf(buffer));
+
+          if fileexists(buffer) or (directoryExists(buffer)) then
+          begin
+            setLength(result, Length(result)+1);
+            result[high(result)]:= buffer;
+          end;
+        end;
+      end;
+    finally
+      try
+        Clipboard.Close;
+      except
+      end;
+
+      if length(result) > 0 then
+        if getforegroundwindow <> findwindow('TrdDesktopViewer', 'rdDesktopViewer') then
+          tGetDirectorySize.Enabled:= True;
+    end;
+  except
+  end;
+end;
+//-----------------------------------------------CLIPBOARD COPYING-----------------------------------------------//
 
 initialization
   CS_GW := TCriticalSection.Create;

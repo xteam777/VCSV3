@@ -2,8 +2,8 @@ object DeviceForm: TDeviceForm
   Left = 0
   Top = 0
   BorderStyle = bsDialog
-  Caption = #1050#1086#1084#1087#1100#1102#1090#1077#1088
-  ClientHeight = 318
+  Caption = #1059#1089#1090#1088#1086#1081#1089#1090#1074#1086
+  ClientHeight = 312
   ClientWidth = 335
   Color = clWhite
   Font.Charset = DEFAULT_CHARSET
@@ -24,7 +24,7 @@ object DeviceForm: TDeviceForm
     Width = 75
     Height = 23
     AutoSize = False
-    Caption = 'VIRCESS ID:'
+    Caption = 'Remox ID:'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -13
@@ -108,65 +108,6 @@ object DeviceForm: TDeviceForm
     TabOrder = 0
     OnKeyDown = eIDKeyDown
   end
-  object pBtnClose: TPanel
-    Left = 214
-    Top = 283
-    Width = 107
-    Height = 29
-    BevelKind = bkFlat
-    BevelOuter = bvNone
-    Color = clWhite
-    ParentBackground = False
-    TabOrder = 1
-    object bClose: TSpeedButton
-      Tag = 1
-      Left = 0
-      Top = 0
-      Width = 103
-      Height = 25
-      Align = alClient
-      Caption = #1054#1058#1052#1045#1053#1040
-      Flat = True
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = cl3DDkShadow
-      Font.Height = -13
-      Font.Name = 'Arial'
-      Font.Style = [fsBold]
-      ParentFont = False
-      OnClick = bCloseClick
-      ExplicitTop = 2
-    end
-  end
-  object pBtnOK: TPanel
-    Left = 94
-    Top = 283
-    Width = 107
-    Height = 29
-    BevelKind = bkFlat
-    BevelOuter = bvNone
-    BevelWidth = 2
-    Color = clWhite
-    ParentBackground = False
-    TabOrder = 2
-    object bOK: TSpeedButton
-      Tag = 1
-      Left = 0
-      Top = 0
-      Width = 103
-      Height = 25
-      Align = alClient
-      Caption = #1054#1050
-      Flat = True
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = cl3DDkShadow
-      Font.Height = -13
-      Font.Name = 'Arial'
-      Font.Style = [fsBold]
-      ParentFont = False
-      OnClick = bOKClick
-      ExplicitLeft = -2
-    end
-  end
   object ePassword: TEdit
     Left = 93
     Top = 37
@@ -180,7 +121,7 @@ object DeviceForm: TDeviceForm
     MaxLength = 50
     ParentFont = False
     PasswordChar = '*'
-    TabOrder = 3
+    TabOrder = 1
     OnKeyDown = eIDKeyDown
   end
   object eName: TEdit
@@ -195,7 +136,7 @@ object DeviceForm: TDeviceForm
     Font.Style = []
     MaxLength = 50
     ParentFont = False
-    TabOrder = 4
+    TabOrder = 2
     OnKeyDown = eIDKeyDown
   end
   object cbGroup: TComboBox
@@ -203,6 +144,8 @@ object DeviceForm: TDeviceForm
     Top = 97
     Width = 230
     Height = 22
+    BevelInner = bvNone
+    BevelOuter = bvNone
     Style = csOwnerDrawFixed
     Ctl3D = True
     DoubleBuffered = False
@@ -215,7 +158,7 @@ object DeviceForm: TDeviceForm
     ParentDoubleBuffered = False
     ParentFont = False
     Sorted = True
-    TabOrder = 5
+    TabOrder = 3
     OnKeyDown = eIDKeyDown
   end
   object mDescription: TMemo
@@ -229,22 +172,54 @@ object DeviceForm: TDeviceForm
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
-    TabOrder = 6
+    TabOrder = 4
     OnKeyDown = eIDKeyDown
+  end
+  object bOK: TButton
+    Left = 100
+    Top = 279
+    Width = 107
+    Height = 29
+    Caption = #1054#1050
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'Arial'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 5
+    OnClick = bOKClick
+  end
+  object bClose: TButton
+    Left = 216
+    Top = 279
+    Width = 107
+    Height = 29
+    Caption = #1054#1058#1052#1045#1053#1040
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'Arial'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 6
+    OnClick = bCloseClick
   end
   object rAddDevice: TRtcResult
     OnReturn = rAddDeviceReturn
-    Left = 6
-    Top = 280
+    RequestAborted = rAddDeviceRequestAborted
+    Left = 154
+    Top = 216
   end
   object rChangeDevice: TRtcResult
     OnReturn = rChangeDeviceReturn
-    Left = 33
-    Top = 280
+    RequestAborted = rChangeDeviceRequestAborted
+    Left = 217
+    Top = 220
   end
   object ApplicationEvents1: TApplicationEvents
     OnMessage = ApplicationEvents1Message
-    Left = 32
-    Top = 252
+    Left = 74
+    Top = 214
   end
 end

@@ -111,8 +111,8 @@ type
   end;
 
 const
-  HELPER_EXE_NAME = 'vcs_w32.exe';
-  HELPER_CONSOLE_EXE_NAME = 'vcs_x64.exe';
+  HELPER_EXE_NAME = 'rmx_w32.exe';
+  HELPER_CONSOLE_EXE_NAME = 'rmx_x64.exe';
 
 var
   VircessService: TVircessService;
@@ -236,7 +236,7 @@ begin
 //    begin
       xLog('');
       xLog('--------------------------');
-      xLog('Vircess Launcher started.');
+      xLog('Remox Launcher started.');
 //      timCheckProcess.Interval := 25;
 //      timCheckProcess.Enabled := True;
       Started := True;
@@ -425,7 +425,7 @@ begin
 //        if (len2 = len - 4 - 5) then
 //        begin
 //          s := Read_File(CfgFileName, len - 4 - 5 - len2, len2, rtc_ShareDenyNone);
-//          DeCrypt(s, 'Vircess');
+//          DeCrypt(s, 'Remox');
 //          try
 //            info := TRtcRecord.FromCode(s);
 //          except
@@ -437,7 +437,7 @@ begin
 
           if s <> '' then
           begin
-            DeCrypt(s, 'Vircess');
+            DeCrypt(s, 'Remox');
             try
               info:=TRtcRecord.FromCode(s);
             except
@@ -558,7 +558,7 @@ begin
     end
     else
     begin
-//      SetStatusString('Сервер Vircess не найден');
+//      SetStatusString('Сервер Remox не найден');
 //      SetStatus(1);
     end;
 end;
@@ -1240,7 +1240,7 @@ begin
     finally
     end;
 
-    xLog('Vircess Launcher stopped.');
+    xLog('Remox Launcher stopped.');
     Stopped := True;
 
 //    if WasRunning or (rtcGetProcessID(AppFileName,True)>0) then
@@ -1258,7 +1258,7 @@ begin
 //      PClient.Stop;
 //    end;
 
-//    xLog('Vircess Launcher stopped.');
+//    xLog('Remox Launcher stopped.');
 //    Stopped:=True;
 //  end
 //  else
@@ -1311,7 +1311,7 @@ begin
 //      UnRegisterSessionNotification(hWnd);
 
 //    if WasRunning then
-    xLog('Vircess Launcher destroyed.');
+    xLog('Remox Launcher destroyed.');
 //    end
 //  else
 //    StopMyService;
@@ -1430,7 +1430,7 @@ end;}
 //          StartProcessAsSystem(AppFileName + ' /SILENT', 'Default', p.SessionId, TTSystem)
 //        else //Если нет, то от имени пользователя
 
-{ Vircess Host Launcher implementation for Windows Vista ... }
+{ Remox Host Launcher implementation for Windows Vista ... }
 //procedure TVircess_Service.timCheckProcessTimer(Sender: TObject);
 //var
 //  iProcessID: DWORD;
@@ -1444,7 +1444,7 @@ end;}
       begin
       if WasRunning then
         begin
-        xLog('Vircess was closed, wait for Windows Explorer to close.');
+        xLog('Remox was closed, wait for Windows Explorer to close.');
         WasRunning:=False;
         WaitLoopCount:=25;
         if rtcGetProcessID('explorer.exe')<=0 then
@@ -1476,7 +1476,7 @@ end;}
         end
       else
         begin
-        xLog('STARTING a new VIRCESS instance ...');
+        xLog('STARTING a new Remox instance ...');
 //        rtcStartProcess(AppFileName+' -autorun -silent');
         rtcStartProcess(AppFileName);
         timCheckProcess.Interval:=1000;
@@ -1487,7 +1487,7 @@ end;}
       begin
       if not WasRunning then
         begin
-        xLog('VIRCESS instance is running.');
+        xLog('Remox instance is running.');
         WasRunning:=True;
         end;
       if File_Exists(ChangeFileExt(AppFileName,'.cad')) then
@@ -1509,7 +1509,7 @@ end;}
     end;}
 //end;
 
-{ Normal Vircess Host Service implementation ... }
+{ Normal Remox Host Service implementation ... }
 
 {procedure TVircess_Service.StartMyService;
 var
@@ -1527,7 +1527,7 @@ begin
       //  with higher priority running at 100% CPU time.
       RTC_THREAD_PRIORITY:=tpHigher;
 
-      xLog('CREATING VIRCESS MODULES ...');
+      xLog('CREATING Remox MODULES ...');
 
       UpdateMyPriority;
 

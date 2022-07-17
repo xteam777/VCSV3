@@ -3,7 +3,7 @@ unit uVircessTypes;
 interface
 
 uses
-  Windows, Classes, rtcInfo, Controls, Forms, Messages, rtcHttpCli,
+  Windows, Classes, rtcInfo, Controls, Forms, Messages, rtcHttpCli, rtcCliModule,
   rtcPortalHttpCli, rtcpDesktopControl, rtcpFileTrans, rtcpChat, ShellApi;
 
 type
@@ -64,6 +64,7 @@ type
   PRtcPChat = ^TRtcPChat;
 
   PRtcHttpClient = ^TRtcHttpClient;
+  yPRtcClientModule = ^TRtcClientModule;
 
 //  PGatewayRec = ^TGatewayRec;
 //  TGatewayRec = record

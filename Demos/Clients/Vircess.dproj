@@ -161,7 +161,11 @@
         <DCCReference Include="..\Modules\rdFileTransLog.pas">
             <Form>rdFileTransferLog</Form>
         </DCCReference>
-        <RcItem Include="vcs_w32.exe">
+        <DCCReference Include="..\Modules\rtcBlankOutForm.pas">
+            <Form>fmBlankoutForm</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <RcItem Include="rmx_w32.exe">
             <ContainerId>ResourceItem</ContainerId>
             <ResourceType>RCDATA</ResourceType>
             <ResourceId>HELPER</ResourceId>
@@ -195,7 +199,7 @@
                 <Platform value="Win32">True</Platform>
             </Platforms>
             <Deployment Version="3">
-                <DeployFile LocalName="vcs_w32.exe" Configuration="Debug" Class="ProjectFile">
+                <DeployFile LocalName="rmx_w32.exe" Configuration="Debug" Class="ProjectFile">
                     <Platform Name="Win32">
                         <RemoteDir>.\</RemoteDir>
                         <Overwrite>true</Overwrite>

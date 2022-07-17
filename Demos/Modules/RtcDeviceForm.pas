@@ -14,10 +14,6 @@ type
   TDeviceForm = class(TForm)
     Label6: TLabel;
     eID: TEdit;
-    pBtnClose: TPanel;
-    bClose: TSpeedButton;
-    pBtnOK: TPanel;
-    bOK: TSpeedButton;
     rAddDevice: TRtcResult;
     rChangeDevice: TRtcResult;
     Label1: TLabel;
@@ -29,6 +25,8 @@ type
     Label4: TLabel;
     mDescription: TMemo;
     ApplicationEvents1: TApplicationEvents;
+    bOK: TButton;
+    bClose: TButton;
     procedure bCloseClick(Sender: TObject);
     procedure bOKClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -39,6 +37,10 @@ type
     procedure eIDKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormDestroy(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure rAddDeviceRequestAborted(Sender: TRtcConnection; Data,
+      Result: TRtcValue);
+    procedure rChangeDeviceRequestAborted(Sender: TRtcConnection; Data,
+      Result: TRtcValue);
   private
     { Private declarations }
     FOnCustomFormClose: TOnCustomFormEvent;
@@ -102,8 +104,8 @@ end;
 
 procedure TDeviceForm.bCloseClick(Sender: TObject);
 begin
-  ModalResult := mrCancel;
   Close;
+  ModalResult := mrCancel;
 end;
 
 procedure TDeviceForm.bOKClick(Sender: TObject);
@@ -114,7 +116,7 @@ begin
   eID.Text := StringReplace(eID.Text, ' ', '', [rfReplaceAll]);
   if eID.Text = '' then
   begin
-    MessageBox(Handle, 'Не указано ID компьютера', 'VIRCESS', MB_ICONWARNING or MB_OK);
+    MessageBox(Handle, 'Не указано ID компьютера', 'Remox', MB_ICONWARNING or MB_OK);
     eID.SetFocus;
     Exit;
   end;
@@ -124,7 +126,7 @@ begin
   try
     i := StrToInt(eID.Text);
   except
-    MessageBox(Handle, 'ID компьютера может содержать только цифры', 'VIRCESS', MB_ICONWARNING or MB_OK);
+    MessageBox(Handle, 'ID компьютера может содержать только цифры', 'Remox', MB_ICONWARNING or MB_OK);
     eID.SetFocus;
     Exit;
   end;
@@ -132,59 +134,77 @@ begin
   if DData <> nil then
     if DData.UID <> UID then
     begin
-      MessageBox(Handle, 'Компьютер с указанныс ID уже присутствует в списке', 'VIRCESS', MB_ICONWARNING or MB_OK);
+      MessageBox(Handle, 'Компьютер с указанныс ID уже присутствует в списке', 'Remox', MB_ICONWARNING or MB_OK);
       eID.SetFocus;
       Exit;
     end;
 
   if Trim(eName.Text) = '' then
   begin
-    MessageBox(Handle, 'Не указано имя компьютера', 'VIRCESS', MB_ICONWARNING or MB_OK);
+    MessageBox(Handle, 'Не указано имя компьютера', 'Remox', MB_ICONWARNING or MB_OK);
     eName.SetFocus;
     Exit;
   end;
   if cbGroup.ItemIndex = -1 then
   begin
-    MessageBox(Handle, 'Не указана группа', 'VIRCESS', MB_ICONWARNING or MB_OK);
+    MessageBox(Handle, 'Не указана группа', 'Remox', MB_ICONWARNING or MB_OK);
     cbGroup.SetFocus;
     Exit;
   end;
+
+  bOK.Enabled := False;
 
   GroupUID := TDeviceGroup(cbGroup.Items.Objects[cbGroup.ItemIndex]).UID;
 
   if Mode = 'Add' then
   begin
-    with CModule^.Data.NewFunction('Account.AddDevice') do
-    begin
-      asString['User'] := user;
-      asWideString['Name'] := eName.Text;
-//      asString['UID'] := UID;
-      asString['AccountUID'] := AccountUID;
-      asString['GroupUID'] := GroupUID;
-      asInteger['DeviceID'] := StrToInt(eID.Text);
-      asWideString['Password'] := ePassword.Text;
-      asWideString['Description'] := mDescription.Lines.GetText;
+    with CModule^ do
+    try
+      with CModule^.Data.NewFunction('Account.AddDevice') do
+      begin
+        asString['User'] := user;
+        asWideString['Name'] := eName.Text;
+  //      asString['UID'] := UID;
+        asString['AccountUID'] := AccountUID;
+        asString['GroupUID'] := GroupUID;
+        asInteger['DeviceID'] := StrToInt(eID.Text);
+        asWideString['Password'] := ePassword.Text;
+        asWideString['Description'] := mDescription.Lines.GetText;
+      end;
+      Call(rAddDevice);
+    except
+      on E: Exception do
+        Data.Clear;
     end;
-    CModule^.Call(rAddDevice);
   end
   else
   begin
-    with CModule^.Data.NewFunction('Account.ChangeDevice') do
-    begin
-      asWideString['Name'] := eName.Text;
-      asString['UID'] := UID;
-      asString['AccountUID'] := AccountUID;
-      asString['GroupUID'] := GroupUID;
-      asInteger['DeviceID'] := StrToInt(eID.Text);
-      asWideString['Password'] := ePassword.Text;
-      asWideString['Description'] := mDescription.Lines.GetText;
+    with CModule^ do
+    try
+      with CModule^.Data.NewFunction('Account.ChangeDevice') do
+      begin
+        asWideString['Name'] := eName.Text;
+        asString['UID'] := UID;
+        asString['AccountUID'] := AccountUID;
+        asString['GroupUID'] := GroupUID;
+        asInteger['DeviceID'] := StrToInt(eID.Text);
+        asWideString['Password'] := ePassword.Text;
+        asWideString['Description'] := mDescription.Lines.GetText;
+      end;
+      Call(rChangeDevice);
+    except
+      on E: Exception do
+        Data.Clear;
     end;
-    CModule^.Call(rChangeDevice);
   end;
-  CModule^.WaitForCompletion(True, 1000, True);
+//  CModule^.WaitForCompletion(True, 1000, True);
 
-  ModalResult := mrOk;
-  Close;
+//  if (CModule^.LastResult.isType = rtc_String)
+//    and (CModule^.LastResult.asString = 'OK') then
+//  begin
+//    Close;
+//    ModalResult := mrOk;
+//  end;
 end;
 
 procedure TDeviceForm.eIDKeyDown(Sender: TObject; var Key: Word;
@@ -249,20 +269,42 @@ begin
   eID.SetFocus;
 end;
 
+procedure TDeviceForm.rAddDeviceRequestAborted(Sender: TRtcConnection; Data,
+  Result: TRtcValue);
+begin
+  bOK.Enabled := True;
+end;
+
 procedure TDeviceForm.rAddDeviceReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 begin
-  UID := Result.asString;
+  bOK.Enabled := True;
 
-  ModalResult := mrOk;
-  Close;
+  if (Result.isType = rtc_String) then
+  begin
+    UID := Result.asString;
+    Close;
+    ModalResult := mrOk;
+  end;
+end;
+
+procedure TDeviceForm.rChangeDeviceRequestAborted(Sender: TRtcConnection; Data,
+  Result: TRtcValue);
+begin
+  bOK.Enabled := True;
 end;
 
 procedure TDeviceForm.rChangeDeviceReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 begin
-  ModalResult := mrOk;
-  Close;
+  bOK.Enabled := True;
+
+  if (Result.isType = rtc_String)
+    and (Result.asString = 'OK') then
+  begin
+    Close;
+    ModalResult := mrOk;
+  end;
 end;
 
 

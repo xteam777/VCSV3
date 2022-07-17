@@ -5,7 +5,7 @@ object rdDesktopViewer: TrdDesktopViewer
   HorzScrollBar.Visible = False
   VertScrollBar.Tracking = True
   VertScrollBar.Visible = False
-  Caption = #1059#1087#1088#1072#1074#1083#1077#1085#1080#1077' '#1082#1086#1084#1087#1100#1102#1090#1077#1088#1086#1084
+  Caption = #1059#1087#1088#1072#1074#1083#1077#1085#1080#1077
   ClientHeight = 665
   ClientWidth = 1074
   Color = 1381653
@@ -4006,6 +4006,15 @@ object rdDesktopViewer: TrdDesktopViewer
           OnMouseUp = panOptionsMiniMouseUp
         end
       end
+      object Button1: TButton
+        Left = 184
+        Top = 240
+        Width = 75
+        Height = 25
+        Caption = 'Button1'
+        TabOrder = 3
+        OnClick = Button1Click
+      end
     end
   end
   object myUI: TRtcPDesktopControlUI
@@ -4091,7 +4100,6 @@ object rdDesktopViewer: TrdDesktopViewer
                 CommandProperties.Width = -1
               end
               item
-                Visible = False
                 Action = aPowerOffMonitor
                 CommandStyle = csCheckBox
                 CommandProperties.Width = -1
@@ -4387,7 +4395,7 @@ object rdDesktopViewer: TrdDesktopViewer
     Left = 8
     Top = 152
     Bitmap = {
-      494C010105001400100218001800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C0101050014001C0218001800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000600000003000000001002000000000000048
       000000000000000000000000000000000000C4AE1300C4AE1300C4AE1300C4AE
       1300C4AE1300C4AE1300C4AE1300C4AE1300C4AE1300C4AE1300C4AE1300C4AE
@@ -5001,7 +5009,7 @@ object rdDesktopViewer: TrdDesktopViewer
     Left = 48
     Top = 264
     Bitmap = {
-      494C010102000800BC0010001000FFFFFFFFFE00FFFFFFFFFFFFFFFF424D3600
+      494C010102000800C80010001000FFFFFFFFFE00FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000001000000001002000000000000010
       000000000000000000000000000000000000737373006C6C6C006C6C6C006C6C
       6C006C6C6C006C6C6C00B5B5B500FFFFFF00FFFFFF00B5B5B5006C6C6C006C6C
@@ -5132,5 +5140,9 @@ object rdDesktopViewer: TrdDesktopViewer
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
       000000000000000000000000000000000000}
+  end
+  object myFileTransferUI: TRtcPFileTransferUI
+    Left = 48
+    Top = 202
   end
 end

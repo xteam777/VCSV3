@@ -28,6 +28,10 @@ object RegistrationForm: TRegistrationForm
     MultiLine = True
     TabOrder = 0
     object tsAccount: TTabSheet
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Label1: TLabel
         AlignWithMargins = True
         Left = 138
@@ -1310,6 +1314,10 @@ object RegistrationForm: TRegistrationForm
       Font.Style = []
       ImageIndex = 1
       ParentFont = False
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Label5: TLabel
         Left = 40
         Top = 167

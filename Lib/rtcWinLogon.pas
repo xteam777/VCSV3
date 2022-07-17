@@ -16,7 +16,6 @@ uses
   rtcLog,
   TLHelp32,
   SysUtils,
-  CommonData,
   WTSApi,
 
 {$IFDEF RTC_LBFIX}

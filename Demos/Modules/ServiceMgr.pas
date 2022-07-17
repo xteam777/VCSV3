@@ -1,7 +1,7 @@
 ﻿unit ServiceMgr;
 
 interface
-  uses Windows, Messages, SysUtils, Winsvc, Dialogs, CommonData;
+  uses Windows, Messages, SysUtils, Winsvc, Dialogs;
 
   function ServiceInstalled(AMachine, AService: PChar): Boolean;
   function StartServices(Const  SvrName:String):Boolean;
@@ -13,7 +13,7 @@ interface
   function IsServiceStarting(const ServiceName:String): Boolean;
   function IsServiceStarted(const ServiceName:String): Boolean;
   function IsServiceDisabled(const ServiceName:String): Boolean;
-  function IsDesktopMode(const ServiceName: String): Boolean;
+//  function IsDesktopMode(const ServiceName: String): Boolean;
   function UninstallService(aServiceName: String; aTimeOut: Cardinal): Boolean;
 
 implementation
@@ -325,17 +325,17 @@ begin
   end;
 end;
 
-function IsDesktopMode(const ServiceName: String): Boolean;
-begin
-  if (Win32Platform <> VER_PLATFORM_WIN32_NT) then
-    Result := True
-  else
-    Result := (CurrentSessionId <> 0);
-//    Result := (not FindCmdLineSwitch('INSTALL', ['-', '/'], True) and
-//                not FindCmdLineSwitch('UNINSTALL', ['-', '/'], True) and
-//                not IsServiceStarting(ServiceName) and
-//                not IsServiceStarted(ServiceName))
-//                or FindCmdLineSwitch('SILENT', ['-', '/'], True);
-end;
+//function IsDesktopMode(const ServiceName: String): Boolean;
+//begin
+//  if (Win32Platform <> VER_PLATFORM_WIN32_NT) then
+//    Result := True
+//  else
+//    Result := (CurrentSessionId <> 0);
+////    Result := (not FindCmdLineSwitch('INSTALL', ['-', '/'], True) and
+////                not FindCmdLineSwitch('UNINSTALL', ['-', '/'], True) and
+////                not IsServiceStarting(ServiceName) and
+////                not IsServiceStarted(ServiceName))
+////                or FindCmdLineSwitch('SILENT', ['-', '/'], True);
+//end;
 
 end.

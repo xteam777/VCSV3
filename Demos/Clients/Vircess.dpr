@@ -8,10 +8,11 @@
 
 
 
+
+
 {$R *.dres}
 
 uses
-//  FastMM4,
   rtcLog,
   SysUtils,
   rtcInfo,
@@ -56,7 +57,8 @@ uses
   Vcl.Styles,
   uMessageBox in '..\Modules\uMessageBox.pas' {fMessageBox},
   uPowerWatcher in '..\Modules\uPowerWatcher.pas',
-  rdFileTransLog in '..\Modules\rdFileTransLog.pas' {rdFileTransferLog};
+  rdFileTransLog in '..\Modules\rdFileTransLog.pas' {rdFileTransferLog},
+  rtcBlankOutForm in '..\Modules\rtcBlankOutForm.pas' {fmBlankoutForm};
 
 {$R rtcportaluac.res rtcportaluac.rc}
 {$R *.res}
