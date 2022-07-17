@@ -1006,7 +1006,7 @@ procedure TMainForm.DoPowerPause;
 var
   i: Integer;
 begin
-  XLog('Power pause');
+//  XLog('Power pause');
 
 //  DeleteAllPendingRequests;
 //  CloseAllActiveUI;
@@ -1019,7 +1019,7 @@ procedure TMainForm.DoPowerResume;
 var
   i: Integer;
 begin
-  XLog('Power resume');
+  //XLog('Power resume');
 
   DeleteAllPendingRequests;
   CloseAllActiveUI;
@@ -1048,7 +1048,7 @@ procedure TMainForm.ShowAboutForm;
 var
   fAboutForm: TfAboutForm;
 begin
-  XLog('ShowAboutForm');
+  //XLog('ShowAboutForm');
 
   fAboutForm := TfAboutForm.Create(nil);
   try
@@ -1063,7 +1063,7 @@ procedure TMainForm.ShowMessageBox(AText, ACaption, AType, AUID: string);
 var
   fMessageBox: TfMessageBox;
 begin
-  XLog('ShowMessageBox');
+  //XLog('ShowMessageBox');
 
   fMessageBox := TfMessageBox.Create(nil);
   try
@@ -1089,7 +1089,7 @@ var
   Res: TModalResult;
   DData: PDeviceData;
 begin
-  XLog('miDeleteClick');
+  //XLog('miDeleteClick');
 
   if twDevices.FocusedNode = nil then
     Exit;
@@ -1115,7 +1115,7 @@ end;
 
 procedure TMainForm.DoDeleteDeviceGroup(AUID: String);
 begin
-  XLog('DoDeleteDeviceGroup');
+  //XLog('DoDeleteDeviceGroup');
 
   with cmAccounts do
   try
@@ -1133,7 +1133,7 @@ end;
 
 procedure TMainForm.miExitClick(Sender: TObject);
 begin
-  XLog('miExitClick');
+  //XLog('miExitClick');
 
 //  if ActiveUIList.Count > 0 then
 //    ShowMessageBox('Имеются открытые подключения. Закрыть Remox?', 'Remox', 'Exit', '')
@@ -1146,7 +1146,7 @@ end;
 
 procedure TMainForm.DoExit;
 begin
-  XLog('DoExit');
+  //XLog('DoExit');
 
   isClosing := True;
   Close;
@@ -1154,7 +1154,7 @@ end;
 
 procedure TMainForm.SetStatusStringDelayed(AStatus: string; AInterval: Integer = 2000);
 begin
-  XLog('SetStatusStringDelayed');
+  //XLog('SetStatusStringDelayed');
 
   DelayedStatus := AStatus;
   tDelayedStatus.Interval := AInterval;
@@ -1163,7 +1163,7 @@ end;
 
 procedure TMainForm.tCheckServiceStartStopTimer(Sender: TObject);
 begin
-  XLog('tCheckServiceStartStopTimer');
+  //XLog('tCheckServiceStartStopTimer');
 
   if File_Exists(ChangeFileExt(ParamStr(0), '.svc')) then
     if (File_Age(ChangeFileExt(ParamStr(0), '.svc')) >= IncSecond(Now, -3)) then //Если это старт/стоп службы
@@ -1182,7 +1182,7 @@ procedure TMainForm.SetIDContolsVisible;
 var
   fIsServiceStarted: Boolean;
 begin
-  XLog('SetIDContolsVisible');
+  //XLog('SetIDContolsVisible');
 
   fIsServiceStarted := IsServiceStarted(RTC_HOSTSERVICE_NAME);
 
@@ -1483,7 +1483,7 @@ end;}
 
 procedure TMainForm.ShowRegularPasswordState();
 begin
-  XLog('ShowRegularPasswordState');
+  //XLog('ShowRegularPasswordState');
 
   if RegularPassword <> '' then
     iRegPassState.Picture.Assign(iRegPassYes.Picture)
@@ -1557,7 +1557,7 @@ var
   err: BOOL;
   p: TPoint;
 begin
-  XLog('WMTaskbarEvent');
+  //XLog('WMTaskbarEvent');
 
   if IsClosing then
     Exit;
@@ -1612,7 +1612,7 @@ procedure TMainForm.WMWTSSESSIONCHANGE(var Message: TMessage);
 var
   tWork: TWorkThread;
 begin
-  XLog('WMWTSSESSIONCHANGE');
+  //XLog('WMWTSSESSIONCHANGE');
 
   if IsClosing then
     Exit;
@@ -1662,7 +1662,7 @@ procedure EliminateListViewBeep;
 var
   reg:TRegistry;
 begin
-  XLog('EliminateListViewBeep');
+  //XLog('EliminateListViewBeep');
 
   reg:=TRegistry.Create;
   try
@@ -1750,7 +1750,7 @@ function TMainForm.GetPortalConnection(AAction: String; AID: String): PPortalCon
 var
   i: Integer;
 begin
-  XLog('GetPortalConnection');
+  //XLog('GetPortalConnection');
 
   Result := nil;
 
@@ -1881,7 +1881,7 @@ procedure TMainForm.RemovePortalConnectionByThreadId(AThreadId: Cardinal; AClose
 var
   i: Integer;
 begin
-  XLog('RemovePortalConnectionByUIHandle');
+  //XLog('RemovePortalConnectionByUIHandle');
 
   CS_GW.Acquire;
   try
@@ -1912,7 +1912,7 @@ procedure TMainForm.RemovePortalConnectionByUser(ID: String);
 var
   i: Integer;
 begin
-  XLog('RemovePortalConnectionByUser');
+  //XLog('RemovePortalConnectionByUser');
 
   CS_GW.Acquire;
   try
@@ -2014,7 +2014,7 @@ procedure TMainForm.aFeedBackExecute(Sender: TObject);
 var
   pAccUserName: String;
 begin
-  XLog('aFeedBackExecute');
+  //XLog('aFeedBackExecute');
 
 //  ShellExecute(Handle, 'Open', 'mailto:support@Remox.com', nil, nil, SW_RESTORE);
 //  if LoggedIn then
@@ -2026,14 +2026,14 @@ end;
 
 procedure TMainForm.aMinimizeExecute(Sender: TObject);
 begin
-  XLog('aMinimizeExecute');
+  //XLog('aMinimizeExecute');
 
   Application.Minimize;
 end;
 
 procedure TMainForm.ApplicationEventsRestore(Sender: TObject);
 begin
-  XLog('ApplicationEventsRestore');
+  //XLog('ApplicationEventsRestore');
 
   SetForegroundWindow(Handle);
 end;
@@ -2301,7 +2301,7 @@ end;
 
 procedure TMainForm.ShowDevicesPanel;
 begin
-  XLog('ShowDevicesPanel');
+  //XLog('ShowDevicesPanel');
 
   Constraints.MinWidth := 0;
   Constraints.MaxWidth := 0;
@@ -2392,7 +2392,7 @@ procedure TMainForm.FormCreate(Sender: TObject);
 var
   err: LongInt;
 begin
-  XLog('FormCreate');
+  //XLog('FormCreate');
 
   hwndNextViewer := SetClipboardViewer(Handle);
 
@@ -2556,7 +2556,7 @@ procedure TMainForm.FormDestroy(Sender: TObject);
 var
   i: Integer;
 begin
-  XLog('FormDestroy');
+  //XLog('FormDestroy');
 
   ChangeClipboardChain(Handle, hwndNextViewer);
   hwndNextViewer := 0;
@@ -2715,7 +2715,7 @@ var
   ProxyServer, CurProxy: String;
   ProxyPort, i: Integer;
 begin
-  XLog('SetProxyFromIE');
+  //XLog('SetProxyFromIE');
 
   ProxyEnabled := False;
 //  PClient.Gate_Proxy := False;
@@ -2932,7 +2932,7 @@ var
   bmp: TBitmap;
   sDots: String;
 begin
-  XLog('SetStatus: ' + IntToStr(CurStatus));
+  //XLog('SetStatus: ' + IntToStr(CurStatus));
 
   CS_Status.Acquire;
   try
@@ -3042,10 +3042,10 @@ begin
     if isClosing then
       Exit;
 
-    if fConnected then
-      XLog('SetConnectedState: Connected')
-    else
-      XLog('SetConnectedState: Not Connected');
+//    if fConnected then
+//      XLog('SetConnectedState: Connected')
+//    else
+//      XLog('SetConnectedState: Not Connected');
 
     if fConnected then
     begin
@@ -3142,7 +3142,7 @@ end;
 
 procedure TMainForm.FormResize(Sender: TObject);
 begin
-  XLog('FormResize');
+//  XLog('FormResize');
 
   pDevAcc.Left := 552;
   pDevAcc.Width := ClientWidth - pDevAcc.Left - 5; //pRight.Left - pRight.Width - GetScaleValue(25);
@@ -3153,14 +3153,14 @@ end;
 
 procedure TMainForm.Label11Click(Sender: TObject);
 begin
-  XLog('Label11Click');
+//  XLog('Label11Click');
 
   cbRememberAccount.Checked := not cbRememberAccount.Checked;
 end;
 
 procedure TMainForm.lDesktopControlClick(Sender: TObject);
 begin
-  XLog('lDesktopControlClick');
+//  XLog('lDesktopControlClick');
 
   if rbDesktopControl.Enabled then
   begin
@@ -3171,7 +3171,7 @@ end;
 
 procedure TMainForm.lFileTransClick(Sender: TObject);
 begin
-  XLog('lFileTransClick');
+//  XLog('lFileTransClick');
 
   if rbFileTrans.Enabled then
   begin
@@ -3182,14 +3182,14 @@ end;
 
 procedure TMainForm.Label22Click(Sender: TObject);
 begin
-  XLog('Label22Click');
+//  XLog('Label22Click');
 
   ShowSettingsForm('tsSequrity');
 end;
 
 procedure TMainForm.lDevicesClick(Sender: TObject);
 begin
-  XLog('lDevicesClick');
+//  XLog('lDevicesClick');
 
   DevicesPanelVisible := not DevicesPanelVisible;
   ShowDevicesPanel;
@@ -3211,7 +3211,7 @@ procedure TMainForm.GeneratePassword;
     letters: array[0..55] of char;
     i: Integer;
 begin
-  XLog('GeneratePassword');
+//  XLog('GeneratePassword');
 
   letters[0] := '0';
   letters[1] := '1';
@@ -3279,7 +3279,7 @@ end;
 
 procedure TMainForm.hcAccountsConnect(Sender: TRtcConnection);
 begin
-  xLog('hcAccountsConnect');
+//  xLog('hcAccountsConnect');
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': hcAccountsConnect'));
 
   tHcAccountsReconnect.Enabled := False;
@@ -3307,7 +3307,7 @@ end;
 
 procedure TMainForm.hcAccountsConnectFail(Sender: TRtcConnection);
 begin
-  xLog('hcAccountsConnectFail');
+//  xLog('hcAccountsConnectFail');
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': hcAccountsConnectFail'));
 
 //  if not tConnect.Enabled
@@ -3345,7 +3345,7 @@ end;
 
 procedure TMainForm.hcAccountsDisconnect(Sender: TRtcConnection);
 begin
-  xLog('hcAccountsDisconnect');
+//  xLog('hcAccountsDisconnect');
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': hcAccountsDisconnect'));
 
 //  if csDestroying in ComponentState then
@@ -3376,7 +3376,7 @@ end;
 
 procedure TMainForm.hcAccountsReconnect(Sender: TRtcConnection);
 begin
-  xLog('hcAccountsReconnect');
+//  xLog('hcAccountsReconnect');
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': hcAccountsReconnect'));
 end;
 
@@ -3386,7 +3386,7 @@ var
   PortalConnection: PPortalConnection;
 //  username: String;
 begin
-  XLog('FriendList_Status');
+//  XLog('FriendList_Status');
 
   Node := twDevices.GetFirst;
   while Node <> nil do
@@ -3419,7 +3419,7 @@ function TMainForm.GetUserNameByID(uname: String): String;
 var
   Data: PDeviceData;
 begin
-  XLog('GetUserNameByID');
+//  XLog('GetUserNameByID');
 
   Data := GetDeviceInfo(uname);
   if Data <> nil then
@@ -3432,7 +3432,7 @@ procedure TMainForm.Locked_Status(uname: String; status: Integer);
 var
   i: Integer;
 begin
-  XLog('Locked_Status');
+//  XLog('Locked_Status');
 
   CS_GW.Acquire;
   try
@@ -3453,7 +3453,7 @@ var
   s: RtcString;
   info: TRtcRecord;
 begin
-  xLog('LoadSetup: ' + RecordType);
+//  xLog('LoadSetup: ' + RecordType);
 
   //Registry
   if (RecordType = 'ALL')
@@ -3657,7 +3657,7 @@ var
   infos: RtcString;
   info: TRtcRecord;
 begin
-  xLog('SaveSetup');
+//  xLog('SaveSetup');
 //  if SilentMode then Exit;
 
   //Registry
@@ -3849,7 +3849,7 @@ var
   i: Integer;
   DData: PDeviceData;
 begin
-  XLog('miFileTransClick');
+//  XLog('miFileTransClick');
 
   if (twDevices.FocusedNode <> nil) and
      (twDevices.GetNodeLevel(twDevices.FocusedNode) <> 0) then
@@ -3866,7 +3866,7 @@ var
   sPassword: String;
   i: Integer;
 begin
-  XLog('StartFileTransferring');
+//  XLog('StartFileTransferring');
 
   if AUser = PClient.LoginUserName then
   begin
@@ -3955,7 +3955,7 @@ end;}
 
 procedure TMainForm.miShowFormClick(Sender: TObject);
 begin
-  XLog('miShowFormClick');
+//  XLog('miShowFormClick');
 
 //  if not Visible then
 //  begin
@@ -4004,14 +4004,14 @@ end;
 
 procedure TMainForm.miWebSiteClick(Sender: TObject);
 begin
-  XLog('miWebSiteClick');
+//  XLog('miWebSiteClick');
 
   ShellExecute(0, 'open', PChar('http://remox.com'), '', nil, SW_SHOW);
 end;
 
 procedure TMainForm.miAccLogOutClick(Sender: TObject);
 begin
-  XLog('miAccLogOutClick');
+//  XLog('miAccLogOutClick');
 
   SaveSetup;
 
@@ -4051,7 +4051,7 @@ var
   DData: PDeviceData;
   DForm: TDeviceForm;
 begin
-  XLog('miAddDeviceClick');
+//  XLog('miAddDeviceClick');
 
   DForm := TDeviceForm.Create(Self);
   //  DForm.Parent := Self;
@@ -4110,7 +4110,7 @@ procedure TMainForm.DoGetDeviceState(Account, User, Pass, Friend: String);
 //var
 //  CurPass: String;
 begin
-  XLog('DoGetDeviceState');
+//  XLog('DoGetDeviceState');
 
   with cmAccounts do
   try
@@ -4136,7 +4136,7 @@ var
   DData: PDeviceData;
   GForm: TGroupForm;
 begin
-  XLog('miAddGroupClick');
+//  XLog('miAddGroupClick');
 
   GForm := TGroupForm.Create(Self);
 //  GForm.Parent := Self;
@@ -4186,7 +4186,7 @@ var
   DForm: TDeviceForm;
   GForm: TGroupForm;
 begin
-  XLog('miChangeClick');
+//  XLog('miChangeClick');
 
   DData := twDevices.GetNodeData(twDevices.FocusedNode);
   if twDevices.GetNodeLevel(twDevices.FocusedNode) = 0 then
@@ -4271,7 +4271,7 @@ var
   user, sPassword: String;
   i: Integer;
 begin
-  XLog('miDesktopControlClick');
+//  XLog('miDesktopControlClick');
 
   GetCursorPos(p);
   p := twDevices.ScreenToClient(p);
@@ -4360,7 +4360,7 @@ end;
 
 procedure TMainForm.btnAccountLoginClick(Sender: TObject);
 begin
-  XLog('btnAccountLoginClick');
+//  XLog('btnAccountLoginClick');
 
   if not ConnectedToMainGateway then
   begin
@@ -4380,7 +4380,7 @@ var
   s: String;
   HasDots: Boolean;
 begin
-  XLog('CheckAccountFields');
+//  XLog('CheckAccountFields');
 
   Result := False;
 
@@ -4456,7 +4456,7 @@ procedure TMainForm.DoAccountLogin;
 var
   CurPass: String;
 begin
-  xLog('DoAccountLogin');
+//  xLog('DoAccountLogin');
 
   btnAccountLogin.Enabled := False;
 
@@ -4499,7 +4499,7 @@ end;
 
 procedure TMainForm.StartAccountLogin;
 begin
-  xLog('StartAccountLogin');
+//  xLog('StartAccountLogin');
 
   hcAccounts.SkipRequests;
   hcAccounts.Connect(True);
@@ -4512,7 +4512,7 @@ end;
 
 procedure TMainForm.StartHostLogin;
 begin
-  xLog('StartHostLogin');
+//  xLog('StartHostLogin');
 ////  PClient.Disconnect;
 
 //  HostTimerClient.SkipRequests;
@@ -4523,7 +4523,7 @@ end;
 
 procedure TMainForm.tActivateHostTimer(Sender: TObject);
 begin
-  xLog('tActivateHostTimer');
+//  xLog('tActivateHostTimer');
 
   if (CurStatus < STATUS_CONNECTING_TO_GATE)
     and (not ActivationInProcess) then
@@ -4547,7 +4547,7 @@ var
   i: Integer;
   fConnected: Boolean;
 begin
-  XLog('FormClose');
+//  XLog('FormClose');
 
   DeleteAllPendingRequests;
   CloseAllActiveUI;
@@ -4598,7 +4598,7 @@ end;
 
 procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
-  XLog('FormCloseQuery');
+//  XLog('FormCloseQuery');
 
 //  if FAutoRun then
 //  begin
@@ -4720,7 +4720,7 @@ end;
 
 procedure TMainForm.aAboutExecute(Sender: TObject);
 begin
-  XLog('aAboutExecute');
+//  XLog('aAboutExecute');
 
   ShowAboutForm;
 end;
@@ -4734,7 +4734,7 @@ var
   myFileName: String;
   UserName: String;
 begin
-  XLog('AcceptFiles');
+//  XLog('AcceptFiles');
 
   try
     if not PClient.Active then
@@ -4770,7 +4770,7 @@ end;
 
 procedure TMainForm.aCloseExecute(Sender: TObject);
 begin
-  XLog('aCloseExecute');
+//  XLog('aCloseExecute');
 
   Close;
 end;
@@ -4780,7 +4780,7 @@ var
   tnid: TNotifyIconData;
 //    xOwner: HWnd;
 begin
-  XLog('TaskBarAddIcon');
+//  XLog('TaskBarAddIcon');
 
 //  if SilentMode then Exit;
 
@@ -4816,7 +4816,7 @@ var
 //  Ic: TIcon;
 //    xOwner: HWnd;
 begin
-  XLog('TaskBarIconUpdate');
+//  XLog('TaskBarIconUpdate');
 
   if TaskBarIcon then
   begin
@@ -4856,7 +4856,7 @@ var
   tnid: TNotifyIconData;
 //    xOwner: HWnd;
 begin
-  XLog('TaskBarRemoveIcon');
+//  XLog('TaskBarRemoveIcon');
 
   if TaskBarIcon then
   begin
@@ -4887,7 +4887,7 @@ procedure TMainForm.tCheckLockedStateTimer(Sender: TObject);
 //  hDesktop : THandle;
 //  bResult, bLocked : BOOL;
 begin
-  XLog('tCheckLockedStateTimer');
+//  XLog('tCheckLockedStateTimer');
 
   if (not IsServiceStarted(RTC_HOSTSERVICE_NAME))
     and (LowerCase(GetInputDesktopName) <> 'default') then
@@ -4937,7 +4937,7 @@ procedure TMainForm.SetScreenLockedState(AValue: Integer);
 var
   desk: String;
 begin
-  XLog('SetScreenLockedState');
+  //XLog('SetScreenLockedState');
 
   if FScreenLockedState <> AValue then
   begin
@@ -4960,7 +4960,7 @@ end;
 
 procedure TMainForm.tHcAccountsReconnectTimer(Sender: TObject);
 begin
-  xLog('tHcAccountsReconnectTimer');
+//  xLog('tHcAccountsReconnectTimer');
 
   if not hcAccounts.isConnecting then
     hcAccounts.Connect(True);
@@ -4990,7 +4990,7 @@ end;
 
 procedure TMainForm.tHostTimerClientReconnectTimer(Sender: TObject);
 begin
-  xLog('tHostTimerClientReconnectTimer');
+//  xLog('tHostTimerClientReconnectTimer');
 
   if not HostTimerClient.isConnecting then
     HostTimerClient.Connect(True);
@@ -4998,7 +4998,7 @@ end;
 
 procedure TMainForm.tConnLimitTimer(Sender: TObject);
 begin
-  XLog('tConnLimitTimer');
+//  XLog('tConnLimitTimer');
 
   if DateAllowConnectionPending < Now then
   begin
@@ -5009,7 +5009,7 @@ end;
 
 procedure TMainForm.tDelayedStatusTimer(Sender: TObject);
 begin
-  XLog('tDelayedStatusTimer');
+//  XLog('tDelayedStatusTimer');
 
   SetStatusString(DelayedStatus);
   tDelayedStatus.Enabled := False;
@@ -5030,7 +5030,7 @@ end;
 
 procedure TMainForm.TimerClientConnect(Sender: TRtcConnection);
 begin
-  xLog('TimerClientConnect');
+//  xLog('TimerClientConnect');
 
   tTimerClientReconnect.Enabled := False;
 end;
@@ -5038,12 +5038,12 @@ end;
 procedure TMainForm.TimerClientConnectError(Sender: TRtcConnection;
   E: Exception);
 begin
-  xLog('TimerClientConnectError');
+//  xLog('TimerClientConnectError');
 end;
 
 procedure TMainForm.TimerClientDisconnect(Sender: TRtcConnection);
 begin
-  xLog('TimerClientDisconnect');
+//  xLog('TimerClientDisconnect');
 
   ChangePort(TimerClient);
 
@@ -5054,7 +5054,7 @@ end;
 
 procedure TMainForm.tIconRefreshTimer(Sender: TObject);
 begin
-  XLog('tIconRefreshTimer');
+//  XLog('tIconRefreshTimer');
 
   if isClosing then
     Exit;
@@ -5076,7 +5076,7 @@ procedure TMainForm.tInternetActiveTimer(Sender: TObject);
 var
   i: Integer;
 begin
-  XLog('tInternetActiveTimer');
+//  XLog('tInternetActiveTimer');
 
   if not IsInternetConnected then
   begin
@@ -5108,7 +5108,7 @@ procedure TMainForm.tPClientReconnectTimer(Sender: TObject);
 var
   i: Integer;
 begin
-  xLog('tPClientReconnectTimer');
+//  xLog('tPClientReconnectTimer');
 
 //  CS_GW.Acquire;
 //  try
@@ -5168,7 +5168,7 @@ procedure TMainForm.tStatusTimer(Sender: TObject);
 var
   s: String;
 begin
-  XLog('tStatusTimer');
+//  XLog('tStatusTimer');
 
   s := ' ';
   if Pos(' . . . . .', lblStatus.Caption) > 0 then
@@ -5191,7 +5191,7 @@ end;
 
 procedure TMainForm.tTimerClientReconnectTimer(Sender: TObject);
 begin
-  xLog('tTimerClientReconnectTimer');
+//  xLog('tTimerClientReconnectTimer');
 
   if not TimerClient.isConnecting then
     TimerClient.Connect(True);
@@ -5587,7 +5587,7 @@ var
   DData: PDeviceData;
   i: Integer;
 begin
-  XLog('twDevicesKeyDown');
+//  XLog('twDevicesKeyDown');
 
   if Key = VK_RETURN then
   begin
@@ -5631,7 +5631,7 @@ procedure TMainForm.twDevicesMouseDown(Sender: TObject; Button: TMouseButton;
 var
   Node: PVirtualNode;
 begin
-  XLog('twDevicesMouseDown');
+//  XLog('twDevicesMouseDown');
 
   Node := twDevices.GetNodeAt(X, Y);
   if Node <> nil then
@@ -5740,7 +5740,7 @@ end;
 
 procedure TMainForm.eUserNameDblClick(Sender: TObject);
 begin
-  XLog('eUserNameDblClick');
+//  XLog('eUserNameDblClick');
 
   if Visible then
     eUserName.SelectAll;
@@ -5751,7 +5751,7 @@ procedure TMainForm.eAccountUserNameKeyDown(Sender: TObject; var Key: Word;
 var
   Mgs: TMsg;
 begin
-  XLog('eAccountUserNameKeyDown');
+//  XLog('eAccountUserNameKeyDown');
 
   if (Key = VK_RETURN)
     or (Key = VK_ESCAPE) then
@@ -5761,7 +5761,7 @@ end;
 procedure TMainForm.eAccountUserNameKeyUp(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
-  XLog('eAccountUserNameKeyUp');
+//  XLog('eAccountUserNameKeyUp');
 
   case Key of
     VK_RETURN:
@@ -5773,7 +5773,7 @@ end;
 
 procedure TMainForm.eConsoleIDDblClick(Sender: TObject);
 begin
-  XLog('eConsoleIDDblClick');
+//  XLog('eConsoleIDDblClick');
 
   if Visible then
     eConsoleID.SelectAll;
@@ -5865,7 +5865,7 @@ end;
 procedure TMainForm.ePartnerIDKeyUp(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
-  XLog('ePartnerIDKeyUp');
+//  XLog('ePartnerIDKeyUp');
 
   if Key = 13 then
     btnViewDesktopClick(nil);
@@ -5932,7 +5932,7 @@ end;
 
 procedure TMainForm.AccountLogOut(Sender: TObject);
 begin
-  xLog('AccountLogOut');
+//  xLog('AccountLogOut');
 //  if Assigned(Options)
 //     and Options.Visible then
 //  begin
@@ -5997,7 +5997,7 @@ begin
     end;
 
 //    cmAccounts.WaitForCompletion(False, 10);
-    xLog('ACC LOGOUT');
+//    xLog('ACC LOGOUT');
   end
   else
   begin
@@ -6021,7 +6021,7 @@ end;
 
 procedure TMainForm.HostLogOut;
 begin
-  xLog('HostLogOut');
+//  xLog('HostLogOut');
 
   HostPingTimer.Enabled := False;
 
@@ -6044,7 +6044,7 @@ begin
         Data.Clear;
     end;
 
-    xLog('HOST LOGOUT');
+//    xLog('HOST LOGOUT');
 //  end;
 end;
 
@@ -6052,7 +6052,7 @@ procedure TMainForm.lRegistrationClick(Sender: TObject);
 var
   PrevRegularPass: String;
 begin
-  XLog('lRegistrationClick');
+//  XLog('lRegistrationClick');
 
   if not ConnectedToMainGateway then
   begin
@@ -6107,21 +6107,21 @@ end;
 
 procedure TMainForm.lRegistrationMouseEnter(Sender: TObject);
 begin
-  XLog('lRegistrationMouseEnter');
+//  XLog('lRegistrationMouseEnter');
 
   Screen.Cursor := crHandPoint;
 end;
 
 procedure TMainForm.lRegistrationMouseLeave(Sender: TObject);
 begin
-  XLog('lRegistrationMouseLeave');
+//  XLog('lRegistrationMouseLeave');
 
   Screen.Cursor := crDefault;
 end;
 
 procedure TMainForm.lRestorePasswordClick(Sender: TObject);
 begin
-  XLog('lRestorePasswordClick');
+//  XLog('lRestorePasswordClick');
 
   ShellExecute(0, 'open', PChar('http://remox.com/lostpassword'), '', nil, SW_SHOW);
 end;
@@ -6177,7 +6177,7 @@ procedure TMainForm.btnSettingsClick(Sender: TObject);
 var
   Options: TrdHostSettings;
 begin
-  XLog('btnSettingsClick');
+//  XLog('btnSettingsClick');
 
   Options := TrdHostSettings.Create(self);
   try
@@ -6253,7 +6253,7 @@ procedure TMainForm.bAccount0Click(Sender: TObject);
 var
   p: TPoint;
 begin
-  XLog('bAccount0Click');
+//  XLog('bAccount0Click');
 
   p.X := pDevAcc.Left + pInMain.Left + btnAccount.Left;
   p.Y := btnAccount.Height + pInMain.Top + pDevAcc.Top + btnAccount.Top;
@@ -6305,7 +6305,7 @@ var
   PassRec: TRtcRecord;
   CurPass: String;
 begin
-  xLog('HostPingTimerTimer');
+//  xLog('HostPingTimerTimer');
 
   //Хост должен быть включен в клиенте только если не запущена служба на десктопной версии или если сервер
   //Эта процедура и так не работает в слуюбе
@@ -6355,14 +6355,14 @@ end;
 
 procedure TMainForm.HostTimerClientConnect(Sender: TRtcConnection);
 begin
-  xLog('HostTimerClientConnect');
+//  xLog('HostTimerClientConnect');
 
   tHostTimerClientReconnect.Enabled := False;
 end;
 
 procedure TMainForm.HostTimerClientDisconnect(Sender: TRtcConnection);
 begin
-  xLog('HostTimerClientDisconnect');
+//  xLog('HostTimerClientDisconnect');
 
   ChangePort(HostTimerClient);
 
@@ -6401,7 +6401,7 @@ var
   Data: PDeviceData;
   i: Integer;
 begin
-  XLog('btnViewDesktopClick');
+//  XLog('btnViewDesktopClick');
 
   if not ConnectedToMainGateway then
   begin
@@ -6476,7 +6476,7 @@ end;
 
 procedure TMainForm.btnViewDesktopMouseEnter(Sender: TObject);
 begin
-  XLog('btnViewDesktopMouseEnter');
+//  XLog('btnViewDesktopMouseEnter');
 
   CS_Status.Acquire;
   try
@@ -6497,7 +6497,7 @@ end;
 
 procedure TMainForm.btnViewDesktopMouseLeave(Sender: TObject);
 begin
-  XLog('btnViewDesktopMouseLeave');
+//  XLog('btnViewDesktopMouseLeave');
 
   CS_Status.Acquire;
   try
@@ -6557,7 +6557,7 @@ var
   i: Integer;
   CurPass: String;
 begin
-  xLog('ConnectToPartnerStart');
+//  xLog('ConnectToPartnerStart');
 
   if user = '' then
   begin
@@ -6685,7 +6685,7 @@ var
   PassForm: TfIdentification;
   PRItem: PPendingRequestItem;
 begin
-  xLog('rGetPartnerInfoReturn');
+//  xLog('rGetPartnerInfoReturn');
 
   if Result.isType = rtc_Exception then
   begin
@@ -6953,7 +6953,7 @@ end;
 procedure TMainForm.rGetHostLockedStateRequestAborted(Sender: TRtcConnection;
   Data, Result: TRtcValue);
 begin
-  XLog('rGetHostLockedStateRequestAborted');
+//  XLog('rGetHostLockedStateRequestAborted');
 
 //  SendLockedStateToGateway();
 end;
@@ -6961,7 +6961,7 @@ end;
 procedure TMainForm.rGetHostLockedStateReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 begin
-  XLog('rGetHostLockedStateReturn');
+//  XLog('rGetHostLockedStateReturn');
 
   if Result.isType = rtc_Exception then
   begin
@@ -6993,7 +6993,7 @@ var
   ThisThreadID: DWORD;
   timeout: DWORD;
 begin
-  XLog('ForceForegroundWindow');
+//  XLog('ForceForegroundWindow');
 
   if IsIconic(hwnd) then
     ShowWindow(hwnd, SW_RESTORE);
@@ -7112,7 +7112,7 @@ end;
 procedure TMainForm.resHostLoginReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 begin
-  XLog('resHostLoginReturn');
+//  XLog('resHostLoginReturn');
 
   if Result.isType = rtc_Exception then
   begin
@@ -7139,7 +7139,7 @@ procedure TMainForm.resHostPingReturn(Sender: TRtcConnection; Data,
 var
   i: Integer;
 begin
-  XLog('resHostPingReturn');
+//  XLog('resHostPingReturn');
 
   if Result.isType = rtc_Exception then
   begin
@@ -7217,7 +7217,7 @@ var
   i: Integer;
   fname: String;
 begin
-  XLog('resHostTimerReturn');
+//  XLog('resHostTimerReturn');
 
   if Result.isType = rtc_Exception then
   begin
@@ -7525,7 +7525,7 @@ procedure TMainForm.N6Click(Sender: TObject);
 var
   Dir: String;
 begin
-  XLog('N6Click');
+//  XLog('N6Click');
 
   if DirectoryExists(ExtractFilePath(Application.ExeName) + RTC_LOG_FOLDER) then
   begin
@@ -7541,14 +7541,14 @@ end;
 
 procedure TMainForm.nCopyPassClick(Sender: TObject);
 begin
-  XLog('nCopyPassClick');
+//  XLog('nCopyPassClick');
 
   Clipboard.asText := ePassword.Text;
 end;
 
 procedure TMainForm.nNewRandomPassClick(Sender: TObject);
 begin
-  XLog('nNewRandomPassClick');
+//  XLog('nNewRandomPassClick');
 
   GeneratePassword;
   SendPasswordsToGateway;
@@ -7592,7 +7592,7 @@ procedure TMainForm.ActivateHost;
 var
   HWID : THardwareId;
 begin
-  xLog('ActivateHost');
+//  xLog('ActivateHost');
 
   ActivationInProcess := True;
 
@@ -7609,7 +7609,7 @@ begin
 //    else
       SetStatus(STATUS_ACTIVATING_ON_MAIN_GATE);
 
-    xLog('ActivateHost IsInternetConnected 2');
+//    xLog('ActivateHost IsInternetConnected 2');
 
   //  if ProxyOption = 'Automatic' then
   //  begin
@@ -7618,7 +7618,7 @@ begin
   //  end;
 //    SetStatus(2);
 
-    xLog('ActivateHost SetStatus 2');
+//    xLog('ActivateHost SetStatus 2');
 
     SetStatusString('Активация Remox', True);
 
@@ -7676,7 +7676,7 @@ end;
 procedure TMainForm.rActivateRequestAborted(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 begin
-  xLog('rActivateRequestAborted');
+//  xLog('rActivateRequestAborted');
 
   if not ActivationInProcess then
     Exit;
@@ -7699,7 +7699,7 @@ var
   PassRec: TRtcRecord;
   ConsoleName, CurPass, sUserName, sConsoleName: String;
 begin
-  xLog('rActivateReturn');
+//  xLog('rActivateReturn');
 
   if not ActivationInProcess then
     Exit;
@@ -7895,7 +7895,7 @@ var
   PassRec: TRtcRecord;
   CurPass: String;
 begin
-  XLog('SendPasswordsToGateway');
+//  XLog('SendPasswordsToGateway');
 
   PassRec := TRtcRecord.Create;
   try
@@ -7946,7 +7946,7 @@ end;
 
 procedure TMainForm.SendLockedStateToGateway;
 begin
-  XLog('SendLockedStateToGateway');
+//  XLog('SendLockedStateToGateway');
 
   //Хост должен быть включен в клиенте только если не запущена служба на десктопной версии или если сервер
   if IsWinServer
@@ -7979,7 +7979,7 @@ end;
 
 procedure TMainForm.rbDesktopControlClick(Sender: TObject);
 begin
-  XLog('rbDesktopControlClick');
+//  XLog('rbDesktopControlClick');
 
   rbFileTrans.Checked := False;
 //  rbChat.Checked := False;
@@ -7987,7 +7987,7 @@ end;
 
 procedure TMainForm.rbFileTransClick(Sender: TObject);
 begin
-  XLog('rbFileTransClick');
+//  XLog('rbFileTransClick');
 
   rbDesktopControl.Checked := False;
 //  rbChat.Checked := False;
@@ -7996,7 +7996,7 @@ end;
 procedure TMainForm.rDeleteDeviceReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 begin
-  XLog('rDeleteDeviceReturn');
+//  XLog('rDeleteDeviceReturn');
 
   if Result.asString = 'OK' then
   begin
@@ -8019,7 +8019,7 @@ var
   GroupNode, Node: PVirtualNode;
   DData: PDeviceData;
 begin
-  xLog('resLoginReturn');
+//  xLog('resLoginReturn');
 
   if Result.isType = rtc_Exception then
   begin
@@ -8166,7 +8166,7 @@ end;
 procedure TMainForm.resLogoutReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 begin
-  xLog('resLogoutReturn');
+//  xLog('resLogoutReturn');
 
   AccountLogOut(nil);
 end;
@@ -8197,7 +8197,7 @@ var
   PassRec: TRtcRecord;
   CurPass: String;
 begin
-  XLog('msgHostTimerTimer');
+//  XLog('msgHostTimerTimer');
 
   //Хост должен быть включен в клиенте только если не запущена служба на десктопной версии или если сервер
   //Служба работате в другом модуле
@@ -8257,7 +8257,7 @@ end;
 procedure TMainForm.resTimerLoginReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 begin
-  xLog('resTimerLoginReturn');
+//  xLog('resTimerLoginReturn');
 
   if Result.isType = rtc_Exception then
     begin
@@ -8309,7 +8309,7 @@ var
   FWin: TrdFileTransfer;
 //  GatewayRec: PGatewayRec;
 begin
-  xLog('PFileTransExplorerNewUI');
+//  xLog('PFileTransExplorerNewUI');
 
   FWin := TrdFileTransfer.Create(nil);
   FWin.OnUIOpen := OnUIOpen;
@@ -8369,7 +8369,7 @@ var
   FWin: TrdFileTransferLog;
 //  GatewayRec: PGatewayRec;
 begin
-  xLog('PFileTransferLogUI');
+//  xLog('PFileTransferLogUI');
 
   FWin := TrdFileTransferLog.Create(nil);
   FWin.OnUIOpen := OnUIOpen;
@@ -8426,7 +8426,7 @@ end;
 
 procedure TMainForm.pingTimerTimer(Sender: TObject);
 begin
-  xLog('pingTimerTimer');
+//  xLog('pingTimerTimer');
 
 //  pingTimer.Enabled := False;
 
@@ -8447,7 +8447,7 @@ end;
 
 procedure TMainForm.pmIconMenuPopup(Sender: TObject);
 begin
-  xLog('pmIconMenuPopup');
+//  xLog('pmIconMenuPopup');
 
   // Hack to fix the "by design" behaviour of popups from notification area icons.
   // See: http://support.microsoft.com/kb/135788
@@ -8460,7 +8460,7 @@ var
   CWin: TrdChatForm;
 //  GatewayRec: PGatewayRec;
 begin
-  xLog('PChatNewUI');
+//  xLog('PChatNewUI');
 
   CWin := TrdChatForm.Create(nil);
   CWin.OnUIOpen := OnUIOpen;
@@ -8517,7 +8517,7 @@ end;
 // Called after a successful login (not after LoadGatewayParams)
 procedure TMainForm.PClientLogIn(Sender: TAbsPortalClient);
 begin
-  xLog('PClientLogIn: ' + Sender.Name);
+//  xLog('PClientLogIn: ' + Sender.Name);
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': PClientLogIn'));
 
 //  if assigned(Options) and Options.Visible then
@@ -8549,7 +8549,7 @@ end;
 
 procedure TMainForm.PClientParams(Sender: TAbsPortalClient; const Data: TRtcValue);
   begin
-  xLog('PClientParams');
+//  xLog('PClientParams');
 
 //  if xAdvanced.Checked then
 //    begin
@@ -8576,7 +8576,7 @@ procedure TMainForm.PClientParams(Sender: TAbsPortalClient; const Data: TRtcValu
 
 procedure TMainForm.PClientStart(Sender: TAbsPortalClient; const Data: TRtcValue);
 begin
-  xLog('PClientStart: ' + Sender.Name);
+//  xLog('PClientStart: ' + Sender.Name);
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': PClientStart'));
 
 //  if Pages.ActivePage<>Page_Hosting then
@@ -8618,7 +8618,7 @@ procedure TMainForm.CloseAllActiveUI;
 var
   i: Integer;
 begin
-  xLog('CloseAllActiveUI');
+//  xLog('CloseAllActiveUI');
   CS_GW.Acquire;
   try
     i := PortalConnectionsList.Count - 1;
@@ -8639,10 +8639,10 @@ begin
     and (not (OpenedModalForm is TrdClientSettings))
       and (not (OpenedModalForm is TfAboutForm)) then
   begin
-    xLog('OpenedModalForm Close Start');
+//    xLog('OpenedModalForm Close Start');
     OpenedModalForm.Close;
     OpenedModalForm := nil;
-    xLog('OpenedModalForm Close End');
+//    xLog('OpenedModalForm Close End');
   end;
 
 //  for i := 0 to Screen.Forms.cou - 1 do
@@ -8659,7 +8659,7 @@ end;
 
 procedure TMainForm.PClientLogOut(Sender: TAbsPortalClient);
 begin
-  xLog('PClientLogOut: ' + Sender.Name);
+//  xLog('PClientLogOut: ' + Sender.Name);
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': PClientLogOut'));
 
   if (Sender = PClient)
@@ -8704,7 +8704,7 @@ end;
 
 procedure TMainForm.PClientFatalError(Sender: TAbsPortalClient; const Msg:string);
 begin
-  xLog('PClientFatalError: ' + Sender.Name + ': ' + Msg);
+//  xLog('PClientFatalError: ' + Sender.Name + ': ' + Msg);
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': PClientFatalError ' + Msg));
 
   TRtcHttpPortalClient(Sender).Disconnect;
@@ -8751,7 +8751,7 @@ end;
 
 procedure TMainForm.PClientError(Sender: TAbsPortalClient; const Msg:string);
 begin
-  xLog('PClientError: ' + Sender.Name + ': ' + Msg);
+//  xLog('PClientError: ' + Sender.Name + ': ' + Msg);
 //  Memo1.Lines.Add('PClientError: ' + Sender.Name + ': ' + Msg);
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': PClientError ' + Msg));
 
@@ -8864,7 +8864,7 @@ procedure TMainForm.PModuleUserLeft(Sender: TRtcPModule; const user:string);
     a,i:integer;
 //    uinfo:TRtcRecord;
   begin
-  xLog('PModuleUserLeft');
+//  xLog('PModuleUserLeft');
 
   if Sender is TRtcPFileTransfer then
     s:='Передача файлов'
@@ -8925,7 +8925,7 @@ procedure TMainForm.PModuleUserLeft(Sender: TRtcPModule; const user:string);
 
 procedure TMainForm.btnGatewayClick(Sender: TObject);
 begin
-  xLog('btnGatewayClick');
+//  xLog('btnGatewayClick');
 
   ShowSettingsForm('tsNetwork');
 end;
@@ -8936,7 +8936,7 @@ var
   s: String;
   sett: TrdClientSettings;
 begin
-  xLog('ShowSettingsForm');
+//  xLog('ShowSettingsForm');
 
   sett := TrdClientSettings.Create(Self);
   try
@@ -9047,7 +9047,7 @@ end;}
 
 procedure TMainForm.PClientStatusPut(Sender: TAbsPortalClient; Status: TRtcPHttpConnStatus);
 begin
-  xLog('PClientStatusPut');
+//  xLog('PClientStatusPut');
 
   if csDestroying in ComponentState then
     Exit;
@@ -9055,7 +9055,7 @@ begin
   case status of
     rtccClosed:
     begin
-      xLog('PClientStatusPut: ' + Sender.Name + ': rtccClosed');
+//      xLog('PClientStatusPut: ' + Sender.Name + ': rtccClosed');
       sStatus1.Brush.Color := clGray;
 //      if not isClosing then
 //      begin
@@ -9065,7 +9065,7 @@ begin
     end;
     rtccOpen:
     begin
-      xLog('PClientStatusPut: ' + Sender.Name + ': rtccOpen');
+//      xLog('PClientStatusPut: ' + Sender.Name + ': rtccOpen');
       sStatus1.Brush.Color := clNavy;
     end;
     rtccSending:
@@ -9103,7 +9103,7 @@ procedure TMainForm.PClientUserLoggedIn(Sender: TAbsPortalClient;
     // uinfo:TRtcRecord;
 //    UName:String;
 begin
-  xLog('PClientUserLoggedIn: ' + Sender.Name);
+//  xLog('PClientUserLoggedIn: ' + Sender.Name);
 //  if User = eUserName.Text then //LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]));
 //    Exit;
 
@@ -9160,7 +9160,7 @@ procedure TMainForm.PClientUserLoggedOut(Sender: TAbsPortalClient;
 //    // uinfo:TRtcRecord;
 //    UName:String;
 begin
-  xLog('PClientUserLoggedOut: ' + Sender.Name);
+//  xLog('PClientUserLoggedOut: ' + Sender.Name);
 //  UName:=User;
   {Read comments in the above (PClientUserLoggedIn) method
    for more information on using the "RemoteUserInfo" property.
@@ -9204,7 +9204,7 @@ end;
 
 procedure TMainForm.PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttpConnStatus);
   begin
-  xLog('PClientStatusGet');
+//  xLog('PClientStatusGet');
 
   if csDestroying in ComponentState then
     Exit;
@@ -9212,7 +9212,7 @@ procedure TMainForm.PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttp
   case status of
     rtccClosed:
       begin
-      xLog('PClientStatusGet: ' + Sender.Name + ': rtccClosed');
+//      xLog('PClientStatusGet: ' + Sender.Name + ': rtccClosed');
       sStatus2.Brush.Color:=clRed;
       sStatus2.Pen.Color:=clMaroon;
 //      if not isClosing then
@@ -9223,7 +9223,7 @@ procedure TMainForm.PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttp
       end;
     rtccOpen:
     begin
-      xLog('PClientStatusGet: ' + Sender.Name + ': rtccOpen');
+//      xLog('PClientStatusGet: ' + Sender.Name + ': rtccOpen');
       sStatus2.Brush.Color:=clNavy;
     end;
     rtccSending:
@@ -9255,7 +9255,7 @@ function TMainForm.GetPendingItemByUserName(uname, action: String): PPendingRequ
 var
   i: Integer;
 begin
-  xLog('GetPendingItemByUserName');
+//  xLog('GetPendingItemByUserName');
 
   Result := nil;
 
@@ -9277,7 +9277,7 @@ function TMainForm.PartnerIsPending(uname, action: String): Boolean;
 var
   i: Integer;
 begin
-  xLog('PartnerIsPending');
+//  xLog('PartnerIsPending');
 
   Result := False;
 
@@ -9299,7 +9299,7 @@ function TMainForm.UIIsPending(username: String): Boolean;
 var
   i: Integer;
 begin
-  xLog('UIIsPending');
+//  xLog('UIIsPending');
 
   Result := False;
 
@@ -9320,7 +9320,7 @@ function TMainForm.AddPendingRequest(uname, action: String): PPendingRequestItem
 var
   PRItem: PPendingRequestItem;
 begin
-  xLog('AddPendingRequest');
+//  xLog('AddPendingRequest');
 
   CS_Pending.Acquire;
   try
@@ -9368,7 +9368,7 @@ procedure TMainForm.DeletePendingRequest(uname, action: String);
 var
   i: Integer;
 begin
-  xLog('DeletePendingRequest');
+//  xLog('DeletePendingRequest');
 
   CS_Pending.Acquire;
   try
@@ -9395,7 +9395,7 @@ function TMainForm.PartnerIsPending(uname, action, gateway: String): Boolean;
 var
   i: Integer;
 begin
-  xLog('PartnerIsPending');
+//  xLog('PartnerIsPending');
 
   Result := False;
 
@@ -9418,7 +9418,7 @@ function TMainForm.PartnerIsPending(uname: String): Boolean;
 var
   i: Integer;
 begin
-  xLog('PartnerIsPending');
+//  xLog('PartnerIsPending');
 
   Result := False;
 
@@ -9439,7 +9439,7 @@ procedure TMainForm.DeletePendingRequestByItem(Item: PPendingRequestItem);
 var
   i: Integer;
 begin
-  xLog('DeletePendingRequestByItem');
+//  xLog('DeletePendingRequestByItem');
 
   CS_Pending.Acquire;
   try
@@ -9461,7 +9461,7 @@ procedure TMainForm.DeletePendingRequests(uname: String);
 var
   i: Integer;
 begin
-  xLog('DeletePendingRequests');
+//  xLog('DeletePendingRequests');
 
   CS_Pending.Acquire;
   try
@@ -9487,7 +9487,7 @@ procedure TMainForm.DeleteAllPendingRequests;
 var
   i: Integer;
 begin
-  xLog('DeleteAllPendingRequests');
+//  xLog('DeleteAllPendingRequests');
 
   CS_Pending.Acquire;
   try
@@ -9518,7 +9518,7 @@ end;
 
 procedure TMainForm.OnUIOpen(UserName, Action: String; var IsPending: Boolean);
 begin
-  xLog('OnUIOpen');
+//  xLog('OnUIOpen');
 
   if IsClosing then
     Exit;
@@ -9536,7 +9536,7 @@ end;
 
 procedure TMainForm.OnUIClose(AThreadId: Cardinal);
 begin
-  xLog('OnUIClose');
+  //xLog('OnUIClose');
 
 //  if IsClosing then
 //    Exit;
@@ -9548,7 +9548,7 @@ end;
 
 function TMainForm.GetPendingRequestsCount: Integer;
 begin
-  xLog('GetPendingRequestsCount');
+  //xLog('GetPendingRequestsCount');
 
   CS_Pending.Acquire;
   try
@@ -9560,7 +9560,7 @@ end;
 
 procedure TMainForm.UpdatePendingStatus;
 begin
-  xLog('UpdatePendingStatus');
+  //xLog('UpdatePendingStatus');
 
   CS_Status.Acquire;
   try
@@ -9619,7 +9619,7 @@ procedure TMainForm.PDesktopControlNewUI(Sender: TRtcPDesktopControl; const user
   CDesk: TrdDesktopViewer;
 //  GatewayRec: PGatewayRec;
 begin
-  xLog('PDesktopControlNewUI');
+  //xLog('PDesktopControlNewUI');
 
   CDesk := TrdDesktopViewer.Create(nil);
   CDesk.OnUIOpen := OnUIOpen;
@@ -9699,7 +9699,7 @@ end;
 
 procedure TMainForm.PDesktopHostHaveScreeenChanged(Sender: TObject);
 begin
-  xLog('PDesktopHostHaveScreeenChanged');
+  //xLog('PDesktopHostHaveScreeenChanged');
 
   tCheckLockedStateTimer(nil);
 end;
@@ -9714,7 +9714,7 @@ procedure TMainForm.FormShow(Sender: TObject);
 var
   i: Integer;
 begin
-  xLog('FormShow');
+  //xLog('FormShow');
 
 //  if not SilentMode then
 //  begin
@@ -9731,7 +9731,7 @@ procedure TMainForm.WMQueryEndSession(var Msg: TWMQueryEndSession);
 var
   i: Integer;
 begin
-  xLog('WMQueryEndSession');
+  //xLog('WMQueryEndSession');
 
  //  AccountLogOut(Self);
 //  HostLogOut;
@@ -9879,14 +9879,14 @@ end;
 
 procedure TMainForm.cbCloseClick(Sender: TObject);
 begin
-  xLog('cbCloseClick');
+  //xLog('cbCloseClick');
 
   Close;
 end;
 
 procedure TMainForm.cbMinClick(Sender: TObject);
 begin
-  xLog('cbMinClick');
+  //xLog('cbMinClick');
 
   Application.Minimize;
 end;
@@ -10000,7 +10000,7 @@ end;}
 
 procedure TMainForm.WMDragFullWindows_Message(var Message: TMessage);
 begin
-  xLog('WMDragFullWindows_Message');
+//  xLog('WMDragFullWindows_Message');
 
   if Message.WParam = 0 then
     EnableDragFullWindows
@@ -10014,7 +10014,7 @@ end;
 
 procedure DisablePowerChanges;
 begin
-  xLog('DisablePowerChanges');
+//  xLog('DisablePowerChanges');
 
   if not PowerStateSaved then
   begin
@@ -10034,7 +10034,7 @@ end;
 
 procedure RestorePowerChanges;
 begin
-  xLog('RestorePowerChanges');
+//  xLog('RestorePowerChanges');
 
   if PowerStateSaved then
   begin
@@ -10051,7 +10051,7 @@ procedure TMainForm.EnableDragFullWindows;
 var
   CurrentDragFullWindows, res: Boolean;
 begin
-  xLog('EnableDragFullWindows');
+//  xLog('EnableDragFullWindows');
 
   if not ChangedDragFullWindows then
   begin
@@ -10068,7 +10068,7 @@ procedure TMainForm.RestoreDragFullWindows;
 var
   res: Boolean;
 begin
-  xLog('RestoreDragFullWindows');
+//  xLog('RestoreDragFullWindows');
 
   if not ChangedDragFullWindows then
     Exit;
