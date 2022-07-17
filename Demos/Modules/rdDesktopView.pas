@@ -654,7 +654,7 @@ begin
 
   fFirstScreen := True;
 
-  pMain.Color := $00A39323;
+  pMain.Color := clWhite; //$00A39323;
   Scroll.Visible := False;
   iPrepare.Visible := True;
   panOptions.Visible := False;

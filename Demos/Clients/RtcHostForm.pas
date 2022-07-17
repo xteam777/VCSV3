@@ -9630,7 +9630,7 @@ begin
   if Assigned(CDesk) then
   begin
 //    GatewayRec := GetGatewayRecByDesktopControl(Sender);
-//    CDesk.PFileTrans := GatewayRec.FileTransfer^;
+//    CDesk.PFileTrans := GatewayRec^.FileTransfer^;
 //    CDesk.PChat := GatewayRec.Chat^;
 
     CDesk.UI.MapKeys := True;
