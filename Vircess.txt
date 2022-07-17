@@ -1,4 +1,5 @@
 ﻿VIRCESS
+шрифт ргб 60 60 60
 подвисает на активации. блокинг
 MainForm.PClient.LoginUserName + '_' + FUserName + '_' + FUID
 //	вышибаем поток при завершении
