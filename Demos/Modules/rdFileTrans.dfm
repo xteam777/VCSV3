@@ -577,7 +577,7 @@ object rdFileTransfer: TrdFileTransfer
         Left = 182
         Top = 4
         Width = 46
-        Height = 23
+        Height = 22
         Caption = 'Local'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -589,8 +589,8 @@ object rdFileTransfer: TrdFileTransfer
       object lRemote: TLabel
         Left = 636
         Top = 4
-        Width = 66
-        Height = 23
+        Width = 68
+        Height = 22
         Caption = 'Remote'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -1140,8 +1140,8 @@ object rdFileTransfer: TrdFileTransfer
     object lUploading: TLabel
       Left = 7
       Top = 1
-      Width = 73
-      Height = 19
+      Width = 71
+      Height = 18
       Caption = 'Uploading'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -1237,8 +1237,8 @@ object rdFileTransfer: TrdFileTransfer
     object lDownloading: TLabel
       Left = 634
       Top = 1
-      Width = 94
-      Height = 19
+      Width = 91
+      Height = 18
       Caption = 'Downloading'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText

@@ -38,14 +38,14 @@ end;
 
 procedure TfMessageBox.bCloseClick(Sender: TObject);
 begin
-  ModalResult := mrClose;
   Close;
+  ModalResult := mrClose;
 end;
 
 procedure TfMessageBox.bOKClick(Sender: TObject);
 begin
-  ModalResult := mrOk;
   Close;
+  ModalResult := mrOk;
 end;
 
 procedure TfMessageBox.FormClose(Sender: TObject; var Action: TCloseAction);

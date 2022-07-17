@@ -19,7 +19,7 @@ uses
   Vcl.ActnCtrls, Vcl.ActnMenus, uVircessTypes, rtcLog, ClipBrd,
   Vcl.PlatformDefaultStyleActnCtrls, {AviFromBitmaps, vfw, }Vcl.Imaging.jpeg,
   System.ImageList, Vcl.ImgList, Math, Vcl.ComCtrls, Vcl.Imaging.pngimage,
-  NFPanel;
+  NFPanel, rtcpFileTransUI;
 
 type
   TrdDesktopViewer = class(TForm)
@@ -97,6 +97,8 @@ type
     iMiniPanelHide: TImage;
     iMiniPanelShow: TImage;
     iMove: TImage;
+    myFileTransferUI: TRtcPFileTransferUI;
+    Button1: TButton;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -164,6 +166,7 @@ type
     procedure aSendShortcutsExecute(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure panOptionsMouseLeave(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
 
   protected
     LMouseX,LMouseY:integer;
@@ -685,6 +688,9 @@ begin
   SetShortcuts_Hook(True); //Доделать
 
   Visible := False; //позже ставим True если не отменено в пендинге
+
+  //PFileTrans.RemoteUserInfo[UI.UserName].asBoolean['ShowDialog'] := False;
+//  PFileTrans.Open(UI.UserName, Sender);
 end;
 
 procedure TrdDesktopViewer.myUILogOut(Sender: TRtcPDesktopControlUI);
@@ -1083,6 +1089,11 @@ procedure TrdDesktopViewer.btnSettingsClick(Sender: TObject);
 //  cbReduceColors.Enabled:=False;
 //  cbReduceColors.Color:=clBtnFace;
   end;
+
+procedure TrdDesktopViewer.Button1Click(Sender: TObject);
+begin
+  myUI.Send('C:\Rufus\rufus.log', 'C:\Rufus\');
+end;
 
 procedure TrdDesktopViewer.btnCancelClick(Sender: TObject);
 begin

@@ -681,9 +681,10 @@ procedure TrdFileTransfer.Form_Close(const mode: string);
   end;
 
 procedure TrdFileTransfer.myUIInit(Sender: TRtcPFileTransferUI);
-  begin
-  if not FReady then Form_Open('(Init) ');
-  end;
+begin
+  if not FReady then
+    Form_Open('(Init) ');
+end;
 
 procedure TrdFileTransfer.myUIOpen(Sender: TRtcPFileTransferUI);
   var

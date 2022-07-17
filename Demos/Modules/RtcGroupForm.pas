@@ -143,8 +143,8 @@ begin
 //  if (CModule^.LastResult.isType = rtc_String)
 //    and (CModule^.LastResult.asString = 'OK') then
 //  begin
-//    ModalResult := mrOk;
 //    Close;
+//    ModalResult := mrOk;
 //  end;
 end;
 
@@ -188,8 +188,8 @@ begin
   if (Result.isType = rtc_String) then
   begin
     UID := Result.asString;
-    ModalResult := mrOk;
     Close;
+    ModalResult := mrOk;
   end;
 end;
 
@@ -207,8 +207,8 @@ begin
   if (Result.isType = rtc_String)
     and (Result.asString = 'OK') then
   begin
-    ModalResult := mrOk;
     Close;
+    ModalResult := mrOk;
   end;
 end;
 

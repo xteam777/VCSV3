@@ -5935,18 +5935,20 @@ object MainForm: TMainForm
     AutoSyncEvents = True
     Client = hcAccounts
     Compression = cMax
+    HyperThreading = True
     EncryptionKey = 16
     SecureKey = '2240897'
     ForceEncryption = True
     AutoSessions = True
     AutoRepost = 2
     ModuleFileName = '/gatefunc'
-    Left = 183
-    Top = 68
+    Left = 95
+    Top = 78
   end
   object hcAccounts: TRtcHttpClient
     MultiThreaded = True
     Timeout.AfterConnecting = 40
+    Timeout.AfterConnect = 40
     ServerPort = '443'
     OnConnect = hcAccountsConnect
     OnDisconnect = hcAccountsDisconnect
@@ -5959,11 +5961,12 @@ object MainForm: TMainForm
     OnConnectError = hcAccountsConnectError
     OnReconnect = hcAccountsReconnect
     AutoConnect = True
+    UseWinHTTP = True
     MaxResponseSize = 128000
     MaxHeaderSize = 16000
     TimeoutsOfAPI.ConnectTimeout = 5
-    Left = 15
-    Top = 106
+    Left = 17
+    Top = 108
   end
   object rActivate: TRtcResult
     OnReturn = rActivateReturn
@@ -6116,17 +6119,20 @@ object MainForm: TMainForm
   object TimerClient: TRtcHttpClient
     MultiThreaded = True
     Timeout.AfterConnecting = 40
+    Timeout.AfterConnect = 40
     ServerPort = '443'
     OnConnect = TimerClientConnect
     OnDisconnect = TimerClientDisconnect
     ReconnectOn.ConnectLost = True
     ReconnectOn.ConnectFail = True
     OnConnectError = TimerClientConnectError
+    AutoConnect = True
+    UseWinHTTP = True
     MaxResponseSize = 128000
     MaxHeaderSize = 16000
     TimeoutsOfAPI.ConnectTimeout = 5
     Left = 44
-    Top = 107
+    Top = 109
   end
   object pingTimer: TTimer
     Enabled = False
@@ -6173,6 +6179,7 @@ object MainForm: TMainForm
   object HostTimerClient: TRtcHttpClient
     MultiThreaded = True
     Timeout.AfterConnecting = 40
+    Timeout.AfterConnect = 40
     ServerPort = '443'
     OnConnect = HostTimerClientConnect
     OnDisconnect = HostTimerClientDisconnect
@@ -6180,6 +6187,7 @@ object MainForm: TMainForm
     ReconnectOn.ConnectLost = True
     ReconnectOn.ConnectFail = True
     AutoConnect = True
+    UseWinHTTP = True
     MaxResponseSize = 128000
     MaxHeaderSize = 16000
     TimeoutsOfAPI.ConnectTimeout = 5
@@ -6421,5 +6429,33 @@ object MainForm: TMainForm
     OnTimer = tCleanConnectionsTimer
     Left = 206
     Top = 116
+  end
+  object tGetDirectorySize: TTimer
+    Enabled = False
+    OnTimer = tGetDirectorySizeTimer
+    Left = 12
+    Top = 12
+  end
+  object tFileSend: TTimer
+    Enabled = False
+    OnTimer = tFileSendTimer
+    Left = 41
+    Top = 12
+  end
+  object ser_: TIdTCPServer
+    Active = True
+    Bindings = <>
+    DefaultPort = 12340
+    OnExecute = ser_Execute
+    Left = 70
+    Top = 12
+  end
+  object cle_: TIdTCPClient
+    ConnectTimeout = 0
+    IPVersion = Id_IPv4
+    Port = 12340
+    ReadTimeout = 3000
+    Left = 95
+    Top = 12
   end
 end

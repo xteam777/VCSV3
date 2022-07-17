@@ -4,7 +4,7 @@ object rdClientSettings: TrdClientSettings
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = #1053#1072#1089#1090#1088#1086#1081#1082#1080
-  ClientHeight = 298
+  ClientHeight = 273
   ClientWidth = 384
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -26,7 +26,7 @@ object rdClientSettings: TrdClientSettings
     Left = 0
     Top = 2
     Width = 385
-    Height = 263
+    Height = 235
     ActivePage = tsNetwork
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -38,84 +38,78 @@ object rdClientSettings: TrdClientSettings
     TabOrder = 0
     object tsNetwork: TTabSheet
       Caption = #1054#1089#1085#1086#1074#1085#1086#1077
+      ExplicitHeight = 232
       object gProxy: TGroupBox
         Left = 3
         Top = 26
         Width = 371
-        Height = 203
+        Height = 177
         Caption = #1053#1072#1089#1090#1088#1086#1081#1082#1080' '#1087#1088#1086#1082#1089#1080
         TabOrder = 0
         object Label1: TLabel
           Left = 10
-          Top = 116
+          Top = 92
           Width = 38
           Height = 16
           Caption = #1040#1076#1088#1077#1089
         end
         object Label4: TLabel
           Left = 10
-          Top = 142
+          Top = 118
           Width = 110
           Height = 16
           Caption = #1048#1084#1103' '#1087#1086#1083#1100#1079#1086#1074#1072#1090#1077#1083#1103
         end
         object Label5: TLabel
           Left = 9
-          Top = 169
+          Top = 145
           Width = 44
           Height = 16
           Caption = #1055#1072#1088#1086#1083#1100
         end
         object Label2: TLabel
           Left = 253
-          Top = 116
+          Top = 92
           Width = 28
           Height = 16
           Alignment = taRightJustify
           Caption = #1055#1086#1088#1090
         end
-        object Label3: TLabel
-          Left = 10
-          Top = 89
-          Width = 65
-          Height = 16
-          Caption = #1058#1080#1087' '#1087#1088#1086#1082#1089#1080
-        end
         object eProxyAddr: TEdit
           Left = 126
-          Top = 112
+          Top = 88
           Width = 119
           Height = 24
           Hint = #1042#1074#1077#1076#1080#1090#1077' '#1072#1076#1088#1077#1089' '#1087#1088#1086#1082#1089#1080', '#1074#1082#1083#1102#1095#1072#1103' http:// or https://'
           Color = clMenu
-          TabOrder = 4
+          TabOrder = 3
           OnKeyDown = cbAutoRunKeyDown
         end
         object eProxyUsername: TEdit
           Left = 126
-          Top = 139
+          Top = 115
           Width = 233
           Height = 24
           Hint = 'Enter Username needed to log in to the Proxy'
           Color = clMenu
-          TabOrder = 6
+          TabOrder = 5
           OnKeyDown = cbAutoRunKeyDown
         end
         object eProxyPassword: TEdit
           Left = 126
-          Top = 166
+          Top = 142
           Width = 233
           Height = 24
           Hint = 'Enter Password needed to log in to the Proxy'
           Color = clMenu
           PasswordChar = '*'
-          TabOrder = 7
+          TabOrder = 6
           OnKeyDown = cbAutoRunKeyDown
         end
         object rbNoProxy: TRadioButton
           Left = 10
           Top = 42
-          Width = 241
+          Width = 349
           Height = 17
           Caption = #1055#1088#1103#1084#1086#1077' '#1087#1086#1076#1082#1083#1102#1095#1077#1085#1080#1077
           Font.Charset = DEFAULT_CHARSET
@@ -131,7 +125,7 @@ object rdClientSettings: TrdClientSettings
         object rbAutomatic: TRadioButton
           Left = 10
           Top = 23
-          Width = 243
+          Width = 349
           Height = 17
           Caption = #1040#1074#1090#1086#1084#1072#1090#1080#1095#1077#1089#1082#1086#1077' '#1086#1087#1088#1077#1076#1077#1083#1077#1085#1080#1077
           TabOrder = 2
@@ -141,7 +135,7 @@ object rdClientSettings: TrdClientSettings
         object rbManual: TRadioButton
           Left = 10
           Top = 61
-          Width = 241
+          Width = 349
           Height = 17
           Caption = #1048#1089#1087#1086#1083#1100#1079#1086#1074#1072#1090#1100' '#1089#1083#1077#1076#1091#1102#1097#1080#1077' '#1085#1072#1089#1090#1088#1086#1081#1082#1080
           TabOrder = 1
@@ -150,30 +144,18 @@ object rdClientSettings: TrdClientSettings
         end
         object eProxyPort: TEdit
           Left = 292
-          Top = 112
+          Top = 88
           Width = 67
           Height = 24
           Color = clMenu
-          TabOrder = 5
+          TabOrder = 4
           OnKeyDown = cbAutoRunKeyDown
-        end
-        object cbProxyType: TComboBox
-          Left = 126
-          Top = 86
-          Width = 233
-          Height = 24
-          Style = csDropDownList
-          Color = clMenu
-          TabOrder = 3
-          Items.Strings = (
-            'HTTP(s)'
-            'SOCKS')
         end
       end
       object cbAutoRun: TCheckBox
-        Left = 10
+        Left = 12
         Top = 3
-        Width = 357
+        Width = 350
         Height = 17
         Caption = #1047#1072#1087#1091#1089#1082#1072#1090#1100' '#1087#1088#1080' '#1089#1090#1072#1088#1090#1077' Windows'
         TabOrder = 1
@@ -183,6 +165,7 @@ object rdClientSettings: TrdClientSettings
     object tsSequrity: TTabSheet
       Caption = #1041#1077#1079#1086#1087#1072#1089#1085#1086#1089#1090#1100
       ImageIndex = 1
+      ExplicitHeight = 232
       object cbOnlyAdminChanges: TCheckBox
         Left = 7
         Top = 147
@@ -260,7 +243,7 @@ object rdClientSettings: TrdClientSettings
   end
   object bOK: TButton
     Left = 156
-    Top = 267
+    Top = 239
     Width = 107
     Height = 29
     Caption = #1054#1050
@@ -275,7 +258,7 @@ object rdClientSettings: TrdClientSettings
   end
   object bClose: TButton
     Left = 269
-    Top = 267
+    Top = 239
     Width = 107
     Height = 29
     Caption = #1054#1058#1052#1045#1053#1040
@@ -291,6 +274,6 @@ object rdClientSettings: TrdClientSettings
   object ApplicationEvents1: TApplicationEvents
     OnMessage = ApplicationEvents1Message
     Left = 10
-    Top = 268
+    Top = 240
   end
 end

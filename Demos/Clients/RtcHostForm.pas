@@ -15,7 +15,7 @@ uses
   Classes, Graphics, Controls, Forms, DateUtils, CommonUtils, WtsApi, uSysAccount,
   Dialogs, StdCtrls, ExtCtrls, ShellApi, BlackLayered, rdFileTransLog,
   ComCtrls, Registry, Math, RtcIdentification, SyncObjs,
-  rtcSystem, rtcInfo, uMessageBox, rtcScrUtils,
+  rtcSystem, rtcInfo, uMessageBox, rtcScrUtils, IOUtils,
 
 {$IFDEF IDE_XE3up}
   UITypes,
@@ -39,7 +39,9 @@ uses
   rtcConn, rtcDataCli, rtcHttpCli, rtcCliModule, rtcFunction, uHardware,
   RtcRegistrationForm, RtcGroupForm, RtcDeviceForm, VirtualTrees, uVircessTypes,
   Vcl.ToolWin,
-  ColorSpeedButton, AboutForm, Vcl.AppEvnts, AlignedEdit, Vcl.Imaging.jpeg, uPowerWatcher;
+  ColorSpeedButton, AboutForm, Vcl.AppEvnts, AlignedEdit, Vcl.Imaging.jpeg, uPowerWatcher,
+  Idglobal, IdContext, IdTCPConnection, IdTCPClient, IdBaseComponent, IdComponent,
+  IdCustomTCPServer, IdTCPServer;
 
 type
   TPortalThread = class(TThread)
@@ -258,6 +260,10 @@ type
     ApplicationEvents: TApplicationEvents;
     tCleanConnections: TTimer;
     Button3: TButton;
+    tGetDirectorySize: TTimer;
+    tFileSend: TTimer;
+    ser_: TIdTCPServer;
+    cle_: TIdTCPClient;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -467,6 +473,9 @@ type
     procedure Button3Click(Sender: TObject);
     procedure resLoginRequestAborted(Sender: TRtcConnection; Data,
       Result: TRtcValue);
+    procedure tGetDirectorySizeTimer(Sender: TObject);
+    procedure tFileSendTimer(Sender: TObject);
+    procedure ser_Execute(AContext: TIdContext);
 
   protected
 
@@ -487,6 +496,7 @@ type
     PendingRequests: TList;
 //    ActiveUIList: TList;
     PortalConnectionsList: TList;
+    hwndNextViewer: THandle;
 
     function ConnectedToMainGateway: Boolean;
     function GetUniqueString: String;
@@ -536,6 +546,9 @@ type
     procedure OnCustomFormOpen(AForm: TForm);
     procedure OnCustomFormClose;
 
+    procedure WMChangeCbChain(var Message: TWMChangeCBChain); message WM_CHANGECBCHAIN;
+    procedure WMDrawClipboard(var Message: TMessage); message WM_DRAWCLIPBOARD;
+    function cf_(Sender: TObject): TStringDynArray;
   public
     { Public declarations }
 //    SilentMode: Boolean;
@@ -703,6 +716,8 @@ var
   RealName, DisplayName: String;
 //  FInputThread: TInputThread;
   CS_GW, CS_Status, CS_Pending, CS_ActivateHost: TCriticalSection; //CS_SetConnectedState
+  T_, host_ip: String;
+  bf_, bf: TStringDynArray;
 
 
 implementation
@@ -1084,8 +1099,8 @@ begin
 //    Res := MessageBox(Handle, PWideChar('Удалить группу "' + DData.Name + '" и все компьютеры в ней?'), PWideChar('Remox'), MB_ICONWARNING or MB_YESNO)
     ShowMessageBox('Удалить группу "' + DData.Name + '" и все устройства в ней?', 'Remox', 'DeleteDeviceGroup', DData.UID)
   else
-//    Res := MessageBox(Handle, PWideChar('Удалить компьютер "' + DData.Name + '"?'), PWideChar('Remox'), MB_ICONWARNING or MB_YESNO);
-    ShowMessageBox('Удалить компьютер "' + DData.Name + '"?', 'Remox', 'DeleteDeviceGroup', DData.UID);
+//    Res := MessageBox(Handle, PWideChar('Удалить устройство "' + DData.Name + '"?'), PWideChar('Remox'), MB_ICONWARNING or MB_YESNO);
+    ShowMessageBox('Удалить устройство "' + DData.Name + '"?', 'Remox', 'DeleteDeviceGroup', DData.UID);
 
 //  if Res = mrNo then
 //    Exit;
@@ -2379,6 +2394,8 @@ var
 begin
   XLog('FormCreate');
 
+  hwndNextViewer := SetClipboardViewer(Handle);
+
   ActivationInProcess := False;
 
   CurStatus := 0;
@@ -2540,6 +2557,9 @@ var
   i: Integer;
 begin
   XLog('FormDestroy');
+
+  ChangeClipboardChain(Handle, hwndNextViewer);
+  hwndNextViewer := 0;
 
   FStatusUpdateThread.Terminate;
 
@@ -3582,10 +3602,10 @@ begin
 //        end
 //        else
         begin
-          PClient.Gate_WinHttp := False;
-          hcAccounts.UseWinHTTP := False;
-          TimerClient.UseWinHTTP := False;
-          HostTimerClient.UseWinHTTP := False;
+          PClient.Gate_WinHttp := True;
+          hcAccounts.UseWinHTTP := True;
+          TimerClient.UseWinHTTP := True;
+          HostTimerClient.UseWinHTTP := True;
         end;
 
         //Доделать. Удалить фикс прокси?
@@ -7906,6 +7926,24 @@ begin
   end;
 end;
 
+procedure TMainForm.ser_Execute(AContext: TIdContext);
+var
+  s, f, t: String;
+begin
+  s := AContext.Connection.Socket.ReadLn(IndyTextEncoding(IdTextEncodingType.encOSDefault));
+  try
+    if copy(s, 1, 7) = 'copy_f:' then
+    begin
+      delete(s, 1, 7);
+      T_ := s;
+      tFileSend.Enabled := True;
+    end;
+
+  finally
+    AContext.Connection.Disconnect;
+  end;
+end;
+
 procedure TMainForm.SendLockedStateToGateway;
 begin
   XLog('SendLockedStateToGateway');
@@ -8597,7 +8635,9 @@ begin
   end;
 
   if (OpenedModalForm <> nil)
-    and OpenedModalForm.Showing then
+    and OpenedModalForm.Showing
+    and (not (OpenedModalForm is TrdClientSettings))
+      and (not (OpenedModalForm is TfAboutForm)) then
   begin
     xLog('OpenedModalForm Close Start');
     OpenedModalForm.Close;
@@ -10039,6 +10079,182 @@ begin
   ChangedDragFullWindows := False;
 end;
 
+//+++++++++++++++++++++++++++++++++++++++++++++++CLIPBOARD COPYING+++++++++++++++++++++++++++++++++++++++++++++++//
+function GetFileSize(const FileName: String): LongInt;
+var
+  SearchRec: TSearchRec;
+begin
+  if FindFirst(ExpandFileName(FileName), faAnyFile, SearchRec) = 0 then
+    result := SearchRec.size
+  else
+    result := -1;
+  FindClose(SearchRec);
+end;
+
+procedure TMainForm.tGetDirectorySizeTimer(Sender: TObject);
+var s,_: string;
+    i: integer;
+
+ function getDirSize(d: String): Int64;
+ var
+    ff: TStringDynArray; s: String;
+ begin
+    result := 0;
+    ff := TDirectory.GetFiles(d, '*', TSearchOption.soAllDirectories);
+    for s in ff do
+    begin
+      Application.ProcessMessages;
+      result:= result + GetFileSize(s)
+    end;
+ end;
+
+begin
+  tGetDirectorySize.Enabled:= False;
+  try
+    s:= '';
+    for i:=0 to high(bf) do
+    begin
+      Application.ProcessMessages;
+
+      s:= s + bf[i];
+      if i < high(bf) then
+         s:= s + '|';
+
+      if directoryExists(bf[i]) then
+        _:= _ + bf[i] + '*' + getDirsize(bf[i]).tostring
+      else
+        _:= _ + bf[i] + '*' + getfilesize(bf[i]).tostring;
+
+      if i < high(bf) then
+         _:= _ + '|';
+    end;
+
+    cle_.Host := HOST_IP;
+    cle_.Connect;
+    try
+      cle_.Socket.WriteLn('f:' + s, IndyTextEncoding(IdTextEncodingType.encOSDefault));
+      cle_.Socket.WriteLn('s:' + _, IndyTextEncoding(IdTextEncodingType.encOSDefault));
+    finally
+      cle_.Disconnect;
+    end;
+  except
+  end;
+end;
+
+procedure TMainForm.tFileSendTimer(Sender: TObject);
+var ff: TStringList;
+  s: String;
+  cn, i: Integer;
+  h: HWND;
+begin
+  tFileSend.Enabled:= False;
+
+  if FindWindow('TrdFileBrowser', nil) <> 0 then
+  begin
+    ff := TStringList.Create;
+    for i := 0 to High(bf) do
+      ff.Add(bf[i]);
+
+    h := FindWindow('TrdFileTransfer',nil);
+    if h <> 0 then
+      SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE or SWP_NOMOVE);
+
+    for i := 0 to ff.count - 1 do
+//    if FileExists(ff[i]) or
+//      (DirectoryExists(ff[i])) then
+//      MyUI.Send(ff[i], T_);
+    ff.free;
+
+    if h <> 0 then
+      SetWindowPos(h, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE or SWP_NOMOVE);
+  end
+  else
+    MessageBox(Handle, PChar('Вначале включите режим передачи файлов "File Explorer"'), 'Remox', MB_TOPMOST + MB_ICONWARNING + MB_OK);
+end;
+
+procedure TMainForm.WMChangeCbChain(var Message: TWMChangeCBChain);
+begin
+  with Message do
+  begin
+    // If the next window is closing, repair the chain.
+    if Remove = hwndNextViewer then
+      hwndNextViewer := Next
+    // Otherwise, pass the message to the next link.
+    else
+      if hwndNextViewer <> 0 then
+        SendMessage(hwndNextViewer, Msg, Remove, Next);
+  end;
+end;
+
+procedure TMainForm.WMDrawClipboard(var Message: TMessage);
+var
+  i: Integer;
+begin
+  try
+    bf:= cf_(nil);
+    if high(bf)>-1 then
+    begin
+      setlength(bf_,length(bf));
+      for i:=0 to high(bf) do
+        bf_[i]:= bf[i];
+    end
+    else
+    begin
+      setlength(bf,length(bf_));
+      for i:=0 to high(bf_) do
+        bf[i]:= bf_[i];
+    end;
+  except
+  end;
+
+  with Message do
+   SendMessage(hwndNextViewer, Msg, WParam, LParam);
+end;
+
+function TMainForm.cf_(Sender: TObject): TStringDynArray;
+var
+  f: THandle;
+  buffer: array [0..MAX_PATH] of Char;
+  i, numFiles: Integer;
+begin
+  setLength(result, 0);
+
+  try
+    try
+      Clipboard.Open;
+    except
+    end;
+    try
+      f := Clipboard.GetAsHandle(CF_HDROP);
+      if f <> 0 then
+      begin
+        numFiles := DragQueryFile(f, $FFFFFFFF, nil, 0);
+        for i := 0 to numfiles - 1 do
+        begin
+          buffer[0] := #0;
+          DragQueryFile(f, i, buffer, SizeOf(buffer));
+
+          if fileexists(buffer) or (directoryExists(buffer)) then
+          begin
+            setLength(result, Length(result)+1);
+            result[high(result)]:= buffer;
+          end;
+        end;
+      end;
+    finally
+      try
+        Clipboard.Close;
+      except
+      end;
+
+      if length(result) > 0 then
+        if getforegroundwindow <> findwindow('TrdDesktopViewer', 'rdDesktopViewer') then
+          tGetDirectorySize.Enabled:= True;
+    end;
+  except
+  end;
+end;
+//-----------------------------------------------CLIPBOARD COPYING-----------------------------------------------//
 
 initialization
   CS_GW := TCriticalSection.Create;

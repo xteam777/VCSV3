@@ -13,7 +13,7 @@ uses
 {$IFNDEF IDE_1}
   Variants,
 {$ENDIF}
-  rtcLog, SyncObjs,
+  rtcLog, SyncObjs, rtcpFileUtils,
   rtcInfo, rtcPortalMod, uProcess,
 
   // cromis units
@@ -30,7 +30,7 @@ uses
 
   rtcCompress, rtcWinLogon, rtcSystem,
 
-  uVircessTypes, CommonUtils, NTPriveleges,
+  uVircessTypes, NTPriveleges,
 
   rtcpFileTrans, //ImageCatcher,
   rtcpDesktopConst, ServiceMgr,
@@ -369,6 +369,17 @@ type
     property HaveScreen: Boolean read GetHaveScreen write SetHaveScreen default False;
   end;
 
+  TRtcPFileTransUserEvent = procedure(Sender: TRtcPDesktopHost;
+    const user: String) of object;
+  TRtcPFileTransFolderEvent = procedure(Sender: TRtcPDesktopHost;
+    const user: String; const FileName, path: String; const size: int64)
+    of object;
+  TRtcPFileTransCallEvent = procedure(Sender: TRtcPDesktopHost;
+    const user: String; const Data: TRtcFunctionInfo) of object;
+  TRtcPFileTransListEvent = procedure(Sender: TRtcPDesktopHost;
+    const user: String; const FolderName: String; const Data: TRtcDataSet)
+    of object;
+
   TRtcPDesktopHost = class(TRtcPModule)
   private
     CS2: TCriticalSection;
@@ -416,6 +427,71 @@ type
     FGatewayParams: boolean;
 
     FFileTrans: TRtcPFileTransfer;
+
+    //FileTrans+
+    WantToSendFiles, PrepareFiles, UpdateFiles: TRtcRecord;
+    SendingFiles: TRtcArray;
+    File_Sending: boolean;
+    File_Senders: integer;
+
+    FMaxSendBlock: longint;
+    FMinSendBlock: longint;
+
+    FOnFileReadStart: TRtcPFileTransFolderEvent;
+    FOnFileRead: TRtcPFileTransFolderEvent;
+    FOnFileReadUpdate: TRtcPFileTransFolderEvent;
+    FOnFileReadStop: TRtcPFileTransFolderEvent;
+    FOnFileReadCancel: TRtcPFileTransFolderEvent;
+
+    FOnFileWriteStart: TRtcPFileTransFolderEvent;
+    FOnFileWrite: TRtcPFileTransFolderEvent;
+    FOnFileWriteStop: TRtcPFileTransFolderEvent;
+    FOnFileWriteCancel: TRtcPFileTransFolderEvent;
+
+    FOnCallReceived: TRtcPFileTransCallEvent;
+
+    FHostMode: boolean;
+    //FileTrans-
+
+   //FileTrans+
+    function StartSendingFile(const UserName: String; const path: String;
+      idx: integer): boolean;
+    function CancelFileSending(Sender: TObject; const uname, FileName, folder: String): int64;
+    procedure StopFileSending(Sender: TObject; const uname: String);
+
+    procedure Event_FileReadStart(Sender: TObject; const user: String;
+      const fname, fromfolder: String; size: int64);
+    procedure Event_FileRead(Sender: TObject; const user: String;
+      const fname, fromfolder: String; size: int64);
+    procedure Event_FileReadUpdate(Sender: TObject; const user: String);
+    procedure Event_FileReadStop(Sender: TObject; const user: String;
+      const fname, fromfolder: String; size: int64);
+    procedure Event_FileReadCancel(Sender: TObject; const user: String;
+      const fname, fromfolder: String; size: int64);
+
+    procedure Event_FileWriteStart(Sender: TObject; const user: String;
+      const fname, tofolder: String; size: int64);
+    procedure Event_FileWrite(Sender: TObject; const user: String;
+      const fname, tofolder: String; size: int64);
+    procedure Event_FileWriteStop(Sender: TObject; const user: String;
+      const fname, tofolder: String; size: int64);
+    procedure Event_FileWriteCancel(Sender: TObject; const user: String;
+      const fname, tofolder: String; size: int64);
+
+    procedure Event_CallReceived(Sender: TObject; const user: String;
+      const Data: TRtcFunctionInfo);
+
+    procedure CallFileEvent(Sender: TObject; Event: TRtcCustomDataEvent;
+      const user: String; const FileName, folder: String; size: int64);
+      overload;
+    procedure CallFileEvent(Sender: TObject; Event: TRtcCustomDataEvent;
+      const user: String); overload;
+    procedure CallFileEvent(Sender: TObject; Event: TRtcCustomDataEvent;
+      const user: String; const Data: TRtcFunctionInfo); overload;
+    procedure CallFileEvent(Sender: TObject; Event: TRtcCustomDataEvent;
+      const user: String; const FolderName: String;
+      const Data: TRtcDataSet); overload;
+    //FileTrans-
 
     procedure setClipboard(const username: String; const data: RtcString);
 
@@ -510,6 +586,21 @@ type
 
     procedure Init; override;
 
+    //FileTrans+
+    procedure xOnFileReadStart(Sender, Obj: TObject; Data: TRtcValue);
+    procedure xOnFileRead(Sender, Obj: TObject; Data: TRtcValue);
+    procedure xOnFileReadUpdate(Sender, Obj: TObject; Data: TRtcValue);
+    procedure xOnFileReadStop(Sender, Obj: TObject; Data: TRtcValue);
+    procedure xOnFileReadCancel(Sender, Obj: TObject; Data: TRtcValue);
+
+    procedure xOnFileWriteStart(Sender, Obj: TObject; Data: TRtcValue);
+    procedure xOnFileWrite(Sender, Obj: TObject; Data: TRtcValue);
+    procedure xOnFileWriteStop(Sender, Obj: TObject; Data: TRtcValue);
+    procedure xOnFileWriteCancel(Sender, Obj: TObject; Data: TRtcValue);
+
+    procedure xOnCallReceived(Sender, Obj: TObject; Data: TRtcValue);
+    //FileTrans-
+
   public
     FHaveScreen: Boolean;
     FOnHaveScreeenChanged: TNotifyEvent;
@@ -530,6 +621,26 @@ type
     property LastMouseUser: String read GetLastMouseUser;
 
     function MirrorDriverInstalled(Init: boolean = False): boolean;
+
+    //FileTrans+
+    { Send (upload) File or Folder "FileName" (specify full path) to folder "ToFolder" (will use INBOX folder if not specified) at user "UserName".
+      If file transfer was not prepared by calling "OpenFiles", it will be after this call. }
+    procedure Send(const UserName: String; const FileName: String;
+      const tofolder: String = ''; Sender: TObject = nil);
+
+    { Fetch (download) File or Folder "FileName" (specify full path) from user "username" to folder "ToFolder" (will use INBOX folder if not specified).
+      If file transfer was not prepared by calling "OpenFiles", it will be after this call. }
+    procedure Fetch(const UserName: String; const FileName: String;
+      const tofolder: String = ''; Sender: TObject = nil);
+
+    procedure Cancel_Send(const UserName: String; const FileName: string;
+      const tofolder: String = ''; Sender: TObject = nil);
+    procedure Cancel_Fetch(const UserName: String; const FileName: string;
+      const tofolder: String = ''; Sender: TObject = nil);
+
+    procedure Call(const UserName: String; const Data: TRtcFunctionInfo;
+      Sender: TObject = nil);
+    //FileTrans-
 
   published
     { Set to TRUE if you wish to store access right and screen parameters on the Gateway
@@ -654,6 +765,51 @@ type
 
     property HaveScreen: Boolean read FHaveScreen;
     property OnHaveScreeenChanged: TNotifyEvent read FOnHaveScreeenChanged write FOnHaveScreeenChanged;
+
+    //FileTrans+
+    { FileTransfer has 2 sides. For two clients to be able to exchange files,
+      at least one side has to have BeTheHost property set to True.
+      You can NOT send files between two clients if they both have BeTheHost=False.
+      On the other hand, if two clients have BeTheHost=True, the one to initiate
+      file transfer will become the host for the duration of file transfer. }
+    property BeTheHost: boolean read FHostMode write FHostMode default False;
+
+    { Minimum chunk size (in bytes) worth sending in a loop, if we have already some data to send. }
+    property MinSendChunkSize: longint read FMinSendBlock write FMinSendBlock
+      default RTCP_DEFAULT_MINCHUNKSIZE;
+
+    { Large files are split in smaller chunks. Maximum allowed chunk size is MaxSendChunkSize bytes.
+      Any file larger than MaxSendChunkSize will be split in chunks of MaxSendChunkSize when sending.
+      Using larger chunks may improve performance, but it can also increase the risk of a file
+      never reaching it's destination if the connection is not good enough to hold for so long.
+      By splitting files in smaller chunks, you allow the connection to close and be reopened
+      between each file chunk, so the ammount of data that needs to be re-sent is lower. }
+    property MaxSendChunkSize: longint read FMaxSendBlock write FMaxSendBlock
+      default RTCP_DEFAULT_MAXCHUNKSIZE;
+
+    property On_FileSendStart: TRtcPFileTransFolderEvent read FOnFileReadStart
+      write FOnFileReadStart;
+    property On_FileSend: TRtcPFileTransFolderEvent read FOnFileRead
+      write FOnFileRead;
+    property On_FileSendUpdate: TRtcPFileTransFolderEvent read FOnFileReadUpdate
+      write FOnFileReadUpdate;
+    property On_FileSendStop: TRtcPFileTransFolderEvent read FOnFileReadStop
+      write FOnFileReadStop;
+    property On_FileSendCancel: TRtcPFileTransFolderEvent read FOnFileReadCancel
+      write FOnFileReadCancel;
+
+    property On_FileRecvStart: TRtcPFileTransFolderEvent read FOnFileWriteStart
+      write FOnFileWriteStart;
+    property On_FileRecv: TRtcPFileTransFolderEvent read FOnFileWrite
+      write FOnFileWrite;
+    property On_FileRecvStop: TRtcPFileTransFolderEvent read FOnFileWriteStop
+      write FOnFileWriteStop;
+    property On_FileRecvCancel: TRtcPFileTransFolderEvent
+      read FOnFileWriteCancel write FOnFileWriteCancel;
+
+    property On_CallReceived: TRtcPFileTransCallEvent read FOnCallReceived
+      write FOnCallReceived;
+    //FileTrans-
   end;
 
 //function CaptureFullScreen(MultiMon: boolean; PixelFormat: TPixelFormat = pf8bit): TBitmap;
@@ -2448,7 +2604,7 @@ var
   BlockTop: integer;
   DW: HWND;
   SDC: HDC;
-  fNeedRecreate, fHaveScreen: Boolean;
+  fNeedRecreate, fHaveScreen, fRes: Boolean;
 
   function CaptureNow: boolean;
   var
@@ -6746,6 +6902,464 @@ begin
     CS.Release;
   end;
 end;
+
+//FileTrans+
+procedure TRtcPDesktopHost.xOnFileReadStart(Sender, Obj: TObject;
+  Data: TRtcValue);
+begin
+  FOnFileReadStart(self, Data.asRecord.asText['user'],
+    Data.asRecord.asText['path'], Data.asRecord.asText['folder'],
+    Data.asRecord.asLargeInt['size']);
+end;
+
+procedure TRtcPDesktopHost.xOnFileRead(Sender, Obj: TObject; Data: TRtcValue);
+begin
+  FOnFileRead(self, Data.asRecord.asText['user'], Data.asRecord.asText['path'],
+    Data.asRecord.asText['folder'], Data.asRecord.asLargeInt['size']);
+end;
+
+procedure TRtcPDesktopHost.xOnFileReadUpdate(Sender, Obj: TObject;
+  Data: TRtcValue);
+begin
+  FOnFileReadUpdate(self, Data.asRecord.asText['user'],
+    Data.asRecord.asText['path'], Data.asRecord.asText['folder'],
+    Data.asRecord.asLargeInt['size']);
+end;
+
+procedure TRtcPDesktopHost.xOnFileReadStop(Sender, Obj: TObject;
+  Data: TRtcValue);
+begin
+  FOnFileReadStop(self, Data.asRecord.asText['user'],
+    Data.asRecord.asText['path'], Data.asRecord.asText['folder'],
+    Data.asRecord.asLargeInt['size']);
+end;
+
+procedure TRtcPDesktopHost.xOnFileReadCancel(Sender, Obj: TObject;
+  Data: TRtcValue);
+begin
+  FOnFileReadCancel(self, Data.asRecord.asText['user'],
+    Data.asRecord.asText['path'], Data.asRecord.asText['folder'],
+    Data.asRecord.asLargeInt['size']);
+end;
+
+procedure TRtcPDesktopHost.xOnFileWriteStart(Sender, Obj: TObject;
+  Data: TRtcValue);
+begin
+  FOnFileWriteStart(self, Data.asRecord.asText['user'],
+    Data.asRecord.asText['path'], Data.asRecord.asText['folder'],
+    Data.asRecord.asLargeInt['size']);
+end;
+
+procedure TRtcPDesktopHost.xOnFileWrite(Sender, Obj: TObject; Data: TRtcValue);
+begin
+  FOnFileWrite(self, Data.asRecord.asText['user'], Data.asRecord.asText['path'],
+    Data.asRecord.asText['folder'], Data.asRecord.asLargeInt['size']);
+end;
+
+procedure TRtcPDesktopHost.xOnFileWriteStop(Sender, Obj: TObject;
+  Data: TRtcValue);
+begin
+  FOnFileWriteStop(self, Data.asRecord.asText['user'],
+    Data.asRecord.asText['path'], Data.asRecord.asText['folder'],
+    Data.asRecord.asLargeInt['size']);
+end;
+
+procedure TRtcPDesktopHost.xOnFileWriteCancel(Sender, Obj: TObject;
+  Data: TRtcValue);
+begin
+  FOnFileWriteCancel(self, Data.asRecord.asText['user'],
+    Data.asRecord.asText['path'], Data.asRecord.asText['folder'],
+    Data.asRecord.asLargeInt['size']);
+end;
+
+procedure TRtcPDesktopHost.xOnCallReceived(Sender, Obj: TObject;
+  Data: TRtcValue);
+begin
+  FOnCallReceived(self, Data.asRecord.asText['user'],
+    Data.asRecord.asFunction['data']);
+end;
+
+function TRtcPDesktopHost.StartSendingFile(const UserName: String;
+  const path: String; idx: integer): boolean;
+var
+  k: integer;
+begin
+  CS.Acquire;
+  try
+    if (PrepareFiles.isType[UserName] = rtc_Array) and
+      (PrepareFiles.asArray[UserName].isType[idx] = rtc_Record) and
+      (PrepareFiles.asArray[UserName].asRecord[idx].asText['path'] = path) then
+    begin
+      Result := True;
+      File_Sending := True;
+      Inc(File_Senders);
+
+      k := SendingFiles.Count;
+      SendingFiles.asObject[k] := PrepareFiles.asArray[UserName].asObject[idx];
+      PrepareFiles.asArray[UserName].asObject[idx] := nil;
+    end
+    else
+      Result := False;
+  finally
+    CS.Release;
+  end;
+end;
+
+function TRtcPDesktopHost.CancelFileSending(Sender:TObject; const uname, FileName,
+  folder: String): int64;
+var
+  fsize: int64;
+  idx: integer;
+
+begin
+  Result := 0;
+  CS.Acquire;
+  try
+    if (PrepareFiles.Count > 0) then
+    begin
+      for idx := PrepareFiles.Count - 1 downto 0 do
+        if (PrepareFiles.isType[uname] = rtc_Array) and
+          (PrepareFiles.asArray[uname].isType[idx] = rtc_Record) and
+          (PrepareFiles.asArray[uname].asRecord[idx].asText['path'] = FileName) and
+          ( (PrepareFiles.asArray[uname].asRecord[idx].asText['folder'] = folder) or
+            (folder = '') ) then
+        begin
+          // Result:=Result+PrepareFiles.asArray[uname].asRecord[idx].asLargeInt['size'];
+          PrepareFiles.asArray[uname].isNull[idx] := True;
+        end;
+    end;
+    if File_Senders > 0 then
+    begin
+      for idx := SendingFiles.Count - 1 downto 0 do
+      begin
+        if (SendingFiles.isType[idx] = rtc_Record) and
+          (SendingFiles.asRecord[idx].asText['user'] = uname) and
+          (SendingFiles.asRecord[idx].asText['path'] = FileName) and
+          ( (SendingFiles.asRecord[idx].asText['folder'] = folder) or
+            (folder = '') ) then
+        begin
+          fsize := SendingFiles.asRecord[idx].asLargeInt['size'] -
+            SendingFiles.asRecord[idx].asLargeInt['sent'];
+          Result := Result + fsize;
+          SendingFiles.isNull[idx] := True;
+
+          Dec(File_Senders);
+          Event_FileReadCancel(Sender, uname, FileName, folder, fsize);
+
+          if (File_Senders = 0) then
+          begin
+            SendingFiles.Clear;
+            Exit;
+          end;
+        end;
+      end;
+    end;
+  finally
+    CS.Release;
+  end;
+end;
+
+procedure TRtcPDesktopHost.StopFileSending(Sender: TObject;
+  const uname: String);
+var
+  idx: integer;
+begin
+  CS.Acquire;
+  try
+    PrepareFiles.isNull[uname] := True;
+    UpdateFiles.isNull[uname] := True;
+    if File_Senders > 0 then
+    begin
+      for idx := SendingFiles.Count - 1 downto 0 do
+      begin
+        if SendingFiles.isType[idx] = rtc_Record then
+        begin
+          if SendingFiles.asRecord[idx].asText['user'] = uname then
+          begin
+            SendingFiles.isNull[idx] := True;
+            Dec(File_Senders);
+            if File_Senders = 0 then
+            begin
+              SendingFiles.Clear;
+              Exit;
+            end;
+          end;
+        end;
+      end;
+    end;
+  finally
+    CS.Release;
+  end;
+end;
+
+procedure TRtcPDesktopHost.Event_FileReadStart(Sender: TObject;
+  const user: String; const fname, fromfolder: String; size: int64);
+begin
+  if assigned(FOnFileReadStart) then
+    CallFileEvent(Sender, xOnFileReadStart, user, fname, fromfolder, size);
+end;
+
+procedure TRtcPDesktopHost.Event_FileRead(Sender: TObject; const user: String;
+  const fname, fromfolder: String; size: int64);
+begin
+  if assigned(FOnFileRead) then
+    CallFileEvent(Sender, xOnFileRead, user, fname, fromfolder, size);
+end;
+
+procedure TRtcPDesktopHost.Event_FileReadUpdate(Sender: TObject;
+  const user: String);
+begin
+  if assigned(FOnFileReadUpdate) then
+    CallFileEvent(Sender, xOnFileReadUpdate, user);
+end;
+
+procedure TRtcPDesktopHost.Event_FileReadStop(Sender: TObject;
+  const user: String; const fname, fromfolder: String; size: int64);
+begin
+  if assigned(FOnFileReadStop) then
+    CallFileEvent(Sender, xOnFileReadStop, user, fname, fromfolder, size);
+end;
+
+procedure TRtcPDesktopHost.Event_FileReadCancel(Sender: TObject;
+  const user, fname, fromfolder: String; size: int64);
+begin
+  if assigned(FOnFileReadCancel) then
+    CallFileEvent(Sender, xOnFileReadCancel, user, fname, fromfolder, size);
+end;
+
+procedure TRtcPDesktopHost.Event_FileWriteStart(Sender: TObject;
+  const user: String; const fname, tofolder: String; size: int64);
+begin
+  if assigned(FOnFileWriteStart) then
+    CallFileEvent(Sender, xOnFileWriteStart, user, fname, tofolder, size);
+end;
+
+procedure TRtcPDesktopHost.Event_FileWrite(Sender: TObject; const user: String;
+  const fname, tofolder: String; size: int64);
+begin
+  if assigned(FOnFileWrite) then
+    CallFileEvent(Sender, xOnFileWrite, user, fname, tofolder, size);
+end;
+
+procedure TRtcPDesktopHost.Event_FileWriteStop(Sender: TObject;
+  const user: String; const fname, tofolder: String; size: int64);
+begin
+  if assigned(FOnFileWriteStop) then
+    CallFileEvent(Sender, xOnFileWriteStop, user, fname, tofolder, size);
+end;
+
+procedure TRtcPDesktopHost.Event_FileWriteCancel(Sender: TObject;
+  const user, fname, tofolder: String; size: int64);
+begin
+  if assigned(FOnFileWriteCancel) then
+    CallFileEvent(Sender, xOnFileWriteCancel, user, fname, tofolder, size);
+end;
+
+procedure TRtcPDesktopHost.Event_CallReceived(Sender: TObject;
+  const user: String; const Data: TRtcFunctionInfo);
+begin
+  if assigned(FOnCallReceived) then
+    CallFileEvent(Sender, xOnCallReceived, user, Data);
+end;
+
+procedure TRtcPDesktopHost.CallFileEvent(Sender: TObject;
+  Event: TRtcCustomDataEvent; const user: String;
+  const FileName, folder: String; size: int64);
+var
+  Msg: TRtcValue;
+begin
+  Msg := TRtcValue.Create;
+  try
+    with Msg.newRecord do
+    begin
+      asText['user'] := user;
+      asText['path'] := FileName;
+      asText['folder'] := folder;
+      asLargeInt['size'] := size;
+    end;
+    CallEvent(Sender, Event, Msg);
+  finally
+    Msg.Free;
+  end;
+end;
+
+procedure TRtcPDesktopHost.CallFileEvent(Sender: TObject;
+  Event: TRtcCustomDataEvent; const user: String);
+var
+  Msg: TRtcValue;
+begin
+  Msg := TRtcValue.Create;
+  try
+    Msg.asText := user;
+    CallEvent(Sender, Event, Msg);
+  finally
+    Msg.Free;
+  end;
+end;
+
+procedure TRtcPDesktopHost.CallFileEvent(Sender: TObject;
+  Event: TRtcCustomDataEvent; const user: String; const Data: TRtcFunctionInfo);
+var
+  Msg: TRtcValue;
+begin
+  Msg := TRtcValue.Create;
+  try
+    with Msg.newRecord do
+    begin
+      asText['user'] := user;
+      asObject['data'] := Data; // temporary set pointer
+    end;
+    CallEvent(Sender, Event, Msg);
+    Msg.asRecord.asObject['data'] := nil; // clear pointer
+  finally
+    Msg.Free;
+  end;
+end;
+
+procedure TRtcPDesktopHost.CallFileEvent(Sender: TObject;
+  Event: TRtcCustomDataEvent; const user, FolderName: String;
+  const Data: TRtcDataSet);
+var
+  Msg: TRtcValue;
+begin
+  Msg := TRtcValue.Create;
+  try
+    with Msg.newRecord do
+    begin
+      asText['user'] := user;
+      asText['folder'] := FolderName;
+      asObject['data'] := Data; // temporary set pointer
+    end;
+    CallEvent(Sender, Event, Msg);
+    Msg.asRecord.asObject['data'] := nil; // clear pointer
+  finally
+    Msg.Free;
+  end;
+end;
+
+procedure TRtcPDesktopHost.Call(const UserName: String;
+  const Data: TRtcFunctionInfo; Sender: TObject);
+var
+  fn: TRtcFunctionInfo;
+begin
+  fn := TRtcFunctionInfo.Create;
+  fn.FunctionName := 'filecmd';
+  fn.asString['c'] := 'call';
+  fn.asObject['i'] := Data;
+  Client.SendToUser(Sender, UserName, fn);
+end;
+
+procedure TRtcPDesktopHost.Send(const UserName: String; const FileName: String;
+  const tofolder: String = ''; Sender: TObject = nil);
+var
+  fn: TRtcFunctionInfo;
+  idx: integer;
+  dts: TRtcRecord;
+begin
+  if not isSubscriber(UserName) then
+  begin
+    CS.Acquire;
+    try
+      if WantToSendFiles.isType[UserName] = rtc_Null then
+        WantToSendFiles.newArray(UserName);
+
+      idx := WantToSendFiles.asArray[UserName].Count;
+      with WantToSendFiles.asArray[UserName].newRecord(idx) do
+      begin
+        asText['file'] := FileName;
+        asText['to'] := tofolder;
+      end;
+    finally
+      CS.Release;
+    end;
+
+    Open(UserName, Sender);
+  end
+  else
+  begin
+    dts := TRtcRecord.Create;
+    try
+      dts.asText['user'] := UserName;
+      dts.asText['path'] := ExtractFileName(FileName);
+      dts.asText['folder'] := ExtractFilePath(FileName);
+      dts.asText['to'] := tofolder;
+      dts.asLargeInt['size'] := File_Content(FileName, dts.newDataSet('files'));
+    except
+      dts.Free;
+      raise;
+    end;
+
+    CS.Acquire;
+    try
+      if PrepareFiles.isType[UserName] = rtc_Null then
+        PrepareFiles.newArray(UserName);
+
+      idx := PrepareFiles.asArray[UserName].Count;
+      PrepareFiles.asArray[UserName].asObject[idx] := dts;
+
+      fn := TRtcFunctionInfo.Create;
+      fn.FunctionName := 'putfile';
+      fn.asInteger['id'] := idx;
+      fn.asText['path'] := ExtractFileName(FileName);
+      fn.asText['to'] := tofolder;
+      fn.asLargeInt['size'] := dts.asLargeInt['size'];
+    finally
+      CS.Release;
+    end;
+
+    if assigned(fn) then
+      Client.SendToUser(Sender, UserName, fn);
+  end;
+end;
+
+procedure TRtcPDesktopHost.Fetch(const UserName: String;
+  const FileName: String; const tofolder: String = ''; Sender: TObject = nil);
+var
+  fn: TRtcFunctionInfo;
+begin
+  fn := TRtcFunctionInfo.Create;
+  fn.FunctionName := 'getfile';
+  fn.asText['file'] := FileName;
+  fn.asText['to'] := tofolder;
+  Client.SendToUser(Sender, UserName, fn);
+end;
+
+procedure TRtcPDesktopHost.Cancel_Send(const UserName, FileName: String;
+  const tofolder: String = ''; Sender: TObject = nil);
+var
+  fname, ffolder: String;
+  fn: TRtcFunctionInfo;
+  fsize: int64;
+begin
+  fname := ExtractFileName(FileName);
+  if fname=FileName then
+    ffolder:=''
+  else
+    ffolder := ExtractFilePath(FileName);
+  fsize := CancelFileSending(Sender, UserName, fname, ffolder);
+
+  fn := TRtcFunctionInfo.Create;
+  fn.FunctionName := 'filecmd';
+  fn.asString['c'] := 'abort';
+  fn.asText['file'] := fname;
+  fn.asText['to'] := tofolder;
+  fn.asLargeInt['size'] := fsize;
+  Client.SendToUser(Sender, UserName, fn);
+end;
+
+procedure TRtcPDesktopHost.Cancel_Fetch(const UserName, FileName: String;
+  const tofolder: String = ''; Sender: TObject = nil);
+var
+  fn: TRtcFunctionInfo;
+begin
+  fn := TRtcFunctionInfo.Create;
+  fn.FunctionName := 'filecmd';
+  fn.asString['c'] := 'cancel';
+  fn.asText['file'] := FileName;
+  fn.asText['to'] := tofolder;
+  Client.SendToUser(Sender, UserName, fn);
+end;
+//FileTrans-
 
 initialization
 
