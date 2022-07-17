@@ -204,6 +204,9 @@ type
     FSendShortcuts: Boolean;
 
     //FileTrans+
+    loop_tosendfile: boolean;
+    loop_update: TRtcArray;
+
     WantToSendFiles, PrepareFiles, UpdateFiles: TRtcRecord;
     SendingFiles: TRtcArray;
     File_Sending: boolean;
@@ -312,9 +315,9 @@ type
 
   protected
 
-    // function SenderLoop_Check(Sender:TObject):boolean; override;
-    // procedure SenderLoop_Prepare(Sender:TObject); override;
-    // procedure SenderLoop_Execute(Sender:TObject); override;
+     function SenderLoop_Check(Sender:TObject):boolean; override;
+     procedure SenderLoop_Prepare(Sender:TObject); override;
+     procedure SenderLoop_Execute(Sender:TObject); override;
 
     // procedure Call_LogIn(Sender:TObject); override;
     procedure Call_LogOut(Sender: TObject); override;
@@ -2575,6 +2578,290 @@ begin
   fn.asText['file'] := FileName;
   fn.asText['to'] := tofolder;
   Client.SendToUser(Sender, UserName, fn);
+end;
+
+function TRtcPDesktopControl.SenderLoop_Check(Sender: TObject): boolean;
+begin
+  loop_update := nil;
+  loop_tosendfile := False;
+
+  CS.Acquire;
+  try
+    Result := File_Sending;
+  finally
+    CS.Release;
+  end;
+end;
+
+procedure TRtcPDesktopControl.SenderLoop_Prepare(Sender: TObject);
+var
+  a: integer;
+  uname: String;
+begin
+  CS.Acquire;
+  try
+    if File_Sending then
+    begin
+      if UpdateFiles.Count > 0 then
+      begin
+        loop_update := TRtcArray.Create;
+        for a := 0 to UpdateFiles.Count - 1 do
+        begin
+          uname := UpdateFiles.FieldName[a];
+          if UpdateFiles.asBoolean[uname] then
+          begin
+            UpdateFiles.asBoolean[uname] := False;
+            loop_update.asText[loop_update.Count] := uname;
+          end;
+        end;
+        UpdateFiles.Clear;
+      end;
+
+      if File_Senders > 0 then
+        loop_tosendfile := True
+      else
+        File_Sending := False;
+    end;
+  finally
+    CS.Release;
+  end;
+end;
+
+procedure TRtcPDesktopControl.SenderLoop_Execute(Sender: TObject);
+var
+  sr: TRtcRecord;
+  fn: TRtcFunctionInfo;
+
+  a: integer;
+
+  maxRead, maxSend, sendNow: int64;
+
+  myStop, myRead: boolean;
+
+  s: RtcString;
+  myUser: String;
+
+  myPath, myFolder, myFile, myDest: String;
+
+  myReadSize, mySize, myLoc: int64;
+
+  dts: TRtcDataSet;
+
+  function SendNextFile: boolean;
+  var
+    idx: integer;
+    fstart: TRtcArray;
+    frec: TRtcRecord;
+  begin
+    myStop := False;
+    myRead := False;
+    fn := nil;
+
+    fstart := nil;
+    try
+      CS.Acquire;
+      try
+        for idx := 0 to SendingFiles.Count - 1 do
+          if SendingFiles.isType[idx] = rtc_Record then
+            with SendingFiles.asRecord[idx] do
+              if not asBoolean['start'] then
+              begin
+                asBoolean['start'] := True;
+                if not assigned(fstart) then
+                  fstart := TRtcArray.Create;
+                frec := fstart.newRecord(fstart.Count);
+                frec.asText['user'] := asText['user'];
+                frec.asText['path'] := asText['path'];
+                frec.asText['folder'] := asText['folder'];
+                frec.asText['to'] := asText['to'];
+                frec.asLargeInt['size'] := asLargeInt['size'];
+              end;
+      finally
+        CS.Release;
+      end;
+    except
+      on E: Exception do
+      begin
+        Log('SEND.LOOP1', E);
+        raise;
+      end;
+    end;
+
+    if assigned(fstart) then
+      try
+        for idx := 0 to fstart.Count - 1 do
+          with fstart.asRecord[idx] do
+            Event_FileReadStart(Sender, asText['user'], asText['path'],
+              asText['folder'], asLargeInt['size']);
+      finally
+        fstart.Free;
+      end;
+
+    CS.Acquire;
+    try
+      if SendingFiles.Count > 0 then
+      begin
+        idx := SendingFiles.Count - 1;
+        while SendingFiles.isNull[idx] do
+        begin
+          Dec(idx);
+          if idx < 0 then
+            Break;
+        end;
+      end
+      else
+        idx := -1;
+
+      if idx >= 0 then
+      begin
+        try
+          sr := SendingFiles.asRecord[idx];
+
+          myUser := sr.asText['user'];
+          myFolder := sr.asText['folder'];
+          myPath := sr.asText['path'];
+          myDest := sr.asText['to'];
+
+          UpdateFiles.asBoolean[myUser] := True;
+
+          dts := sr.asDataSet['files'];
+          dts.Last;
+
+          myFile := dts.asText['name'];
+
+          // re-calculate file size before sending it
+          if dts.asLargeInt['sent'] = 0 then
+            dts.asLargeInt['size'] := File_Size(myFolder + myFile);
+
+          mySize := dts.asLargeInt['size'];
+          myLoc := dts.asLargeInt['sent'];
+
+          fn := TRtcFunctionInfo.Create;
+          fn.FunctionName := 'file';
+          fn.asText['file'] := myFile;
+          fn.asText['path'] := myPath;
+          if myDest <> '' then
+            fn.asText['to'] := myDest;
+
+        except
+          on E: Exception do
+          begin
+            Log('SEND.READ1', E);
+            raise;
+          end;
+        end;
+
+        try
+          if myLoc < mySize then
+          begin
+            sendNow := mySize - myLoc;
+            if sendNow > maxRead then
+              sendNow := maxRead;
+
+            s := Read_File(myFolder + myFile, myLoc, sendNow);
+
+            if length(s) > 0 then
+            begin
+              myRead := True;
+              myReadSize := length(s);
+
+              dts.asLargeInt['sent'] := myLoc + myReadSize;
+
+              fn.asString['data'] := s;
+              fn.asLargeInt['at'] := myLoc;
+
+              maxRead := maxRead - myReadSize;
+              maxSend := maxSend - length(fn.asString['data']);
+
+              if dts.asLargeInt['sent'] = mySize then
+              begin
+                fn.asDateTime['fage'] := dts.asDateTime['age'];
+                fn.asInteger['fattr'] := dts.asInteger['attr'];
+                dts.Delete;
+                if dts.RowCount = 0 then
+                begin
+                  myStop := True;
+                  SendingFiles.isNull[idx] := True;
+                  Dec(File_Senders);
+                  fn.asBoolean['stop'] := True;
+                end;
+              end;
+            end
+            else
+            begin
+              fn.asDateTime['fage'] := dts.asDateTime['age'];
+              fn.asInteger['fattr'] := dts.asInteger['attr'];
+              dts.Delete;
+              if dts.RowCount = 0 then
+              begin
+                myStop := True;
+                SendingFiles.isNull[idx] := True;
+                Dec(File_Senders);
+                fn.asBoolean['stop'] := True;
+              end;
+            end;
+          end
+          else
+          begin
+            fn.asDateTime['fage'] := dts.asDateTime['age'];
+            fn.asInteger['fattr'] := dts.asInteger['attr'];
+            dts.Delete;
+            if dts.RowCount = 0 then
+            begin
+              myStop := True;
+              SendingFiles.isNull[idx] := True;
+              Dec(File_Senders);
+              fn.asBoolean['stop'] := True;
+            end;
+          end;
+
+        except
+          on E: Exception do
+          begin
+            Log('SEND.READ2', E);
+            raise;
+          end;
+        end;
+
+      end;
+    finally
+      CS.Release;
+    end;
+
+    if assigned(fn) then
+    begin
+      Client.SendToUser(Sender, myUser, fn);
+
+      if myRead then
+        Event_FileRead(Sender, myUser, myPath, myFolder, myReadSize);
+
+      if myStop then
+        Event_FileReadStop(Sender, myUser, myPath, myFolder, 0);
+
+      Result := True;
+    end
+    else
+      Result := False;
+  end;
+
+begin
+  if assigned(loop_update) then
+    try
+      for a := 0 to loop_update.Count - 1 do
+        Event_FileReadUpdate(Sender, loop_update.asText[a]);
+    finally
+      loop_update.Free;
+    end;
+
+  if loop_tosendfile then
+  begin
+    maxRead := FMaxSendBlock; // read max 100 KB of data at once
+    maxSend := FMaxSendBlock div 2; // send max 50 KB of compressed data at once
+    repeat
+      if not SendNextFile then
+        Break;
+    until (maxRead < FMinSendBlock) or (maxSend < FMinSendBlock);
+  end;
 end;
 //FileTrans-
 
