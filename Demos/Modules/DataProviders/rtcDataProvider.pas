@@ -20,7 +20,7 @@ uses
   rtcConn, rtcDataSrv, uVircessTypes,
 
   rtcAccounts, Data.DB, Data.Win.ADODB, Variants, Vcl.ExtCtrls, Vcl.StdCtrls,
-  rtcSystem, rtcLog, SyncObjs, rtcDataCli, rtcCliModule, rtcHttpCli;
+  rtcSystem, rtcLog, SyncObjs, rtcDataCli, rtcCliModule, rtcHttpCli, rtcPortalGate;
 
 type
   TStartForceUserLogoutThread = procedure(AUserName: String) of Object;
@@ -73,16 +73,19 @@ type
     Module3: TRtcServerModule;
     Module4: TRtcServerModule;
     ServerLink4: TRtcDataServerLink;
-    GateServerGroup: TRtcFunctionGroup;
-    GateServerModule: TRtcServerModule;
-    GateClientModule: TRtcClientModule;
-    GateServerLink: TRtcDataServerLink;
-    GateClientLink: TRtcDataClientLink;
+    MainGateServerGroup: TRtcFunctionGroup;
+    MainGateServerModule: TRtcServerModule;
+    MainGateClientModule: TRtcClientModule;
+    MainGateServerLink: TRtcDataServerLink;
+    MainGateClientLink: TRtcDataClientLink;
     GateRelogin: TRtcFunction;
     GateLogout: TRtcFunction;
     rGateRelogin: TRtcResult;
     rGateLogOut: TRtcResult;
     ClientDestroy: TRtcFunction;
+    PortalGateServerLink: TRtcDataServerLink;
+    PortalGateServerModule: TRtcServerModule;
+    PortalGateServerGroup: TRtcFunctionGroup;
     procedure DataModuleCreate(Sender: TObject);
     procedure DataModuleDestroy(Sender: TObject);
     procedure Module1SessionClose(Sender: TRtcConnection);
@@ -140,6 +143,8 @@ type
       Result: TRtcValue);
     procedure rGateReloginReturn(Sender: TRtcConnection; Data,
       Result: TRtcValue);
+    procedure ClientDestroyExecute(Sender: TRtcConnection;
+      Param: TRtcFunctionInfo; Result: TRtcValue);
   private
     FOnUserLogin: TUserEvent;
     FOnUserLogOut: TUserEvent;
@@ -155,6 +160,8 @@ type
     { Public declarations }
     ThisGatewayAddress: String;
     ThisGatewayMaxUsers: Integer;
+
+    Gateway1, Gateway2, Gateway3, Gateway4: TRtcPortalGateway;
 
     Users: TVircessUsers;
 //    LogMemo: TMemo;
@@ -1380,6 +1387,17 @@ begin
 //      raise Exception.Create('Logged out.');
 //      User.RegUser(account, uname, pass, GetFriendList(uname), Session.ID);
   end;
+end;
+
+procedure TData_Provider.ClientDestroyExecute(Sender: TRtcConnection;
+  Param: TRtcFunctionInfo; Result: TRtcValue);
+begin
+  Gateway1.StartForceUserLogoutThread(Param.asString['UserName']);
+  Gateway2.StartForceUserLogoutThread(Param.asString['UserName']);
+  Gateway3.StartForceUserLogoutThread(Param.asString['UserName']);
+  Gateway4.StartForceUserLogoutThread(Param.asString['UserName']);
+
+  Result.asString := 'OK';
 end;
 
 procedure TData_Provider.AccountSendTextExecute(Sender: TRtcConnection; Param: TRtcFunctionInfo; Result: TRtcValue);

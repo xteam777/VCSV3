@@ -739,17 +739,17 @@ object MainForm: TMainForm
     Left = 521
     Top = 192
   end
-  object GateClient: TRtcHttpClient
+  object MainGateClient: TRtcHttpClient
     MultiThreaded = True
     ServerPort = '9000'
     ReconnectOn.ConnectError = True
     ReconnectOn.ConnectLost = True
     ReconnectOn.ConnectFail = True
     AutoConnect = True
-    Left = 443
-    Top = 294
+    Left = 273
+    Top = 290
   end
-  object GateServer: TRtcHttpServer
+  object MainGateServer: TRtcHttpServer
     MultiThreaded = True
     Timeout.AfterConnecting = 300
     ServerPort = '9000'
@@ -765,7 +765,26 @@ object MainForm: TMainForm
     TimeoutsOfAPI.SendTimeout = 10
     TimeoutsOfAPI.ReceiveTimeout = 10
     TimeoutsOfAPI.ResponseTimeout = 10
-    Left = 444
-    Top = 247
+    Left = 274
+    Top = 243
+  end
+  object PortalGateServer: TRtcHttpServer
+    MultiThreaded = True
+    Timeout.AfterConnecting = 300
+    ServerPort = '9000'
+    RestartOn.ListenLost = True
+    RestartOn.ListenError = True
+    OnListenLost = HttpServer1ListenLost
+    OnListenError = HttpServer1ListenError
+    FixupRequest.RemovePrefix = True
+    MaxRequestSize = 16000
+    MaxHeaderSize = 64000
+    TimeoutsOfAPI.ResolveTimeout = 10
+    TimeoutsOfAPI.ConnectTimeout = 10
+    TimeoutsOfAPI.SendTimeout = 10
+    TimeoutsOfAPI.ReceiveTimeout = 10
+    TimeoutsOfAPI.ResponseTimeout = 10
+    Left = 332
+    Top = 243
   end
 end

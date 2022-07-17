@@ -262,23 +262,23 @@ object Data_Provider: TData_Provider
     Left = 150
     Top = 79
   end
-  object GateServerGroup: TRtcFunctionGroup
+  object MainGateServerGroup: TRtcFunctionGroup
     Left = 507
     Top = 58
   end
-  object GateServerModule: TRtcServerModule
-    Link = GateServerLink
+  object MainGateServerModule: TRtcServerModule
+    Link = MainGateServerLink
     EncryptionKey = 16
     SecureKey = '2240897'
     ForceEncryption = True
     AutoSessions = True
     ModuleFileName = '/gategroup'
-    FunctionGroup = GateServerGroup
+    FunctionGroup = MainGateServerGroup
     Left = 445
     Top = 20
   end
-  object GateClientModule: TRtcClientModule
-    Link = GateClientLink
+  object MainGateClientModule: TRtcClientModule
+    Link = MainGateClientLink
     Compression = cMax
     HyperThreading = True
     EncryptionKey = 16
@@ -289,24 +289,24 @@ object Data_Provider: TData_Provider
     Left = 441
     Top = 84
   end
-  object GateServerLink: TRtcDataServerLink
+  object MainGateServerLink: TRtcDataServerLink
     Left = 398
     Top = 19
   end
-  object GateClientLink: TRtcDataClientLink
+  object MainGateClientLink: TRtcDataClientLink
     AutoSyncEvents = True
     Left = 396
     Top = 84
   end
   object GateRelogin: TRtcFunction
-    Group = GateServerGroup
+    Group = MainGateServerGroup
     FunctionName = 'Gateway.Relogin'
     OnExecute = GateReloginExecute
     Left = 328
     Top = 331
   end
   object GateLogout: TRtcFunction
-    Group = GateServerGroup
+    Group = MainGateServerGroup
     FunctionName = 'Gateway.Logout'
     OnExecute = GateLogoutExecute
     Left = 412
@@ -323,9 +323,29 @@ object Data_Provider: TData_Provider
     Top = 390
   end
   object ClientDestroy: TRtcFunction
-    Group = GatewayFunctions
+    Group = PortalGateServerGroup
     FunctionName = 'ClientDestroy'
-    Left = 206
-    Top = 381
+    OnExecute = ClientDestroyExecute
+    Left = 672
+    Top = 63
+  end
+  object PortalGateServerLink: TRtcDataServerLink
+    Left = 616
+    Top = 15
+  end
+  object PortalGateServerModule: TRtcServerModule
+    Link = PortalGateServerLink
+    EncryptionKey = 16
+    SecureKey = '2240897'
+    ForceEncryption = True
+    AutoSessions = True
+    ModuleFileName = '/portalgategroup'
+    FunctionGroup = PortalGateServerGroup
+    Left = 675
+    Top = 16
+  end
+  object PortalGateServerGroup: TRtcFunctionGroup
+    Left = 615
+    Top = 64
   end
 end

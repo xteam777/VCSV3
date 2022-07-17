@@ -96,13 +96,14 @@ type
     Label11: TLabel;
     lAccounts: TLabel;
     lHosts: TLabel;
-    GateClient: TRtcHttpClient;
-    GateServer: TRtcHttpServer;
+    MainGateClient: TRtcHttpClient;
+    MainGateServer: TRtcHttpServer;
     eMainGate: TEdit;
     Label8: TLabel;
     lGateways: TLabel;
     eMaxUsers: TEdit;
     Label9: TLabel;
+    PortalGateServer: TRtcHttpServer;
     procedure btnLoginClick(Sender: TObject);
     procedure btnLogoutClick(Sender: TObject);
     procedure xSSLClick(Sender: TObject);
@@ -400,17 +401,24 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
     GetDataProvider.ServerLink2.Server := hsMain2;
     GetDataProvider.ServerLink3.Server := hsMain3;
     GetDataProvider.ServerLink4.Server := hsMain4;
-    GetDataProvider.GateServerLink.Server := GateServer;
+    GetDataProvider.MainGateServerLink.Server := MainGateServer;
+    GetDataProvider.PortalGateServerLink.Server := PortalGateServer;
   //  GetDataProvider.LogMemo := LogMemo;
   //  GetDataProvider.OnUserLogin := OnBillingUserLogin;
   //  GetDataProvider.OnUserLogOut := OnBillingUserLogOut;
+
+    GetDataProvider.Gateway1 := Gateway1;
+    GetDataProvider.Gateway2 := Gateway2;
+    GetDataProvider.Gateway3 := Gateway3;
+    GetDataProvider.Gateway4 := Gateway4;
 
     hsMain1.StopListenNow;
     hsMain2.StopListenNow;
     hsMain3.StopListenNow;
     hsMain4.StopListenNow;
 
-    GateServer.StopListenNow;
+    MainGateServer.StopListenNow;
+    PortalGateServer.StopListenNow;
 
     if xBindIP.Checked then
     begin
@@ -419,7 +427,7 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
       hsMain3.ServerAddr := RtcString(Trim(eAddress.Text));
       hsMain4.ServerAddr := RtcString(Trim(eAddress.Text));
 
-      GateServer.ServerAddr := RtcString(Trim(eAddress.Text));
+      MainGateServer.ServerAddr := RtcString(Trim(eAddress.Text));
     end
     else
     begin
@@ -428,7 +436,7 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
       hsMain3.ServerAddr := '';
       hsMain4.ServerAddr := '';
 
-      GateServer.ServerAddr := '';
+      MainGateServer.ServerAddr := '';
     end;
 
     if cb80.Checked then
@@ -440,7 +448,7 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
     if cb5938.Checked then
       hsMain4.Listen();
 
-    GateServer.Listen();
+    MainGateServer.Listen();
   end
   else
   begin
@@ -451,9 +459,10 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
     HttpServer3.StopListenNow;
     HttpServer4.StopListenNow;
 
-    GateServer.StopListenNow;
+    MainGateServer.StopListenNow;
+    PortalGateServer.StopListenNow;
 
-    GetDataProvider.GateClientModule.Client := GateClient;
+    GetDataProvider.MainGateClientModule.Client := MainGateClient;
     GetDataProvider.ThisGatewayAddress := eAddress.Text;
     GetDataProvider.ThisGatewayMaxUsers := StrToInt(eMaxUsers.Text);
 
@@ -463,7 +472,9 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
       HttpServer2.ServerAddr := RtcString(Trim(eAddress.Text));
       HttpServer3.ServerAddr := RtcString(Trim(eAddress.Text));
       HttpServer4.ServerAddr := RtcString(Trim(eAddress.Text));
-      GateClient.ServerAddr := RtcString(Trim(eMainGate.Text));
+      MainGateClient.ServerAddr := RtcString(Trim(eMainGate.Text));
+
+      PortalGateServer.ServerAddr := RtcString(Trim(eAddress.Text));
     end
     else
     begin
@@ -471,7 +482,9 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
       HttpServer2.ServerAddr := '';
       HttpServer3.ServerAddr := '';
       HttpServer4.ServerAddr := '';
-      GateClient.ServerAddr := RtcString(Trim(eMainGate.Text));
+      MainGateClient.ServerAddr := RtcString(Trim(eMainGate.Text));
+
+      PortalGateServer.ServerAddr := '';
     end;
 
     Gateway1.AutoRegisterUsers := True; //not xNoAutoRegUsers.Checked;
@@ -489,6 +502,8 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
       HttpServer4.Listen();
 
     GetDataProvider.GatewayReloginStart;
+
+    PortalGateServer.Listen();
   end;
 
   btnLogin.Enabled := False;
