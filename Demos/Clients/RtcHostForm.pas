@@ -44,10 +44,14 @@ uses
   IdCustomTCPServer, IdTCPServer;
 
 type
+  TSendDestroyClientToGatewayProc = procedure(Gateway, ClientName: String) of Object;
   TPortalThread = class(TThread)
   private
     FUserName: String;
     FAction: String;
+    FUID: String;
+    FGateway: String;
+    FSendDestroyClientToGatewayProc: TSendDestroyClientToGatewayProc;
     FGatewayClient: TRtcHttpPortalClient;
     FDesktopControl: TRtcPDesktopControl;
     FFileTransfer: TRtcPFileTransfer;
@@ -56,7 +60,7 @@ type
     { Private declarations }
     function GetUniqueString: String;
   protected
-    constructor Create(CreateSuspended: Boolean; AUserName, AAction, AGateway: String); overload;
+    constructor Create(CreateSuspended: Boolean; AUserName, AAction, AGateway: String; SendDestroyClientToGatewayProc: TSendDestroyClientToGatewayProc); overload;
     destructor Destroy; override;
     procedure Execute; override;
     procedure ProcessMessage(MSG: TMSG);
@@ -264,6 +268,7 @@ type
     tFileSend: TTimer;
     ser_: TIdTCPServer;
     cle_: TIdTCPClient;
+    rDestroyClient: TRtcResult;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -590,6 +595,8 @@ type
     procedure DoPowerPause;
     procedure DoPowerResume;
 
+    procedure SendDestroyClientToGateway(Gateway, ClientName: String);
+
 //    procedure AppMessage(var Msg: TMsg; var Handled: Boolean);
     procedure SetIDContolsVisible;
 //    procedure SetHostActive;
@@ -784,24 +791,24 @@ begin
     AClient.GatePort := '80';
 end;
 
-constructor TPortalThread.Create(CreateSuspended: Boolean; AUserName, AAction, AGateway: String);
-var
-  sUID: String;
+constructor TPortalThread.Create(CreateSuspended: Boolean; AUserName, AAction, AGateway: String; SendDestroyClientToGatewayProc: TSendDestroyClientToGatewayProc);
 begin
   inherited Create(CreateSuspended);
 
   FreeOnTerminate := True;
 
   FUserName := AUserName;
+  FGateway := AGateway;
   FAction := AAction;
+  FSendDestroyClientToGatewayProc := SendDestroyClientToGatewayProc;
 
   FNeedStopThread := False;
 
-  sUID := GetUniqueString;
+  FUID := GetUniqueString;
 
   FGatewayClient := TRtcHttpPortalClient.Create(nil);
-  FGatewayClient.Name := 'PClient_' + sUID;
-  FGatewayClient.LoginUserName := MainForm.PClient.LoginUserName + '_' + FUserName + '_' + sUID; //IntToStr(GatewayClientsList.Count + 1);
+  FGatewayClient.Name := 'PClient_' + FUID;
+  FGatewayClient.LoginUserName := MainForm.PClient.LoginUserName + '_' + FUserName + '_' + FUID; //IntToStr(GatewayClientsList.Count + 1);
   FGatewayClient.LoginUserInfo.asText['RealName'] := MainForm.PClient.LoginUserInfo.asText['RealName'];
   FGatewayClient.LoginPassword := MainForm.PClient.LoginPassword;
   FGatewayClient.AutoSyncEvents := MainForm.PClient.AutoSyncEvents;
@@ -843,6 +850,8 @@ begin
   FGatewayClient.OnUserLoggedOut := MainForm.PClientUserLoggedOut;
   FGatewayClient.Tag := ThreadID;
 
+  xLog('Created gateway client: ' + 'PClient_' + FUID);
+
   FDesktopControl := nil;
   FFileTransfer := nil;
   FChat := nil;
@@ -850,7 +859,7 @@ begin
   if FAction = 'desk' then
   begin
     FDesktopControl := TRtcPDesktopControl.Create(nil);
-    FDesktopControl.Name := 'PDesktopControl_' + sUID;
+    FDesktopControl.Name := 'PDesktopControl_' + FUID;
     FDesktopControl.Client := FGatewayClient;
     FDesktopControl.SendShortcuts := MainForm.PDesktopControl.SendShortcuts;
     FDesktopControl.OnNewUI := MainForm.PDesktopControlNewUI;
@@ -860,7 +869,7 @@ begin
   if FAction = 'file' then
   begin
     FFileTransfer := TRtcPFileTransfer.Create(nil);
-    FFileTransfer.Name := 'PFileTransfer_' + sUID;
+    FFileTransfer.Name := 'PFileTransfer_' + FUID;
     FFileTransfer.Client := FGatewayClient;
     FFileTransfer.AccessControl := MainForm.PFileTrans.AccessControl;
     FFileTransfer.BeTheHost := False;
@@ -899,7 +908,7 @@ begin
   if FAction = 'chat' then
   begin
     FChat := TRtcPChat.Create(nil);
-    FChat.Name := 'PChat_' + sUID;
+    FChat.Name := 'PChat_' + FUID;
     FChat.Client := FGatewayClient;
     FChat.AccessControl := MainForm.PChat.AccessControl;
     FChat.BeTheHost := False;
@@ -933,9 +942,18 @@ end;
 
 destructor TPortalThread.Destroy;
 begin
-  FGatewayClient.Disconnect;
-  FGatewayClient.Active := False;
-  FGatewayClient.Stop;
+  try
+    FGatewayClient.Disconnect;
+  finally
+  end;
+  try
+    FGatewayClient.Active := False;
+  finally
+  end;
+  try
+    FGatewayClient.Stop;
+  finally
+  end;
 
   try
     if FDesktopControl <> nil then
@@ -956,6 +974,46 @@ begin
     FGatewayClient.Free;
   finally
   end;
+
+  if Assigned(FSendDestroyClientToGatewayProc) then
+    FSendDestroyClientToGatewayProc(FGateway, 'PClient_' + FUID);
+end;
+
+procedure TMainForm.SendDestroyClientToGateway(Gateway, ClientName: String);
+var
+  rtcClient: TRtcHttpClient;
+  rtcModule: TRtcClientModule;
+  rtrRes: TRtcResult;
+begin
+  rtcClient := TRtcHttpClient.Create(nil);
+  rtcClient.MultiThreaded := False;
+  rtcClient.ServerAddr := Copy(Gateway, 1, Pos(Gateway, ':') - 1);
+  rtcClient.ServerPort := '9000';
+  rtcClient.Blocking := True;
+
+  rtcModule := TRtcClientModule.Create(nil);
+  rtcModule.Client := rtcClient;
+  rtcModule.AutoRepost := 2;
+  rtcModule.AutoSyncEvents := True;
+
+  rtrRes := TRtcResult.Create(nil);
+
+  with rtcModule do
+  try
+    with Data.NewFunction('Clients.Destroy') do
+    begin
+      asString['UserName'] := ClientName;
+      Call(rDestroyClient);
+    end;
+  except
+    on E: Exception do
+      Data.Clear;
+  end;
+  rtcClient.WaitForCompletion(False, 2);
+
+  rtcModule.Free;
+  rtcClient.Free;
+  rtrRes.Free;
 end;
 
 procedure TPortalThread.Execute;
@@ -6723,7 +6781,7 @@ begin
       if not PartnerIsPending(asWideString['user'], asString['action'], asString['Address']) then
       begin
 //        AddPendingRequest(asWideString['user'], asString['action'], asString['Address'] + ':' +  asString['Port'], 0);
-        PortalThread := TPortalThread.Create(False, asWideString['user'], asWideString['action'], asString['Address']); //Для каждого соединения новый клиент
+        PortalThread := TPortalThread.Create(False, asWideString['user'], asWideString['action'], asString['Address'], SendDestroyClientToGateway); //Для каждого соединения новый клиент
         PRItem^.Gateway := asString['Address'];
         PRItem^.ThreadID := PortalThread.ThreadID;
 //        New(PRItem);

@@ -6458,4 +6458,8 @@ object MainForm: TMainForm
     Left = 95
     Top = 12
   end
+  object rDestroyClient: TRtcResult
+    Left = 322
+    Top = 122
+  end
 end
