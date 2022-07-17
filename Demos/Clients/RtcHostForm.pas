@@ -768,7 +768,7 @@ begin
 
   with rtcModule do
   try
-    with Data.NewFunction('Clients.DestroyAllById') do
+    with Data.NewFunction('Clients.Destroy') do
     begin
       asString['UserName'] := ClientName;
       asBoolean['AllConnectionsById'] := AAllConnectionsById;
