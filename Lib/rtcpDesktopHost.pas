@@ -2448,7 +2448,7 @@ var
   BlockTop: integer;
   DW: HWND;
   SDC: HDC;
-  fNeedRecreate, fHaveScreen: Boolean;
+  fRes, fNeedRecreate, fHaveScreen: Boolean;
 
   function CaptureNow: boolean;
   var
