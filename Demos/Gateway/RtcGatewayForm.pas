@@ -421,7 +421,7 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
       hsMain3.ServerAddr := RtcString(Trim(eAddress.Text));
       hsMain4.ServerAddr := RtcString(Trim(eAddress.Text));
 
-      MainGateServer.ServerAddr := RtcString(Trim(eAddress.Text));
+      MainGateServer.ServerAddr := RtcString(Trim(eMainGate.Text));
     end
     else
     begin
