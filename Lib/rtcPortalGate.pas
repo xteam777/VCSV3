@@ -46,16 +46,17 @@ type
     procedure Execute; override;
   end;}
 
-  TForceUserLogOut = procedure(uname: String) of Object;
+  TForceUserLogOut = procedure(uname: String; AAllConnectionsById: Boolean) of Object;
 
   TLogoffThread = class(TThread)
    private
      FUserName: String;
+     FAllConnectionsById: Boolean;
      FForceUserLogout: TForceUserLogOut;
    protected
      procedure Execute; override;
    public
-    constructor Create(ACreateSuspended: Boolean; AUserName: String); overload;
+    constructor Create(ACreateSuspended: Boolean; AUserName: String; AAllConnectionsById: Boolean); overload;
    end;
 
   TRtcPortalUserEvent = procedure(const UserName:String) of object;
@@ -322,10 +323,10 @@ type
     procedure SaveInfo;
 
     function GetUsersCount: Integer;
-    procedure ForceUserLogOutByPattern(uname: String);
+    procedure ForceUserLogOutByPattern(uname: String; AAllConnectionsById: Boolean);
     procedure ForceUserLogOut(uname: String);
 {    procedure CheckDisconnectedHosts;}
-    procedure StartForceUserLogoutThread(AUserName: String);
+    procedure StartForceUserLogoutThread(AUserName: String; AAllConnectionsById: Boolean);
 
   published
     { Write important events (user login/logout) to a LOG file? }
@@ -623,12 +624,13 @@ implementation
 procedure TLogoffThread.Execute;
 begin
   if Assigned(FForceUserLogout) then
-    FForceUserLogout(FUserName);
+    FForceUserLogout(FUserName, FAllConnectionsById);
 end;
 
-constructor TLogoffThread.Create(ACreateSuspended: Boolean; AUserName: String);
+constructor TLogoffThread.Create(ACreateSuspended: Boolean; AUserName: String; AAllConnectionsById: Boolean);
 begin
   FUserName := AUserName;
+  FAllConnectionsById := AAllConnectionsById;
 
   Inherited Create(ACreateSuspended);
 end;
@@ -655,7 +657,7 @@ begin
   end;
 end;
 
-procedure TRtcPortalGateway.ForceUserLogOutByPattern(uname: String);
+procedure TRtcPortalGateway.ForceUserLogOutByPattern(uname: String; AAllConnectionsById: Boolean);
 var
   i: Integer;
 begin
@@ -664,11 +666,22 @@ begin
     i := LoggedIn.Count - 1;
     while (i >= 0) do
     begin
-      if (LoggedIn.isType[LoggedIn.FieldName[i]] = rtc_Record)
-        and (Copy(LoggedIn.FieldName[i], 1, Length(uname)) = uname) then
+      if AAllConnectionsById then
       begin
-        xLog('ForceUserLogOutByPattern ' + LoggedIn.FieldName[i]);
-        ForceUserLogOut(LoggedIn.FieldName[i]);
+        if Pos(uname, Copy(LoggedIn.FieldName[i], 1, Length(uname))) > 0 then
+        begin
+          xLog('ForceUserLogOutByPattern ' + LoggedIn.FieldName[i]);
+          ForceUserLogOut(LoggedIn.FieldName[i]);
+        end;
+      end
+      else
+      begin
+        if (LoggedIn.isType[LoggedIn.FieldName[i]] = rtc_Record)
+          and (Copy(LoggedIn.FieldName[i], 1, Length(uname)) = uname) then
+        begin
+          xLog('ForceUserLogOutByPattern ' + LoggedIn.FieldName[i]);
+          ForceUserLogOut(LoggedIn.FieldName[i]);
+        end;
       end;
 
       i := i - 1;
@@ -736,11 +749,11 @@ begin
   end;
 end;}
 
-procedure TRtcPortalGateway.StartForceUserLogoutThread(AUserName: String);
+procedure TRtcPortalGateway.StartForceUserLogoutThread(AUserName: String; AAllConnectionsById: Boolean);
 var
   tLogout: TLogoffThread;
 begin
-  tLogout := TLogoffThread.Create(True, AUserName);
+  tLogout := TLogoffThread.Create(True, AUserName, AAllConnectionsById);
   tLogout.FreeOnTerminate := True;
   tLogout.FForceUserLogout := ForceUserLogOutByPattern;
   tLogout.Resume;

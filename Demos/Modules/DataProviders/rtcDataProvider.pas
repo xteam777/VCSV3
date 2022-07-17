@@ -23,7 +23,7 @@ uses
   rtcSystem, rtcLog, SyncObjs, rtcDataCli, rtcCliModule, rtcHttpCli, rtcPortalGate;
 
 type
-  TStartForceUserLogoutThread = procedure(AUserName: String) of Object;
+  TStartForceUserLogoutThread = procedure(AUserName: String; AAllConnectionsById: Boolean) of Object;
 
   TDoWorkProc = procedure of object;
   TCheckDisconnectedThread = class(TThread)
@@ -518,7 +518,7 @@ procedure TData_Provider.HostLoginExecute(Sender: TRtcConnection;
   Param: TRtcFunctionInfo; Result: TRtcValue);
 begin
   if Assigned(FStartForceUserLogoutThread) then
-    FStartForceUserLogoutThread(Param['User']);
+    FStartForceUserLogoutThread(Param['User'], True);
 
   if DoHostLogin(Sender, Param['User'], Param['Gateway'], Param['IsService'], Param) then
     Result.asString := 'OK';
@@ -584,7 +584,7 @@ begin
           end;
 
   if Assigned(FStartForceUserLogoutThread) then
-    FStartForceUserLogoutThread(Param['User']);
+    FStartForceUserLogoutThread(Param['User'], True);
 end;
 
 //procedure TData_Provider.DoLogoffUser(uname: String);
@@ -627,7 +627,7 @@ begin
     begin
       asBoolean['NeedHostRelogin'] := True;
       if Assigned(FStartForceUserLogoutThread) then
-        FStartForceUserLogoutThread(Param['User']);
+        FStartForceUserLogoutThread(Param['User'], True);
     end
     else
       asBoolean['NeedHostRelogin'] := False;
@@ -1376,10 +1376,10 @@ end;
 procedure TData_Provider.ClientDestroyExecute(Sender: TRtcConnection;
   Param: TRtcFunctionInfo; Result: TRtcValue);
 begin
-  Gateway1.StartForceUserLogoutThread(Param.asString['UserName']);
-  Gateway2.StartForceUserLogoutThread(Param.asString['UserName']);
-  Gateway3.StartForceUserLogoutThread(Param.asString['UserName']);
-  Gateway4.StartForceUserLogoutThread(Param.asString['UserName']);
+  Gateway1.StartForceUserLogoutThread(Param.asString['UserName'], Param.asBoolean['AllConnectionsById']);
+  Gateway2.StartForceUserLogoutThread(Param.asString['UserName'], Param.asBoolean['AllConnectionsById']);
+  Gateway3.StartForceUserLogoutThread(Param.asString['UserName'], Param.asBoolean['AllConnectionsById']);
+  Gateway4.StartForceUserLogoutThread(Param.asString['UserName'], Param.asBoolean['AllConnectionsById']);
 
   Result.asString := 'OK';
 end;
