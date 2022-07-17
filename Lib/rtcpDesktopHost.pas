@@ -1284,30 +1284,31 @@ begin
 //  FImageCatcher := TImageCatcher.Create;
   FDesktopDuplicator := TDesktopDuplicationWrapper.Create;
 
-  while not ScrCap.HaveScreen do
-  begin
-    fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
-    while fNeedRecreate do
-    begin
-      FDesktopDuplicator.Free;
-      FDesktopDuplicator := TDesktopDuplicationWrapper.Create;
-      fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
-
-      Application.ProcessMessages;
-    end;
-    if fRes then
-    begin
-      if FDesktopDuplicator.DrawFrame(FNewImage) then
-        ScrCap.HaveScreen := True;
-    end
-    else
-    begin
-      //Memo1.Lines.Add('no frame ' + IntToHex(FDuplication.Error));
-    end;
-
-//    Sleep(1);
-    Application.ProcessMessages;
-  end;
+//TRtcScreenEncoder.Create берет ScrCap.HaveScreen а ScrCap = nil. Белый экран вначале
+//  while not ScrCap.HaveScreen do
+//  begin
+//    fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
+//    while fNeedRecreate do
+//    begin
+//      FDesktopDuplicator.Free;
+//      FDesktopDuplicator := TDesktopDuplicationWrapper.Create;
+//      fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
+//
+//      Application.ProcessMessages;
+//    end;
+//    if fRes then
+//    begin
+//      if FDesktopDuplicator.DrawFrame(FNewImage) then
+//        ScrCap.HaveScreen := True;
+//    end
+//    else
+//    begin
+//      //Memo1.Lines.Add('no frame ' + IntToHex(FDuplication.Error));
+//    end;
+//
+////    Sleep(1);
+//    Application.ProcessMessages;
+//  end;
 end;
 
 destructor TRtcScreenEncoder.Destroy;
