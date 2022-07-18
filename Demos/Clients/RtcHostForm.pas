@@ -505,7 +505,7 @@ type
     PortalConnectionsList: TList;
     hwndNextViewer: THandle;
 
-    function ConnectedToMainGateway: Boolean;
+    function ConnectedToAllGateways: Boolean;
     function GetUniqueString: String;
     function GetUserDescription(aUserName: String): String;
     function GetUserPassword(aUserName: String): String;
@@ -722,7 +722,7 @@ var
   UseConnectionsLimit: Boolean = False;
   ChangedDragFullWindows: Boolean = False;
   OriginalDragFullWindows: LongBool = True;
-//  ConnectedToMainGateway: Boolean;
+//  ConnectedToAllGateways: Boolean;
   RealName, DisplayName: String;
 //  FInputThread: TInputThread;
   CS_GW, CS_Status, CS_Pending, CS_ActivateHost: TCriticalSection; //CS_SetConnectedState
@@ -792,11 +792,11 @@ begin
   end;
 end;
 
-function TMainForm.ConnectedToMainGateway: Boolean;
+function TMainForm.ConnectedToAllGateways: Boolean;
 begin
   CS_Status.Acquire;
   try
-    Result := CurStatus >= 2;
+    Result := CurStatus >= 3;
   finally
     CS_Status.Release;
   end;
@@ -2904,7 +2904,7 @@ begin
   try
     CurStatus := Status;
 
-    ConnectedToMainGateway := (Status >= 3);
+    ConnectedToAllGateways := (Status >= 3);
 
     if Status = 4 then
       SetStatusString('Подключение к серверу...')
@@ -4444,7 +4444,7 @@ procedure TMainForm.btnAccountLoginClick(Sender: TObject);
 begin
 //  XLog('btnAccountLoginClick');
 
-  if not ConnectedToMainGateway then
+  if not ConnectedToAllGateways then
   begin
 //    MessageBox(Handle, 'Нет подключения к серверу', 'Remox', MB_ICONWARNING or MB_OK);
     SetStatusStringDelayed('Нет подключения к серверу');
@@ -5212,6 +5212,11 @@ begin
   if (PClient.LoginUserName <> '')
     and (PClient.LoginUserName <> '') then
   begin
+    if (GetStatus = STATUS_READY) then
+      SetStatus(STATUS_CONNECTING_TO_GATE);
+
+    AccountLogOut(nil);
+
     PClient.Disconnect;
     PClient.Active := False;
     PClient.Active := True;
@@ -6137,7 +6142,7 @@ var
 begin
 //  XLog('lRegistrationClick');
 
-  if not ConnectedToMainGateway then
+  if not ConnectedToAllGateways then
   begin
 //    MessageBox(Handle, 'Нет подключения к серверу', 'Remox', MB_ICONWARNING or MB_OK);
     SetStatusStringDelayed('Нет подключения к серверу');
@@ -6486,7 +6491,7 @@ var
 begin
 //  XLog('btnViewDesktopClick');
 
-  if not ConnectedToMainGateway then
+  if not ConnectedToAllGateways then
   begin
 //    MessageBox(Handle, 'Нет подключения к серверу', 'Remox', MB_ICONWARNING or MB_OK);
     SetStatusStringDelayed('Нет подключения к серверу');
@@ -8755,10 +8760,6 @@ begin
   xLog('PClientLogOut: ' + Sender.Name);
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': PClientLogOut'));
 
-  if (Sender = PClient)
-    and (GetStatus = STATUS_READY) then
-    SetStatus(STATUS_CONNECTING_TO_GATE);
-
 //  SetStatusStringDelayed('Готов к подключению', 2000);
 
 //  if not isClosing then
@@ -9304,7 +9305,7 @@ procedure TMainForm.PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttp
 
   case status of
     rtccClosed:
-      begin
+    begin
       xLog('PClientStatusGet: ' + Sender.Name + ': rtccClosed');
       sStatus2.Brush.Color:=clRed;
       sStatus2.Pen.Color:=clMaroon;
@@ -9313,14 +9314,18 @@ procedure TMainForm.PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttp
 //        CloseAllActiveUIByGatewayClient(Sender);
 //        tPClientReconnect.Enabled := True;
 //      end;
-      end;
+
+      tPClientReconnect.Enabled := True;
+    end;
     rtccOpen:
     begin
       xLog('PClientStatusGet: ' + Sender.Name + ': rtccOpen');
       sStatus2.Brush.Color:=clNavy;
+
+//      tPClientReconnect.Enabled := False;
     end;
     rtccSending:
-      begin
+    begin
       sStatus2.Brush.Color:=clGreen;
       case ReqCnt2 of
         0:sStatus2.Pen.Color:=clBlack;
@@ -9331,16 +9336,17 @@ procedure TMainForm.PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttp
         5:sStatus2.Pen.Color:=clGray;
         end;
       Inc(ReqCnt2);
-      if ReqCnt2>5 then ReqCnt2:=0;
-      end;
+      if ReqCnt2>5 then
+        ReqCnt2:=0;
+    end;
     rtccReceiving:
       sStatus2.Brush.Color:=clLime;
     else
-      begin
+    begin
       sStatus2.Brush.Color:=clFuchsia;
       sStatus2.Pen.Color:=clRed;
-      end;
     end;
+  end;
   sStatus2.Update;
 end;
 
