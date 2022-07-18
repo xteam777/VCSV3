@@ -1,8 +1,8 @@
-object VircessService: TVircessService
+object RemoxService: TRemoxService
   OldCreateOrder = False
   OnCreate = ServiceCreate
   OnDestroy = ServiceDestroy
-  DisplayName = 'Vircess'
+  DisplayName = 'Remox'
   Interactive = True
   OnExecute = ServiceExecute
   OnShutdown = ServiceShutdown
@@ -26,6 +26,7 @@ object VircessService: TVircessService
     MultiThreaded = True
     GatePort = '443'
     Gate_Timeout = 300
+    OnStatusGet = PClientStatusGet
     Left = 44
     Top = 8
   end
