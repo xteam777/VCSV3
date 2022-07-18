@@ -3305,7 +3305,7 @@ procedure TMainForm.FormResize(Sender: TObject);
 begin
 //  XLog('FormResize');
 
-  pDevAcc.Left := 544;
+  pDevAcc.Left := 542;
   pDevAcc.Width := ClientWidth - pDevAcc.Left; //pRight.Left - pRight.Width - GetScaleValue(25);
 //  CurWidth := Width;
 end;
