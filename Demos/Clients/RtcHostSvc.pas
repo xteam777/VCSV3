@@ -22,14 +22,17 @@ type
   TStartThread = class(TThread)
   public
     eTimer: THandle;
+    FType: String;
+    procedure PermanentlyRestartHelpers;
+    procedure StartClientsOnLogon;
     procedure StartClientInAllSessions(doStartHelper, doStartClient: Boolean);
     procedure StartClientInSession(SessionID: Cardinal; doStartHelper, doStartClient: Boolean);
     procedure Execute; override;
-    constructor Create(ACreateSuspended: Boolean); overload;
+    constructor Create(ACreateSuspended: Boolean; AType: String); overload;
     destructor Destroy; overload;
   end;
 
-  TVircessService = class(TService)
+  TRemoxService = class(TService)
     PClient: TRtcHttpPortalClient;
     PFileTrans: TRtcPFileTransfer;
     PChat: TRtcPChat;
@@ -74,6 +77,7 @@ type
     procedure HostTimerClientConnectLost(Sender: TRtcConnection);
     procedure PClientLogOut(Sender: TAbsPortalClient);
     procedure PClientLogIn(Sender: TAbsPortalClient);
+    procedure PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttpConnStatus);
     procedure resPingReturn(Sender: TRtcConnection; Data, Result: TRtcValue);
 
   private
@@ -97,6 +101,9 @@ type
     procedure StartHostLogin;
     procedure msgHostTimerTimer(Sender: TObject);
 
+    procedure ChangePort(AClient: TRtcHttpClient);
+    procedure ChangePortP(AClient: TRtcHttpPortalClient);
+
 //    procedure OnSessionChange(var Msg: TMessage); message WM_WTSSESSION_CHANGE;
 
 //    function GetServiceController:
@@ -115,9 +122,9 @@ const
   HELPER_CONSOLE_EXE_NAME = 'rmx_x64.exe';
 
 var
-  VircessService: TVircessService;
+  RemoxService: TRemoxService;
   HelperTempFileName, HelperConsoleTempFileName: String;
-  tStart: TStartThread;
+  tStartHelpers, tStartClients: TStartThread;
   ConfigLastDate: TDateTime;
 //  hWnd, hWndThread: THandle;
 //  tid: Cardinal;
@@ -127,17 +134,53 @@ implementation
 
 {$R *.DFM}
 
-procedure TVircessService.SetRegularPassword(AValue: String);
+procedure TRemoxService.ChangePort(AClient: TRtcHttpClient);
+begin
+  if AClient.ServerPort = '80' then
+    AClient.ServerPort := '8080'
+  else
+  if AClient.ServerPort = '8080' then
+    AClient.ServerPort := '443'
+  else
+  if AClient.ServerPort = '443' then
+    AClient.ServerPort := '5938'
+  else
+  if AClient.ServerPort = '5938' then
+    AClient.ServerPort := '80';
+end;
+
+procedure TRemoxService.ChangePortP(AClient: TRtcHttpPortalClient);
+begin
+  if AClient.GatePort = '80' then
+    AClient.GatePort := '8080'
+  else
+  if AClient.GatePort = '8080' then
+    AClient.GatePort := '443'
+  else
+  if AClient.GatePort = '443' then
+    AClient.GatePort := '5938'
+  else
+  if AClient.GatePort = '5938' then
+    AClient.GatePort := '80';
+end;
+
+procedure TRemoxService.SetRegularPassword(AValue: String);
 begin
   if FRegularPassword <> AValue then
     FRegularPassword := AValue;
 end;
 
-constructor TStartThread.Create(ACreateSuspended: Boolean);
+constructor TStartThread.Create(ACreateSuspended: Boolean; AType: String);
 begin
+  inherited Create(ACreateSuspended);
+
+  FType := AType;
+
+//  Sleep(10000);
+
   eTimer := CreateEvent(nil, True, False, 'RMXTimerEvent');
 
-  inherited;
+  FreeOnTerminate := True;
 end;
 
 destructor TStartThread.Destroy;
@@ -148,6 +191,51 @@ begin
 end;
 
 procedure TStartThread.Execute;
+begin
+  if FType = 'PermanentlyRestartHelpers' then
+    PermanentlyRestartHelpers
+  else
+  if FType = 'StartClientsOnLogon' then
+    StartClientsOnLogon;
+end;
+
+procedure TStartThread.PermanentlyRestartHelpers;
+var
+//  pEventFlags: DWORD;
+  i: Integer;
+begin
+  while not Terminated do
+  begin
+//    if WTSWaitSystemEvent(WTS_CURRENT_SERVER_HANDLE, {WTS_EVENT_CREATE or WTS_EVENT_LOGON or} WTS_EVENT_ALL, pEventFlags) then
+      try
+        ActiveConsoleSessionID := GetActiveConsoleSessionId; //Используется при получении изображения из хелпера
+
+//        if (WTS_EVENT_CREATE and pEventFlags) = WTS_EVENT_CREATE then
+//        begin
+          for i := 1 to 5 do
+          begin
+            StartClientInAllSessions(True, False);
+//            StartClientInAllSessions(False, True);
+            Sleep(1000);
+          end;
+//        end
+//        else
+//        if (WTS_EVENT_LOGON and pEventFlags) = WTS_EVENT_LOGON then
+//        begin
+//          for i := 1 to 5 do
+//          begin
+//            StartClientInAllSessions(False, True);
+//            Sleep(5000);
+//          end;
+//        end;
+      except
+        on E: Exception do
+          xLog('PermanentlyRestartHelpers Error: ' + E.Message);
+      end;
+  end;
+end;
+
+procedure TStartThread.StartClientsOnLogon;
 var
   pEventFlags: DWORD;
   i: Integer;
@@ -162,7 +250,7 @@ begin
 //        begin
           for i := 1 to 5 do
           begin
-            StartClientInAllSessions(True, False);
+//            StartClientInAllSessions(True, False);
             StartClientInAllSessions(False, True);
             Sleep(1000);
           end;
@@ -178,12 +266,12 @@ begin
 //        end;
       except
         on E: Exception do
-          xLog('StartClientInAllSessions Error: ' + E.Message);
+          xLog('StartClientsOnLogon Error: ' + E.Message);
       end;
   end;
 end;
 
-procedure TVircessService.ServiceStart(Sender: TService; var Started: Boolean);
+procedure TRemoxService.ServiceStart(Sender: TService; var Started: Boolean);
 var
   s: RtcString;
 begin
@@ -247,9 +335,11 @@ begin
 //    StartMyService;
 //    Started := Running;
 //  end;
-  tStart.StartClientInAllSessions(True, True);
-//Sleep(10000);
-  tStart.Resume;
+
+  tStartHelpers.StartClientInAllSessions(True, False);
+  tStartHelpers.Resume;
+  tStartClients.StartClientInAllSessions(False, True);
+  tStartClients.Resume;
 end;
 
 procedure TStartThread.StartClientInAllSessions(doStartHelper, doStartClient: Boolean);
@@ -344,7 +434,7 @@ begin
   end;
 end;
 
-procedure TVircessService.HostLogOut;
+procedure TRemoxService.HostLogOut;
 begin
   with HostTimerModule, Data.NewFunction('Host.Logout') do
   begin
@@ -354,7 +444,7 @@ begin
   xLog('HOST LOGOUT');
 end;
 
-procedure TVircessService.StartHostLogin;
+procedure TRemoxService.StartHostLogin;
 begin
 //  xLog('StartHostLogin');
 //  HostTimerClient.SkipRequests;
@@ -363,7 +453,7 @@ begin
   HostTimerClient.Connect(True);
 end;
 
-procedure TVircessService.ServiceCreate(Sender: TObject);
+procedure TRemoxService.ServiceCreate(Sender: TObject);
 begin
   if (Win32MajorVersion >= 6 {vista\server 2k8}) then
     Interactive := False;
@@ -389,15 +479,15 @@ begin
   PClient.OnError := PClientError;
   PClient.OnFatalError := PClientFatalError;
 
-  tStart := TStartThread.Create(True);
-  tStart.FreeOnTerminate := True;
+  tStartHelpers := TStartThread.Create(True, 'PermanentlyRestartHelpers');
+  tStartClients := TStartThread.Create(True, 'StartClientsOnLogon');
 
   LoadSetup('ALL');
 
   PFileTrans.FileInboxPath:= ExtractFilePath(AppFileName) + '\INBOX';
 end;
 
-procedure TVircessService.LoadSetup(RecordType: String);
+procedure TRemoxService.LoadSetup(RecordType: String);
 var
   CfgFileName: String;
   s: String;
@@ -492,7 +582,7 @@ begin
     ProxyOption := 'NoProxy';
 end;
 
-procedure TVircessService.rActivateReturn(Sender: TRtcConnection; Data,
+procedure TRemoxService.rActivateReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 var
   i: Integer;
@@ -563,7 +653,7 @@ begin
     end;
 end;
 
-procedure TVircessService.resHostLoginReturn(Sender: TRtcConnection; Data,
+procedure TRemoxService.resHostLoginReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 begin
   if Result.isType = rtc_Exception then
@@ -586,7 +676,7 @@ begin
   end;
 end;
 
-procedure TVircessService.resHostPingReturn(Sender: TRtcConnection; Data,
+procedure TRemoxService.resHostPingReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 begin
   if Result.isType = rtc_Exception then
@@ -603,7 +693,6 @@ begin
   begin
     PClient.Disconnect;
     PClient.Active := False;
-//    PClient.Stop;
     PClient.Active := True;
 //    tPClientReconnectTimer(nil);
 //    hcAccounts.DisconnectNow(True);
@@ -614,7 +703,7 @@ begin
   end;
 end;
 
-procedure TVircessService.resHostTimerReturn(Sender: TRtcConnection; Data,
+procedure TRemoxService.resHostTimerReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 var
   i: Integer;
@@ -850,7 +939,7 @@ begin
 //  end;
 end;
 
-procedure TVircessService.resPingReturn(Sender: TRtcConnection; Data,
+procedure TRemoxService.resPingReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 begin
 //  if Result.isType = rtc_Exception then
@@ -863,7 +952,7 @@ begin
 //    pingTimer.Enabled := True;
 end;
 
-procedure TVircessService.msgHostTimerTimer(Sender: TObject);
+procedure TRemoxService.msgHostTimerTimer(Sender: TObject);
 var
   PassRec: TRtcRecord;
   CurPass: String;
@@ -889,41 +978,52 @@ begin
   end;
 end;
 
-procedure TVircessService.PClientError(Sender: TAbsPortalClient;
+procedure TRemoxService.PClientError(Sender: TAbsPortalClient;
   const Msg: string);
 begin
   xLog('PClientError: ' + Msg);
 
+  if (Sender = PClient)
+    and (Msg = 'Не удалось подключиться к серверу.') then
+    ChangePortP(PClient);
+
   PClientFatalError(Sender, Msg);
 
-//  if (Msg <> S_RTCP_ERROR_CONNECT)
-//    and (Msg <> 'Logged out') then
-    PClient.Active:=True;
+  if Msg <> 'Logged out' then
+    TRtcHttpPortalClient(Sender).Active := True;
 
 //  PDesktopHost.Restart;
 end;
 
-procedure TVircessService.PClientFatalError(Sender: TAbsPortalClient;
+procedure TRemoxService.PClientFatalError(Sender: TAbsPortalClient;
   const Msg: string);
 begin
-//  tPClientReconnect.Enabled := True;
-  PClient.Disconnect;
+  tPClientReconnect.Enabled := True;
+//  PClient.Disconnect;
 //  if Msg = 'Сервер недоступен.' then
 //    PClient.Active := False;
 end;
 
-procedure TVircessService.PClientLogIn(Sender: TAbsPortalClient);
+procedure TRemoxService.PClientLogIn(Sender: TAbsPortalClient);
 begin
 //  tPClientReconnect.Enabled := False;
 end;
 
-procedure TVircessService.PClientLogOut(Sender: TAbsPortalClient);
+procedure TRemoxService.PClientLogOut(Sender: TAbsPortalClient);
 begin
 //  tPClientReconnect.Enabled := True;
   TRtcHttpPortalClient(Sender).Active := True;
 end;
 
-procedure TVircessService.ActivateHost;
+procedure TRemoxService.PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttpConnStatus);
+begin
+  case Status of
+    rtccClosed:
+      tPClientReconnect.Enabled := True;
+  end;
+end;
+
+procedure TRemoxService.ActivateHost;
 var
   HWID : THardwareId;
 begin
@@ -1112,15 +1212,15 @@ end;}
 
 procedure ServiceController(CtrlCode: DWord); stdcall;
 begin
-  VircessService.Controller(CtrlCode);
+  RemoxService.Controller(CtrlCode);
 end;
 
-function TVircessService.GetServiceController: TServiceController;
+function TRemoxService.GetServiceController: TServiceController;
 begin
   Result := ServiceController;
 end;
 
-procedure TVircessService.HostPingTimerTimer(Sender: TObject);
+procedure TRemoxService.HostPingTimerTimer(Sender: TObject);
 var
   PassRec: TRtcRecord;
   CurPass: String;
@@ -1148,14 +1248,14 @@ begin
     Call(resPing);
 end;
 
-procedure TVircessService.HostTimerClientConnect(Sender: TRtcConnection);
+procedure TRemoxService.HostTimerClientConnect(Sender: TRtcConnection);
 begin
   tHostTimerClientReconnect.Enabled := False;
 
   tActivate.Enabled := True;
 end;
 
-procedure TVircessService.HostTimerClientConnectError(Sender: TRtcConnection;
+procedure TRemoxService.HostTimerClientConnectError(Sender: TRtcConnection;
   E: Exception);
 begin
   tHostTimerClientReconnect.Enabled := True;
@@ -1165,17 +1265,19 @@ begin
   xLog('HostTimerClientError: ' + E.Message);
 end;
 
-procedure TVircessService.HostTimerClientConnectLost(Sender: TRtcConnection);
+procedure TRemoxService.HostTimerClientConnectLost(Sender: TRtcConnection);
 begin
   tHostTimerClientReconnect.Enabled := True;
 
   tActivate.Enabled := False;
 end;
 
-procedure TVircessService.HostTimerClientDisconnect(Sender: TRtcConnection);
+procedure TRemoxService.HostTimerClientDisconnect(Sender: TRtcConnection);
 begin
   tHostTimerClientReconnect.Enabled := True;
   tActivate.Enabled := False;
+
+  ChangePort(HostTimerClient);
 end;
 
 //function TVircess_Service.GetServiceController: {$IFDEF VER120} PServiceController; {$ELSE} TServiceController; {$ENDIF}
@@ -1183,7 +1285,7 @@ end;
 //  Result := {$IFDEF VER120}@{$ENDIF}ServiceController;
 //end;
 
-procedure TVircessService.UpdateMyPriority;
+procedure TRemoxService.UpdateMyPriority;
 var
   hProcess:Cardinal;
 begin
@@ -1199,7 +1301,7 @@ begin
 //  end;
 end;
 
-procedure TVircessService.ServiceStop(Sender: TService; var Stopped: Boolean);
+procedure TRemoxService.ServiceStop(Sender: TService; var Stopped: Boolean);
 var
   cnt: Integer;
 begin
@@ -1209,7 +1311,8 @@ begin
 //    timCheckProcess.Enabled := False;
     HostPingTimer.Enabled := False;
 
-    tStart.Suspend;
+    tStartHelpers.Suspend;
+    tStartClients.Suspend;
 
     HostLogOut;
 
@@ -1255,7 +1358,6 @@ begin
 //        Sleep(100);
 //      until PClient.GParamsLoaded or (cnt<=0);
 //      PClient.Active:=False;
-//      PClient.Stop;
 //    end;
 
 //    xLog('Remox Launcher stopped.');
@@ -1268,7 +1370,7 @@ begin
 //  end;
 end;
 
-procedure TVircessService.ServiceShutdown(Sender: TService);
+procedure TRemoxService.ServiceShutdown(Sender: TService);
 var
   cnt:integer;
 begin
@@ -1292,7 +1394,6 @@ begin
 //        Sleep(100);
 //        until PClient.GParamsLoaded or (cnt<=0);
 //      PClient.Active:=False;
-//      PClient.Stop;
 //      end;
     xLog('Host Launcher shut down.');
 //    end
@@ -1300,7 +1401,7 @@ begin
 //    StopMyService;
 end;
 
-procedure TVircessService.ServiceDestroy(Sender: TObject);
+procedure TRemoxService.ServiceDestroy(Sender: TObject);
 begin
   Stopping := True;
 //  if (Win32MajorVersion >= 6 { vista\server 2k8 } ) then
@@ -1316,12 +1417,13 @@ begin
 //  else
 //    StopMyService;
 
-  tStart.Terminate;
+  tStartHelpers.Terminate;
+  tStartClients.Terminate;
 
   StopLog;
 end;
 
-procedure TVircessService.ServiceExecute(Sender: TService);
+procedure TRemoxService.ServiceExecute(Sender: TService);
 begin
   repeat
     ServiceThread.ProcessRequests(False);
@@ -1329,32 +1431,30 @@ begin
   until Stopping;
 end;
 
-procedure TVircessService.tActivateTimer(Sender: TObject);
+procedure TRemoxService.tActivateTimer(Sender: TObject);
 begin
   ActivateHost;
 end;
 
-procedure TVircessService.tHostTimerClientReconnectTimer(Sender: TObject);
+procedure TRemoxService.tHostTimerClientReconnectTimer(Sender: TObject);
 begin
   HostTimerClient.Connect(True);
 end;
 
-procedure TVircessService.tPClientReconnectTimer(Sender: TObject);
+procedure TRemoxService.tPClientReconnectTimer(Sender: TObject);
 begin
 //  if PClient.LoginUserName = '' then
 //    Exit;
 //
-////  PClient.Module.SkipRequests;
-////  PClient.Disconnect;
-////  PClient.Active := False;
-////  PClient.Stop;
+  PClient.Disconnect;
+  PClient.Active := False;
+  PClient.Active := True;
 //
 //  if not PClient.Active then
 ////    and not PClient.Connected then
 //  begin
 ////    PClient.Disconnect;
 ////    PClient.Active := False;
-//    PClient.Stop;
 //    PClient.Active := True;
 //  end;
 end;
@@ -1552,7 +1652,6 @@ procedure TVircess_Service.StopMyService;
 //    except
 //    end;
 //    try
-//      PClient.Stop;
 //    except
 //    end;
 

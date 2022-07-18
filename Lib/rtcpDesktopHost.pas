@@ -2255,7 +2255,7 @@ var
   hProc: THandle;
   numberRead : SIZE_T;
   WaitTimeout: DWORD;
-//  SaveBitMap: TBitmap;
+  SaveBitMap: TBitmap;
 i, j: LongInt;
 begin
   WaitTimeout := 1000;
@@ -2415,7 +2415,7 @@ begin
 //  hMemDC, //откуда
 //  0,0, //координаты
 //  SRCCOPY); //режим копирования
-//  SaveBitMap.SaveToFile('C:\Screenshots\rmx_' + StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
+//  SaveBitMap.SaveToFile('C:\Rufus\rmx_.bmp'); //+ StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
 //  SaveBitMap.Free;
 
 //      hDestDC := CreateCompatibleDC(FNewImage.Canvas.Handle);
@@ -2635,8 +2635,9 @@ var
 //        FDesktopDuplicator.GetScreenshot(FNewImage, TRect.Create(FCaptureLeft, FCaptureTop + BlockTop, FCaptureLeft + FNewImage.Width, FCaptureTop + BlockTop + FNewImage.Height));
 //      end
 //      else
-      if (LowerCase(GetInputDesktopName) <> 'default')
-        or (IsService) then
+      if True //(LowerCase(GetInputDesktopName) <> 'default')
+//        or (IsService)
+        then
       begin
 //        CS.Acquire;
 //i := GetTickCount;

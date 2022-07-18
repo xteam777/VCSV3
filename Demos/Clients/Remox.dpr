@@ -30,7 +30,7 @@ uses
   IdComponent,
   IdTCPClient,
   RtcHostForm in 'RtcHostForm.pas' {MainForm},
-  RtcHostSvc in 'RtcHostSvc.pas' {VircessService: TService},
+  RtcHostSvc in 'RtcHostSvc.pas' {RemoxService: TService},
   dmSetRegion in '..\Modules\dmSetRegion.pas' {dmSelectRegion},
   rdChat in '..\Modules\rdChat.pas' {rdChatForm},
   rdFileTrans in '..\Modules\rdFileTrans.pas' {rdFileTransfer},
@@ -150,6 +150,7 @@ end;
 
 procedure StartProcessInServiceMode;
 begin
+//Sleep(5000);
   xLog('Start Remox in service mode');
 
   IsService := True;
@@ -167,10 +168,11 @@ begin
 //  TStyleManager.TrySetStyle('Windows10');
 //доделать      TCustomStyleExt(TStyleManager.ActiveStyle).SetStyleColor(scPanel, clWhite);
   SvcMgr.Application.Initialize;
-  SvcMgr.Application.CreateForm(TVircessService, VircessService);
+  SvcMgr.Application.CreateForm(TRemoxService, RemoxService);
 //      if Win32MajorVersion = 10 then
 //        TStyleManager.TrySetStyle('Windows10');
   SvcMgr.Application.Run;
+  err := 1;
 end;
 
 
