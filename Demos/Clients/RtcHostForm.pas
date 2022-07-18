@@ -1134,7 +1134,6 @@ end;
 procedure TPortalThread.Execute;
 var
   msg: TMsg;
-  i: Integer;
 begin
   while (not Terminated)
     and (not FNeedStopThread) do
@@ -1151,12 +1150,6 @@ begin
         else
           ProcessMessage(msg);
       end;
-  end;
-
-  for i := 0 to 10 do
-  begin
-    Application.ProcessMessages;
-    Sleep(1000);
   end;
 end;
 
@@ -4066,7 +4059,7 @@ begin
 //    end;
 
   if ANeedGetPass then
-    APassword := GetUserPassword(AUser)
+    sPassword := GetUserPassword(AUser)
   else
     sPassword := APassword;
 
@@ -6749,7 +6742,6 @@ var
   PortalConnection: PPortalConnection;
   s: String;
   i: Integer;
-  CurPass: String;
 begin
 //  xLog('ConnectToPartnerStart');
 
@@ -6838,9 +6830,8 @@ begin
     with Data.NewFunction('Host.GetUserInfo') do
     begin
       asWideString['User'] := user;
-      CurPass := pass;
-      Crypt(CurPass, '@VCS@');
-      asWideString['Pass'] := CurPass;
+      Crypt(pass, '@VCS@');
+      asWideString['Pass'] := pass;
       asString['Action'] := action;
       Call(rGetPartnerInfo);
     end;
