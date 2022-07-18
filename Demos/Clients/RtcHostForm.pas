@@ -2487,7 +2487,7 @@ begin
   else
   begin
     pDevAcc.Visible := False;
-    ClientWidth := 550;
+    ClientWidth := 538;
     bDevices.Caption := 'Мои устройства >>';
     Constraints.MaxWidth := Width;
   end;
