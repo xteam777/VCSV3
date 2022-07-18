@@ -14,6 +14,8 @@ uses
   Vcl.Graphics;
 
 type
+  TCreateBitmapDataProc = procedure(pBits: Pointer);
+
 {$POINTERMATH ON} // Pointer[x]
   TDesktopDuplicationWrapper = class
   private
@@ -32,15 +34,18 @@ type
     FMoveCount: Integer;
     FDirtyRects: PRECT; // array of
     FDirtyCount: Integer;
+    FCreateBitmapDataProc: TCreateBitmapDataProc;
   public
     constructor Create;
     function GetFrame(var fNeedRecreate: Boolean): Boolean;
     function DrawFrame(var Bitmap: TBitmap): Boolean;
+    function DrawFrameToDib: Boolean;
     property Error: HRESULT read FError;
     property MoveCount: Integer read FMoveCount;
     property MoveRects: PDXGI_OUTDUPL_MOVE_RECT read FMoveRects;
     property DirtyCount: Integer read FDirtyCount;
     property DirtyRects: PRect read FDirtyRects;
+    property CreateBitmapDataProc: TCreateBitmapDataProc read FCreateBitmapDataProc write FCreateBitmapDataProc;
   end;
 
 implementation
@@ -140,6 +145,48 @@ begin
     Move(p^, Bitmap.ScanLine[i]^, 4 * Desc.Width);
     Inc(p, 4 * Desc.Width);
   end;
+
+  FTexture := nil;
+  FDuplicate.ReleaseFrame;
+end;
+
+function TDesktopDuplicationWrapper.DrawFrameToDib: Boolean;
+var
+  Desc: TD3D11_TEXTURE2D_DESC;
+  Temp: ID3D11Texture2D;
+  Resource: TD3D11_MAPPED_SUBRESOURCE;
+  i: Integer;
+  p: PByte;
+begin
+  Result := True;
+
+  FTexture.GetDesc(Desc);
+
+  Desc.BindFlags := 0;
+  Desc.CPUAccessFlags := Ord(D3D11_CPU_ACCESS_READ) or Ord(D3D11_CPU_ACCESS_WRITE);
+  Desc.Usage := D3D11_USAGE_STAGING;
+  Desc.MiscFlags := 0;
+
+  //  READ/WRITE texture
+  FError := FDevice.CreateTexture2D(@Desc, nil, Temp);
+  if Failed(FError) then
+  begin
+    FTexture := nil;
+    FDuplicate.ReleaseFrame;
+
+    Result := False;
+    Exit;
+  end;
+
+  // copy original to the RW texture
+  FContext.CopyResource(Temp, FTexture);
+
+  // get texture bits
+  FContext.Map(Temp, 0, D3D11_MAP_READ_WRITE, 0, Resource);
+  p := Resource.pData;
+
+  if Assigned(FCreateBitmapDataProc) then
+    FCreateBitmapDataProc(p);
 
   FTexture := nil;
   FDuplicate.ReleaseFrame;
