@@ -837,7 +837,7 @@ uses Math, Types;
 {$IFDEF KMDriver}
 
 const
-  VCS_MAGIC_NUMBER = 777;
+  RMX_MAGIC_NUMBER = 777;
 
 var
   FMouseAInit: Integer = 0;
@@ -1936,11 +1936,11 @@ begin
 
   try
     PipeClient := TPipeClient.Create(nil);
-    PipeClient.ServerName := 'VCS_SCREEN_SESSION_' + IntToStr(SessionID);
+    PipeClient.ServerName := 'RMX_SCREEN_SESSION_' + IntToStr(SessionID);
     PipeClient.Connect(1000, True);
 
-//    hMap := OpenFileMapping(FILE_MAP_READ, False, PWideChar(WideString('Global\VCS_SCREEN_SESSION_' + IntToStr(SessionID))));
-    hMap := OpenFileMapping(FILE_MAP_READ, False, PWideChar(WideString('Session\' + IntToStr(SessionID) + '\VCS_SCREEN')));
+//    hMap := OpenFileMapping(FILE_MAP_READ, False, PWideChar(WideString('Global\RMX_SCREEN_SESSION_' + IntToStr(SessionID))));
+    hMap := OpenFileMapping(FILE_MAP_READ, False, PWideChar(WideString('Session\' + IntToStr(SessionID) + '\RMX_SCREEN')));
     if hMap = 0 then
       Exit;
 
@@ -2040,21 +2040,21 @@ begin
       NameSuffix := '';
     end;
 
-    EventWriteBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\VCS_SCREEN_WRITE_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    EventWriteBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_WRITE_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
     if EventWriteBegin = 0 then
       Exit;
-    EventWriteEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\VCS_SCREEN_WRITE_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    EventWriteEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_WRITE_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
     if EventWriteEnd = 0 then
       Exit;
-    EventReadBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\VCS_SCREEN_READ_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    EventReadBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_READ_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
     if EventReadBegin = 0 then
       Exit;
-    EventReadEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\VCS_SCREEN_READ_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    EventReadEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_READ_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
     if EventReadEnd = 0 then
       Exit;
 
     try
-  //    MutexRead := OpenMutex(MUTEX_ALL_ACCESS, False, PWideChar(WideString('Global\VCS_SCREEN_READ_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+  //    MutexRead := OpenMutex(MUTEX_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_READ_SESSION_' + IntToStr(SessionID) + NameSuffix)));
   //    if MutexRead = 0 then
   //    if WaitForSingleObject(EventRead, 0) <> WAIT_OBJECT_0 then //≈сли идет чтение скрина в другом процессе, запись скрина не начинаем
   //    begin
@@ -2072,13 +2072,13 @@ begin
   //      SetEvent(EventRead);
   //    end;
 
-  //      MutexRead := DoCreateMutex(PWideChar(WideString('Global\VCS_SCREEN_READ_SESSION_' + IntToStr(SessionID))));
+  //      MutexRead := DoCreateMutex(PWideChar(WideString('Global\RMX_SCREEN_READ_SESSION_' + IntToStr(SessionID))));
   //    end
   //    else
   //      CloseHandle(MutexRead);
 
       try
-        hMap := OpenFileMapping(FILE_MAP_READ, False, PWideChar(WideString('Session\' + IntToStr(SessionID) + '\VCS_SCREEN' + NameSuffix)));
+        hMap := OpenFileMapping(FILE_MAP_READ, False, PWideChar(WideString('Session\' + IntToStr(SessionID) + '\RMX_SCREEN' + NameSuffix)));
         if hMap = 0 then
           Exit;
         HeaderSize := sizeof(BitmapSize) + sizeof(Result) + sizeof(FHelper_Width) + sizeof(FHelper_Height) + sizeof(FHelper_BitsPerPixel) + sizeof(PID) + sizeof(ipBase) + sizeof(FHelper_mouseFlags) + sizeof(FHelper_mouseCursor);
@@ -2279,21 +2279,21 @@ begin
       NameSuffix := '';
     end;
 
-    EventWriteBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\VCS_SCREEN_WRITE_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    EventWriteBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_WRITE_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
     if EventWriteBegin = 0 then
       Exit;
-    EventWriteEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\VCS_SCREEN_WRITE_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    EventWriteEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_WRITE_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
     if EventWriteEnd = 0 then
       Exit;
-    EventReadBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\VCS_SCREEN_READ_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    EventReadBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_READ_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
     if EventReadBegin = 0 then
       Exit;
-    EventReadEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\VCS_SCREEN_READ_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    EventReadEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_READ_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
     if EventReadEnd = 0 then
       Exit;
 
     try
-  //    MutexRead := OpenMutex(MUTEX_ALL_ACCESS, False, PWideChar(WideString('Global\VCS_SCREEN_READ_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+  //    MutexRead := OpenMutex(MUTEX_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_READ_SESSION_' + IntToStr(SessionID) + NameSuffix)));
   //    if MutexRead = 0 then
   //    if WaitForSingleObject(EventRead, 0) <> WAIT_OBJECT_0 then //≈сли идет чтение скрина в другом процессе, запись скрина не начинаем
   //    begin
@@ -2315,13 +2315,13 @@ begin
   //      SetEvent(EventRead);
   //    end;
 
-  //      MutexRead := DoCreateMutex(PWideChar(WideString('Global\VCS_SCREEN_READ_SESSION_' + IntToStr(SessionID))));
+  //      MutexRead := DoCreateMutex(PWideChar(WideString('Global\RMX_SCREEN_READ_SESSION_' + IntToStr(SessionID))));
   //    end
   //    else
   //      CloseHandle(MutexRead);
 
       try
-        hMap := OpenFileMapping(FILE_MAP_READ or FILE_MAP_WRITE, False, PWideChar(WideString('Session\' + IntToStr(SessionID) + '\VCS_SCREEN' + NameSuffix)));
+        hMap := OpenFileMapping(FILE_MAP_READ or FILE_MAP_WRITE, False, PWideChar(WideString('Session\' + IntToStr(SessionID) + '\RMX_SCREEN' + NameSuffix)));
         if hMap = 0 then
           Exit;
         HeaderSize := sizeof(BitmapSize) + sizeof(Result) + sizeof(FHelper_Width) + sizeof(FHelper_Height) + sizeof(FHelper_BitsPerPixel) + sizeof(CurrentProcessId) + sizeof(ipBase) + sizeof(FHelper_mouseFlags) + sizeof(FHelper_mouseCursor);
@@ -2415,7 +2415,7 @@ begin
 //  hMemDC, //откуда
 //  0,0, //координаты
 //  SRCCOPY); //режим копировани€
-//  SaveBitMap.SaveToFile('C:\Screenshots\vcs_' + StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
+//  SaveBitMap.SaveToFile('C:\Screenshots\rmx_' + StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
 //  SaveBitMap.Free;
 
 //      hDestDC := CreateCompatibleDC(FNewImage.Canvas.Handle);
@@ -2528,7 +2528,7 @@ begin
   IPCClient := TIPCClient.Create;
   try
     IPCClient.ComputerName := 'localhost';
-    IPCClient.ServerName := 'Vircess_IPC_Session_' + IntToStr(SessionID);
+    IPCClient.ServerName := 'Remox_IPC_Session_' + IntToStr(SessionID);
     IPCClient.ConnectClient(1000); //cDefaultTimeout
     try
       if IPCClient.IsConnected then
@@ -2573,7 +2573,7 @@ begin
   IPCClient := TIPCClient.Create;
   try
     IPCClient.ComputerName := 'localhost';
-    IPCClient.ServerName := 'Vircess_IPC_Session_' + IntToStr(SessionID);
+    IPCClient.ServerName := 'Remox_IPC_Session_' + IntToStr(SessionID);
     IPCClient.ConnectClient(1000); //cDefaultTimeout
     try
       if IPCClient.IsConnected then
@@ -2899,8 +2899,8 @@ begin
     NameSuffix := '';
   end;
 
-{  hCursorInfoEventWriteBegin := DoCreateEvent(PWideChar(WideString('Global\VCS_CURINFO_WRITE_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
-  hCursorInfoEventWriteEnd := DoCreateEvent(PWideChar(WideString('Global\VCS_CURINFO_WRITE_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+{  hCursorInfoEventWriteBegin := DoCreateEvent(PWideChar(WideString('Global\RMX_CURINFO_WRITE_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+  hCursorInfoEventWriteEnd := DoCreateEvent(PWideChar(WideString('Global\RMX_CURINFO_WRITE_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
 
   tCursorInfoThrd := TCursorInfoThread.Create(False);
   tCursorInfoThrd.FreeOnTerminate := True;}
@@ -4342,7 +4342,7 @@ begin
         inputs[0].mi.dx := FLastMouseX;
         inputs[0].mi.dy := FLastMouseY;
         inputs[0].mi.mouseData := 0;
-        inputs[0].mi.dwExtraInfo := VCS_MAGIC_NUMBER;
+        inputs[0].mi.dwExtraInfo := RMX_MAGIC_NUMBER;
         SendInput(1, inputs[0], SizeOf(inputs));
 //        mouse_event(MOUSEEVENTF_MIDDLEDOWN, 0, 0, 0, 0);
       end;
@@ -4370,7 +4370,7 @@ begin
         inputs[0].mi.dx := FLastMouseX;
         inputs[0].mi.dy := FLastMouseY;
         inputs[0].mi.mouseData := 0;
-        inputs[0].mi.dwExtraInfo := VCS_MAGIC_NUMBER;
+        inputs[0].mi.dwExtraInfo := RMX_MAGIC_NUMBER;
         SendInput(1, inputs[0], SizeOf(inputs));
     end
     else
@@ -4421,7 +4421,7 @@ begin
         inputs[0].mi.dx := 0;
         inputs[0].mi.dy := 0;
         inputs[0].mi.mouseData := 0;
-        inputs[0].mi.dwExtraInfo := VCS_MAGIC_NUMBER;
+        inputs[0].mi.dwExtraInfo := RMX_MAGIC_NUMBER;
         SendInput(1, inputs[0], SizeOf(inputs));
 
 //        mouse_event(MOUSEEVENTF_MIDDLEUP, 0, 0, 0, 0);
@@ -4449,7 +4449,7 @@ begin
       inputs[0].mi.dx := 0;
       inputs[0].mi.dy := 0;
       inputs[0].mi.mouseData := 0;
-      inputs[0].mi.dwExtraInfo := VCS_MAGIC_NUMBER;
+      inputs[0].mi.dwExtraInfo := RMX_MAGIC_NUMBER;
       SendInput(1, inputs[0], SizeOf(inputs));
     end
     else
@@ -4486,7 +4486,7 @@ begin
     inputs[0].mi.dx := 0;
     inputs[0].mi.dy := 0;
     inputs[0].mi.mouseData := DWORD(Wheel);
-    inputs[0].mi.dwExtraInfo := VCS_MAGIC_NUMBER;
+    inputs[0].mi.dwExtraInfo := RMX_MAGIC_NUMBER;
     SendInput(1, inputs[0], SizeOf(inputs));
 //    mouse_event(MOUSEEVENTF_WHEEL, 0, 0, DWORD(Wheel), 0);
   end
@@ -4532,7 +4532,7 @@ begin
         inputs[0].mi.dx := X;
         inputs[0].mi.dy := Y;
         inputs[0].mi.mouseData := 0;
-        inputs[0].mi.dwExtraInfo := VCS_MAGIC_NUMBER;
+        inputs[0].mi.dwExtraInfo := RMX_MAGIC_NUMBER;
         SendInput(1, inputs[0], SizeOf(inputs));
 
         //mouse_event(MOUSEEVENTF_MOVE or MOUSEEVENTF_ABSOLUTE, X, Y, 0, 0);
@@ -4761,7 +4761,7 @@ begin
     inputs[0].ki.dwFlags := dwFlags;
     inputs[0].ki.wVk := key;
     inputs[0].ki.wScan := vk;
-    inputs[0].ki.dwExtraInfo := VCS_MAGIC_NUMBER;
+    inputs[0].ki.dwExtraInfo := RMX_MAGIC_NUMBER;
 
     SendInput(1, inputs[0], SizeOf(inputs));
   end
@@ -5327,7 +5327,7 @@ end;
 //  end;
 //
 //  KeyboardStruct := Pointer(lParam);
-//  if KeyboardStruct^.dwExtraInfo <> VCS_MAGIC_NUMBER then
+//  if KeyboardStruct^.dwExtraInfo <> RMX_MAGIC_NUMBER then
 //    Result := 1
 //  else
 //  Result := CallNextHookEx(BlockInputHook_Keyboard, CODE, wParam, LParam);
@@ -5345,7 +5345,7 @@ end;
 //  end;
 //
 //  MouseStruct := Pointer(lParam);
-//  if MouseStruct^.dwExtraInfo <> VCS_MAGIC_NUMBER then
+//  if MouseStruct^.dwExtraInfo <> RMX_MAGIC_NUMBER then
 //    Result := 1
 //  else
 //  Result := CallNextHookEx(BlockInputHook_Mouse, CODE, wParam, LParam);

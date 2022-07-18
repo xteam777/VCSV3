@@ -16,7 +16,7 @@ uses
 //  FWIOCompletionPipes;
   // cromis units
   uProcess,
-  Cromis.Comm.Custom, Cromis.Comm.IPC, Cromis.Threading;
+  Cromis.Comm.Custom, Cromis.Comm.IPC, Cromis.Threading, Execute.DesktopDuplicationAPI;
 //  rtcWinlogon,
   //FastDIB in 'Lib\FastDIB.pas';
 
@@ -157,7 +157,9 @@ var
   dwFlags, wVk, wScan: DWORD;
   IOtype, dx, dy, mouseData: Integer;
 
-  FShiftDown, FCtrlDown, FAltDown: boolean;
+  FShiftDown, FCtrlDown, FAltDown: Boolean;
+
+  FDesktopDuplicator: TDesktopDuplicationWrapper;
 
   function RpcRevertToSelf: RPC_STATUS; stdcall; external 'rpcrt4.dll';
   function RpcImpersonateClient(BindingHandle: RPC_BINDING_HANDLE): RPC_STATUS; stdcall; external 'rpcrt4.dll';
@@ -1943,7 +1945,7 @@ begin
   end;
 end;}
 
-procedure CreateBitmapData;
+procedure CreateBitmapData(pBits: Pointer);
 begin
   sWidth := GetSystemMetrics(SM_CXSCREEN);
   sHeight := GetSystemMetrics(SM_CYSCREEN);
@@ -1960,7 +1962,7 @@ begin
     biBitCount := GetDeviceCaps(hScrDC, BITSPIXEL);
     biCompression := BI_RGB;
   end;
-  pBits := nil;
+//  pBits := nil;
   hBmp := CreateDIBSection(hScrDC, bitmap_info, DIB_RGB_COLORS, pBits, 0, 0);
 //  hBmp := CreateCompatibleBitmap(hScrDC, sWidth, sHeight);
   hMemDC := CreateCompatibleDC(hScrDC);
@@ -2266,7 +2268,7 @@ end;
 function ScreenShotThreadProc(pParam: Pointer): DWORD; stdcall;
 var
   BitmapSize: Cardinal;
-  mResult: Boolean;
+  mResult, fRes, fHaveScreen, fNeedRecreate: Boolean;
   CurOffset: Integer;
   ci: TCursorInfo;
   hProc: THandle;
@@ -2289,7 +2291,40 @@ begin
           SelectInputWinStation;
           SwitchToActiveDesktop;
 
-          CreateBitmapData;
+//          hOld := SelectObject(hMemDC, hBmp);
+//          mResult := BitBlt(hMemDC, 0, 0, sWidth, sHeight, hScrDC, 0, 0, SRCCOPY);
+//          if not mResult then
+//          begin
+//            err := GetLastError;
+//            xLog('BitBlt Error: ' + IntToStr(err) + ' ' + SysErrorMessage(err));
+//            Continue;
+//          end;
+
+          while not fHaveScreen do
+          begin
+            fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
+            while fNeedRecreate do
+            begin
+              FDesktopDuplicator.Free;
+              FDesktopDuplicator := TDesktopDuplicationWrapper.Create;
+              fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
+
+              Sleep(1);
+            end;
+            if fRes then
+            begin
+              if FDesktopDuplicator.DrawFrameToDib then
+                fHaveScreen := True;
+            end;
+            //else
+            //  Memo1.Lines.Add('no frame ' + IntToHex(FDuplication.Error));
+
+            Sleep(1);
+          end;
+
+          SaveBitMap := TBitmap.Create;
+          SaveBitMap.Width := sWidth;
+          SaveBitMap.Height := sHeight;
 
           hOld := SelectObject(hMemDC, hBmp);
           mResult := BitBlt(hMemDC, 0, 0, sWidth, sHeight, hScrDC, 0, 0, SRCCOPY);
@@ -2638,14 +2673,14 @@ begin
 
   CurrentPID := GetCurrentProcessId;
 
-  if LowerCase(ExtractFileName(ParamStr(0))) = 'vcs_w32.exe' then
+  if LowerCase(ExtractFileName(ParamStr(0))) = 'rmx_w32.exe' then
     NameSuffix := ''
   else
     NameSuffix := '_C';
 
   ProcessIdToSessionId(GetCurrentProcessId, CurrentSessionID);
 
-  if not UniqueApp('Vircess_Helper_Session_' + IntToStr(CurrentSessionID) + NameSuffix) then
+  if not UniqueApp('Remox_Helper_Session_' + IntToStr(CurrentSessionID) + NameSuffix) then
     Exit;
 
   AdjustPriviliges(SE_CREATE_GLOBAL_NAME);
@@ -2663,7 +2698,7 @@ begin
   HeaderSize := sizeof(Cardinal) + sizeof(Boolean) + sizeof(sWidth) + sizeof(sHeight) + sizeof(Word) +
     sizeof(CurrentPID) + sizeof(DWORD) + sizeof(HCURSOR) + sizeof(Integer) + sizeof(Integer);
   hMap := CreateFileMapping(INVALID_HANDLE_VALUE, nil, PAGE_READWRITE, 0, HeaderSize,
-    PWideChar(WideString('Session\' + IntToStr(CurrentSessionID) + '\VCS_SCREEN' + NameSuffix)));
+    PWideChar(WideString('Session\' + IntToStr(CurrentSessionID) + '\RMX_SCREEN' + NameSuffix)));
 
   if hMap = 0 then
   begin
@@ -2679,22 +2714,25 @@ begin
     Exit;
   end;
 
-  EventWriteBegin := DoCreateEvent('Global\VCS_SCREEN_WRITE_BEGIN_SESSION_' + IntToStr(CurrentSessionID) + NameSuffix);
-  EventWriteEnd := DoCreateEvent('Global\VCS_SCREEN_WRITE_END_SESSION_' + IntToStr(CurrentSessionID) + NameSuffix);
-  EventReadBegin := DoCreateEvent('Global\VCS_SCREEN_READ_BEGIN_SESSION_' + IntToStr(CurrentSessionID) + NameSuffix);
-  EventReadEnd := DoCreateEvent('Global\VCS_SCREEN_READ_END_SESSION_' + IntToStr(CurrentSessionID) + NameSuffix);
+  EventWriteBegin := DoCreateEvent('Global\RMX_SCREEN_WRITE_BEGIN_SESSION_' + IntToStr(CurrentSessionID) + NameSuffix);
+  EventWriteEnd := DoCreateEvent('Global\RMX_SCREEN_WRITE_END_SESSION_' + IntToStr(CurrentSessionID) + NameSuffix);
+  EventReadBegin := DoCreateEvent('Global\RMX_SCREEN_READ_BEGIN_SESSION_' + IntToStr(CurrentSessionID) + NameSuffix);
+  EventReadEnd := DoCreateEvent('Global\RMX_SCREEN_READ_END_SESSION_' + IntToStr(CurrentSessionID) + NameSuffix);
 
-  EventReadBeginIN := DoCreateEvent('Global\VCS_SCREEN_READ_BEGIN_IN_SESSION_' + IntToStr(CurrentSessionID) + NameSuffix);
-  EventWriteEndIN := DoCreateEvent('Global\VCS_SCREEN_WRITE_END_IN_SESSION_' + IntToStr(CurrentSessionID) + NameSuffix);
+  EventReadBeginIN := DoCreateEvent('Global\RMX_SCREEN_READ_BEGIN_IN_SESSION_' + IntToStr(CurrentSessionID) + NameSuffix);
+  EventWriteEndIN := DoCreateEvent('Global\RMX_SCREEN_WRITE_END_IN_SESSION_' + IntToStr(CurrentSessionID) + NameSuffix);
 
   hThreadSS := CreateThread(nil, 0, @ScreenShotThreadProc, nil, 0, tidSS);
   hThreadIN := CreateThread(nil, 0, @InputThreadProc, nil, 0, tidIN);
+
+  FDesktopDuplicator := TDesktopDuplicationWrapper.Create;
+  FDesktopDuplicator.CreateBitmapDataProc := CreateBitmapData;
 
   try
     FHelper := THelper.Create;
     FIPCServer := TIPCServer.Create;
     FIPCServer.OnExecuteRequest := FHelper.OnExecuteRequest;
-    FIPCServer.ServerName := 'Vircess_IPC_Session_' + IntToStr(CurrentSessionID);
+    FIPCServer.ServerName := 'Remox_IPC_Session_' + IntToStr(CurrentSessionID);
     FIPCServer.Start;
 
     while GetMessage(msg, 0, 0, 0) do
@@ -2704,6 +2742,7 @@ begin
     FIPCServer.Stop;
     FIPCServer.Free;
     FHelper.Free;
+    FDesktopDuplicator.Free;
   finally
     if EventWriteBegin <> 0 then
     begin

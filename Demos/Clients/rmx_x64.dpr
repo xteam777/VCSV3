@@ -15,7 +15,7 @@ uses
 //  SyncObjs,
 //  FWIOCompletionPipes;
   // cromis units
-  Cromis.Comm.Custom, Cromis.Comm.IPC, Cromis.Threading;
+  Cromis.Comm.Custom, Cromis.Comm.IPC, Cromis.Threading, Execute.DesktopDuplicationAPI;
 //  rtcWinlogon,
   //FastDIB in 'Lib\FastDIB.pas';
 
@@ -156,7 +156,9 @@ var
   dwFlags, wVk, wScan: DWORD;
   IOtype, dx, dy, mouseData: Integer;
 
-  FShiftDown, FCtrlDown, FAltDown: boolean;
+  FShiftDown, FCtrlDown, FAltDown: Boolean;
+
+  FDesktopDuplicator: TDesktopDuplicationWrapper;
 
   function RpcRevertToSelf: RPC_STATUS; stdcall; external 'rpcrt4.dll';
   function RpcImpersonateClient(BindingHandle: RPC_BINDING_HANDLE): RPC_STATUS; stdcall; external 'rpcrt4.dll';
@@ -2684,6 +2686,8 @@ begin
   hThreadSS := CreateThread(nil, 0, @ScreenShotThreadProc, nil, 0, tidSS);
   hThreadIN := CreateThread(nil, 0, @InputThreadProc, nil, 0, tidIN);
 
+  FDesktopDuplicator := TDesktopDuplicationWrapper.Create;
+
   try
     FHelper := THelper.Create;
     FIPCServer := TIPCServer.Create;
@@ -2692,12 +2696,13 @@ begin
     FIPCServer.Start;
 
     while GetMessage(msg, 0, 0, 0) do
-      if msg.message <> WM_QUIT then
+      if msg.Message <> WM_QUIT then
       DispatchMessage(msg);
 
     FIPCServer.Stop;
     FIPCServer.Free;
     FHelper.Free;
+    FDesktopDuplicator.Free;
   finally
     if EventWriteBegin <> 0 then
     begin

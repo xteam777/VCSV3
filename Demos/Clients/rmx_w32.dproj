@@ -127,13 +127,13 @@
                 </Excluded_Packages>
             </Delphi.Personality>
             <Deployment Version="3">
-                <DeployFile LocalName="Win32\Debug\rmx_w32.exe" Configuration="Debug" Class="ProjectOutput">
+                <DeployFile LocalName="rmx_w32.exe" Configuration="Release" Class="ProjectOutput">
                     <Platform Name="Win32">
                         <RemoteName>rmx_w32.exe</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployFile LocalName="rmx_w32.exe" Configuration="Release" Class="ProjectOutput">
+                <DeployFile LocalName="Win32\Debug\rmx_w32.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win32">
                         <RemoteName>rmx_w32.exe</RemoteName>
                         <Overwrite>true</Overwrite>
