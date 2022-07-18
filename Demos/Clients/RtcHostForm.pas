@@ -274,20 +274,20 @@ type
     tHostTimerClientReconnect: TTimer;
     tPClientReconnect: TTimer;
     lRegistration: TLabel;
-    Button1: TButton;
     N6: TMenuItem;
     N11: TMenuItem;
-    Button2: TButton;
     tActivateHost: TTimer;
     ApplicationEvents: TApplicationEvents;
     tCleanConnections: TTimer;
-    Button3: TButton;
     tGetDirectorySize: TTimer;
     tFileSend: TTimer;
     ser_: TIdTCPServer;
     cle_: TIdTCPClient;
-    Button4: TButton;
     rDestroyClient: TRtcResult;
+    Button4: TButton;
+    Button1: TButton;
+    Button2: TButton;
+    Button3: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -604,7 +604,6 @@ type
     LastFocusedUID: String;
 
     FormMinimized: Boolean;
-    CurIconState: String;
 
     PowerWatcher: TPowerWatcher;
 
@@ -638,7 +637,7 @@ type
     procedure HostLogOut;
 
     procedure TaskBarAddIcon;
-    procedure TaskBarIconUpdate(State: String);
+    procedure TaskBarIconUpdate(AIsOnline: Boolean);
     procedure TaskBarRemoveIcon;
 
     procedure DrawButton(Canvas:TCanvas; ARect: TRect; Node: PVirtualNode; AColor: TColor);
@@ -3189,22 +3188,7 @@ begin
     iStatus4.Update;
     bmp.Free;
 
-    // bmp := TBitmap.Create;
-    // if CurStatus > 4 then
-    // begin
-    // ilStatus.GetBitmap(1, bmp);
-    // CurIconState := 'ONLINE';
-    // TaskBarIconUpdate(CurIconState);
-    // end
-    // else
-    // begin
-    // ilStatus.GetBitmap(0, bmp);
-    // CurIconState := 'OFFLINE';
-    // TaskBarIconUpdate(CurIconState);
-    // end;
-    // iStatus5.Picture.Bitmap.Assign(bmp);
-    // iStatus5.Update;
-    // bmp.Free;
+    TaskBarIconUpdate(CurStatus = 3);
   finally
     CS_Status.Release;
   end;
@@ -4987,7 +4971,7 @@ begin
 //  end;
 end;
 
-procedure TMainForm.TaskBarIconUpdate(State: String);
+procedure TMainForm.TaskBarIconUpdate(AIsOnline: Boolean);
 var
   tnid: TNotifyIconData;
 //  Ic: TIcon;
@@ -5009,7 +4993,7 @@ begin
     tnid.uFlags := NIF_MESSAGE or NIF_ICON or NIF_TIP;
     tnid.uCallbackMessage := WM_TASKBAREVENT;
 //    tnid.hIcon := Ic.Handle;
-    if State = 'ONLINE' then
+    if AIsOnline then
       tnid.hIcon := iAppIconOnline.Picture.Icon.Handle
     else
       tnid.hIcon := iAppIconOffline.Picture.Icon.Handle;
@@ -5238,7 +5222,7 @@ begin
     Exit;
 
   TaskBarAddIcon;
-  TaskBarIconUpdate(CurIconState);
+  TaskBarIconUpdate(CurStatus = 3);
 end;
 
 procedure TMainForm.TimerModuleResponseAbort(Sender: TRtcConnection);

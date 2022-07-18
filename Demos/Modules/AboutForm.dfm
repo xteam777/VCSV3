@@ -1084,7 +1084,7 @@ object fAboutForm: TfAboutForm
     Alignment = taRightJustify
     Caption = 'v. 3.0'
     Font.Charset = DEFAULT_CHARSET
-    Font.Color = clWindowText
+    Font.Color = 3947580
     Font.Height = -11
     Font.Name = 'MS Sans Serif'
     Font.Style = [fsBold]
@@ -1099,7 +1099,7 @@ object fAboutForm: TfAboutForm
     Alignment = taRightJustify
     Caption = 'Remox'
     Font.Charset = DEFAULT_CHARSET
-    Font.Color = clWindowText
+    Font.Color = 3947580
     Font.Height = -13
     Font.Name = 'MS Sans Serif'
     Font.Style = [fsBold]

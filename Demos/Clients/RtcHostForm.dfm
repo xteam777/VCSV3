@@ -87,7 +87,7 @@ object MainForm: TMainForm
       Layout = tlCenter
     end
     object iStatus1: TImage
-      Left = 1
+      Left = 0
       Top = 471
       Width = 8
       Height = 8
@@ -455,7 +455,7 @@ object MainForm: TMainForm
         010002110311003F001DBF2AD4F2AEFD6B5AE6A2CDF5E6FA854786BA3FFFD9}
     end
     object iStatus2: TImage
-      Left = 11
+      Left = 10
       Top = 471
       Width = 8
       Height = 8
@@ -823,7 +823,7 @@ object MainForm: TMainForm
         010002110311003F001DBF2AD4F2AEFD6B5AE6A2CDF5E6FA854786BA3FFFD9}
     end
     object iStatus3: TImage
-      Left = 21
+      Left = 20
       Top = 471
       Width = 8
       Height = 8
@@ -1191,7 +1191,7 @@ object MainForm: TMainForm
         010002110311003F001DBF2AD4F2AEFD6B5AE6A2CDF5E6FA854786BA3FFFD9}
     end
     object iStatus4: TImage
-      Left = 31
+      Left = 30
       Top = 471
       Width = 8
       Height = 8
@@ -2026,7 +2026,7 @@ object MainForm: TMainForm
     end
     object iBkgLeft: TImage
       AlignWithMargins = True
-      Left = 1
+      Left = 0
       Top = 6
       Width = 538
       Height = 131
@@ -3581,7 +3581,7 @@ object MainForm: TMainForm
         Caption = #1052#1086#1081' ID'
         Color = clWhite
         Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
+        Font.Color = 3947580
         Font.Height = -13
         Font.Name = 'Arial'
         Font.Style = [fsBold]
@@ -3598,7 +3598,7 @@ object MainForm: TMainForm
         Caption = #1052#1086#1081' '#1087#1072#1088#1086#1083#1100
         Color = clWhite
         Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
+        Font.Color = 3947580
         Font.Height = -13
         Font.Name = 'Arial'
         Font.Style = [fsBold]
@@ -4416,7 +4416,7 @@ object MainForm: TMainForm
         BevelOuter = bvNone
         BorderStyle = bsNone
         Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
+        Font.Color = 3947580
         Font.Height = -21
         Font.Name = 'Bahnschrift'
         Font.Style = [fsBold]
@@ -4438,7 +4438,7 @@ object MainForm: TMainForm
         BevelOuter = bvNone
         BorderStyle = bsNone
         Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
+        Font.Color = 3947580
         Font.Height = -21
         Font.Name = 'Bahnschrift'
         Font.Style = []
@@ -4471,18 +4471,9 @@ object MainForm: TMainForm
         Text = '-'
         OnDblClick = eConsoleIDDblClick
       end
-      object Button4: TButton
-        Left = 140
-        Top = 66
-        Width = 75
-        Height = 25
-        Caption = 'Button4'
-        TabOrder = 3
-        OnClick = Button4Click
-      end
     end
     object pRight: TPanel
-      Left = 272
+      Left = 271
       Top = 151
       Width = 267
       Height = 310
@@ -5233,33 +5224,6 @@ object MainForm: TMainForm
         TabOrder = 2
         OnClick = rbFileTransClick
       end
-      object Button1: TButton
-        Left = 18
-        Top = 94
-        Width = 75
-        Height = 25
-        Caption = 'Button1'
-        TabOrder = 3
-        OnClick = Button1Click
-      end
-      object Button2: TButton
-        Left = 168
-        Top = 38
-        Width = 75
-        Height = 25
-        Caption = 'Button1'
-        TabOrder = 4
-        OnClick = Button2Click
-      end
-      object Button3: TButton
-        Left = 168
-        Top = 66
-        Width = 75
-        Height = 25
-        Caption = 'Button3'
-        TabOrder = 5
-        OnClick = Button3Click
-      end
     end
     object pDevAcc: TPanel
       AlignWithMargins = True
@@ -5578,7 +5542,7 @@ object MainForm: TMainForm
             Color = 16645629
             DefaultNodeHeight = 24
             Font.Charset = DEFAULT_CHARSET
-            Font.Color = clBlack
+            Font.Color = 3947580
             Font.Height = -11
             Font.Name = 'Arial'
             Font.Style = [fsBold]
@@ -5754,9 +5718,9 @@ object MainForm: TMainForm
       end
     end
     object pBtnDevices: TPanel
-      Left = 426
+      Left = 421
       Top = 6
-      Width = 116
+      Width = 117
       Height = 28
       BevelOuter = bvNone
       Color = 15001320
@@ -5770,15 +5734,15 @@ object MainForm: TMainForm
       TabOrder = 3
       StyleElements = [seFont, seBorder]
       object bDevices: TColorSpeedButton
-        Left = -1
-        Top = 0
+        Left = 0
+        Top = 1
         Width = 117
         Height = 28
         Caption = #1052#1086#1080' '#1091#1089#1090#1088#1086#1081#1089#1090#1074#1072' <<'
         Color = 15001320
         Flat = True
         Font.Charset = DEFAULT_CHARSET
-        Font.Color = clBlack
+        Font.Color = 3947580
         Font.Height = -11
         Font.Name = 'Arial'
         Font.Style = [fsBold]
@@ -5787,6 +5751,42 @@ object MainForm: TMainForm
         OnMouseEnter = bDevicesMouseEnter
         OnMouseLeave = bDevicesMouseLeave
       end
+    end
+    object Button4: TButton
+      Left = 463
+      Top = 464
+      Width = 75
+      Height = 25
+      Caption = 'Button4'
+      TabOrder = 4
+      OnClick = Button4Click
+    end
+    object Button1: TButton
+      Left = 544
+      Top = 463
+      Width = 75
+      Height = 25
+      Caption = 'Button1'
+      TabOrder = 5
+      OnClick = Button1Click
+    end
+    object Button2: TButton
+      Left = 630
+      Top = 463
+      Width = 75
+      Height = 25
+      Caption = 'Button1'
+      TabOrder = 6
+      OnClick = Button2Click
+    end
+    object Button3: TButton
+      Left = 716
+      Top = 464
+      Width = 75
+      Height = 25
+      Caption = 'Button3'
+      TabOrder = 7
+      OnClick = Button3Click
     end
   end
   object PClient: TRtcHttpPortalClient
@@ -6375,7 +6375,7 @@ object MainForm: TMainForm
     object N17: TMenuItem
       Caption = #1057#1087#1088#1072#1074#1082#1072
       object Vircess1: TMenuItem
-        Caption = #1042#1077#1073'-'#1089#1072#1081#1090' Vircess'
+        Caption = #1042#1077#1073'-'#1089#1072#1081#1090' Remox'
         OnClick = miWebSiteClick
         OnDrawItem = N11DrawItem
       end
