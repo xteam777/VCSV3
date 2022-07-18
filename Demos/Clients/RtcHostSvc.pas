@@ -101,6 +101,9 @@ type
     procedure StartHostLogin;
     procedure msgHostTimerTimer(Sender: TObject);
 
+    procedure ChangePort(AClient: TRtcHttpClient);
+    procedure ChangePortP(AClient: TRtcHttpPortalClient);
+
 //    procedure OnSessionChange(var Msg: TMessage); message WM_WTSSESSION_CHANGE;
 
 //    function GetServiceController:
@@ -130,6 +133,36 @@ var
 implementation
 
 {$R *.DFM}
+
+procedure TRemoxService.ChangePort(AClient: TRtcHttpClient);
+begin
+  if AClient.ServerPort = '80' then
+    AClient.ServerPort := '8080'
+  else
+  if AClient.ServerPort = '8080' then
+    AClient.ServerPort := '443'
+  else
+  if AClient.ServerPort = '443' then
+    AClient.ServerPort := '5938'
+  else
+  if AClient.ServerPort = '5938' then
+    AClient.ServerPort := '80';
+end;
+
+procedure TRemoxService.ChangePortP(AClient: TRtcHttpPortalClient);
+begin
+  if AClient.GatePort = '80' then
+    AClient.GatePort := '8080'
+  else
+  if AClient.GatePort = '8080' then
+    AClient.GatePort := '443'
+  else
+  if AClient.GatePort = '443' then
+    AClient.GatePort := '5938'
+  else
+  if AClient.GatePort = '5938' then
+    AClient.GatePort := '80';
+end;
 
 procedure TRemoxService.SetRegularPassword(AValue: String);
 begin
@@ -242,7 +275,7 @@ procedure TRemoxService.ServiceStart(Sender: TService; var Started: Boolean);
 var
   s: RtcString;
 begin
-  Sleep(10000);
+//  Sleep(10000);
   xLog('Service start pending');
   try
 
@@ -950,11 +983,14 @@ procedure TRemoxService.PClientError(Sender: TAbsPortalClient;
 begin
   xLog('PClientError: ' + Msg);
 
+  if (Sender = PClient)
+    and (Msg = 'Не удалось подключиться к серверу.') then
+    ChangePortP(PClient);
+
   PClientFatalError(Sender, Msg);
 
-//  if (Msg <> S_RTCP_ERROR_CONNECT)
-//    and (Msg <> 'Logged out') then
-    PClient.Active:=True;
+  if Msg <> 'Logged out' then
+    TRtcHttpPortalClient(Sender).Active := True;
 
 //  PDesktopHost.Restart;
 end;
@@ -1240,6 +1276,8 @@ procedure TRemoxService.HostTimerClientDisconnect(Sender: TRtcConnection);
 begin
   tHostTimerClientReconnect.Enabled := True;
   tActivate.Enabled := False;
+
+  ChangePort(HostTimerClient);
 end;
 
 //function TVircess_Service.GetServiceController: {$IFDEF VER120} PServiceController; {$ELSE} TServiceController; {$ENDIF}

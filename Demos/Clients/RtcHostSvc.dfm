@@ -26,6 +26,7 @@ object RemoxService: TRemoxService
     MultiThreaded = True
     GatePort = '443'
     Gate_Timeout = 300
+    Gate_WinHttp = True
     OnStatusGet = PClientStatusGet
     Left = 44
     Top = 8
@@ -51,7 +52,7 @@ object RemoxService: TRemoxService
     GAllowFolderDelete_Super = True
     GAllowShellExecute = True
     GAllowShellExecute_Super = True
-    Left = 70
+    Left = 72
     Top = 6
   end
   object PChat: TRtcPChat
@@ -82,13 +83,13 @@ object RemoxService: TRemoxService
     AutoSessions = True
     AutoRepost = 2
     ModuleFileName = '/gatefunc'
-    Left = 52
-    Top = 146
+    Left = 68
+    Top = 142
   end
   object HostTimerClient: TRtcHttpClient
     MultiThreaded = True
     Timeout.AfterConnecting = 40
-    ServerPort = '8443'
+    ServerPort = '443'
     OnConnect = HostTimerClientConnect
     OnDisconnect = HostTimerClientDisconnect
     ReconnectOn.ConnectLost = True
@@ -96,9 +97,10 @@ object RemoxService: TRemoxService
     OnConnectLost = HostTimerClientConnectLost
     OnConnectError = HostTimerClientConnectError
     AutoConnect = True
+    UseWinHTTP = True
     MaxResponseSize = 128000
     MaxHeaderSize = 16000
-    Left = 14
+    Left = 16
     Top = 143
   end
   object resHostPing: TRtcResult
@@ -121,7 +123,7 @@ object RemoxService: TRemoxService
     Enabled = False
     Interval = 6000
     OnTimer = HostPingTimerTimer
-    Left = 175
+    Left = 171
     Top = 54
   end
   object resHostLogin: TRtcResult
@@ -144,7 +146,7 @@ object RemoxService: TRemoxService
   object resHostTimer: TRtcResult
     OnReturn = resHostTimerReturn
     Left = 107
-    Top = 56
+    Top = 54
   end
   object tActivate: TTimer
     Enabled = False

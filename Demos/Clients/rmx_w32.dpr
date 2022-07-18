@@ -1,9 +1,8 @@
 program rmx_w32;
 
 uses
-//  FastMM4,
   Winapi.Windows,
-//  Messages,
+  Forms,
   System.SysUtils,
   System.Classes,
   Vcl.Graphics,
@@ -12,11 +11,12 @@ uses
   NTPriveleges,
   SASLibEx,
   rtcScrUtils,
-//  SyncObjs,
-//  FWIOCompletionPipes;
-  // cromis units
   uProcess,
-  Cromis.Comm.Custom, Cromis.Comm.IPC, Cromis.Threading, Execute.DesktopDuplicationAPI;
+  Cromis.Comm.Custom,
+  Cromis.Comm.IPC,
+  Cromis.Threading,
+  Execute.DesktopDuplicationAPI;
+
 //  rtcWinlogon,
   //FastDIB in 'Lib\FastDIB.pas';
 
@@ -165,7 +165,6 @@ var
   function RpcImpersonateClient(BindingHandle: RPC_BINDING_HANDLE): RPC_STATUS; stdcall; external 'rpcrt4.dll';
   function ProcessIdToSessionId(dwProcessId: DWORD; out pSessionId: DWORD): BOOL; stdcall; external 'kernel32.dll';
   function WTSGetActiveConsoleSessionId: THandle; external 'Kernel32.dll' name 'WTSGetActiveConsoleSessionId';
-
 
 procedure keybdevent(key: word; Down: boolean = True; Extended: boolean=False);
 var
@@ -1945,7 +1944,7 @@ begin
   end;
 end;}
 
-procedure CreateBitmapData(pBits: Pointer);
+procedure CreateBitmapData;
 begin
   sWidth := GetSystemMetrics(SM_CXSCREEN);
   sHeight := GetSystemMetrics(SM_CYSCREEN);
@@ -1956,13 +1955,13 @@ begin
   begin
     biSize := sizeof(BITMAPINFOHEADER);
     biWidth := sWidth;
-    //Use negative height to scan top-down.
-    biHeight := -sHeight;
+    biHeight := -sHeight; //Use negative height to scan top-down.
     biPlanes := 1;
     biBitCount := GetDeviceCaps(hScrDC, BITSPIXEL);
+    biSizeImage := 4 * sWidth * sHeight;
     biCompression := BI_RGB;
   end;
-//  pBits := nil;
+  pBits := nil;
   hBmp := CreateDIBSection(hScrDC, bitmap_info, DIB_RGB_COLORS, pBits, 0, 0);
 //  hBmp := CreateCompatibleBitmap(hScrDC, sWidth, sHeight);
   hMemDC := CreateCompatibleDC(hScrDC);
@@ -2265,6 +2264,44 @@ begin
   end;
 end;
 
+//procedure DrawDIB;
+//var
+//  OldPalette: HPalette;
+//  bmp: TBitmap;
+//begin
+//  Form1 := TForm1.Create(nil);
+////  if Assigned(Bitmap_Info) and Assigned(pBits) then
+//    with bitmap_info.bmiHeader, Form1.PaintBox1.Canvas do
+//    begin
+//      OldPalette := SelectPalette(Handle,
+//        FDesktopDuplicator.Bitmap.Palette,
+//        false);
+//      try
+//        RealizePalette(Handle);
+//        StretchDIBits(Handle, 0, 0, Form1.PaintBox1.Width, Form1.PaintBox1.Height,
+//          0, 0, biWidth, biHeight, pBits,
+//          bitmap_info, DIB_RGB_COLORS,
+//          SRCCOPY);
+//
+//        bmp := TBitmap.Create;
+//        bmp.PixelFormat := pf32Bit;
+//        bmp.SetSize(Form1.PaintBox1.Width, Form1.PaintBox1.Height);
+////        mResult := BitBlt(hMemDC, 0, 0, sWidth, sHeight, hScrDC, 0, 0, SRCCOPY);
+////         StretchDIBits(bmp.Canvas.Handle, 0, 0, bmp.Width, bmp.Height,
+////          0, 0, biWidth, biHeight, pBits,
+////          bitmap_info, DIB_RGB_COLORS,
+////          SRCCOPY);
+//         bmp.SaveToFile('C:\Rufus\ddb.bmp');
+//      finally
+//        SelectPalette(Handle, OldPalette, true);
+//      end;
+//    end;
+//
+//    Form1.Show;
+//    Form1.PaintBox1.Update;
+//    Application.ProcessMessages;
+//end;
+
 function ScreenShotThreadProc(pParam: Pointer): DWORD; stdcall;
 var
   BitmapSize: Cardinal;
@@ -2276,6 +2313,7 @@ var
   numberRead : SIZE_T;
   WaitTimeout: DWORD;
   SaveBitMap: TBitmap;
+  i: Integer;
 begin
   WaitTimeout := 1000;
   try
@@ -2291,6 +2329,8 @@ begin
           SelectInputWinStation;
           SwitchToActiveDesktop;
 
+          CreateBitmapData;
+
 //          hOld := SelectObject(hMemDC, hBmp);
 //          mResult := BitBlt(hMemDC, 0, 0, sWidth, sHeight, hScrDC, 0, 0, SRCCOPY);
 //          if not mResult then
@@ -2300,6 +2340,7 @@ begin
 //            Continue;
 //          end;
 
+          fHaveScreen := False;
           while not fHaveScreen do
           begin
             fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
@@ -2313,7 +2354,7 @@ begin
             end;
             if fRes then
             begin
-              if FDesktopDuplicator.DrawFrameToDib then
+              if FDesktopDuplicator.DrawFrame(FDesktopDuplicator.Bitmap) then
                 fHaveScreen := True;
             end;
             //else
@@ -2322,12 +2363,19 @@ begin
             Sleep(1);
           end;
 
-          SaveBitMap := TBitmap.Create;
-          SaveBitMap.Width := sWidth;
-          SaveBitMap.Height := sHeight;
+//          FDesktopDuplicator.Bitmap.SaveToFile('C:\Rufus\dda.bmp');
 
+//          DrawDIB;
+//
+//          for i := 0 to 10000 do
+//            Application.ProcessMessages;
+
+//          SaveBitMap := TBitmap.Create;
+//          SaveBitMap.Width := sWidth;
+//          SaveBitMap.Height := sHeight;
+//
           hOld := SelectObject(hMemDC, hBmp);
-          mResult := BitBlt(hMemDC, 0, 0, sWidth, sHeight, hScrDC, 0, 0, SRCCOPY);
+          mResult := BitBlt(hMemDC, 0, 0, sWidth, sHeight, FDesktopDuplicator.Bitmap.Canvas.Handle, 0, 0, SRCCOPY);
           if not mResult then
           begin
             err := GetLastError;
@@ -2726,7 +2774,6 @@ begin
   hThreadIN := CreateThread(nil, 0, @InputThreadProc, nil, 0, tidIN);
 
   FDesktopDuplicator := TDesktopDuplicationWrapper.Create;
-  FDesktopDuplicator.CreateBitmapDataProc := CreateBitmapData;
 
   try
     FHelper := THelper.Create;
