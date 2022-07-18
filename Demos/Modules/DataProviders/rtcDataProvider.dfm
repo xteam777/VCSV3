@@ -312,10 +312,6 @@ object Data_Provider: TData_Provider
     Left = 412
     Top = 333
   end
-  object rGateRelogin: TRtcResult
-    Left = 326
-    Top = 388
-  end
   object rGateLogOut: TRtcResult
     Left = 412
     Top = 390
@@ -324,7 +320,7 @@ object Data_Provider: TData_Provider
     Group = PortalGateServerGroup
     FunctionName = 'Clients.Destroy'
     OnExecute = ClientsDestroyExecute
-    Left = 672
+    Left = 706
     Top = 63
   end
   object PortalGateServerLink: TRtcDataServerLink
@@ -346,5 +342,9 @@ object Data_Provider: TData_Provider
   object PortalGateServerGroup: TRtcFunctionGroup
     Left = 615
     Top = 64
+  end
+  object rGateRelogin: TRtcResult
+    Left = 326
+    Top = 388
   end
 end

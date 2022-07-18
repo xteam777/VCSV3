@@ -80,12 +80,12 @@ type
     MainGateClientLink: TRtcDataClientLink;
     GateRelogin: TRtcFunction;
     GateLogout: TRtcFunction;
-    rGateRelogin: TRtcResult;
     rGateLogOut: TRtcResult;
     ClientsDestroy: TRtcFunction;
     PortalGateServerLink: TRtcDataServerLink;
     PortalGateServerModule: TRtcServerModule;
     PortalGateServerGroup: TRtcFunctionGroup;
+    rGateRelogin: TRtcResult;
     procedure DataModuleCreate(Sender: TObject);
     procedure DataModuleDestroy(Sender: TObject);
     procedure Module1SessionClose(Sender: TRtcConnection);

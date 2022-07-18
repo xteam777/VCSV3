@@ -743,7 +743,10 @@ begin
     rtcClient := TRtcHttpClient.Create(nil);
     rtcClient.AutoConnect := True;
     rtcClient.MultiThreaded := False;
-    rtcClient.ServerAddr := Copy(Gateway, 1, Pos(':', Gateway) - 1);
+    if Pos(':', Gateway) > 0 then
+      rtcClient.ServerAddr := Copy(Gateway, 1, Pos(':', Gateway) - 1)
+    else
+      rtcClient.ServerAddr := Gateway;
     rtcClient.ServerPort := '9000';
     rtcClient.Blocking := True;
     rtcClient.UseWinHttp := True;
@@ -780,7 +783,7 @@ begin
       on E: Exception do
         Data.Clear;
     end;
-    rtcClient.WaitForCompletion(False, 1);
+    rtcClient.WaitForCompletion(False, 5);
   finally
     rtcClient.Disconnect;
     rtcModule.Free;
