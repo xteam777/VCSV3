@@ -661,7 +661,7 @@ type
     property ScreenLockedState: Integer read FScreenLockedState write SetScreenLockedState;
 //    function Block_UserInput_Hook(fBlockInput: Boolean): Boolean;
 //    function Block_ZOrder_Hook(fBlock: Boolean): Boolean;
-    procedure SetStatusString(AStatus: String; AEnableTimer: Boolean = False);
+//    procedure SetStatusString(AStatus: String; AEnableTimer: Boolean = False);
 
     procedure EnableDragFullWindows;
     procedure RestoreDragFullWindows;
@@ -681,26 +681,27 @@ type
     //procedure SetServiceMenuAttributes;
 
     property CurStatus: Integer read GetStatus write SetStatus;
+
+      {Returns fill range list for specified Y coordinate. It calculates intersection
+      points with specified scanline (at Y coordinates).}
+    procedure Polygon_GetFillRange(const Points: array of TPoint; Y: Integer;
+      out ARangeList: TRangeList);
+    {Returns bounds of polygon}
+    function Polygon_GetBounds(const Points: array of TPoint): TRect;
+    {Returns True if point lies inside polygon}
+    function Polygon_PtInside(const Points: array of TPoint; Pt: TPoint): Boolean;
+    procedure FillPolygon(ACanvas: TCanvas; APoints: array of TPoint; AColor: TColor);
+
+  //  procedure TransStretchDraw(ACanvas: TCanvas; const Rect: TRect; SRC: TBitmap; TransParentColor: TColor);
+    function ForceForegroundWindow(hwnd: THandle): Boolean;
+  //  function ExecAndWait(const FileName, Params: ShortString; const WinState: Word): boolean;
   end;
-
-    {Returns fill range list for specified Y coordinate. It calculates intersection
-    points with specified scanline (at Y coordinates).}
-  procedure Polygon_GetFillRange(const Points: array of TPoint; Y: Integer;
-    out ARangeList: TRangeList);
-  {Returns bounds of polygon}
-  function Polygon_GetBounds(const Points: array of TPoint): TRect;
-  {Returns True if point lies inside polygon}
-  function Polygon_PtInside(const Points: array of TPoint; Pt: TPoint): Boolean;
-  procedure FillPolygon(ACanvas: TCanvas; APoints: array of TPoint; AColor: TColor);
-
-//  procedure TransStretchDraw(ACanvas: TCanvas; const Rect: TRect; SRC: TBitmap; TransParentColor: TColor);
-  function ForceForegroundWindow(hwnd: THandle): Boolean;
-//  function ExecAndWait(const FileName, Params: ShortString; const WinState: Word): boolean;
-  procedure DisablePowerChanges;
-  procedure RestorePowerChanges;
 
 //type
 //  TBlankDllHookProc = procedure (switch: Boolean); stdcall;
+
+  procedure DisablePowerChanges;
+  procedure RestorePowerChanges;
 
 const
   VCS_MAGIC_NUMBER = 777;
@@ -1103,7 +1104,7 @@ begin
   CloseAllActiveUI;
 
   SetConnectedState(False); //Сначала устанавливаем первичные насройки прокси
-  SetStatusString('Подключение к серверу...', True);
+//  SetStatusString('Подключение к серверу...', True);
   StartAccountLogin;
   StartHostLogin;
 
@@ -1447,8 +1448,8 @@ begin
   CharToOemBuff(PChar(aStr), PAnsiChar(Result), Len);
 end;
 
-procedure TMainForm.SetStatusString(AStatus: String; AEnableTimer: Boolean = False);
-begin
+//procedure TMainForm.SetStatusString(AStatus: String; AEnableTimer: Boolean = False);
+//begin
 //  XLog('SetStatusString');
 //
 //  CS_Status.Acquire;
@@ -1467,7 +1468,7 @@ begin
 //  finally
 //    CS_Status.Release;
 //  end;
-end;
+//end;
 
 //procedure TMainForm.CreateParams(var Params: TCreateParams);
 //begin
@@ -2580,7 +2581,7 @@ begin
 
   LoadSetup('ALL');
   SetConnectedState(False); //Сначала устанавливаем первичные насройки прокси
-  SetStatusString('Подключение к серверу...', True);
+//  SetStatusString('Подключение к серверу...', True);
   StartAccountLogin;
   StartHostLogin;
   ShowRegularPasswordState();
@@ -3433,7 +3434,7 @@ begin
     and (not isClosing)
     and (not SettingsFormOpened) then
   begin
-    SetStatusString('Сервер недоступен');
+//    SetStatusString('Сервер недоступен');
     ActivationInProcess := False;
     SetStatus(STATUS_NO_CONNECTION);
     SetConnectedState(False);
@@ -4443,7 +4444,7 @@ begin
   if not ConnectedToMainGateway then
   begin
 //    MessageBox(Handle, 'Нет подключения к серверу', 'Remox', MB_ICONWARNING or MB_OK);
-    SetStatusString('Нет подключения к серверу');
+    SetStatusStringDelayed('Нет подключения к серверу');
     Exit;
   end;
 
@@ -5089,7 +5090,8 @@ procedure TMainForm.tDelayedStatusTimer(Sender: TObject);
 begin
 //  XLog('tDelayedStatusTimer');
 
-  SetStatusString(DelayedStatus);
+//  SetStatusString(DelayedStatus);
+  DelayedStatus := '';
   tDelayedStatus.Enabled := False;
 end;
 
@@ -5467,7 +5469,7 @@ begin
   end;
 end;
 
-function Polygon_GetBounds(const Points: array of TPoint): TRect;
+function TMainForm.Polygon_GetBounds(const Points: array of TPoint): TRect;
 var
   i: Integer;
 begin
@@ -5492,7 +5494,7 @@ begin
   Result.Bottom := Result.Bottom + 1;
 end;
 
-procedure Polygon_GetFillRange(const Points: array of TPoint; Y: Integer;
+procedure TMainForm.Polygon_GetFillRange(const Points: array of TPoint; Y: Integer;
   out ARangeList: TRangeList);
 var
   {first item in list}
@@ -5619,7 +5621,7 @@ begin
   end;
 end;
 
-function Polygon_PtInside(const Points: array of TPoint; Pt: TPoint): Boolean;
+function TMainForm.Polygon_PtInside(const Points: array of TPoint; Pt: TPoint): Boolean;
 var
   RL: TRangeList;
   i: Integer;
@@ -5634,7 +5636,7 @@ begin
   end;
 end;
 
-procedure FillPolygon(ACanvas: TCanvas; APoints: array of TPoint; AColor: TColor);
+procedure TMainForm.FillPolygon(ACanvas: TCanvas; APoints: array of TPoint; AColor: TColor);
 var
   i, j: Integer;
   R: TRect;
@@ -6135,7 +6137,7 @@ begin
   if not ConnectedToMainGateway then
   begin
 //    MessageBox(Handle, 'Нет подключения к серверу', 'Remox', MB_ICONWARNING or MB_OK);
-    SetStatusString('Нет подключения к серверу');
+    SetStatusStringDelayed('Нет подключения к серверу');
     Exit;
   end;
 
@@ -6484,7 +6486,7 @@ begin
   if not ConnectedToMainGateway then
   begin
 //    MessageBox(Handle, 'Нет подключения к серверу', 'Remox', MB_ICONWARNING or MB_OK);
-    SetStatusString('Нет подключения к серверу');
+    SetStatusStringDelayed('Нет подключения к серверу');
     Exit;
   end;
 
@@ -6492,14 +6494,14 @@ begin
   begin
     DeleteLastPendingItem;
 
-    if GetPendingRequestsCount > 0 then
-    begin
-      SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True);
-      btnViewDesktop.Caption := 'ПРЕРВАТЬ';
-      btnViewDesktop.Color := RGB(232, 17, 35);
-    end
-    else
-      SetStatusString('Готов к подключению');
+//    if GetPendingRequestsCount > 0 then
+//    begin
+//      SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True);
+//      btnViewDesktop.Caption := 'ПРЕРВАТЬ';
+//      btnViewDesktop.Color := RGB(232, 17, 35);
+//    end
+//    else
+//      SetStatusString('Готов к подключению');
   end
   else
   begin
@@ -6703,7 +6705,7 @@ begin
     end;
   end;
 
-  SetStatusString('Подключение к ' + username, True);
+//  SetStatusString('Подключение к ' + username, True);
 
   PortalConnection := GetPortalConnection(action, user); //При повторном подключении ищем уже открытое
   if PortalConnection <> nil then
@@ -6711,7 +6713,7 @@ begin
 //    BringWindowToTop(ActiveUIRec^.Handle);
 //    SetForegroundWindow(ActiveUIRec^.Handle);
     ForceForegroundWindow(PortalConnection^.UIHandle);
-    SetStatusString('Готов к подключению');
+//    SetStatusString('Готов к подключению');
     Exit;
   end;
 
@@ -6778,7 +6780,7 @@ begin
   else
   if Result.isType <> rtc_Record then
   begin
-    SetStatusString('Некорректный ответ от сервера');
+//    SetStatusString('Некорректный ответ от сервера');
   end
   else
   with Result.asRecord do
@@ -6817,12 +6819,12 @@ begin
 //        PRItem.GatewayRec := GatewayRec;
 //        PendingRequests.Add(PRItem);
 //        CurrentPendingItem := PRItem;
-        SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True);
+//        SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True);
       end
       else
-        SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True);
-        btnViewDesktop.Caption := 'ПРЕРВАТЬ';
-        btnViewDesktop.Color := RGB(232, 17, 35);
+//        SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True);
+//        btnViewDesktop.Caption := 'ПРЕРВАТЬ';
+//        btnViewDesktop.Color := RGB(232, 17, 35);
 
 //      sUID := GetUniqueString;
 //      if GatewayRec = nil then
@@ -7025,10 +7027,10 @@ begin
       begin
         DeletePendingRequest(asWideString['user'], 'desk');
 
-        if GetPendingRequestsCount > 0 then
-          SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
-        else
-          SetStatusString('Готов к подключению');
+//        if GetPendingRequestsCount > 0 then
+//          SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
+//        else
+//          SetStatusString('Готов к подключению');
       end;
     end;
   end;
@@ -7055,7 +7057,7 @@ begin
   else
   if Result.isType <> rtc_Record then
   begin
-    SetStatusString('Некорректный ответ от сервера');
+//    SetStatusString('Некорректный ответ от сервера');
   end
   else
     with Result.asRecord do
@@ -7068,7 +7070,7 @@ begin
 //  Tag := Tag;
 end;
 
-function ForceForegroundWindow(hwnd: THandle): Boolean;
+function TMainForm.ForceForegroundWindow(hwnd: THandle): Boolean;
 const
   SPI_GETFOREGROUNDLOCKTIMEOUT = $2000;
   SPI_SETFOREGROUNDLOCKTIMEOUT = $2001;
@@ -7255,14 +7257,16 @@ begin
 //    finally
 //      CS_GW.Release;
 //    end;
-    if (PClient.LoginUserName <> '')
-      and (PClient.LoginUserName <> '') then
-    begin
-      PClient.Disconnect;
-      PClient.Active := False;
-      tPClientReconnect.Enabled := True;
-    end;
-//    CloseAllActiveUI;
+
+//    if (PClient.LoginUserName <> '')
+//      and (PClient.LoginUserName <> '') then
+//    begin
+////      PClient.Disconnect;
+////      PClient.Active := False;
+//      tPClientReconnect.Enabled := True;
+//    end;
+
+    //    CloseAllActiveUI;
 //
 //    for i := 0 to GatewayClientsList.Count - 1 do
 //    begin
@@ -7704,7 +7708,7 @@ begin
 
 //    xLog('ActivateHost SetStatus 2');
 
-    SetStatusString('Активация Remox', True);
+//    SetStatusString('Активация Remox', True);
 
   //  if cmAccounts.Data = nil then
   //    Exit;
@@ -7767,7 +7771,7 @@ begin
 
 //   lblStatus.Caption := Result.asException;
 
-  SetStatusString('Сервер недоступен');
+//  SetStatusString('Сервер недоступен');
   if (not tHcAccountsReconnect.Enabled)
     and (not isClosing) then
     tHcAccountsReconnect.Enabled := True;
@@ -7895,7 +7899,7 @@ begin
       //  TaskBarRemoveIcon;
       //  TaskBarAddIcon;
 
-        SetStatusString('Подключение к серверу...', True);
+//        SetStatusString('Подключение к серверу...', True);
 
         SetConnectedState(True);
         SetStatus(STATUS_CONNECTING_TO_GATE);
@@ -7968,7 +7972,7 @@ begin
       end
       else
       begin
-        SetStatusString('Сервер Remox не найден');
+//        SetStatusString('Сервер Remox не найден');
         SetStatus(STATUS_ACTIVATING_ON_MAIN_GATE);
         SetConnectedState(False);
       end;
@@ -8444,10 +8448,10 @@ begin
   else
     raise Exception.Create('Ошибка при создании окна');
 
-  if GetPendingRequestsCount > 0 then
-    SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
-  else
-    SetStatusString('Готов к подключению');
+//  if GetPendingRequestsCount > 0 then
+//    SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
+//  else
+//    SetStatusString('Готов к подключению');
 end;
 
 procedure TMainForm.PFileTransferLogUI(Sender: TRtcPFileTransfer; const user: String);
@@ -8504,10 +8508,10 @@ begin
   else
     raise Exception.Create('Ошибка при создании окна');
 
-  if GetPendingRequestsCount > 0 then
-    SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
-  else
-    SetStatusString('Готов к подключению');
+//  if GetPendingRequestsCount > 0 then
+//    SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
+//  else
+//    SetStatusString('Готов к подключению');
 end;
 
 procedure TMainForm.pingTimerTimer(Sender: TObject);
@@ -8594,16 +8598,16 @@ begin
   else
     raise Exception.Create('Ошибка при создании окна');
 
-  if GetPendingRequestsCount > 0 then
-    SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
-  else
-    SetStatusString('Готов к подключению');
+//  if GetPendingRequestsCount > 0 then
+//    SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
+//  else
+//    SetStatusString('Готов к подключению');
 end;
 
 // Called after a successful login (not after LoadGatewayParams)
 procedure TMainForm.PClientLogIn(Sender: TAbsPortalClient);
 begin
-//  xLog('PClientLogIn: ' + Sender.Name);
+  xLog('PClientLogIn: ' + Sender.Name);
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': PClientLogIn'));
 
 //  if assigned(Options) and Options.Visible then
@@ -8630,7 +8634,7 @@ begin
 //  if FAutoRun then
 //    PostMessage(Handle, WM_AUTOMINIMIZE, 0, 0);
 
-//  tPClientReconnect.Enabled := False;
+  tPClientReconnect.Enabled := False;
 end;
 
 procedure TMainForm.PClientParams(Sender: TAbsPortalClient; const Data: TRtcValue);
@@ -8662,7 +8666,7 @@ procedure TMainForm.PClientParams(Sender: TAbsPortalClient; const Data: TRtcValu
 
 procedure TMainForm.PClientStart(Sender: TAbsPortalClient; const Data: TRtcValue);
 begin
-//  xLog('PClientStart: ' + Sender.Name);
+  xLog('PClientStart: ' + Sender.Name);
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': PClientStart'));
 
 //  if Pages.ActivePage<>Page_Hosting then
@@ -8671,9 +8675,9 @@ begin
 //    Pages.ActivePage.TabVisible:=False;
 //    Pages.ActivePage:=Page_Hosting;
 //    end;
-  SetStatusString('Готов к подключению');
+//  SetStatusString('Готов к подключению');
 
-//  tPClientReconnect.Enabled := False;
+  tPClientReconnect.Enabled := False;
 
 //  cTitleBar.Refresh;
 //  btnMinimize.Refresh;
@@ -8757,18 +8761,18 @@ begin
 //  if not isClosing then
 //  begin
 //    CloseAllActiveUIByGatewayClient(Sender);
-////    tPClientReconnect.Enabled := True;
+//    tPClientReconnect.Enabled := True;
 //  end;
 
 //  TRtcHttpPortalClient(Sender).Active := True;
 
-//  if Sender = PClient then
-//  begin
+  if Sender = PClient then
+  begin
 //    TRtcHttpPortalClient(Sender).Disconnect;
 //    TRtcHttpPortalClient(Sender).Active := False;
-//  ////  TRtcHttpPortalClient(Sender).Active := True;
-//    tPClientReconnect.Enabled := True;
-//  end;
+  ////  TRtcHttpPortalClient(Sender).Active := True;
+    tPClientReconnect.Enabled := True;
+  end;
 
 //  Tag := Tag;
 //  if assigned(Options) and Options.Visible then
@@ -8852,7 +8856,7 @@ begin
     ChangePortP(PClient);
 
 //  if Msg = S_RTCP_ERROR_CONNECT then
-    tPClientReconnect.Enabled := True;
+//    tPClientReconnect.Enabled := True;
 
 //  if (Msg <> S_RTCP_ERROR_CONNECT)
 //    and (Msg <> 'Logged out') then
@@ -9652,13 +9656,13 @@ begin
   try
     if GetPendingRequestsCount > 0 then
     begin
-      SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True);
+//      SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True);
       btnViewDesktop.Caption := 'ПРЕРВАТЬ';
       btnViewDesktop.Color := RGB(232, 17, 35);
     end
     else
     begin
-      SetStatusString('Готов к подключению');
+//      SetStatusString('Готов к подключению');
       btnViewDesktop.Caption := 'ПОДКЛЮЧИТЬСЯ';
       btnViewDesktop.Color := $00A39323;
     end;
@@ -9777,10 +9781,10 @@ begin
   else
     raise Exception.Create('Ошибка при создании окна');
 
-  if GetPendingRequestsCount > 0 then
-    SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
-  else
-    SetStatusString('Готов к подключению');
+//  if GetPendingRequestsCount > 0 then
+//    SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
+//  else
+//    SetStatusString('Готов к подключению');
 end;
 
 procedure TMainForm.PDesktopHostHaveScreeenChanged(Sender: TObject);
