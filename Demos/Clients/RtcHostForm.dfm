@@ -3,7 +3,7 @@ object MainForm: TMainForm
   Top = 309
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'Remox'
-  ClientHeight = 488
+  ClientHeight = 492
   ClientWidth = 840
   Color = clBtnFace
   DoubleBuffered = True
@@ -48,7 +48,7 @@ object MainForm: TMainForm
     Left = 0
     Top = 0
     Width = 840
-    Height = 488
+    Height = 492
     Margins.Left = 0
     Margins.Top = 0
     Margins.Right = 0
@@ -61,10 +61,10 @@ object MainForm: TMainForm
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
-    ExplicitHeight = 469
+    ExplicitHeight = 468
     DesignSize = (
       840
-      488)
+      492)
     object lblStatus: TLabel
       AlignWithMargins = True
       Left = 60
@@ -5951,8 +5951,8 @@ object MainForm: TMainForm
     AutoSessions = True
     AutoRepost = 2
     ModuleFileName = '/gatefunc'
-    Left = 95
-    Top = 78
+    Left = 73
+    Top = 80
   end
   object hcAccounts: TRtcHttpClient
     MultiThreaded = True
@@ -6151,24 +6151,24 @@ object MainForm: TMainForm
   end
   object resPing: TRtcResult
     OnReturn = resPingReturn
-    Left = 223
-    Top = 85
+    Left = 295
+    Top = 121
   end
   object resTimerLogin: TRtcResult
     OnReturn = resTimerLoginReturn
-    Left = 258
-    Top = 75
+    Left = 296
+    Top = 93
   end
   object resLogout: TRtcResult
     OnReturn = resLogoutReturn
-    Left = 117
-    Top = 117
+    Left = 269
+    Top = 122
   end
   object resLogin: TRtcResult
     OnReturn = resLoginReturn
     RequestAborted = resLoginRequestAborted
-    Left = 91
-    Top = 116
+    Left = 437
+    Top = 90
   end
   object TimerModule: TRtcClientModule
     AutoSyncEvents = True
@@ -6182,7 +6182,7 @@ object MainForm: TMainForm
     AutoRepost = 2
     ModuleFileName = '/gatefunc'
     OnResponseAbort = TimerModuleResponseAbort
-    Left = 64
+    Left = 74
     Top = 108
   end
   object HostTimerClient: TRtcHttpClient
@@ -6200,8 +6200,8 @@ object MainForm: TMainForm
     MaxResponseSize = 128000
     MaxHeaderSize = 16000
     TimeoutsOfAPI.ConnectTimeout = 5
-    Left = 38
-    Top = 79
+    Left = 16
+    Top = 81
   end
   object HostTimerModule: TRtcClientModule
     AutoSyncEvents = True
@@ -6215,8 +6215,8 @@ object MainForm: TMainForm
     AutoRepost = 2
     ModuleFileName = '/gatefunc'
     OnResponseAbort = HostTimerModuleResponseAbort
-    Left = 66
-    Top = 78
+    Left = 44
+    Top = 80
   end
   object HostPingTimer: TTimer
     Enabled = False

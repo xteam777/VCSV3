@@ -738,52 +738,54 @@ var
   rtcModule: TRtcClientModule;
   rtcRes: TRtcResult;
 begin
-  rtcClient := TRtcHttpClient.Create(nil);
-  rtcClient.AutoConnect := True;
-  rtcClient.MultiThreaded := False;
-  rtcClient.ServerAddr := Copy(Gateway, 1, Pos(':', Gateway) - 1);
-  rtcClient.ServerPort := '9000';
-  rtcClient.Blocking := True;
-  rtcClient.UseWinHttp := True;
-  rtcClient.ReconnectOn.ConnectError := True;
-  rtcClient.ReconnectOn.ConnectFail := True;
-  rtcClient.ReconnectOn.ConnectLost := True;
-  rtcClient.UseProxy := hcAccounts.UseProxy;
-  rtcClient.UserLogin.ProxyAddr := hcAccounts.UserLogin.ProxyAddr;
-  rtcClient.UserLogin.ProxyUserName := hcAccounts.UserLogin.ProxyUserName;
-  rtcClient.UserLogin.ProxyPassword := hcAccounts.UserLogin.ProxyPassword;
-  rtcClient.Connect(True);
-
-  rtcModule := TRtcClientModule.Create(nil);
-  rtcModule.Client := rtcClient;
-  rtcModule.AutoRepost := 2;
-  rtcModule.AutoSyncEvents := True;
-  rtcModule.ModuleFileName := '/portalgategroup';
-  rtcModule.SecureKey := '2240897';
-  rtcModule.ForceEncryption := True;
-  rtcModule.EncryptionKey := 16;
-  rtcModule.Compression := cMax;
-
-  rtcRes := TRtcResult.Create(nil);
-
-  with rtcModule do
   try
-    with Data.NewFunction('Clients.Destroy') do
-    begin
-      asString['UserName'] := ClientName;
-      asBoolean['AllConnectionsById'] := AAllConnectionsById;
-      Call(rDestroyClient);
-    end;
-  except
-    on E: Exception do
-      Data.Clear;
-  end;
-  rtcClient.WaitForCompletion(False, 5);
+    rtcClient := TRtcHttpClient.Create(nil);
+    rtcClient.AutoConnect := True;
+    rtcClient.MultiThreaded := False;
+    rtcClient.ServerAddr := Copy(Gateway, 1, Pos(':', Gateway) - 1);
+    rtcClient.ServerPort := '9000';
+    rtcClient.Blocking := True;
+    rtcClient.UseWinHttp := True;
+    rtcClient.ReconnectOn.ConnectError := True;
+    rtcClient.ReconnectOn.ConnectFail := True;
+    rtcClient.ReconnectOn.ConnectLost := True;
+    rtcClient.UseProxy := hcAccounts.UseProxy;
+    rtcClient.UserLogin.ProxyAddr := hcAccounts.UserLogin.ProxyAddr;
+    rtcClient.UserLogin.ProxyUserName := hcAccounts.UserLogin.ProxyUserName;
+    rtcClient.UserLogin.ProxyPassword := hcAccounts.UserLogin.ProxyPassword;
+    rtcClient.Connect();
 
-  rtcClient.Disconnect;
-  rtcModule.Free;
-  rtcClient.Free;
-  rtcRes.Free;
+    rtcModule := TRtcClientModule.Create(nil);
+    rtcModule.Client := rtcClient;
+    rtcModule.AutoRepost := 2;
+    rtcModule.AutoSyncEvents := True;
+    rtcModule.ModuleFileName := '/portalgategroup';
+    rtcModule.SecureKey := '2240897';
+    rtcModule.ForceEncryption := True;
+    rtcModule.EncryptionKey := 16;
+    rtcModule.Compression := cMax;
+
+    rtcRes := TRtcResult.Create(nil);
+
+    with rtcModule do
+    try
+      with Data.NewFunction('Clients.Destroy') do
+      begin
+        asString['UserName'] := ClientName;
+        asBoolean['AllConnectionsById'] := AAllConnectionsById;
+        Call(rDestroyClient);
+      end;
+    except
+      on E: Exception do
+        Data.Clear;
+    end;
+    rtcClient.WaitForCompletion(False, 1);
+  finally
+    rtcClient.Disconnect;
+    rtcModule.Free;
+    rtcClient.Free;
+    rtcRes.Free;
+  end;
 end;
 
 function TMainForm.ConnectedToMainGateway: Boolean;
