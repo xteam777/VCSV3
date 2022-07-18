@@ -3058,6 +3058,9 @@ begin
       btnViewDesktop.Color := $00A39323;
     end;
 
+    btnViewDesktop.Enabled := LoggedIn;
+    btnAccountLogin.Enabled := (not LoggedIn) and ConnectedToAllGateways;
+
     bmp := TBitmap.Create;
     if CurStatus >= 0 then
       ilStatus.GetBitmap(1, bmp)
