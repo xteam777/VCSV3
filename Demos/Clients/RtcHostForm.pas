@@ -9318,14 +9318,16 @@ procedure TMainForm.PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttp
 //        tPClientReconnect.Enabled := True;
 //      end;
 
-      tPClientReconnect.Enabled := True;
+      if Sender = PClient then
+        tPClientReconnect.Enabled := True;
     end;
     rtccOpen:
     begin
       xLog('PClientStatusGet: ' + Sender.Name + ': rtccOpen');
       sStatus2.Brush.Color:=clNavy;
 
-//      tPClientReconnect.Enabled := False;
+//      if Sender = PClient then
+//        tPClientReconnect.Enabled := False;
     end;
     rtccSending:
     begin
