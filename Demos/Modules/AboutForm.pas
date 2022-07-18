@@ -8,13 +8,12 @@ uses WinApi.Windows, System.SysUtils, System.Classes, Vcl.Graphics,
 
 type
   TfAboutForm = class(TForm)
-    pBtnOK: TPanel;
-    bOK: TSpeedButton;
     ProgramIcon: TImage;
     Copyright: TLabel;
     Comments: TLabel;
     Version: TLabel;
     ProductName: TLabel;
+    bOK: TButton;
     procedure bOKClick(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);

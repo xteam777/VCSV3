@@ -44,14 +44,12 @@ uses
   IdCustomTCPServer, IdTCPServer;
 
 type
-  TSendDestroyClientToGatewayProc = procedure(Gateway, ClientName: String; AAllConnectionsById: Boolean) of Object;
   TPortalThread = class(TThread)
   private
     FUserName: String;
     FAction: String;
     FUID: String;
     FGateway: String;
-    FSendDestroyClientToGatewayProc: TSendDestroyClientToGatewayProc;
     FGatewayClient: TRtcHttpPortalClient;
     FDesktopControl: TRtcPDesktopControl;
     FFileTransfer: TRtcPFileTransfer;
@@ -60,10 +58,30 @@ type
     { Private declarations }
     function GetUniqueString: String;
   protected
-    constructor Create(CreateSuspended: Boolean; AUserName, AAction, AGateway: String; SendDestroyClientToGatewayProc: TSendDestroyClientToGatewayProc); overload;
+    constructor Create(CreateSuspended: Boolean; AUserName, AAction, AGateway: String); overload;
     destructor Destroy; override;
     procedure Execute; override;
     procedure ProcessMessage(MSG: TMSG);
+  end;
+
+  TSendDestroyClientToGatewayThread = class(TThread)
+  private
+    FGateway: String;
+    FClientName: String;
+    FAllConnectionsById: Boolean;
+    FNeedStopThread: Boolean;
+    rtcClient: TRtcHttpClient;
+    rtcModule: TRtcClientModule;
+    rtcRes: TRtcResult;
+    FResultGot: Boolean;
+    { Private declarations }
+  protected
+    constructor Create(CreateSuspended: Boolean; AGateway, AClientName: String; AAllConnectionsById: Boolean); overload;
+    destructor Destroy; override;
+    procedure Execute; override;
+    procedure ProcessMessage(MSG: TMSG);
+    procedure rtcResReturn(Sender: TRtcConnection; Data, Result: TRtcValue);
+    procedure rtcResRequestAborted(Sender: TRtcConnection; Data, Result: TRtcValue);
   end;
 
   TStatusUpdateProc = procedure of Object;
@@ -268,7 +286,6 @@ type
     tFileSend: TTimer;
     ser_: TIdTCPServer;
     cle_: TIdTCPClient;
-    rDestroyClient: TRtcResult;
     Button4: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -597,8 +614,6 @@ type
     procedure DoPowerPause;
     procedure DoPowerResume;
 
-    procedure SendDestroyClientToGateway(Gateway, ClientName: String; AAllConnectionsById: Boolean);
-
 //    procedure AppMessage(var Msg: TMsg; var Handled: Boolean);
     procedure SetIDContolsVisible;
 //    procedure SetHostActive;
@@ -733,30 +748,38 @@ implementation
 
 {$R *.dfm}
 
-procedure TMainForm.SendDestroyClientToGateway(Gateway, ClientName: String; AAllConnectionsById: Boolean);
-var
-  rtcClient: TRtcHttpClient;
-  rtcModule: TRtcClientModule;
-  rtcRes: TRtcResult;
+
+constructor TSendDestroyClientToGatewayThread.Create(CreateSuspended: Boolean; AGateway, AClientName: String; AAllConnectionsById: Boolean);
 begin
+  inherited Create(CreateSuspended);
+
+  FreeOnTerminate := True;
+
+  FGateway := AGateway;
+  FClientName := AClientName;
+  FAllConnectionsById := AAllConnectionsById;
+
+  FNeedStopThread := False;
+  FResultGot := False;
+
   try
     rtcClient := TRtcHttpClient.Create(nil);
     rtcClient.AutoConnect := True;
     rtcClient.MultiThreaded := False;
-    if Pos(':', Gateway) > 0 then
-      rtcClient.ServerAddr := Copy(Gateway, 1, Pos(':', Gateway) - 1)
+    if Pos(':', AGateway) > 0 then
+      rtcClient.ServerAddr := Copy(AGateway, 1, Pos(':', AGateway) - 1)
     else
-      rtcClient.ServerAddr := Gateway;
+      rtcClient.ServerAddr := AGateway;
     rtcClient.ServerPort := '9000';
     rtcClient.Blocking := True;
     rtcClient.UseWinHttp := True;
     rtcClient.ReconnectOn.ConnectError := True;
     rtcClient.ReconnectOn.ConnectFail := True;
     rtcClient.ReconnectOn.ConnectLost := True;
-    rtcClient.UseProxy := hcAccounts.UseProxy;
-    rtcClient.UserLogin.ProxyAddr := hcAccounts.UserLogin.ProxyAddr;
-    rtcClient.UserLogin.ProxyUserName := hcAccounts.UserLogin.ProxyUserName;
-    rtcClient.UserLogin.ProxyPassword := hcAccounts.UserLogin.ProxyPassword;
+    rtcClient.UseProxy := MainForm.hcAccounts.UseProxy;
+    rtcClient.UserLogin.ProxyAddr := MainForm.hcAccounts.UserLogin.ProxyAddr;
+    rtcClient.UserLogin.ProxyUserName := MainForm.hcAccounts.UserLogin.ProxyUserName;
+    rtcClient.UserLogin.ProxyPassword := MainForm.hcAccounts.UserLogin.ProxyPassword;
     rtcClient.Connect();
 
     rtcModule := TRtcClientModule.Create(nil);
@@ -770,26 +793,96 @@ begin
     rtcModule.Compression := cMax;
 
     rtcRes := TRtcResult.Create(nil);
+    rtcRes.OnReturn := rtcResReturn;
+    rtcRes.RequestAborted := rtcResRequestAborted;
 
     with rtcModule do
     try
       with Data.NewFunction('Clients.Destroy') do
       begin
-        asString['UserName'] := ClientName;
+        asString['UserName'] := AClientName;
         asBoolean['AllConnectionsById'] := AAllConnectionsById;
-        Call(rDestroyClient);
+        Call(rtcRes);
       end;
     except
       on E: Exception do
         Data.Clear;
     end;
-    rtcClient.WaitForCompletion(False, 5);
   finally
-    rtcClient.Disconnect;
-    rtcModule.Free;
-    rtcClient.Free;
-    rtcRes.Free;
   end;
+end;
+
+destructor TSendDestroyClientToGatewayThread.Destroy;
+begin
+  try
+    rtcClient.Disconnect;
+  finally
+  end;
+  try
+    rtcModule.Free;
+  finally
+  end;
+  try
+    rtcClient.Free;
+  finally
+  end;
+  try
+    rtcRes.Free;
+  finally
+  end;
+end;
+
+procedure TSendDestroyClientToGatewayThread.Execute;
+var
+  msg: TMsg;
+  i: Integer;
+begin
+  while (not Terminated)
+    and (not FNeedStopThread)
+    and (not FResultGot) do
+  begin
+    if not Windows.GetMessage(msg, 0, 0, 0) then
+      Terminate;
+
+      if not Terminated then
+      begin
+        if (MSG.message = WM_DESTROY) then
+        begin
+          FNeedStopThread := True;
+        end
+        else
+          ProcessMessage(msg);
+      end;
+  end;
+
+  for i := 0 to 10 do
+  begin
+    Application.ProcessMessages;
+    Sleep(1000);
+  end;
+end;
+
+procedure TSendDestroyClientToGatewayThread.rtcResReturn(Sender: TRtcConnection; Data,
+  Result: TRtcValue);
+begin
+  FResultGot := True;
+end;
+
+procedure TSendDestroyClientToGatewayThread.rtcResRequestAborted(Sender: TRtcConnection; Data,
+  Result: TRtcValue);
+begin
+  FResultGot := True;
+end;
+
+procedure TSendDestroyClientToGatewayThread.ProcessMessage(MSG: TMSG);
+var
+  Message: TMessage;
+begin
+  Message.Msg := Msg.message;
+  Message.WParam := MSG.wParam;
+  Message.LParam := MSG.lParam;
+  Message.Result := 0;
+  Dispatch(Message);
 end;
 
 function TMainForm.ConnectedToAllGateways: Boolean;
@@ -852,7 +945,7 @@ begin
     AClient.GatePort := '80';
 end;
 
-constructor TPortalThread.Create(CreateSuspended: Boolean; AUserName, AAction, AGateway: String; SendDestroyClientToGatewayProc: TSendDestroyClientToGatewayProc);
+constructor TPortalThread.Create(CreateSuspended: Boolean; AUserName, AAction, AGateway: String);
 begin
   inherited Create(CreateSuspended);
 
@@ -861,7 +954,6 @@ begin
   FUserName := AUserName;
   FGateway := AGateway;
   FAction := AAction;
-  FSendDestroyClientToGatewayProc := SendDestroyClientToGatewayProc;
 
   FNeedStopThread := False;
 
@@ -1036,13 +1128,13 @@ begin
   finally
   end;
 
-  if Assigned(FSendDestroyClientToGatewayProc) then
-    FSendDestroyClientToGatewayProc(FGateway, MainForm.PClient.LoginUserName + '_' + FUserName + '_' + FAction + '_' + FUID, False);
+  TSendDestroyClientToGatewayThread.Create(False, FGateway, MainForm.PClient.LoginUserName + '_' + FUserName + '_' + FAction + '_' + FUID, False);
 end;
 
 procedure TPortalThread.Execute;
 var
   msg: TMsg;
+  i: Integer;
 begin
   while (not Terminated)
     and (not FNeedStopThread) do
@@ -1059,6 +1151,12 @@ begin
         else
           ProcessMessage(msg);
       end;
+  end;
+
+  for i := 0 to 10 do
+  begin
+    Application.ProcessMessages;
+    Sleep(1000);
   end;
 end;
 
@@ -6642,7 +6740,7 @@ end;
 
 procedure TMainForm.Button4Click(Sender: TObject);
 begin
-  SendDestroyClientToGateway('95.216.96.8:443', 'asasd', False);
+  TSendDestroyClientToGatewayThread.Create(False, '95.216.96.8:443', '111222333', False);
 end;
 
 procedure TMainForm.ConnectToPartnerStart(user, username, pass, action: String);
@@ -6819,8 +6917,8 @@ begin
       if not PartnerIsPending(asWideString['user'], asString['action'], asString['Address']) then
       begin
 //        AddPendingRequest(asWideString['user'], asString['action'], asString['Address'] + ':' +  asString['Port'], 0);
-        SendDestroyClientToGateway(asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['user'] + '_' + asWideString['action'] + '_', False);
-        PortalThread := TPortalThread.Create(False, asWideString['user'], asWideString['action'], asString['Address'], SendDestroyClientToGateway); //Для каждого соединения новый клиент
+        TSendDestroyClientToGatewayThread.Create(False, asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['user'] + '_' + asWideString['action'] + '_', False);
+        PortalThread := TPortalThread.Create(False, asWideString['user'], asWideString['action'], asString['Address']); //Для каждого соединения новый клиент
         PRItem^.Gateway := asString['Address'];
         PRItem^.ThreadID := PortalThread.ThreadID;
 //        New(PRItem);
@@ -7897,7 +7995,7 @@ begin
           PClient.Disconnect;
           PClient.Active := False;
 
-          SendDestroyClientToGateway(asString['Gateway'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]), True);
+          TSendDestroyClientToGatewayThread.Create(False, asString['Gateway'], PClient.LoginUserName + '_' + asWideString['user'] + '_' + asWideString['action'] + '_', True);
 
           PClient.LoginUserName := RealName;
           PClient.LoginUserInfo.asText['RealName'] := DisplayName;

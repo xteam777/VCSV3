@@ -1106,34 +1106,19 @@ object fAboutForm: TfAboutForm
     ParentFont = False
     IsControl = True
   end
-  object pBtnOK: TPanel
+  object bOK: TButton
     Left = 267
-    Top = 234
+    Top = 238
     Width = 107
     Height = 29
-    BevelKind = bkFlat
-    BevelOuter = bvNone
-    BevelWidth = 2
-    Color = clWhite
-    ParentBackground = False
+    Caption = 'OK'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'MS Sans Serif'
+    Font.Style = []
+    ParentFont = False
     TabOrder = 0
-    object bOK: TSpeedButton
-      Tag = 1
-      Left = 0
-      Top = 0
-      Width = 103
-      Height = 25
-      Align = alClient
-      Caption = #1054#1050
-      Flat = True
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = cl3DDkShadow
-      Font.Height = -13
-      Font.Name = 'Arial'
-      Font.Style = [fsBold]
-      ParentFont = False
-      OnClick = bOKClick
-      ExplicitLeft = -2
-    end
+    OnClick = bOKClick
   end
 end

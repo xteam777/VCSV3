@@ -4041,6 +4041,7 @@ object rdDesktopViewer: TrdDesktopViewer
   object ActionManagerTop: TActionManager
     ActionBars = <
       item
+        Color = clBtnFace
         Items = <
           item
             Items = <
@@ -4083,6 +4084,7 @@ object rdDesktopViewer: TrdDesktopViewer
                 CommandProperties.Width = -1
               end
               item
+                Color = clBtnFace
                 Visible = False
                 Caption = '-'
                 CommandStyle = csSeparator
@@ -4116,6 +4118,7 @@ object rdDesktopViewer: TrdDesktopViewer
             CommandProperties.Height = 0
           end
           item
+            Color = clBtnFace
             Caption = '-'
             CommandStyle = csSeparator
             CommandProperties.Width = -1
@@ -4155,6 +4158,7 @@ object rdDesktopViewer: TrdDesktopViewer
                 CommandProperties.Width = -1
               end
               item
+                Color = clBtnFace
                 Caption = '-'
                 CommandStyle = csSeparator
                 CommandProperties.Width = -1
@@ -4176,6 +4180,7 @@ object rdDesktopViewer: TrdDesktopViewer
                 CommandProperties.Width = -1
               end
               item
+                Color = clBtnFace
                 Caption = '-'
                 CommandStyle = csSeparator
                 CommandProperties.Width = -1
@@ -4203,6 +4208,7 @@ object rdDesktopViewer: TrdDesktopViewer
             CommandProperties.Height = 0
           end
           item
+            Color = clBtnFace
             Caption = '-'
             CommandStyle = csSeparator
             CommandProperties.Width = -1
@@ -4219,6 +4225,7 @@ object rdDesktopViewer: TrdDesktopViewer
             ImageIndex = 2
           end
           item
+            Color = clBtnFace
             Caption = '-'
           end
           item
@@ -4395,7 +4402,7 @@ object rdDesktopViewer: TrdDesktopViewer
     Left = 8
     Top = 152
     Bitmap = {
-      494C0101050014001C0218001800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C010105001400200218001800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000600000003000000001002000000000000048
       000000000000000000000000000000000000C4AE1300C4AE1300C4AE1300C4AE
       1300C4AE1300C4AE1300C4AE1300C4AE1300C4AE1300C4AE1300C4AE1300C4AE
@@ -5009,7 +5016,7 @@ object rdDesktopViewer: TrdDesktopViewer
     Left = 48
     Top = 264
     Bitmap = {
-      494C010102000800C80010001000FFFFFFFFFE00FFFFFFFFFFFFFFFF424D3600
+      494C010102000800CC0010001000FFFFFFFFFE00FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000001000000001002000000000000010
       000000000000000000000000000000000000737373006C6C6C006C6C6C006C6C
       6C006C6C6C006C6C6C00B5B5B500FFFFFF00FFFFFF00B5B5B5006C6C6C006C6C

@@ -3,7 +3,7 @@ object MainForm: TMainForm
   Top = 309
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'Remox'
-  ClientHeight = 452
+  ClientHeight = 490
   ClientWidth = 840
   Color = clBtnFace
   DoubleBuffered = True
@@ -48,7 +48,7 @@ object MainForm: TMainForm
     Left = 0
     Top = 0
     Width = 840
-    Height = 452
+    Height = 490
     Margins.Left = 0
     Margins.Top = 0
     Margins.Right = 0
@@ -61,9 +61,10 @@ object MainForm: TMainForm
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
+    ExplicitHeight = 452
     DesignSize = (
       840
-      452)
+      490)
     object lblStatus: TLabel
       AlignWithMargins = True
       Left = 60
@@ -6160,7 +6161,7 @@ object MainForm: TMainForm
   end
   object resLogout: TRtcResult
     OnReturn = resLogoutReturn
-    Left = 269
+    Left = 323
     Top = 122
   end
   object resLogin: TRtcResult
@@ -6465,9 +6466,5 @@ object MainForm: TMainForm
     ReadTimeout = 3000
     Left = 95
     Top = 12
-  end
-  object rDestroyClient: TRtcResult
-    Left = 322
-    Top = 122
   end
 end
