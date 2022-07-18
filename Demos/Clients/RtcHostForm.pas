@@ -287,6 +287,7 @@ type
     ser_: TIdTCPServer;
     cle_: TIdTCPClient;
     Button4: TButton;
+    rDestroyClient: TRtcResult;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -3320,8 +3321,8 @@ procedure TMainForm.FormResize(Sender: TObject);
 begin
 //  XLog('FormResize');
 
-  pDevAcc.Left := 552;
-  pDevAcc.Width := ClientWidth - pDevAcc.Left - 5; //pRight.Left - pRight.Width - GetScaleValue(25);
+  pDevAcc.Left := 544;
+  pDevAcc.Width := ClientWidth - pDevAcc.Left; //pRight.Left - pRight.Width - GetScaleValue(25);
 //  CurWidth := Width;
 end;
 

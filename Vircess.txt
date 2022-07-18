@@ -1,4 +1,5 @@
 ﻿VIRCESS
+статус в трее красный всегда
 try try except finally
 на глгейте 11 хостов хотя дб 2
 ?ав при завершении порталтреда. приходит ответ SendDestroyClientToGateway

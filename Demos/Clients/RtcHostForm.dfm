@@ -67,9 +67,9 @@ object MainForm: TMainForm
       490)
     object lblStatus: TLabel
       AlignWithMargins = True
-      Left = 60
+      Left = 46
       Top = 467
-      Width = 775
+      Width = 793
       Height = 17
       Margins.Left = 75
       Anchors = [akLeft, akTop, akRight]
@@ -87,7 +87,7 @@ object MainForm: TMainForm
       Layout = tlCenter
     end
     object iStatus1: TImage
-      Left = 7
+      Left = 1
       Top = 471
       Width = 8
       Height = 8
@@ -455,7 +455,7 @@ object MainForm: TMainForm
         010002110311003F001DBF2AD4F2AEFD6B5AE6A2CDF5E6FA854786BA3FFFD9}
     end
     object iStatus2: TImage
-      Left = 19
+      Left = 11
       Top = 471
       Width = 8
       Height = 8
@@ -823,7 +823,7 @@ object MainForm: TMainForm
         010002110311003F001DBF2AD4F2AEFD6B5AE6A2CDF5E6FA854786BA3FFFD9}
     end
     object iStatus3: TImage
-      Left = 31
+      Left = 21
       Top = 471
       Width = 8
       Height = 8
@@ -1191,7 +1191,7 @@ object MainForm: TMainForm
         010002110311003F001DBF2AD4F2AEFD6B5AE6A2CDF5E6FA854786BA3FFFD9}
     end
     object iStatus4: TImage
-      Left = 43
+      Left = 31
       Top = 471
       Width = 8
       Height = 8
@@ -2026,9 +2026,9 @@ object MainForm: TMainForm
     end
     object iBkgLeft: TImage
       AlignWithMargins = True
-      Left = 5
+      Left = 1
       Top = 6
-      Width = 539
+      Width = 538
       Height = 131
       Margins.Left = 5
       Margins.Top = 5
@@ -3553,7 +3553,7 @@ object MainForm: TMainForm
       Stretch = True
     end
     object pLeft: TPanel
-      Left = 5
+      Left = 0
       Top = 151
       Width = 264
       Height = 310
@@ -4482,7 +4482,7 @@ object MainForm: TMainForm
       end
     end
     object pRight: TPanel
-      Left = 278
+      Left = 272
       Top = 151
       Width = 267
       Height = 310
@@ -5263,10 +5263,11 @@ object MainForm: TMainForm
     end
     object pDevAcc: TPanel
       AlignWithMargins = True
-      Left = 552
+      Left = 544
       Top = 6
-      Width = 282
+      Width = 296
       Height = 455
+      Hint = '-'
       Margins.Top = 6
       Margins.Right = 5
       Margins.Bottom = 5
@@ -5280,7 +5281,7 @@ object MainForm: TMainForm
       object pAccount: TPanel
         Left = 1
         Top = 1
-        Width = 280
+        Width = 294
         Height = 453
         Margins.Left = 5
         Margins.Top = 6
@@ -5293,6 +5294,7 @@ object MainForm: TMainForm
         ParentBackground = False
         TabOrder = 0
         StyleElements = [seFont, seBorder]
+        ExplicitWidth = 280
         object Label6: TLabel
           Left = 28
           Top = 179
@@ -5470,7 +5472,7 @@ object MainForm: TMainForm
       object pDevices: TPanel
         Left = 1
         Top = 1
-        Width = 280
+        Width = 294
         Height = 453
         Margins.Left = 5
         Margins.Top = 6
@@ -5483,10 +5485,11 @@ object MainForm: TMainForm
         ParentBackground = False
         TabOrder = 1
         StyleElements = [seFont, seBorder]
+        ExplicitWidth = 280
         object GridPanel1: TGridPanel
           Left = 0
           Top = 0
-          Width = 280
+          Width = 294
           Height = 453
           Margins.Left = 0
           Margins.Top = 0
@@ -5555,13 +5558,15 @@ object MainForm: TMainForm
               Value = 5.000000000000000000
             end>
           TabOrder = 0
+          ExplicitLeft = 6
+          ExplicitWidth = 281
           DesignSize = (
-            280
+            294
             453)
           object twDevices: TVirtualStringTree
             Left = 5
             Top = 38
-            Width = 270
+            Width = 284
             Height = 410
             Margins.Left = 5
             Margins.Top = 73
@@ -5601,16 +5606,17 @@ object MainForm: TMainForm
             OnMouseMove = twDevicesMouseMove
             OnMouseUp = twDevicesMouseUp
             OnMouseLeave = twDevicesMouseLeave
+            ExplicitWidth = 270
             Columns = <
               item
                 Position = 0
-                Width = 270
+                Width = 284
               end>
           end
           object eDeviceName: TEdit
             Left = 45
             Top = 5
-            Width = 230
+            Width = 244
             Height = 28
             Margins.Left = 46
             Margins.Top = 45
@@ -5630,6 +5636,7 @@ object MainForm: TMainForm
             ParentFont = False
             TabOrder = 1
             OnChange = eDeviceNameChange
+            ExplicitWidth = 230
           end
           object btnAccount: TColorSpeedButton
             Left = 5
@@ -5763,7 +5770,7 @@ object MainForm: TMainForm
       TabOrder = 3
       StyleElements = [seFont, seBorder]
       object bDevices: TColorSpeedButton
-        Left = 2
+        Left = -1
         Top = 0
         Width = 117
         Height = 28
@@ -6466,5 +6473,9 @@ object MainForm: TMainForm
     ReadTimeout = 3000
     Left = 95
     Top = 12
+  end
+  object rDestroyClient: TRtcResult
+    Left = 322
+    Top = 122
   end
 end
