@@ -320,10 +320,10 @@ object Data_Provider: TData_Provider
     Left = 412
     Top = 390
   end
-  object ClientDestroy: TRtcFunction
+  object ClientsDestroy: TRtcFunction
     Group = PortalGateServerGroup
     FunctionName = 'Clients.Destroy'
-    OnExecute = ClientDestroyExecute
+    OnExecute = ClientsDestroyExecute
     Left = 672
     Top = 63
   end

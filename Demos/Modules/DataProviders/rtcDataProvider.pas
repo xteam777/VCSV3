@@ -82,7 +82,7 @@ type
     GateLogout: TRtcFunction;
     rGateRelogin: TRtcResult;
     rGateLogOut: TRtcResult;
-    ClientDestroy: TRtcFunction;
+    ClientsDestroy: TRtcFunction;
     PortalGateServerLink: TRtcDataServerLink;
     PortalGateServerModule: TRtcServerModule;
     PortalGateServerGroup: TRtcFunctionGroup;
@@ -139,7 +139,7 @@ type
       Result: TRtcValue);
     procedure GateLogoutExecute(Sender: TRtcConnection; Param: TRtcFunctionInfo;
       Result: TRtcValue);
-    procedure ClientDestroyExecute(Sender: TRtcConnection;
+    procedure ClientsDestroyExecute(Sender: TRtcConnection;
       Param: TRtcFunctionInfo; Result: TRtcValue);
   private
     FOnUserLogin: TUserEvent;
@@ -1373,7 +1373,7 @@ begin
   end;
 end;
 
-procedure TData_Provider.ClientDestroyExecute(Sender: TRtcConnection;
+procedure TData_Provider.ClientsDestroyExecute(Sender: TRtcConnection;
   Param: TRtcFunctionInfo; Result: TRtcValue);
 begin
   Gateway1.StartForceUserLogoutThread(Param.asString['UserName'], Param.asBoolean['AllConnectionsById']);
