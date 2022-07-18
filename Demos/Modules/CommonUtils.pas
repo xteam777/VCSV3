@@ -108,9 +108,9 @@ var
   fw: TFireWall;
 begin
   fw := TFireWall.Create;
-  fw.RemoveRule('Vircess');
-  fw.AddRule('Vircess', ParamStr(0), NET_FW_RULE_DIR_IN);
-  fw.AddRule('Vircess', ParamStr(0), NET_FW_RULE_DIR_OUT);
+  fw.RemoveRule('Remox');
+  fw.AddRule('Remox', ParamStr(0), NET_FW_RULE_DIR_IN);
+  fw.AddRule('Remox', ParamStr(0), NET_FW_RULE_DIR_OUT);
   fw.Free;
 end;
 
@@ -120,7 +120,7 @@ var
 begin
   fw := TFireWall.Create;
   if not fw.ApplicationExists(ParamStr(0)) then
-    fw.AddApplication('Vircess', ParamStr(0));
+    fw.AddApplication('Remox', ParamStr(0));
   fw.Free;
 end;
 

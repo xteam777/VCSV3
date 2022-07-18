@@ -87,7 +87,7 @@ begin
 //MessageBox(Application.Handle, PWideChar(WideString(IntToStr(GetCurrentProcessId))), '', MB_OK);
 //Sleep(10000);
 
-  xLog('Start Vircess in desktop mode');
+  xLog('Start Remox in desktop mode');
 
   IsService := False;
 
@@ -100,7 +100,7 @@ begin
 //      if Win32MajorVersion = 10 then
 //        TStyleManager.TrySetStyle('Windows10');
   TStyleManager.TrySetStyle('Windows10');
-  Application.Title := 'Vircess';
+  Application.Title := 'Remox';
   Forms.Application.ShowMainForm := (Pos('/SILENT', UpperCase(CmdLine)) = 0);
   Forms.Application.CreateForm(TMainForm, MainForm);
   Forms.Application.Run;
@@ -133,7 +133,7 @@ begin
 //        begin
 //          Delete_File(ChangeFileExt(AppFileName,'.run'));
 //          Forms.Application.Initialize;
-//          Forms.Application.Title := 'Vircess';
+//          Forms.Application.Title := 'Remox';
 //          Forms.Application.CreateForm(TMainForm, MainForm);
 //          Forms.Application.Run;
 //        end;
@@ -141,7 +141,7 @@ begin
 //      else
 //      begin
 //        Forms.Application.Initialize;
-//        Forms.Application.Title := 'Vircess';
+//        Forms.Application.Title := 'Remox';
 //        Forms.Application.CreateForm(TMainForm, MainForm);
 //        Forms.Application.Run;
 //      end;
@@ -150,16 +150,16 @@ end;
 
 procedure StartProcessInServiceMode;
 begin
-  xLog('Start Vircess in service mode');
+  xLog('Start Remox in service mode');
 
   IsService := True;
 
-//  xLog('Kill Vircess desktop process');
+//  xLog('Kill Remox desktop process');
 //  rtcKillProcess(AppFileName); //<--Изза этого сервис завершается
 //    PostMessage(HWND_BROADCAST, WM_CLOSEVIRCESS, Application.Handle, 0);
 
 //      if not File_Exists(ChangeFileExt(AppFileName,'.run')) then
-//        xLog('Vircess Service ...');
+//        xLog('Remox Service ...');
 
   AutoDesktopSwitch := False; //True; //Нужно для получения инфы об экране и курсоре
 
@@ -224,7 +224,7 @@ begin
 //  IsConsoleClient := (CurrentSessionID = WTSGetActiveConsoleSessionId);
 
   //Сохраняться в HKLM
-//  RTC_LOG_FOLDER := GetDOSEnvVar('APPDATA') + '\Vircess\';
+//  RTC_LOG_FOLDER := GetDOSEnvVar('APPDATA') + '\Remox\';
 
   StartLog;
   xLog('');
@@ -314,12 +314,12 @@ begin
     begin
       if IsDesktopMode(RTC_HOSTSERVICE_NAME) then
       begin
-        if not UniqueApp('Vircess_Session_' + IntToStr(CurrentSessionID)) then
+        if not UniqueApp('Remox_Session_' + IntToStr(CurrentSessionID)) then
         begin
-          hPrev := FindWindow('TMainForm', 'Vircess');
+          hPrev := FindWindow('TMainForm', 'Remox');
           if hPrev <> 0 then
           begin
-            xLog('Bring existing Vircess window to top. Handle:' + IntToStr(hPrev));
+//            xLog('Bring existing Remox window to top. Handle:' + IntToStr(hPrev));
             PostMessage(hPrev, WM_TASKBAREVENT, 100, WM_LBUTTONDBLCLK);
 
   //          Visible := True;

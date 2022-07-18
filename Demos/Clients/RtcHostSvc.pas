@@ -135,7 +135,7 @@ end;
 
 constructor TStartThread.Create(ACreateSuspended: Boolean);
 begin
-  eTimer := CreateEvent(nil, True, False, 'VCSTimerEvent');
+  eTimer := CreateEvent(nil, True, False, 'RMXTimerEvent');
 
   inherited;
 end;

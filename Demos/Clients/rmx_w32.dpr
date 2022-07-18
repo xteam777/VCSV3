@@ -2058,7 +2058,7 @@ begin
   IPCClient := TIPCClient.Create;
   try
     IPCClient.ComputerName := 'localhost';
-    IPCClient.ServerName := 'Vircess_IPC';
+    IPCClient.ServerName := 'Remox_IPC';
     IPCClient.ConnectClient(cDefaultTimeout);
     try
       if IPCClient.IsConnected then

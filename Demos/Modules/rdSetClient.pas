@@ -205,7 +205,7 @@ var
 begin
   if ePassword.Text <> ePasswordConfirm.Text then
   begin
-    MessageBox(Handle, 'Пароль и подтверждение пароля не совпадают', 'VIRCESS', MB_ICONWARNING or MB_OK);
+    MessageBox(Handle, 'Пароль и подтверждение пароля не совпадают', 'Remox', MB_ICONWARNING or MB_OK);
     if Visible then
       ePassword.SetFocus;
     Exit;
@@ -214,13 +214,13 @@ begin
   begin
     if Trim(eProxyAddr.Text) = '' then
     begin
-      MessageBox(Handle, 'Не указан адрес прокси-сервера', 'VIRCESS', MB_ICONWARNING or MB_OK);
+      MessageBox(Handle, 'Не указан адрес прокси-сервера', 'Remox', MB_ICONWARNING or MB_OK);
       eProxyAddr.SetFocus;
       Exit;
     end;
     if Trim(eProxyPort.Text) = '' then
     begin
-      MessageBox(Handle, 'Не указан порт прокси-сервера', 'VIRCESS', MB_ICONWARNING or MB_OK);
+      MessageBox(Handle, 'Не указан порт прокси-сервера', 'Remox', MB_ICONWARNING or MB_OK);
       eProxyPort.SetFocus;
       Exit;
     end;
@@ -496,9 +496,9 @@ begin
   Reg.OpenKey('Software\Microsoft\Windows\CurrentVersion\Run', False);
 //    else Reg.OpenKey('SOFTWARE\Microsoft\Windows\CurrentVersion\Run',False);
   if Value then
-    Reg.WriteString('Vircess', ParamStr(0))
+    Reg.WriteString('Remox', ParamStr(0))
   else
-    Reg.DeleteValue('Vircess');
+    Reg.DeleteValue('Remox');
   Reg.CloseKey;
   Reg.Free;
 end;
@@ -512,7 +512,7 @@ begin
   Reg.LazyWrite := False;
   Reg.OpenKey('Software\Microsoft\Windows\CurrentVersion\Run', False);
 //    else Reg.OpenKey('SOFTWARE\Microsoft\Windows\CurrentVersion\Run',False);
-  Result := (Reg.ReadString('Vircess') = ParamStr(0));
+  Result := (Reg.ReadString('Remox') = ParamStr(0));
   Reg.CloseKey;
   Reg.Free
 end;

@@ -3,7 +3,7 @@ object MainForm: TMainForm
   Top = 309
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'Remox'
-  ClientHeight = 470
+  ClientHeight = 450
   ClientWidth = 839
   Color = clBtnFace
   DoubleBuffered = True
@@ -48,7 +48,7 @@ object MainForm: TMainForm
     Left = 0
     Top = 0
     Width = 839
-    Height = 470
+    Height = 450
     Margins.Left = 0
     Margins.Top = 0
     Margins.Right = 0
@@ -61,10 +61,9 @@ object MainForm: TMainForm
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
-    ExplicitWidth = 840
     DesignSize = (
       839
-      470)
+      450)
     object lblStatus: TLabel
       AlignWithMargins = True
       Left = 46
@@ -5258,7 +5257,6 @@ object MainForm: TMainForm
         ParentBackground = False
         TabOrder = 0
         StyleElements = [seFont, seBorder]
-        ExplicitWidth = 294
         object Label6: TLabel
           Left = 28
           Top = 179
@@ -5449,7 +5447,6 @@ object MainForm: TMainForm
         ParentBackground = False
         TabOrder = 1
         StyleElements = [seFont, seBorder]
-        ExplicitWidth = 294
         object GridPanel1: TGridPanel
           Left = 0
           Top = 0
@@ -5522,7 +5519,6 @@ object MainForm: TMainForm
               Value = 5.000000000000000000
             end>
           TabOrder = 0
-          ExplicitWidth = 294
           DesignSize = (
             296
             453)
@@ -5569,7 +5565,6 @@ object MainForm: TMainForm
             OnMouseMove = twDevicesMouseMove
             OnMouseUp = twDevicesMouseUp
             OnMouseLeave = twDevicesMouseLeave
-            ExplicitWidth = 284
             Columns = <
               item
                 Position = 0
@@ -5599,7 +5594,6 @@ object MainForm: TMainForm
             ParentFont = False
             TabOrder = 1
             OnChange = eDeviceNameChange
-            ExplicitWidth = 244
           end
           object btnAccount: TColorSpeedButton
             Left = 5
@@ -5996,7 +5990,7 @@ object MainForm: TMainForm
     Left = 11
     Top = 44
     Bitmap = {
-      494C010102001400A80508000800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C010102001400AC0508000800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000200000000800000001002000000000000004
       000000000000000000000000000000000000846BEF006B63E700635AE7006B5A
       EF006B5AEF006B63EF006B63E7007B6BEF00C6B52900BDAD1800BDAD1800BDAD

@@ -38,7 +38,6 @@ object rdClientSettings: TrdClientSettings
     TabOrder = 0
     object tsNetwork: TTabSheet
       Caption = #1054#1089#1085#1086#1074#1085#1086#1077
-      ExplicitHeight = 232
       object gProxy: TGroupBox
         Left = 3
         Top = 26
@@ -165,6 +164,9 @@ object rdClientSettings: TrdClientSettings
     object tsSequrity: TTabSheet
       Caption = #1041#1077#1079#1086#1087#1072#1089#1085#1086#1089#1090#1100
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
       ExplicitHeight = 232
       object cbOnlyAdminChanges: TCheckBox
         Left = 7

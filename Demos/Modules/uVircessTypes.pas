@@ -181,8 +181,8 @@ const
   LCK_STATE_LOCKED = 2;
   LCK_STATE_SCREENSAVER = 3;
 
-  RTC_HOSTSERVICE_NAME = 'VircessService'; //Должны отличаться, иначе служба не запустится
-  RTC_HOSTSERVICE_DISPLAY_NAME = 'Vircess';
+  RTC_HOSTSERVICE_NAME = 'RemoxService'; //Должны отличаться, иначе служба не запустится
+  RTC_HOSTSERVICE_DISPLAY_NAME = 'Remox';
 
 
 implementation
