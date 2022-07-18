@@ -71,9 +71,6 @@ __recovery/
 *.inf
 <<<<<<< Updated upstream
 Demos/Gateway/VircessGateway.inf
-Demos/Gateway/VircessGateway.inf
-Demos/Gateway/VircessGateway.inf
-Demos/Gateway/VircessGateway.inf
 =======
 *.svc
 >>>>>>> Stashed changes
