@@ -2635,9 +2635,8 @@ var
 //        FDesktopDuplicator.GetScreenshot(FNewImage, TRect.Create(FCaptureLeft, FCaptureTop + BlockTop, FCaptureLeft + FNewImage.Width, FCaptureTop + BlockTop + FNewImage.Height));
 //      end
 //      else
-      if True //(LowerCase(GetInputDesktopName) <> 'default')
-//        or (IsService)
-        then
+      if (LowerCase(GetInputDesktopName) <> 'default')
+        or (IsService) then
       begin
 //        CS.Acquire;
 //i := GetTickCount;
