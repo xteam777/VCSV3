@@ -7258,13 +7258,13 @@ begin
 //      CS_GW.Release;
 //    end;
 
-//    if (PClient.LoginUserName <> '')
-//      and (PClient.LoginUserName <> '') then
-//    begin
-////      PClient.Disconnect;
-////      PClient.Active := False;
-//      tPClientReconnect.Enabled := True;
-//    end;
+    if (PClient.LoginUserName <> '')
+      and (PClient.LoginUserName <> '') then
+    begin
+//      PClient.Disconnect;
+//      PClient.Active := False;
+      tPClientReconnect.Enabled := True;
+    end;
 
     //    CloseAllActiveUI;
 //
@@ -8749,7 +8749,7 @@ end;
 
 procedure TMainForm.PClientLogOut(Sender: TAbsPortalClient);
 begin
-//  xLog('PClientLogOut: ' + Sender.Name);
+  xLog('PClientLogOut: ' + Sender.Name);
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': PClientLogOut'));
 
   if (Sender = PClient)
@@ -8794,7 +8794,7 @@ end;
 
 procedure TMainForm.PClientFatalError(Sender: TAbsPortalClient; const Msg:string);
 begin
-//  xLog('PClientFatalError: ' + Sender.Name + ': ' + Msg);
+  xLog('PClientFatalError: ' + Sender.Name + ': ' + Msg);
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': PClientFatalError ' + Msg));
 
   TRtcHttpPortalClient(Sender).Disconnect;
@@ -9145,7 +9145,7 @@ begin
   case status of
     rtccClosed:
     begin
-//      xLog('PClientStatusPut: ' + Sender.Name + ': rtccClosed');
+      xLog('PClientStatusPut: ' + Sender.Name + ': rtccClosed');
       sStatus1.Brush.Color := clGray;
 //      if not isClosing then
 //      begin
@@ -9155,7 +9155,7 @@ begin
     end;
     rtccOpen:
     begin
-//      xLog('PClientStatusPut: ' + Sender.Name + ': rtccOpen');
+      xLog('PClientStatusPut: ' + Sender.Name + ': rtccOpen');
       sStatus1.Brush.Color := clNavy;
     end;
     rtccSending:
@@ -9302,7 +9302,7 @@ procedure TMainForm.PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttp
   case status of
     rtccClosed:
       begin
-//      xLog('PClientStatusGet: ' + Sender.Name + ': rtccClosed');
+      xLog('PClientStatusGet: ' + Sender.Name + ': rtccClosed');
       sStatus2.Brush.Color:=clRed;
       sStatus2.Pen.Color:=clMaroon;
 //      if not isClosing then
@@ -9313,7 +9313,7 @@ procedure TMainForm.PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttp
       end;
     rtccOpen:
     begin
-//      xLog('PClientStatusGet: ' + Sender.Name + ': rtccOpen');
+      xLog('PClientStatusGet: ' + Sender.Name + ': rtccOpen');
       sStatus2.Brush.Color:=clNavy;
     end;
     rtccSending:
