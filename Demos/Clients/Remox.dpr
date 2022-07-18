@@ -1,4 +1,4 @@
- program Vircess;
+ program Remox;
 
 { Copyright (c) Danijel Tkalcec,
   RealThinClient components - http://www.realthinclient.com }

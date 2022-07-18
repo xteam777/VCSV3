@@ -1,4 +1,4 @@
-program vcs_x64;
+program rmx_w32;
 
 uses
 //  FastMM4,

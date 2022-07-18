@@ -5227,7 +5227,6 @@ object MainForm: TMainForm
       end
     end
     object pDevAcc: TPanel
-      AlignWithMargins = True
       Left = 542
       Top = 6
       Width = 298
@@ -5236,6 +5235,7 @@ object MainForm: TMainForm
       Margins.Top = 6
       Margins.Right = 5
       Margins.Bottom = 5
+      BevelInner = bvSpace
       BevelOuter = bvNone
       Color = clWhite
       ParentBackground = False
@@ -5243,10 +5243,10 @@ object MainForm: TMainForm
       TabOrder = 2
       StyleElements = [seFont, seBorder]
       object pAccount: TPanel
-        Left = 0
-        Top = 0
-        Width = 298
-        Height = 455
+        Left = 1
+        Top = 1
+        Width = 296
+        Height = 453
         Margins.Left = 5
         Margins.Top = 6
         Margins.Right = 5
@@ -5258,10 +5258,7 @@ object MainForm: TMainForm
         ParentBackground = False
         TabOrder = 0
         StyleElements = [seFont, seBorder]
-        ExplicitLeft = 1
-        ExplicitTop = 1
         ExplicitWidth = 294
-        ExplicitHeight = 453
         object Label6: TLabel
           Left = 28
           Top = 179
@@ -5437,10 +5434,10 @@ object MainForm: TMainForm
         end
       end
       object pDevices: TPanel
-        Left = 0
-        Top = 0
-        Width = 298
-        Height = 455
+        Left = 1
+        Top = 1
+        Width = 296
+        Height = 453
         Margins.Left = 5
         Margins.Top = 6
         Margins.Right = 5
@@ -5452,15 +5449,12 @@ object MainForm: TMainForm
         ParentBackground = False
         TabOrder = 1
         StyleElements = [seFont, seBorder]
-        ExplicitLeft = 1
-        ExplicitTop = 1
         ExplicitWidth = 294
-        ExplicitHeight = 453
         object GridPanel1: TGridPanel
           Left = 0
           Top = 0
-          Width = 298
-          Height = 455
+          Width = 296
+          Height = 453
           Margins.Left = 0
           Margins.Top = 0
           Margins.Right = 5
@@ -5529,15 +5523,14 @@ object MainForm: TMainForm
             end>
           TabOrder = 0
           ExplicitWidth = 294
-          ExplicitHeight = 453
           DesignSize = (
-            298
-            455)
+            296
+            453)
           object twDevices: TVirtualStringTree
             Left = 5
             Top = 38
-            Width = 288
-            Height = 412
+            Width = 286
+            Height = 410
             Margins.Left = 5
             Margins.Top = 73
             Margins.Right = 5
@@ -5577,17 +5570,16 @@ object MainForm: TMainForm
             OnMouseUp = twDevicesMouseUp
             OnMouseLeave = twDevicesMouseLeave
             ExplicitWidth = 284
-            ExplicitHeight = 410
             Columns = <
               item
                 Position = 0
-                Width = 288
+                Width = 286
               end>
           end
           object eDeviceName: TEdit
             Left = 45
             Top = 5
-            Width = 248
+            Width = 246
             Height = 28
             Margins.Left = 46
             Margins.Top = 45
