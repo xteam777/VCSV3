@@ -5772,9 +5772,9 @@ object MainForm: TMainForm
         Flat = True
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clBlack
-        Font.Height = -13
+        Font.Height = -11
         Font.Name = 'Arial'
-        Font.Style = []
+        Font.Style = [fsBold]
         ParentFont = False
         OnClick = lDevicesClick
         OnMouseEnter = bDevicesMouseEnter

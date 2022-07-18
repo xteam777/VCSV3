@@ -2482,13 +2482,13 @@ begin
   begin
     pDevAcc.Visible := True;
     ClientWidth := 840;
-    bDevices.Caption := 'Устройства <<';
+    bDevices.Caption := 'Мои устройства <<';
   end
   else
   begin
     pDevAcc.Visible := False;
     ClientWidth := 550;
-    bDevices.Caption := 'Устройства >>';
+    bDevices.Caption := 'Мои устройства >>';
     Constraints.MaxWidth := Width;
   end;
 
