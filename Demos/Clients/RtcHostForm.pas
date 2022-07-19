@@ -3468,7 +3468,7 @@ end;
 
 procedure TMainForm.hcAccountsConnectFail(Sender: TRtcConnection);
 begin
-//  xLog('hcAccountsConnectFail');
+  xLog('hcAccountsConnectFail');
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': hcAccountsConnectFail'));
 
 //  if not tConnect.Enabled
@@ -3482,7 +3482,7 @@ end;
 
 procedure TMainForm.hcAccountsConnectLost(Sender: TRtcConnection);
 begin
-//  xLog('hcAccountsConnectLost');
+  xLog('hcAccountsConnectLost');
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': hcAccountsConnectFail'));
 
 //  if not tConnect.Enabled
@@ -3532,6 +3532,7 @@ end;
 
 procedure TMainForm.hcAccountsException(Sender: TRtcConnection; E: Exception);
 begin
+  xLog('hcAccountsException: ' + E.Message);
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': hcAccountsException' + E.Message));
 end;
 
@@ -4662,10 +4663,10 @@ procedure TMainForm.StartAccountLogin;
 begin
 //  xLog('StartAccountLogin');
 
-  hcAccounts.SkipRequests;
+//  hcAccounts.SkipRequests;
   hcAccounts.Connect(True);
 
-  TimerClient.SkipRequests;
+//  TimerClient.SkipRequests;
   TimerClient.Connect(True);
 
 //  do_notify := False;

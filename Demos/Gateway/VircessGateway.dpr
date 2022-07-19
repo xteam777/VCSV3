@@ -34,6 +34,8 @@ StartLog;
 
   LOG_EXCEPTIONS := True;
 
+  if not DirectoryExists(ExtractFilePath(ParamStr(0)) + 'Logs') then
+    CreateDir(ExtractFilePath(ParamStr(0)) + 'Logs');
   if not DirectoryExists(ExtractFilePath(ParamStr(0)) + 'Logs\' + GetSystemUserName) then
     CreateDir(ExtractFilePath(ParamStr(0)) + 'Logs\' + GetSystemUserName);
   RTC_LOG_FOLDER := ExtractFilePath(ParamStr(0)) + 'Logs\' + GetSystemUserName + '\';
