@@ -2635,8 +2635,8 @@ var
 //        FDesktopDuplicator.GetScreenshot(FNewImage, TRect.Create(FCaptureLeft, FCaptureTop + BlockTop, FCaptureLeft + FNewImage.Width, FCaptureTop + BlockTop + FNewImage.Height));
 //      end
 //      else
-      if (LowerCase(GetInputDesktopName) <> 'default')
-        or (IsService) then
+      if (LowerCase(GetInputDesktopName) <> 'default') //Мы либо на экране блокировки / UAC
+        or (IsService) then //Либо мы служба
       begin
 //        CS.Acquire;
 //i := GetTickCount;
