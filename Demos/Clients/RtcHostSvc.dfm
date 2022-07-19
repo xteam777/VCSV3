@@ -14,6 +14,7 @@ object RemoxService: TRemoxService
     UserVisible = True
     OnLogIn = PClientLogIn
     OnLogOut = PClientLogOut
+    OnStart = PClientStart
     OnError = PClientError
     OnFatalError = PClientFatalError
     AutoSyncEvents = True
@@ -110,6 +111,7 @@ object RemoxService: TRemoxService
   end
   object rActivate: TRtcResult
     OnReturn = rActivateReturn
+    RequestAborted = rActivateRequestAborted
     Left = 3
     Top = 54
   end

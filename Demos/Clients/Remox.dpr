@@ -150,7 +150,6 @@ end;
 
 procedure StartProcessInServiceMode;
 begin
-//Sleep(5000);
   xLog('Start Remox in service mode');
 
   IsService := True;

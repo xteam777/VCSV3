@@ -79,6 +79,9 @@ type
     procedure PClientLogIn(Sender: TAbsPortalClient);
     procedure PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttpConnStatus);
     procedure resPingReturn(Sender: TRtcConnection; Data, Result: TRtcValue);
+    procedure PClientStart(Sender: TAbsPortalClient; const Data: TRtcValue);
+    procedure rActivateRequestAborted(Sender: TRtcConnection; Data,
+      Result: TRtcValue);
 
   private
     { Private declarations }
@@ -126,6 +129,7 @@ var
   HelperTempFileName, HelperConsoleTempFileName: String;
   tStartHelpers, tStartClients: TStartThread;
   ConfigLastDate: TDateTime;
+  ActivationInProcess: Boolean;
 //  hWnd, hWndThread: THandle;
 //  tid: Cardinal;
 //  FRegisteredSessionNotification: Boolean;
@@ -133,6 +137,240 @@ var
 implementation
 
 {$R *.DFM}
+
+procedure TRemoxService.ServiceCreate(Sender: TObject);
+begin
+  Sleep(10000);
+  if (Win32MajorVersion >= 6 {vista\server 2k8}) then
+    Interactive := False;
+
+  ConfigLastDate := 0;
+  ActivationInProcess := False;
+
+//  FRegisteredSessionNotification := RegisterSessionNotification(hWnd, NOTIFY_FOR_ALL_SESSIONS);
+//  hWndThread := CreateThread(nil, 0, @WinMainThreadProc, nil, 0, tid);
+
+  HelperTempFileName := GetTempDirectory + HELPER_EXE_NAME;
+  HelperConsoleTempFileName := GetTempDirectory + HELPER_CONSOLE_EXE_NAME;
+
+  Stopping := False;
+
+//  tPClientReconnect.Enabled := True;
+  tHostTimerClientReconnect.Enabled := True;
+
+  LOG_THREAD_EXCEPTIONS := True;
+  LOG_EXCEPTIONS := True;
+
+  StartLog;
+
+  tStartHelpers := TStartThread.Create(True, 'PermanentlyRestartHelpers');
+  tStartClients := TStartThread.Create(True, 'StartClientsOnLogon');
+
+  LoadSetup('ALL');
+
+  PFileTrans.FileInboxPath:= ExtractFilePath(AppFileName) + '\INBOX';
+end;
+
+procedure TRemoxService.ServiceStart(Sender: TService; var Started: Boolean);
+var
+  s: RtcString;
+begin
+//  Sleep(10000);
+  xLog('Service start pending');
+  try
+
+  StartHostLogin;
+
+  Stopping := False;
+//  if (Win32MajorVersion >= 6 {vista\server 2k8}) then
+//  begin
+//    WasRunning := False;
+//    WaitLoopCount := 0;
+
+//    rtcKillProcess(HELPER_EXE_NAME);
+//    rtcKillProcess(ExtractFileName(AppFileName));
+      if File_Exists(HelperTempFileName) then
+        if not DeleteFile(HelperTempFileName) then
+//          xLog('Can''t delete file ' + HelperTempFileName);
+      if not File_Exists(HelperTempFileName) then
+        CommonUtils.SaveResourceToFile('HELPER', HelperTempFileName);
+
+      if File_Exists(HelperConsoleTempFileName) then
+        if not DeleteFile(HelperConsoleTempFileName) then
+//          xLog('Can''t delete file ' + HelperConsoleTempFileName);
+      if not File_Exists(HelperConsoleTempFileName) then
+        CommonUtils.SaveResourceToFile('HELPER', HelperConsoleTempFileName);
+    finally
+    end;
+
+    //Создаем файл-флаг. В клиенте проверяется его наличие
+    with TStringList.Create do
+    begin
+      SaveToFile(ChangeFileExt(ParamStr(0), '.svc'));
+      Free;
+    end;
+//    StartClientInAllSessions;
+
+//    rtcStartProcess(AppFileName + ' -autorun -silent');
+//    rtcStartProcess(AppFileName);
+//    if File_Exists(ChangeFileExt(AppFileName,'.run')) then
+//    begin
+//      s:=Read_File(ChangeFileExt(AppFileName,'.run'));
+//      rtcStartProcess(AppFileName+String(s));
+//      Delete_File(ChangeFileExt(AppFileName,'.run'));
+//      Started:=False;
+//    end
+//    else
+//    begin
+      xLog('');
+      xLog('--------------------------');
+      xLog('Remox Launcher started.');
+//      timCheckProcess.Interval := 25;
+//      timCheckProcess.Enabled := True;
+      Started := True;
+//    end;
+//  end
+//  else
+//  begin
+//    StartMyService;
+//    Started := Running;
+//  end;
+
+  tStartHelpers.StartClientInAllSessions(True, False);
+  tStartHelpers.Resume;
+  tStartClients.StartClientInAllSessions(False, True);
+  tStartClients.Resume;
+end;
+
+procedure TRemoxService.ServiceStop(Sender: TService; var Stopped: Boolean);
+var
+  cnt: Integer;
+begin
+  Stopping := True;
+//  if (Win32MajorVersion >= 6 { vista\server 2k8 } ) then
+//  begin
+//    timCheckProcess.Enabled := False;
+    HostPingTimer.Enabled := False;
+
+    tStartHelpers.Suspend;
+    tStartClients.Suspend;
+
+    HostLogOut;
+
+    xLog('Do kill helper processes');
+    rtcKillProcess(HELPER_EXE_NAME);
+    rtcKillProcess(HELPER_CONSOLE_EXE_NAME);
+    if not File_Exists(ChangeFileExt(ParamStr(0), '.ncl')) then //Если это остановка службы при снятии галки автозапуска, то клиентов не закрываем
+    begin
+      xLog('Do kill client processes');
+      rtcKillProcess(ExtractFileName(AppFileName));
+    end;
+    Delete_File(ChangeFileExt(ParamStr(0), '.ncl'));
+
+    //Создаем файл-флаг. В клиенте проверяется его наличие
+    with TStringList.Create do
+    begin
+      SaveToFile(ChangeFileExt(ParamStr(0), '.svc')); //Чтобы клиенты обновили ID консоли
+      Free;
+    end;
+
+    try
+      if File_Exists(HelperTempFileName) then
+        if not DeleteFile(HelperTempFileName) then
+//          xLog('Can''t delete file ' + HelperTempFileName);
+      if File_Exists(HelperConsoleTempFileName) then
+        if not DeleteFile(HelperConsoleTempFileName) then
+//          xLog('Can''t delete file ' + HelperConsoleTempFileName);
+    finally
+    end;
+
+    xLog('Remox Launcher stopped.');
+    Stopped := True;
+
+//    if WasRunning or (rtcGetProcessID(AppFileName,True)>0) then
+//    begin
+//      rtcKillProcess(AppFileName);
+//      xLog('Logging on to the Gateway to force the Host process to close.');
+//      LoadSetup;
+//      PClient.GParamsLoaded := True; // this will force all other Hosts to close
+//      cnt:=100;
+//      repeat
+//        Dec(cnt);
+//        Sleep(100);
+//      until PClient.GParamsLoaded or (cnt<=0);
+//      PClient.Active:=False;
+//    end;
+
+//    xLog('Remox Launcher stopped.');
+//    Stopped:=True;
+//  end
+//  else
+//  begin
+//    StopMyService;
+//    Stopped := not Running;
+//  end;
+end;
+
+procedure TRemoxService.ServiceShutdown(Sender: TService);
+var
+  cnt:integer;
+begin
+  Stopping := True;
+//  if (Win32MajorVersion >= 6 { vista\server 2k8 } ) then
+//    begin
+//    if WasRunning or
+//    if (rtcGetProcessID(AppFileName,True) > 0) then
+//      begin
+//        xLog('Do kill helper processes');
+//        rtcKillProcess(HELPER_EXE_NAME);
+//        xLog('Do kill client processes');
+//        rtcKillProcess(ExtractFileName(AppFileName));
+
+//      xLog('Logging on to the Gateway to force the Host process to close.');
+//      LoadSetup;
+//      PClient.GParamsLoaded:=True; // this will force all other Hosts to close
+//      cnt:=100;
+//      repeat
+//        Dec(cnt);
+//        Sleep(100);
+//        until PClient.GParamsLoaded or (cnt<=0);
+//      PClient.Active:=False;
+//      end;
+    xLog('Host Launcher shut down.');
+//    end
+//  else
+//    StopMyService;
+end;
+
+procedure TRemoxService.ServiceDestroy(Sender: TObject);
+begin
+  Stopping := True;
+//  if (Win32MajorVersion >= 6 { vista\server 2k8 } ) then
+//    begin
+
+    // unregister session change notifications.
+//    if FRegisteredSessionNotification then
+//      UnRegisterSessionNotification(hWnd);
+
+//    if WasRunning then
+    xLog('Remox Launcher destroyed.');
+//    end
+//  else
+//    StopMyService;
+
+  tStartHelpers.Terminate;
+  tStartClients.Terminate;
+
+  StopLog;
+end;
+
+procedure TRemoxService.ServiceExecute(Sender: TService);
+begin
+  repeat
+    ServiceThread.ProcessRequests(False);
+    Sleep(1);
+  until Stopping;
+end;
 
 procedure TRemoxService.ChangePort(AClient: TRtcHttpClient);
 begin
@@ -271,77 +509,6 @@ begin
   end;
 end;
 
-procedure TRemoxService.ServiceStart(Sender: TService; var Started: Boolean);
-var
-  s: RtcString;
-begin
-//  Sleep(10000);
-  xLog('Service start pending');
-  try
-
-  StartHostLogin;
-
-  Stopping := False;
-//  if (Win32MajorVersion >= 6 {vista\server 2k8}) then
-//  begin
-//    WasRunning := False;
-//    WaitLoopCount := 0;
-
-//    rtcKillProcess(HELPER_EXE_NAME);
-//    rtcKillProcess(ExtractFileName(AppFileName));
-      if File_Exists(HelperTempFileName) then
-        if not DeleteFile(HelperTempFileName) then
-//          xLog('Can''t delete file ' + HelperTempFileName);
-      if not File_Exists(HelperTempFileName) then
-        CommonUtils.SaveResourceToFile('HELPER', HelperTempFileName);
-
-      if File_Exists(HelperConsoleTempFileName) then
-        if not DeleteFile(HelperConsoleTempFileName) then
-//          xLog('Can''t delete file ' + HelperConsoleTempFileName);
-      if not File_Exists(HelperConsoleTempFileName) then
-        CommonUtils.SaveResourceToFile('HELPER', HelperConsoleTempFileName);
-    finally
-    end;
-
-    //Создаем файл-флаг. В клиенте проверяется его наличие
-    with TStringList.Create do
-    begin
-      SaveToFile(ChangeFileExt(ParamStr(0), '.svc'));
-      Free;
-    end;
-//    StartClientInAllSessions;
-
-//    rtcStartProcess(AppFileName + ' -autorun -silent');
-//    rtcStartProcess(AppFileName);
-//    if File_Exists(ChangeFileExt(AppFileName,'.run')) then
-//    begin
-//      s:=Read_File(ChangeFileExt(AppFileName,'.run'));
-//      rtcStartProcess(AppFileName+String(s));
-//      Delete_File(ChangeFileExt(AppFileName,'.run'));
-//      Started:=False;
-//    end
-//    else
-//    begin
-      xLog('');
-      xLog('--------------------------');
-      xLog('Remox Launcher started.');
-//      timCheckProcess.Interval := 25;
-//      timCheckProcess.Enabled := True;
-      Started := True;
-//    end;
-//  end
-//  else
-//  begin
-//    StartMyService;
-//    Started := Running;
-//  end;
-
-  tStartHelpers.StartClientInAllSessions(True, False);
-  tStartHelpers.Resume;
-  tStartClients.StartClientInAllSessions(False, True);
-  tStartClients.Resume;
-end;
-
 procedure TStartThread.StartClientInAllSessions(doStartHelper, doStartClient: Boolean);
 var
    pArrSessInfo, p: PWTS_SESSION_INFO;
@@ -453,40 +620,6 @@ begin
   HostTimerClient.Connect(True);
 end;
 
-procedure TRemoxService.ServiceCreate(Sender: TObject);
-begin
-  if (Win32MajorVersion >= 6 {vista\server 2k8}) then
-    Interactive := False;
-
-  ConfigLastDate := 0;
-
-//  FRegisteredSessionNotification := RegisterSessionNotification(hWnd, NOTIFY_FOR_ALL_SESSIONS);
-//  hWndThread := CreateThread(nil, 0, @WinMainThreadProc, nil, 0, tid);
-
-  HelperTempFileName := GetTempDirectory + HELPER_EXE_NAME;
-  HelperConsoleTempFileName := GetTempDirectory + HELPER_CONSOLE_EXE_NAME;
-
-  Stopping := False;
-
-//  tPClientReconnect.Enabled := True;
-  tHostTimerClientReconnect.Enabled := True;
-
-  LOG_THREAD_EXCEPTIONS := True;
-  LOG_EXCEPTIONS := True;
-
-  StartLog;
-
-  PClient.OnError := PClientError;
-  PClient.OnFatalError := PClientFatalError;
-
-  tStartHelpers := TStartThread.Create(True, 'PermanentlyRestartHelpers');
-  tStartClients := TStartThread.Create(True, 'StartClientsOnLogon');
-
-  LoadSetup('ALL');
-
-  PFileTrans.FileInboxPath:= ExtractFilePath(AppFileName) + '\INBOX';
-end;
-
 procedure TRemoxService.LoadSetup(RecordType: String);
 var
   CfgFileName: String;
@@ -582,6 +715,12 @@ begin
     ProxyOption := 'NoProxy';
 end;
 
+procedure TRemoxService.rActivateRequestAborted(Sender: TRtcConnection; Data,
+  Result: TRtcValue);
+begin
+  ActivationInProcess := False;
+end;
+
 procedure TRemoxService.rActivateReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 var
@@ -651,6 +790,8 @@ begin
 //      SetStatusString('Сервер Remox не найден');
 //      SetStatus(1);
     end;
+
+  ActivationInProcess := False;
 end;
 
 procedure TRemoxService.resHostLoginReturn(Sender: TRtcConnection; Data,
@@ -983,11 +1124,11 @@ procedure TRemoxService.PClientError(Sender: TAbsPortalClient;
 begin
   xLog('PClientError: ' + Msg);
 
+  PClientFatalError(Sender, Msg);
+
   if (Sender = PClient)
     and (Msg = 'Не удалось подключиться к серверу.') then
     ChangePortP(PClient);
-
-  PClientFatalError(Sender, Msg);
 
   if Msg <> 'Logged out' then
     TRtcHttpPortalClient(Sender).Active := True;
@@ -1006,13 +1147,18 @@ end;
 
 procedure TRemoxService.PClientLogIn(Sender: TAbsPortalClient);
 begin
-//  tPClientReconnect.Enabled := False;
+  tPClientReconnect.Enabled := False;
 end;
 
 procedure TRemoxService.PClientLogOut(Sender: TAbsPortalClient);
 begin
-//  tPClientReconnect.Enabled := True;
-  TRtcHttpPortalClient(Sender).Active := True;
+  tPClientReconnect.Enabled := True;
+end;
+
+procedure TRemoxService.PClientStart(Sender: TAbsPortalClient;
+  const Data: TRtcValue);
+begin
+  tPClientReconnect.Enabled := False;
 end;
 
 procedure TRemoxService.PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttpConnStatus);
@@ -1027,6 +1173,8 @@ procedure TRemoxService.ActivateHost;
 var
   HWID : THardwareId;
 begin
+  ActivationInProcess := True;
+
   if not IsInternetConnected then
     Exit;
 
@@ -1301,139 +1449,10 @@ begin
 //  end;
 end;
 
-procedure TRemoxService.ServiceStop(Sender: TService; var Stopped: Boolean);
-var
-  cnt: Integer;
-begin
-  Stopping := True;
-//  if (Win32MajorVersion >= 6 { vista\server 2k8 } ) then
-//  begin
-//    timCheckProcess.Enabled := False;
-    HostPingTimer.Enabled := False;
-
-    tStartHelpers.Suspend;
-    tStartClients.Suspend;
-
-    HostLogOut;
-
-    xLog('Do kill helper processes');
-    rtcKillProcess(HELPER_EXE_NAME);
-    rtcKillProcess(HELPER_CONSOLE_EXE_NAME);
-    if not File_Exists(ChangeFileExt(ParamStr(0), '.ncl')) then //Если это остановка службы при снятии галки автозапуска, то клиентов не закрываем
-    begin
-      xLog('Do kill client processes');
-      rtcKillProcess(ExtractFileName(AppFileName));
-    end;
-    Delete_File(ChangeFileExt(ParamStr(0), '.ncl'));
-
-    //Создаем файл-флаг. В клиенте проверяется его наличие
-    with TStringList.Create do
-    begin
-      SaveToFile(ChangeFileExt(ParamStr(0), '.svc')); //Чтобы клиенты обновили ID консоли
-      Free;
-    end;
-
-    try
-      if File_Exists(HelperTempFileName) then
-        if not DeleteFile(HelperTempFileName) then
-//          xLog('Can''t delete file ' + HelperTempFileName);
-      if File_Exists(HelperConsoleTempFileName) then
-        if not DeleteFile(HelperConsoleTempFileName) then
-//          xLog('Can''t delete file ' + HelperConsoleTempFileName);
-    finally
-    end;
-
-    xLog('Remox Launcher stopped.');
-    Stopped := True;
-
-//    if WasRunning or (rtcGetProcessID(AppFileName,True)>0) then
-//    begin
-//      rtcKillProcess(AppFileName);
-//      xLog('Logging on to the Gateway to force the Host process to close.');
-//      LoadSetup;
-//      PClient.GParamsLoaded := True; // this will force all other Hosts to close
-//      cnt:=100;
-//      repeat
-//        Dec(cnt);
-//        Sleep(100);
-//      until PClient.GParamsLoaded or (cnt<=0);
-//      PClient.Active:=False;
-//    end;
-
-//    xLog('Remox Launcher stopped.');
-//    Stopped:=True;
-//  end
-//  else
-//  begin
-//    StopMyService;
-//    Stopped := not Running;
-//  end;
-end;
-
-procedure TRemoxService.ServiceShutdown(Sender: TService);
-var
-  cnt:integer;
-begin
-  Stopping := True;
-//  if (Win32MajorVersion >= 6 { vista\server 2k8 } ) then
-//    begin
-//    if WasRunning or
-//    if (rtcGetProcessID(AppFileName,True) > 0) then
-//      begin
-//        xLog('Do kill helper processes');
-//        rtcKillProcess(HELPER_EXE_NAME);
-//        xLog('Do kill client processes');
-//        rtcKillProcess(ExtractFileName(AppFileName));
-
-//      xLog('Logging on to the Gateway to force the Host process to close.');
-//      LoadSetup;
-//      PClient.GParamsLoaded:=True; // this will force all other Hosts to close
-//      cnt:=100;
-//      repeat
-//        Dec(cnt);
-//        Sleep(100);
-//        until PClient.GParamsLoaded or (cnt<=0);
-//      PClient.Active:=False;
-//      end;
-    xLog('Host Launcher shut down.');
-//    end
-//  else
-//    StopMyService;
-end;
-
-procedure TRemoxService.ServiceDestroy(Sender: TObject);
-begin
-  Stopping := True;
-//  if (Win32MajorVersion >= 6 { vista\server 2k8 } ) then
-//    begin
-
-    // unregister session change notifications.
-//    if FRegisteredSessionNotification then
-//      UnRegisterSessionNotification(hWnd);
-
-//    if WasRunning then
-    xLog('Remox Launcher destroyed.');
-//    end
-//  else
-//    StopMyService;
-
-  tStartHelpers.Terminate;
-  tStartClients.Terminate;
-
-  StopLog;
-end;
-
-procedure TRemoxService.ServiceExecute(Sender: TService);
-begin
-  repeat
-    ServiceThread.ProcessRequests(False);
-    Sleep(1);
-  until Stopping;
-end;
-
 procedure TRemoxService.tActivateTimer(Sender: TObject);
 begin
-  ActivateHost;
+  if not ActivationInProcess then
+    ActivateHost;
 end;
 
 procedure TRemoxService.tHostTimerClientReconnectTimer(Sender: TObject);
@@ -1449,6 +1468,8 @@ begin
   PClient.Disconnect;
   PClient.Active := False;
   PClient.Active := True;
+
+  tPClientReconnect.Enabled := False;
 //
 //  if not PClient.Active then
 ////    and not PClient.Connected then
