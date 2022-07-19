@@ -4664,10 +4664,10 @@ begin
 //  xLog('StartAccountLogin');
 
 //  hcAccounts.SkipRequests;
-//  hcAccounts.Connect(True);
+  hcAccounts.Connect(True);
 
 //  TimerClient.SkipRequests;
-//  TimerClient.Connect(True);
+  TimerClient.Connect(True);
 
 //  do_notify := False;
 end;
