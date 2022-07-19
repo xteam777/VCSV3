@@ -2571,7 +2571,7 @@ begin
 
   ActivationInProcess := False;
 
-  CurStatus := 0;
+  CurStatus := STATUS_NO_CONNECTION;
   FStatusUpdateThread := TStatusUpdateThread.Create(False, UpdateStatus);
 
   OpenedModalForm := nil;
@@ -3468,7 +3468,7 @@ end;
 
 procedure TMainForm.hcAccountsConnectFail(Sender: TRtcConnection);
 begin
-//  xLog('hcAccountsConnectFail');
+  xLog('hcAccountsConnectFail');
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': hcAccountsConnectFail'));
 
 //  if not tConnect.Enabled
@@ -3482,7 +3482,7 @@ end;
 
 procedure TMainForm.hcAccountsConnectLost(Sender: TRtcConnection);
 begin
-//  xLog('hcAccountsConnectLost');
+  xLog('hcAccountsConnectLost');
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': hcAccountsConnectFail'));
 
 //  if not tConnect.Enabled
@@ -3532,6 +3532,7 @@ end;
 
 procedure TMainForm.hcAccountsException(Sender: TRtcConnection; E: Exception);
 begin
+  xLog('hcAccountsException: ' + E.Message);
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': hcAccountsException' + E.Message));
 end;
 
@@ -3797,7 +3798,7 @@ begin
   end;
 
   if PClient.GateAddr = '' then
-    PClient.GateAddr := '95.216.96.39';
+    PClient.GateAddr := '95.216.96.8';
   if hcAccounts.ServerAddr = '' then
     hcAccounts.ServerAddr := '95.216.96.39';
   if TimerClient.ServerAddr = '' then
@@ -4662,11 +4663,11 @@ procedure TMainForm.StartAccountLogin;
 begin
 //  xLog('StartAccountLogin');
 
-  hcAccounts.SkipRequests;
-  hcAccounts.Connect(True);
+//  hcAccounts.SkipRequests;
+//  hcAccounts.Connect(True);
 
-  TimerClient.SkipRequests;
-  TimerClient.Connect(True);
+//  TimerClient.SkipRequests;
+//  TimerClient.Connect(True);
 
 //  do_notify := False;
 end;
@@ -8704,15 +8705,6 @@ begin
 
   DragAcceptFiles(Handle, False);
 
-  if (Sender = PClient)
-    and (GetStatus = STATUS_CONNECTING_TO_GATE) then
-  begin
-    SetStatus(STATUS_READY);
-
-    if cbRememberAccount.Checked then
-      btnAccountLoginClick(nil);
-  end;
-
 //  lblStatus.Caption := 'Подключен как "' + eUserName.Text + '".';
 //  lblStatus.Update;
 
@@ -8761,6 +8753,15 @@ begin
 //    Pages.ActivePage:=Page_Hosting;
 //    end;
 //  SetStatusString('Готов к подключению');
+
+  if (Sender = PClient)
+    and (GetStatus = STATUS_CONNECTING_TO_GATE) then
+  begin
+    SetStatus(STATUS_READY);
+
+    if cbRememberAccount.Checked then
+      btnAccountLoginClick(nil);
+  end;
 
   tPClientReconnect.Enabled := False;
 

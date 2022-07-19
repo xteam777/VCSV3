@@ -111,6 +111,7 @@ type
     ScrCap: TRtcScreenCapture;
 
 //    FImageCatcher: TImageCatcher;
+    FDDACreated: Boolean;
     FDesktopDuplicator: TDesktopDuplicationWrapper;
 
     function CreateBitmap(index: integer): TBitmap;
@@ -837,7 +838,7 @@ uses Math, Types;
 {$IFDEF KMDriver}
 
 const
-  VCS_MAGIC_NUMBER = 777;
+  RMX_MAGIC_NUMBER = 777;
 
 var
   FMouseAInit: Integer = 0;
@@ -1287,7 +1288,7 @@ begin
   SetLength(FMarked, 0);
 
 //  FImageCatcher := TImageCatcher.Create;
-  FDesktopDuplicator := TDesktopDuplicationWrapper.Create;
+  FDesktopDuplicator := TDesktopDuplicationWrapper.Create(FDDACreated);
 
 //TRtcScreenEncoder.Create берет ScrCap.HaveScreen а ScrCap = nil. Белый экран вначале
 //  while not ScrCap.HaveScreen do
@@ -1936,11 +1937,11 @@ begin
 
   try
     PipeClient := TPipeClient.Create(nil);
-    PipeClient.ServerName := 'VCS_SCREEN_SESSION_' + IntToStr(SessionID);
+    PipeClient.ServerName := 'RMX_SCREEN_SESSION_' + IntToStr(SessionID);
     PipeClient.Connect(1000, True);
 
-//    hMap := OpenFileMapping(FILE_MAP_READ, False, PWideChar(WideString('Global\VCS_SCREEN_SESSION_' + IntToStr(SessionID))));
-    hMap := OpenFileMapping(FILE_MAP_READ, False, PWideChar(WideString('Session\' + IntToStr(SessionID) + '\VCS_SCREEN')));
+//    hMap := OpenFileMapping(FILE_MAP_READ, False, PWideChar(WideString('Global\RMX_SCREEN_SESSION_' + IntToStr(SessionID))));
+    hMap := OpenFileMapping(FILE_MAP_READ, False, PWideChar(WideString('Session\' + IntToStr(SessionID) + '\RMX_SCREEN')));
     if hMap = 0 then
       Exit;
 
@@ -2040,21 +2041,21 @@ begin
       NameSuffix := '';
     end;
 
-    EventWriteBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\VCS_SCREEN_WRITE_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    EventWriteBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_WRITE_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
     if EventWriteBegin = 0 then
       Exit;
-    EventWriteEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\VCS_SCREEN_WRITE_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    EventWriteEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_WRITE_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
     if EventWriteEnd = 0 then
       Exit;
-    EventReadBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\VCS_SCREEN_READ_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    EventReadBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_READ_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
     if EventReadBegin = 0 then
       Exit;
-    EventReadEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\VCS_SCREEN_READ_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    EventReadEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_READ_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
     if EventReadEnd = 0 then
       Exit;
 
     try
-  //    MutexRead := OpenMutex(MUTEX_ALL_ACCESS, False, PWideChar(WideString('Global\VCS_SCREEN_READ_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+  //    MutexRead := OpenMutex(MUTEX_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_READ_SESSION_' + IntToStr(SessionID) + NameSuffix)));
   //    if MutexRead = 0 then
   //    if WaitForSingleObject(EventRead, 0) <> WAIT_OBJECT_0 then //Если идет чтение скрина в другом процессе, запись скрина не начинаем
   //    begin
@@ -2072,13 +2073,13 @@ begin
   //      SetEvent(EventRead);
   //    end;
 
-  //      MutexRead := DoCreateMutex(PWideChar(WideString('Global\VCS_SCREEN_READ_SESSION_' + IntToStr(SessionID))));
+  //      MutexRead := DoCreateMutex(PWideChar(WideString('Global\RMX_SCREEN_READ_SESSION_' + IntToStr(SessionID))));
   //    end
   //    else
   //      CloseHandle(MutexRead);
 
       try
-        hMap := OpenFileMapping(FILE_MAP_READ, False, PWideChar(WideString('Session\' + IntToStr(SessionID) + '\VCS_SCREEN' + NameSuffix)));
+        hMap := OpenFileMapping(FILE_MAP_READ, False, PWideChar(WideString('Session\' + IntToStr(SessionID) + '\RMX_SCREEN' + NameSuffix)));
         if hMap = 0 then
           Exit;
         HeaderSize := sizeof(BitmapSize) + sizeof(Result) + sizeof(FHelper_Width) + sizeof(FHelper_Height) + sizeof(FHelper_BitsPerPixel) + sizeof(PID) + sizeof(ipBase) + sizeof(FHelper_mouseFlags) + sizeof(FHelper_mouseCursor);
@@ -2255,8 +2256,9 @@ var
   hProc: THandle;
   numberRead : SIZE_T;
   WaitTimeout: DWORD;
-//  SaveBitMap: TBitmap;
-i, j: LongInt;
+  SaveBitMap: TBitmap;
+  i, j: LongInt;
+  fScreenGrabbed: Boolean;
 begin
   WaitTimeout := 1000;
 
@@ -2279,21 +2281,23 @@ begin
       NameSuffix := '';
     end;
 
-    EventWriteBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\VCS_SCREEN_WRITE_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+//    NameSuffix := '_C';
+
+    EventWriteBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_WRITE_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
     if EventWriteBegin = 0 then
       Exit;
-    EventWriteEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\VCS_SCREEN_WRITE_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    EventWriteEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_WRITE_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
     if EventWriteEnd = 0 then
       Exit;
-    EventReadBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\VCS_SCREEN_READ_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    EventReadBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_READ_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
     if EventReadBegin = 0 then
       Exit;
-    EventReadEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\VCS_SCREEN_READ_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    EventReadEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_READ_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
     if EventReadEnd = 0 then
       Exit;
 
     try
-  //    MutexRead := OpenMutex(MUTEX_ALL_ACCESS, False, PWideChar(WideString('Global\VCS_SCREEN_READ_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+  //    MutexRead := OpenMutex(MUTEX_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_READ_SESSION_' + IntToStr(SessionID) + NameSuffix)));
   //    if MutexRead = 0 then
   //    if WaitForSingleObject(EventRead, 0) <> WAIT_OBJECT_0 then //Если идет чтение скрина в другом процессе, запись скрина не начинаем
   //    begin
@@ -2315,16 +2319,16 @@ begin
   //      SetEvent(EventRead);
   //    end;
 
-  //      MutexRead := DoCreateMutex(PWideChar(WideString('Global\VCS_SCREEN_READ_SESSION_' + IntToStr(SessionID))));
+  //      MutexRead := DoCreateMutex(PWideChar(WideString('Global\RMX_SCREEN_READ_SESSION_' + IntToStr(SessionID))));
   //    end
   //    else
   //      CloseHandle(MutexRead);
 
       try
-        hMap := OpenFileMapping(FILE_MAP_READ or FILE_MAP_WRITE, False, PWideChar(WideString('Session\' + IntToStr(SessionID) + '\VCS_SCREEN' + NameSuffix)));
+        hMap := OpenFileMapping(FILE_MAP_READ or FILE_MAP_WRITE, False, PWideChar(WideString('Session\' + IntToStr(SessionID) + '\RMX_SCREEN' + NameSuffix)));
         if hMap = 0 then
           Exit;
-        HeaderSize := sizeof(BitmapSize) + sizeof(Result) + sizeof(FHelper_Width) + sizeof(FHelper_Height) + sizeof(FHelper_BitsPerPixel) + sizeof(CurrentProcessId) + sizeof(ipBase) + sizeof(FHelper_mouseFlags) + sizeof(FHelper_mouseCursor);
+        HeaderSize := sizeof(BitmapSize) + sizeof(fScreenGrabbed) + sizeof(FHelper_Width) + sizeof(FHelper_Height) + sizeof(FHelper_BitsPerPixel) + sizeof(CurrentProcessId) + sizeof(ipBase) + sizeof(FHelper_mouseFlags) + sizeof(FHelper_mouseCursor);
         pMap := MapViewOfFile(hMap, //дескриптор "проецируемого" объекта
                                 FILE_MAP_READ or FILE_MAP_WRITE,  // разрешение чтения/записи
                                 0,0,
@@ -2339,8 +2343,8 @@ begin
         CurOffset := 0;
         CopyMemory(@BitmapSize, pMap, SizeOf(BitmapSize));
         CurOffset := CurOffset + SizeOf(BitmapSize);
-        CopyMemory(@Result, PByte(pMap) + CurOffset, sizeof(Result));
-        CurOffset := CurOffset + SizeOf(Result);
+        CopyMemory(@fScreenGrabbed, PByte(pMap) + CurOffset, sizeof(fScreenGrabbed));
+        CurOffset := CurOffset + SizeOf(fScreenGrabbed);
         CopyMemory(@FHelper_Width, PByte(pMap) + CurOffset, sizeof(FHelper_Width));
         CurOffset := CurOffset + SizeOf(FHelper_Width);
         CopyMemory(@FHelper_Height, PByte(pMap) + CurOffset, sizeof(FHelper_Height));
@@ -2384,8 +2388,8 @@ begin
         CurOffset := 0;
   //      CopyMemory(@BitmapSize, pMap, SizeOf(BitmapSize));
         CurOffset := CurOffset + SizeOf(BitmapSize);
-  //      CopyMemory(@Result, PByte(pMap) + CurOffset, sizeof(Result));
-        CurOffset := CurOffset + SizeOf(Result);
+  //      CopyMemory(@fScreenGrabbed, PByte(pMap) + CurOffset, sizeof(fScreenGrabbed));
+        CurOffset := CurOffset + SizeOf(fScreenGrabbed);
   //      CopyMemory(@FHelper_Width, PByte(pMap) + CurOffset, sizeof(FHelper_Width));
         CurOffset := CurOffset + SizeOf(FHelper_Width);
   //      CopyMemory(@FHelper_Height, PByte(pMap) + CurOffset, sizeof(FHelper_Height));
@@ -2415,7 +2419,7 @@ begin
 //  hMemDC, //откуда
 //  0,0, //координаты
 //  SRCCOPY); //режим копирования
-//  SaveBitMap.SaveToFile('C:\Screenshots\vcs_' + StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
+//  SaveBitMap.SaveToFile('C:\Rufus\rmx_.bmp'); //+ StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
 //  SaveBitMap.Free;
 
 //      hDestDC := CreateCompatibleDC(FNewImage.Canvas.Handle);
@@ -2444,7 +2448,8 @@ begin
 //        CloseHandle(hProc); // отсоединяемся от процесса
 //      end;
 
-      BitBlt(FNewImage.Canvas.Handle, 0, 0, FHelper_Width, FHelper_Height, hMemDC, 0, 0, SRCCOPY);
+//      if fScreenGrabbed then
+        Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FHelper_Width, FHelper_Height, hMemDC, 0, 0, SRCCOPY);
 //      FNewImage.Invalidate;
 //      SelectObject(hMemDC, hOld);
 //      DeleteDC(hMemDC);
@@ -2528,7 +2533,7 @@ begin
   IPCClient := TIPCClient.Create;
   try
     IPCClient.ComputerName := 'localhost';
-    IPCClient.ServerName := 'Vircess_IPC_Session_' + IntToStr(SessionID);
+    IPCClient.ServerName := 'Remox_IPC_Session_' + IntToStr(SessionID);
     IPCClient.ConnectClient(1000); //cDefaultTimeout
     try
       if IPCClient.IsConnected then
@@ -2573,7 +2578,7 @@ begin
   IPCClient := TIPCClient.Create;
   try
     IPCClient.ComputerName := 'localhost';
-    IPCClient.ServerName := 'Vircess_IPC_Session_' + IntToStr(SessionID);
+    IPCClient.ServerName := 'Remox_IPC_Session_' + IntToStr(SessionID);
     IPCClient.ConnectClient(1000); //cDefaultTimeout
     try
       if IPCClient.IsConnected then
@@ -2635,8 +2640,9 @@ var
 //        FDesktopDuplicator.GetScreenshot(FNewImage, TRect.Create(FCaptureLeft, FCaptureTop + BlockTop, FCaptureLeft + FNewImage.Width, FCaptureTop + BlockTop + FNewImage.Height));
 //      end
 //      else
-      if (LowerCase(GetInputDesktopName) <> 'default')
-        or (IsService) then
+      if (LowerCase(GetInputDesktopName) <> 'default') //Мы либо на экране блокировки / UAC
+        or (IsService) then //Либо мы служба
+//      if True then
       begin
 //        CS.Acquire;
 //i := GetTickCount;
@@ -2708,7 +2714,7 @@ var
             while fNeedRecreate do
             begin
               FDesktopDuplicator.Free;
-              FDesktopDuplicator := TDesktopDuplicationWrapper.Create;
+              FDesktopDuplicator := TDesktopDuplicationWrapper.Create(FDDACreated);
               fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
 
               Application.ProcessMessages;
@@ -2899,8 +2905,8 @@ begin
     NameSuffix := '';
   end;
 
-{  hCursorInfoEventWriteBegin := DoCreateEvent(PWideChar(WideString('Global\VCS_CURINFO_WRITE_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
-  hCursorInfoEventWriteEnd := DoCreateEvent(PWideChar(WideString('Global\VCS_CURINFO_WRITE_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+{  hCursorInfoEventWriteBegin := DoCreateEvent(PWideChar(WideString('Global\RMX_CURINFO_WRITE_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+  hCursorInfoEventWriteEnd := DoCreateEvent(PWideChar(WideString('Global\RMX_CURINFO_WRITE_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
 
   tCursorInfoThrd := TCursorInfoThread.Create(False);
   tCursorInfoThrd.FreeOnTerminate := True;}
@@ -4342,7 +4348,7 @@ begin
         inputs[0].mi.dx := FLastMouseX;
         inputs[0].mi.dy := FLastMouseY;
         inputs[0].mi.mouseData := 0;
-        inputs[0].mi.dwExtraInfo := VCS_MAGIC_NUMBER;
+        inputs[0].mi.dwExtraInfo := RMX_MAGIC_NUMBER;
         SendInput(1, inputs[0], SizeOf(inputs));
 //        mouse_event(MOUSEEVENTF_MIDDLEDOWN, 0, 0, 0, 0);
       end;
@@ -4370,7 +4376,7 @@ begin
         inputs[0].mi.dx := FLastMouseX;
         inputs[0].mi.dy := FLastMouseY;
         inputs[0].mi.mouseData := 0;
-        inputs[0].mi.dwExtraInfo := VCS_MAGIC_NUMBER;
+        inputs[0].mi.dwExtraInfo := RMX_MAGIC_NUMBER;
         SendInput(1, inputs[0], SizeOf(inputs));
     end
     else
@@ -4421,7 +4427,7 @@ begin
         inputs[0].mi.dx := 0;
         inputs[0].mi.dy := 0;
         inputs[0].mi.mouseData := 0;
-        inputs[0].mi.dwExtraInfo := VCS_MAGIC_NUMBER;
+        inputs[0].mi.dwExtraInfo := RMX_MAGIC_NUMBER;
         SendInput(1, inputs[0], SizeOf(inputs));
 
 //        mouse_event(MOUSEEVENTF_MIDDLEUP, 0, 0, 0, 0);
@@ -4449,7 +4455,7 @@ begin
       inputs[0].mi.dx := 0;
       inputs[0].mi.dy := 0;
       inputs[0].mi.mouseData := 0;
-      inputs[0].mi.dwExtraInfo := VCS_MAGIC_NUMBER;
+      inputs[0].mi.dwExtraInfo := RMX_MAGIC_NUMBER;
       SendInput(1, inputs[0], SizeOf(inputs));
     end
     else
@@ -4486,7 +4492,7 @@ begin
     inputs[0].mi.dx := 0;
     inputs[0].mi.dy := 0;
     inputs[0].mi.mouseData := DWORD(Wheel);
-    inputs[0].mi.dwExtraInfo := VCS_MAGIC_NUMBER;
+    inputs[0].mi.dwExtraInfo := RMX_MAGIC_NUMBER;
     SendInput(1, inputs[0], SizeOf(inputs));
 //    mouse_event(MOUSEEVENTF_WHEEL, 0, 0, DWORD(Wheel), 0);
   end
@@ -4532,7 +4538,7 @@ begin
         inputs[0].mi.dx := X;
         inputs[0].mi.dy := Y;
         inputs[0].mi.mouseData := 0;
-        inputs[0].mi.dwExtraInfo := VCS_MAGIC_NUMBER;
+        inputs[0].mi.dwExtraInfo := RMX_MAGIC_NUMBER;
         SendInput(1, inputs[0], SizeOf(inputs));
 
         //mouse_event(MOUSEEVENTF_MOVE or MOUSEEVENTF_ABSOLUTE, X, Y, 0, 0);
@@ -4761,7 +4767,7 @@ begin
     inputs[0].ki.dwFlags := dwFlags;
     inputs[0].ki.wVk := key;
     inputs[0].ki.wScan := vk;
-    inputs[0].ki.dwExtraInfo := VCS_MAGIC_NUMBER;
+    inputs[0].ki.dwExtraInfo := RMX_MAGIC_NUMBER;
 
     SendInput(1, inputs[0], SizeOf(inputs));
   end
@@ -5327,7 +5333,7 @@ end;
 //  end;
 //
 //  KeyboardStruct := Pointer(lParam);
-//  if KeyboardStruct^.dwExtraInfo <> VCS_MAGIC_NUMBER then
+//  if KeyboardStruct^.dwExtraInfo <> RMX_MAGIC_NUMBER then
 //    Result := 1
 //  else
 //  Result := CallNextHookEx(BlockInputHook_Keyboard, CODE, wParam, LParam);
@@ -5345,7 +5351,7 @@ end;
 //  end;
 //
 //  MouseStruct := Pointer(lParam);
-//  if MouseStruct^.dwExtraInfo <> VCS_MAGIC_NUMBER then
+//  if MouseStruct^.dwExtraInfo <> RMX_MAGIC_NUMBER then
 //    Result := 1
 //  else
 //  Result := CallNextHookEx(BlockInputHook_Mouse, CODE, wParam, LParam);

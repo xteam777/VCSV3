@@ -3,7 +3,7 @@ object MainForm: TMainForm
   Top = 309
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'Remox'
-  ClientHeight = 470
+  ClientHeight = 469
   ClientWidth = 839
   Color = clBtnFace
   DoubleBuffered = True
@@ -48,7 +48,7 @@ object MainForm: TMainForm
     Left = 0
     Top = 0
     Width = 839
-    Height = 470
+    Height = 469
     Margins.Left = 0
     Margins.Top = 0
     Margins.Right = 0
@@ -61,10 +61,9 @@ object MainForm: TMainForm
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
-    ExplicitWidth = 840
     DesignSize = (
       839
-      470)
+      469)
     object lblStatus: TLabel
       AlignWithMargins = True
       Left = 46
@@ -5227,7 +5226,6 @@ object MainForm: TMainForm
       end
     end
     object pDevAcc: TPanel
-      AlignWithMargins = True
       Left = 542
       Top = 6
       Width = 298
@@ -5236,6 +5234,7 @@ object MainForm: TMainForm
       Margins.Top = 6
       Margins.Right = 5
       Margins.Bottom = 5
+      BevelInner = bvSpace
       BevelOuter = bvNone
       Color = clWhite
       ParentBackground = False
@@ -5243,10 +5242,10 @@ object MainForm: TMainForm
       TabOrder = 2
       StyleElements = [seFont, seBorder]
       object pAccount: TPanel
-        Left = 0
-        Top = 0
-        Width = 298
-        Height = 455
+        Left = 1
+        Top = 1
+        Width = 296
+        Height = 453
         Margins.Left = 5
         Margins.Top = 6
         Margins.Right = 5
@@ -5258,10 +5257,6 @@ object MainForm: TMainForm
         ParentBackground = False
         TabOrder = 0
         StyleElements = [seFont, seBorder]
-        ExplicitLeft = 1
-        ExplicitTop = 1
-        ExplicitWidth = 294
-        ExplicitHeight = 453
         object Label6: TLabel
           Left = 28
           Top = 179
@@ -5437,10 +5432,10 @@ object MainForm: TMainForm
         end
       end
       object pDevices: TPanel
-        Left = 0
-        Top = 0
-        Width = 298
-        Height = 455
+        Left = 1
+        Top = 1
+        Width = 296
+        Height = 453
         Margins.Left = 5
         Margins.Top = 6
         Margins.Right = 5
@@ -5452,15 +5447,11 @@ object MainForm: TMainForm
         ParentBackground = False
         TabOrder = 1
         StyleElements = [seFont, seBorder]
-        ExplicitLeft = 1
-        ExplicitTop = 1
-        ExplicitWidth = 294
-        ExplicitHeight = 453
         object GridPanel1: TGridPanel
           Left = 0
           Top = 0
-          Width = 298
-          Height = 455
+          Width = 296
+          Height = 453
           Margins.Left = 0
           Margins.Top = 0
           Margins.Right = 5
@@ -5528,16 +5519,14 @@ object MainForm: TMainForm
               Value = 5.000000000000000000
             end>
           TabOrder = 0
-          ExplicitWidth = 294
-          ExplicitHeight = 453
           DesignSize = (
-            298
-            455)
+            296
+            453)
           object twDevices: TVirtualStringTree
             Left = 5
             Top = 38
-            Width = 288
-            Height = 412
+            Width = 286
+            Height = 410
             Margins.Left = 5
             Margins.Top = 73
             Margins.Right = 5
@@ -5576,18 +5565,16 @@ object MainForm: TMainForm
             OnMouseMove = twDevicesMouseMove
             OnMouseUp = twDevicesMouseUp
             OnMouseLeave = twDevicesMouseLeave
-            ExplicitWidth = 284
-            ExplicitHeight = 410
             Columns = <
               item
                 Position = 0
-                Width = 288
+                Width = 286
               end>
           end
           object eDeviceName: TEdit
             Left = 45
             Top = 5
-            Width = 248
+            Width = 246
             Height = 28
             Margins.Left = 46
             Margins.Top = 45
@@ -5607,7 +5594,6 @@ object MainForm: TMainForm
             ParentFont = False
             TabOrder = 1
             OnChange = eDeviceNameChange
-            ExplicitWidth = 244
           end
           object btnAccount: TColorSpeedButton
             Left = 5
@@ -5761,7 +5747,7 @@ object MainForm: TMainForm
     end
     object Button4: TButton
       Left = 463
-      Top = 464
+      Top = 463
       Width = 75
       Height = 25
       Caption = 'Button4'
@@ -5787,8 +5773,8 @@ object MainForm: TMainForm
       OnClick = Button2Click
     end
     object Button3: TButton
-      Left = 716
-      Top = 464
+      Left = 711
+      Top = 463
       Width = 75
       Height = 25
       Caption = 'Button3'
@@ -6004,7 +5990,7 @@ object MainForm: TMainForm
     Left = 11
     Top = 44
     Bitmap = {
-      494C010102001400A80508000800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C010102001400BC0508000800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000200000000800000001002000000000000004
       000000000000000000000000000000000000846BEF006B63E700635AE7006B5A
       EF006B5AEF006B63EF006B63E7007B6BEF00C6B52900BDAD1800BDAD1800BDAD

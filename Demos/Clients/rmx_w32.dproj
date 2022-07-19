@@ -1,14 +1,14 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
-        <ProjectGuid>{C9C9CB0C-CA8E-4DC3-B257-63F6E0ED7B84}</ProjectGuid>
-        <MainSource>Vircess.dpr</MainSource>
+        <ProjectGuid>{B9B080F6-D517-4A97-9A0E-85E0D1C41039}</ProjectGuid>
+        <ProjectVersion>18.2</ProjectVersion>
+        <FrameworkType>VCL</FrameworkType>
+        <MainSource>rmx_w32.dpr</MainSource>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>
+        <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <TargetedPlatforms>1</TargetedPlatforms>
         <AppType>Application</AppType>
-        <FrameworkType>VCL</FrameworkType>
-        <ProjectVersion>18.2</ProjectVersion>
-        <Platform Condition="'$(Platform)'==''">Win32</Platform>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
         <Base>true</Base>
@@ -18,7 +18,7 @@
         <CfgParent>Base</CfgParent>
         <Base>true</Base>
     </PropertyGroup>
-    <PropertyGroup Condition="'$(Config)'=='Release' or '$(Cfg_1)'!=''">
+    <PropertyGroup Condition="'$(Config)'=='Debug' or '$(Cfg_1)'!=''">
         <Cfg_1>true</Cfg_1>
         <CfgParent>Base</CfgParent>
         <Base>true</Base>
@@ -29,7 +29,7 @@
         <Cfg_1>true</Cfg_1>
         <Base>true</Base>
     </PropertyGroup>
-    <PropertyGroup Condition="'$(Config)'=='Debug' or '$(Cfg_2)'!=''">
+    <PropertyGroup Condition="'$(Config)'=='Release' or '$(Cfg_2)'!=''">
         <Cfg_2>true</Cfg_2>
         <CfgParent>Base</CfgParent>
         <Base>true</Base>
@@ -41,179 +41,107 @@
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
-        <Custom_Styles>Windows10|VCLSTYLE|$(BDSCOMMONDIR)\Styles\Windows10.vsf</Custom_Styles>
+        <SanitizedProjectName>rmx_w32</SanitizedProjectName>
+        <Icon_MainIcon>$(BDS)\bin\delphi_PROJECTICON.ico</Icon_MainIcon>
+        <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
         <DCC_E>false</DCC_E>
-        <DCC_F>false</DCC_F>
-        <DCC_Namespace>Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;System;Xml;Data;Datasnap;Web;Soap;Winapi;System.Win;$(DCC_Namespace)</DCC_Namespace>
-        <DCC_K>false</DCC_K>
-        <DCC_ImageBase>00400000</DCC_ImageBase>
         <DCC_N>false</DCC_N>
         <DCC_S>false</DCC_S>
-        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=;CFBundleName=</VerInfo_Keys>
-        <SanitizedProjectName>Vircess</SanitizedProjectName>
-        <VerInfo_Locale>1049</VerInfo_Locale>
+        <DCC_F>false</DCC_F>
+        <DCC_K>false</DCC_K>
+        <DCC_Define>EUREKALOG_VER7;$(DCC_Define)</DCC_Define>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
-        <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <VerInfo_Locale>1033</VerInfo_Locale>
-        <DCC_Namespace>Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
         <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
-        <Icon_MainIcon>Vircess_Icon13.ico</Icon_MainIcon>
+        <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
+        <DCC_UsePackage>DBXSqliteDriver;RESTComponents;DataSnapServerMidas;DBXDb2Driver;DBXInterBaseDriver;vclactnband;vclFireDAC;emsclientfiredac;DataSnapFireDAC;svnui;tethering;JvGlobus;FireDACADSDriver;JvPluginSystem;DBXMSSQLDriver;JvMM;DatasnapConnectorsFreePascal;FireDACMSSQLDriver;vcltouch;JvBands;vcldb;bindcompfmx;svn;JvJans;DBXOracleDriver;JvNet;inetdb;JvAppFrm;DesktopDuplicatorLibrary;JvDotNetCtrls;emsedge;FireDACIBDriver;fmx;fmxdae;JvWizards;FireDACDBXDriver;dbexpress;IndyCore;vclx;JvPageComps;dsnap;DataSnapCommon;emsclient;FireDACCommon;ColorSpeedButton_VCL;JvDB;RESTBackendComponents;DataSnapConnectors;VCLRESTComponents;soapserver;JclDeveloperTools;vclie;bindengine;DBXMySQLDriver;FireDACOracleDriver;CloudService;FireDACMySQLDriver;DBXFirebirdDriver;JvCmp;JvHMI;FireDACCommonODBC;FireDACCommonDriver;DataSnapClient;inet;bindcompdbx;IndyIPCommon;IProgressDialog;AlignedEdit_VCL;vcl;DBXSybaseASEDriver;IndyIPServer;JvCustom;JvXPCtrls;IndySystem;FireDACDb2Driver;dsnapcon;VirtualTreesR;FireDACMSAccDriver;fmxFireDAC;FireDACInfxDriver;vclimg;Jcl;FireDAC;JvCore;emshosting;NFPanel_VCL;JvCrypt;FireDACSqliteDriver;FireDACPgDriver;FireDACASADriver;DBXOdbcDriver;FireDACTDataDriver;soaprtl;DbxCommonDriver;JvDlgs;JvRuntimeDesign;JvManagedThreads;DataSnapServer;xmlrtl;soapmidas;DataSnapNativeClient;fmxobj;vclwinx;FireDACDSDriver;rtl;JvTimeFramework;DbxClientDriver;DBXSybaseASADriver;CustomIPTransport;vcldsnap;JvSystem;JvStdCtrls;bindcomp;appanalytics;DBXInformixDriver;IndyIPClient;bindcompvcl;JvDocking;dbxcds;VclSmp;JvPascalInterpreter;adortl;FireDACODBCDriver;JclVcl;DataSnapIndy10ServerTransport;dsnapxml;DataSnapProviderClient;dbrtl;inetdbxpress;FireDACMongoDBDriver;IndyProtocols;JvControls;JvPrintPreview;JclContainers;fmxase;$(DCC_UsePackage)</DCC_UsePackage>
+        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Keys>CompanyName=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductVersion=1.0.0.0;Comments=;ProgramID=com.embarcadero.$(MSBuildProjectName);FileDescription=$(MSBuildProjectName);ProductName=$(MSBuildProjectName)</VerInfo_Keys>
+        <VerInfo_Locale>1033</VerInfo_Locale>
         <UWP_DelphiLogo44>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_44.png</UWP_DelphiLogo44>
         <UWP_DelphiLogo150>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_150.png</UWP_DelphiLogo150>
-        <DCC_UsePackage>rtl;dbrtl;rtcSDK;$(DCC_UsePackage)</DCC_UsePackage>
+        <BRCC_IncludePath>C:\Base_1C\_vircess.com\_V10\Lib;$(BRCC_IncludePath)</BRCC_IncludePath>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1)'!=''">
-        <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
-        <DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
-        <DCC_DebugInformation>0</DCC_DebugInformation>
-        <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
+        <DCC_Define>DEBUG;EUREKALOG;$(DCC_Define)</DCC_Define>
+        <DCC_DebugDCUs>true</DCC_DebugDCUs>
+        <DCC_Optimize>false</DCC_Optimize>
+        <DCC_GenerateStackFrames>true</DCC_GenerateStackFrames>
+        <DCC_DebugInfoInExe>true</DCC_DebugInfoInExe>
+        <DCC_RemoteDebug>true</DCC_RemoteDebug>
+        <DCC_MapFile>3</DCC_MapFile>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
-        <Icon_MainIcon>Vircess_Icon1.ico</Icon_MainIcon>
-        <VerInfo_Locale>1033</VerInfo_Locale>
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+        <AppEnableHighDPI>true</AppEnableHighDPI>
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
-        <VerInfo_Keys>CompanyName=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductVersion=1.0.0.0;Comments=;ProgramID=com.embarcadero.$(MSBuildProjectName);FileDescription=$(MSBuildProjectName);ProductName=$(MSBuildProjectName)</VerInfo_Keys>
+        <DCC_RemoteDebug>false</DCC_RemoteDebug>
+        <BT_BuildType>Debug</BT_BuildType>
+        <BRCC_IncludePath>C:\Base_1C\_vircess.com\_V10\Lib\DesktopDuplicatorLibrary;C:\Base_1C\_vircess.com\_V10\Lib\VirtualTreeView.v.6.3.0.XE3-XE10.1.Src.Exirbox\Source;C:\Base_1C\_vircess.com\_V10\LibSDK;C:\Base_1C\_vircess.com\_V10\Demos\Modules;C:\Base_1C\_vircess.com\_V10\Demos\Modules\DataProviders;$(BRCC_IncludePath)</BRCC_IncludePath>
+        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+        <VerInfo_Locale>1033</VerInfo_Locale>
+        <AppExecutionLevel>requireAdministrator</AppExecutionLevel>
+        <AppExecutionLevelUIAccess>true</AppExecutionLevelUIAccess>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
-        <DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
-        <DCC_GenerateStackFrames>true</DCC_GenerateStackFrames>
-        <DCC_Optimize>false</DCC_Optimize>
+        <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
+        <DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
+        <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
+        <DCC_DebugInformation>0</DCC_DebugInformation>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
-        <DCC_RemoteDebug>true</DCC_RemoteDebug>
+        <AppEnableHighDPI>true</AppEnableHighDPI>
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
-        <Icon_MainIcon>Vircess_Icon.ico</Icon_MainIcon>
-        <BRCC_IncludePath>D:\Base_1C\vircess.com\V10;$(BRCC_IncludePath)</BRCC_IncludePath>
-        <DCC_RangeChecking>true</DCC_RangeChecking>
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <DCC_DebugInfoInTds>true</DCC_DebugInfoInTds>
-        <DCC_DebugDCUs>true</DCC_DebugDCUs>
-        <DCC_MapFile>3</DCC_MapFile>
-        <VerInfo_Keys>CompanyName=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductVersion=1.0.0.0;Comments=;ProgramID=com.embarcadero.$(MSBuildProjectName);FileDescription=$(MSBuildProjectName);ProductName=$(MSBuildProjectName)</VerInfo_Keys>
-        <VerInfo_Locale>1033</VerInfo_Locale>
-        <DCC_DebugInfoInExe>true</DCC_DebugInfoInExe>
         <BT_BuildType>Debug</BT_BuildType>
+        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+        <VerInfo_Locale>1033</VerInfo_Locale>
+        <AppExecutionLevelUIAccess>true</AppExecutionLevelUIAccess>
         <AppExecutionLevel>highestAvailable</AppExecutionLevel>
     </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="RtcHostForm.pas">
-            <Form>MainForm</Form>
-        </DCCReference>
-        <DCCReference Include="RtcHostSvc.pas">
-            <Form>VircessService</Form>
-            <DesignClass>TService</DesignClass>
-        </DCCReference>
-        <DCCReference Include="..\Modules\dmSetRegion.pas">
-            <Form>dmSelectRegion</Form>
-        </DCCReference>
-        <DCCReference Include="..\Modules\rdChat.pas">
-            <Form>rdChatForm</Form>
-        </DCCReference>
-        <DCCReference Include="..\Modules\rdFileTrans.pas">
-            <Form>rdFileTransfer</Form>
-        </DCCReference>
-        <DCCReference Include="..\Modules\rdSetClient.pas">
-            <Form>rdClientSettings</Form>
-        </DCCReference>
-        <DCCReference Include="..\Modules\rdSetHost.pas">
-            <Form>rdHostSettings</Form>
-        </DCCReference>
-        <DCCReference Include="..\Modules\rdDesktopView.pas">
-            <Form>rdDesktopViewer</Form>
-        </DCCReference>
-        <DCCReference Include="..\Modules\rdDesktopSave.pas">
-            <Form>rdDesktopSaver</Form>
-            <DesignClass>TDataModule</DesignClass>
-        </DCCReference>
-        <DCCReference Include="..\Modules\RtcGroupForm.pas">
-            <Form>GroupForm</Form>
-        </DCCReference>
-        <DCCReference Include="..\Modules\RtcDeviceForm.pas">
-            <Form>DeviceForm</Form>
-        </DCCReference>
-        <DCCReference Include="..\Modules\uVircessTypes.pas"/>
-        <DCCReference Include="..\Modules\RunElevatedSupport.pas"/>
-        <DCCReference Include="..\Modules\RtcIdentification.pas">
-            <Form>fIdentification</Form>
-        </DCCReference>
-        <DCCReference Include="..\Modules\RtcRegistrationForm.pas">
-            <Form>RegistrationForm</Form>
-        </DCCReference>
-        <DCCReference Include="..\Modules\RecordThrd.pas"/>
-        <DCCReference Include="..\Modules\AboutForm.pas">
-            <Form>fAboutForm</Form>
-        </DCCReference>
-        <DCCReference Include="..\Modules\CommonUtils.pas"/>
-        <DCCReference Include="..\Modules\FireWall.pas"/>
-        <DCCReference Include="..\Modules\CommonData.pas"/>
-        <DCCReference Include="..\Modules\ServiceMgr.pas"/>
-        <DCCReference Include="..\Modules\uMessageBox.pas">
-            <Form>fMessageBox</Form>
-        </DCCReference>
-        <DCCReference Include="..\Modules\uPowerWatcher.pas"/>
-        <DCCReference Include="..\Modules\rdFileTransLog.pas">
-            <Form>rdFileTransferLog</Form>
-        </DCCReference>
-        <DCCReference Include="..\Modules\rtcBlankOutForm.pas">
-            <Form>fmBlankoutForm</Form>
-            <FormType>dfm</FormType>
-        </DCCReference>
-        <RcItem Include="rmx_w32.exe">
-            <ContainerId>ResourceItem</ContainerId>
-            <ResourceType>RCDATA</ResourceType>
-            <ResourceId>HELPER</ResourceId>
-        </RcItem>
-        <BuildConfiguration Include="Debug">
+        <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
         </BuildConfiguration>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
-        <BuildConfiguration Include="Release">
+        <BuildConfiguration Include="Debug">
             <Key>Cfg_1</Key>
             <CfgParent>Base</CfgParent>
         </BuildConfiguration>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Delphi.Personality.12</Borland.Personality>
-        <Borland.ProjectType/>
+        <Borland.ProjectType>Application</Borland.ProjectType>
         <BorlandProject>
             <Delphi.Personality>
                 <Source>
-                    <Source Name="MainSource">Vircess.dpr</Source>
+                    <Source Name="MainSource">rmx_w32.dpr</Source>
                 </Source>
                 <Excluded_Packages>
                     <Excluded_Packages Name="$(BDSBIN)\dcloffice2k250.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
                     <Excluded_Packages Name="$(BDSBIN)\dclofficexp250.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
                 </Excluded_Packages>
             </Delphi.Personality>
-            <Platforms>
-                <Platform value="Win32">True</Platform>
-            </Platforms>
             <Deployment Version="3">
-                <DeployFile LocalName="rmx_w32.exe" Configuration="Debug" Class="ProjectFile">
+                <DeployFile LocalName="rmx_w32.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win32">
-                        <RemoteDir>.\</RemoteDir>
+                        <RemoteName>rmx_w32.exe</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployFile LocalName="Vircess.exe" Configuration="Debug" Class="ProjectOutput">
+                <DeployFile LocalName="rmx_w32.exe" Configuration="Release" Class="ProjectOutput">
                     <Platform Name="Win32">
-                        <RemoteName>Vircess.exe</RemoteName>
+                        <RemoteName>rmx_w32.exe</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployFile LocalName="Vircess.rsm" Configuration="Debug" Class="DebugSymbols">
+                <DeployFile LocalName="Win32\Debug\rmx_w32.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win32">
-                        <RemoteName>Vircess.rsm</RemoteName>
+                        <RemoteName>rmx_w32.exe</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
@@ -254,7 +182,6 @@
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
-                <DeployClass Name="AndroidLibnativeX86File"/>
                 <DeployClass Name="AndroidServiceOutput">
                     <Platform Name="Android">
                         <RemoteDir>library\lib\armeabi-v7a</RemoteDir>
@@ -628,12 +555,15 @@
                 <ProjectRoot Platform="iOSDevice64" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>
-                <ProjectRoot Platform="Win32" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="Linux64" Name="$(PROJECTNAME)"/>
+                <ProjectRoot Platform="Win32" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="OSX32" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Android" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="iOSSimulator" Name="$(PROJECTNAME).app"/>
             </Deployment>
+            <Platforms>
+                <Platform value="Win32">True</Platform>
+            </Platforms>
         </BorlandProject>
         <ProjectFileVersion>12</ProjectFileVersion>
     </ProjectExtensions>
