@@ -8,7 +8,7 @@ interface
 {$INCLUDE rtcDefs.inc}
 
 uses
-  Windows, Messages, SysUtils, Classes,
+  Windows, Messages, SysUtils, Classes, SyncObjs,
   Graphics, Controls, SvcMgr, Dialogs, ExtCtrls,
 
   rtcInfo, rtcLog, rtcCrypt, rtcSystem, CommonData,
@@ -85,6 +85,7 @@ type
 
   private
     { Private declarations }
+    FCurStatus: Integer;
   public
     { Public declarations }
 //    Running:boolean;
@@ -107,6 +108,10 @@ type
     procedure ChangePort(AClient: TRtcHttpClient);
     procedure ChangePortP(AClient: TRtcHttpPortalClient);
 
+    function GetStatus: Integer;
+    procedure SetStatus(Status: Integer);
+    property CurStatus: Integer read GetStatus write SetStatus;
+
 //    procedure OnSessionChange(var Msg: TMessage); message WM_WTSSESSION_CHANGE;
 
 //    function GetServiceController:
@@ -124,12 +129,19 @@ const
   HELPER_EXE_NAME = 'rmx_w32.exe';
   HELPER_CONSOLE_EXE_NAME = 'rmx_x64.exe';
 
+  STATUS_NO_CONNECTION = 0;
+  STATUS_ACTIVATING_ON_MAIN_GATE = 1;
+  STATUS_CONNECTING_TO_GATE = 2;
+  STATUS_READY = 3;
+
 var
   RemoxService: TRemoxService;
   HelperTempFileName, HelperConsoleTempFileName: String;
   tStartHelpers, tStartClients: TStartThread;
   ConfigLastDate: TDateTime;
   ActivationInProcess: Boolean;
+  CurStatus: Integer;
+  CS_Status: TCriticalSection;
 //  hWnd, hWndThread: THandle;
 //  tid: Cardinal;
 //  FRegisteredSessionNotification: Boolean;
@@ -138,13 +150,34 @@ implementation
 
 {$R *.DFM}
 
+function TRemoxService.GetStatus: Integer;
+begin
+  CS_Status.Acquire;
+  try
+    Result := FCurStatus;
+  finally
+    CS_Status.Release;
+  end;
+end;
+
+procedure TRemoxService.SetStatus(Status: Integer);
+begin
+  CS_Status.Acquire;
+  try
+    FCurStatus := Status;
+  finally
+    CS_Status.Release;
+  end;
+end;
+
 procedure TRemoxService.ServiceCreate(Sender: TObject);
 begin
-  Sleep(10000);
+//  Sleep(10000);
   if (Win32MajorVersion >= 6 {vista\server 2k8}) then
     Interactive := False;
 
   ConfigLastDate := 0;
+  CurStatus := STATUS_NO_CONNECTION;
   ActivationInProcess := False;
 
 //  FRegisteredSessionNotification := RegisterSessionNotification(hWnd, NOTIFY_FOR_ALL_SESSIONS);
@@ -168,7 +201,7 @@ begin
 
   LoadSetup('ALL');
 
-  PFileTrans.FileInboxPath:= ExtractFilePath(AppFileName) + '\INBOX';
+//  PFileTrans.FileInboxPath := ExtractFilePath(AppFileName) + '\INBOX';
 end;
 
 procedure TRemoxService.ServiceStart(Sender: TService; var Started: Boolean);
@@ -575,6 +608,8 @@ var
 begin
 //HelperConsoleTempFileName := 'C:\Base_1C\_vircess\_V10\VCL-V4\Demos\Clients\vcs_x64.exe';
 //HelperTempFileName := 'C:\1C_Bases\_vircess.com\_V11\VCL-V4\Demos\Clients\vcs_w32.exe';
+HelperConsoleTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_x64.exe';
+HelperTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_w32.exe';
 
   if doStartHelper then
   begin
@@ -707,7 +742,7 @@ begin
 //  end;
 
   if PClient.GateAddr = '' then
-    PClient.GateAddr := '95.216.96.39';
+    PClient.GateAddr := '95.216.96.8';
   if HostTimerClient.ServerAddr = '' then
     HostTimerClient.ServerAddr := '95.216.96.39';
 
@@ -752,8 +787,10 @@ begin
       PClient.Active := False;
       PClient.LoginUserName := UserName;
       PClient.GateAddr := asString['Gateway'];
-      PClient.GatePort := asString['Port'];
+      PClient.GatePort := '443';
       PClient.Active := True;
+
+      SetStatus(STATUS_CONNECTING_TO_GATE);
 
       HostPingTimer.Enabled := True;
 
@@ -787,6 +824,7 @@ begin
     end
     else
     begin
+        SetStatus(STATUS_ACTIVATING_ON_MAIN_GATE);
 //      SetStatusString('Сервер Remox не найден');
 //      SetStatus(1);
     end;
@@ -1158,6 +1196,11 @@ end;
 procedure TRemoxService.PClientStart(Sender: TAbsPortalClient;
   const Data: TRtcValue);
 begin
+  if (GetStatus = STATUS_CONNECTING_TO_GATE) then
+  begin
+    SetStatus(STATUS_READY);
+  end;
+
   tPClientReconnect.Enabled := False;
 end;
 
@@ -1177,6 +1220,8 @@ begin
 
   if not IsInternetConnected then
     Exit;
+
+  SetStatus(STATUS_ACTIVATING_ON_MAIN_GATE);
 
   if not HostTimerClient.isConnected then
     Exit;
@@ -1422,7 +1467,13 @@ end;
 
 procedure TRemoxService.HostTimerClientDisconnect(Sender: TRtcConnection);
 begin
-  tHostTimerClientReconnect.Enabled := True;
+  if (not tHostTimerClientReconnect.Enabled) then
+  begin
+    ActivationInProcess := False;
+    SetStatus(STATUS_NO_CONNECTION);
+    tHostTimerClientReconnect.Enabled := True;
+  end;
+
   tActivate.Enabled := False;
 
   ChangePort(HostTimerClient);
@@ -1451,7 +1502,8 @@ end;
 
 procedure TRemoxService.tActivateTimer(Sender: TObject);
 begin
-  if not ActivationInProcess then
+  if (CurStatus < STATUS_CONNECTING_TO_GATE)
+    and (not ActivationInProcess) then
     ActivateHost;
 end;
 
@@ -1465,11 +1517,21 @@ begin
 //  if PClient.LoginUserName = '' then
 //    Exit;
 //
-  PClient.Disconnect;
-  PClient.Active := False;
-  PClient.Active := True;
+  if (PClient.LoginUserName <> '')
+    and (PClient.LoginUserName <> '') then
+  begin
+    if (GetStatus = STATUS_READY) then
+      SetStatus(STATUS_CONNECTING_TO_GATE);
 
-  tPClientReconnect.Enabled := False;
+    PClient.Disconnect;
+    PClient.Active := False;
+    PClient.Active := True;
+
+    tPClientReconnect.Enabled := False;
+  end
+  else
+    tPClientReconnect.Enabled := True;
+
 //
 //  if not PClient.Active then
 ////    and not PClient.Connected then
@@ -1679,6 +1741,12 @@ procedure TVircess_Service.StopMyService;
     running := False;
     end;
   end;}
+
+initialization
+  CS_Status := TCriticalSection.Create;
+
+finalization
+  CS_Status.Free;
 
 end.
 

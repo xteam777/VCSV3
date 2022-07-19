@@ -78,6 +78,7 @@ object RemoxService: TRemoxService
     AutoSyncEvents = True
     Client = HostTimerClient
     Compression = cMax
+    HyperThreading = True
     EncryptionKey = 16
     SecureKey = '2240897'
     ForceEncryption = True
@@ -102,7 +103,7 @@ object RemoxService: TRemoxService
     MaxResponseSize = 128000
     MaxHeaderSize = 16000
     Left = 16
-    Top = 143
+    Top = 139
   end
   object resHostPing: TRtcResult
     OnReturn = resHostPingReturn
@@ -151,7 +152,6 @@ object RemoxService: TRemoxService
     Top = 54
   end
   object tActivate: TTimer
-    Enabled = False
     OnTimer = tActivateTimer
     Left = 232
     Top = 8

@@ -2571,7 +2571,7 @@ begin
 
   ActivationInProcess := False;
 
-  CurStatus := 0;
+  CurStatus := STATUS_NO_CONNECTION;
   FStatusUpdateThread := TStatusUpdateThread.Create(False, UpdateStatus);
 
   OpenedModalForm := nil;
@@ -3797,7 +3797,7 @@ begin
   end;
 
   if PClient.GateAddr = '' then
-    PClient.GateAddr := '95.216.96.39';
+    PClient.GateAddr := '95.216.96.8';
   if hcAccounts.ServerAddr = '' then
     hcAccounts.ServerAddr := '95.216.96.39';
   if TimerClient.ServerAddr = '' then
@@ -8704,15 +8704,6 @@ begin
 
   DragAcceptFiles(Handle, False);
 
-  if (Sender = PClient)
-    and (GetStatus = STATUS_CONNECTING_TO_GATE) then
-  begin
-    SetStatus(STATUS_READY);
-
-    if cbRememberAccount.Checked then
-      btnAccountLoginClick(nil);
-  end;
-
 //  lblStatus.Caption := 'Подключен как "' + eUserName.Text + '".';
 //  lblStatus.Update;
 
@@ -8761,6 +8752,15 @@ begin
 //    Pages.ActivePage:=Page_Hosting;
 //    end;
 //  SetStatusString('Готов к подключению');
+
+  if (Sender = PClient)
+    and (GetStatus = STATUS_CONNECTING_TO_GATE) then
+  begin
+    SetStatus(STATUS_READY);
+
+    if cbRememberAccount.Checked then
+      btnAccountLoginClick(nil);
+  end;
 
   tPClientReconnect.Enabled := False;
 

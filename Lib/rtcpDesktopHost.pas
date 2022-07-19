@@ -111,6 +111,7 @@ type
     ScrCap: TRtcScreenCapture;
 
 //    FImageCatcher: TImageCatcher;
+    FDDACreated: Boolean;
     FDesktopDuplicator: TDesktopDuplicationWrapper;
 
     function CreateBitmap(index: integer): TBitmap;
@@ -1287,7 +1288,7 @@ begin
   SetLength(FMarked, 0);
 
 //  FImageCatcher := TImageCatcher.Create;
-  FDesktopDuplicator := TDesktopDuplicationWrapper.Create;
+  FDesktopDuplicator := TDesktopDuplicationWrapper.Create(FDDACreated);
 
 //TRtcScreenEncoder.Create берет ScrCap.HaveScreen а ScrCap = nil. Белый экран вначале
 //  while not ScrCap.HaveScreen do
@@ -2256,7 +2257,8 @@ var
   numberRead : SIZE_T;
   WaitTimeout: DWORD;
   SaveBitMap: TBitmap;
-i, j: LongInt;
+  i, j: LongInt;
+  fScreenGrabbed: Boolean;
 begin
   WaitTimeout := 1000;
 
@@ -2278,6 +2280,8 @@ begin
       SessionID := CurrentSessionID;
       NameSuffix := '';
     end;
+
+//    NameSuffix := '_C';
 
     EventWriteBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_WRITE_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
     if EventWriteBegin = 0 then
@@ -2324,7 +2328,7 @@ begin
         hMap := OpenFileMapping(FILE_MAP_READ or FILE_MAP_WRITE, False, PWideChar(WideString('Session\' + IntToStr(SessionID) + '\RMX_SCREEN' + NameSuffix)));
         if hMap = 0 then
           Exit;
-        HeaderSize := sizeof(BitmapSize) + sizeof(Result) + sizeof(FHelper_Width) + sizeof(FHelper_Height) + sizeof(FHelper_BitsPerPixel) + sizeof(CurrentProcessId) + sizeof(ipBase) + sizeof(FHelper_mouseFlags) + sizeof(FHelper_mouseCursor);
+        HeaderSize := sizeof(BitmapSize) + sizeof(fScreenGrabbed) + sizeof(FHelper_Width) + sizeof(FHelper_Height) + sizeof(FHelper_BitsPerPixel) + sizeof(CurrentProcessId) + sizeof(ipBase) + sizeof(FHelper_mouseFlags) + sizeof(FHelper_mouseCursor);
         pMap := MapViewOfFile(hMap, //дескриптор "проецируемого" объекта
                                 FILE_MAP_READ or FILE_MAP_WRITE,  // разрешение чтения/записи
                                 0,0,
@@ -2339,8 +2343,8 @@ begin
         CurOffset := 0;
         CopyMemory(@BitmapSize, pMap, SizeOf(BitmapSize));
         CurOffset := CurOffset + SizeOf(BitmapSize);
-        CopyMemory(@Result, PByte(pMap) + CurOffset, sizeof(Result));
-        CurOffset := CurOffset + SizeOf(Result);
+        CopyMemory(@fScreenGrabbed, PByte(pMap) + CurOffset, sizeof(fScreenGrabbed));
+        CurOffset := CurOffset + SizeOf(fScreenGrabbed);
         CopyMemory(@FHelper_Width, PByte(pMap) + CurOffset, sizeof(FHelper_Width));
         CurOffset := CurOffset + SizeOf(FHelper_Width);
         CopyMemory(@FHelper_Height, PByte(pMap) + CurOffset, sizeof(FHelper_Height));
@@ -2384,8 +2388,8 @@ begin
         CurOffset := 0;
   //      CopyMemory(@BitmapSize, pMap, SizeOf(BitmapSize));
         CurOffset := CurOffset + SizeOf(BitmapSize);
-  //      CopyMemory(@Result, PByte(pMap) + CurOffset, sizeof(Result));
-        CurOffset := CurOffset + SizeOf(Result);
+  //      CopyMemory(@fScreenGrabbed, PByte(pMap) + CurOffset, sizeof(fScreenGrabbed));
+        CurOffset := CurOffset + SizeOf(fScreenGrabbed);
   //      CopyMemory(@FHelper_Width, PByte(pMap) + CurOffset, sizeof(FHelper_Width));
         CurOffset := CurOffset + SizeOf(FHelper_Width);
   //      CopyMemory(@FHelper_Height, PByte(pMap) + CurOffset, sizeof(FHelper_Height));
@@ -2444,7 +2448,8 @@ begin
 //        CloseHandle(hProc); // отсоединяемся от процесса
 //      end;
 
-      BitBlt(FNewImage.Canvas.Handle, 0, 0, FHelper_Width, FHelper_Height, hMemDC, 0, 0, SRCCOPY);
+//      if fScreenGrabbed then
+        Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FHelper_Width, FHelper_Height, hMemDC, 0, 0, SRCCOPY);
 //      FNewImage.Invalidate;
 //      SelectObject(hMemDC, hOld);
 //      DeleteDC(hMemDC);
@@ -2637,6 +2642,7 @@ var
 //      else
       if (LowerCase(GetInputDesktopName) <> 'default') //Мы либо на экране блокировки / UAC
         or (IsService) then //Либо мы служба
+//      if True then
       begin
 //        CS.Acquire;
 //i := GetTickCount;
@@ -2708,7 +2714,7 @@ var
             while fNeedRecreate do
             begin
               FDesktopDuplicator.Free;
-              FDesktopDuplicator := TDesktopDuplicationWrapper.Create;
+              FDesktopDuplicator := TDesktopDuplicationWrapper.Create(FDDACreated);
               fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
 
               Application.ProcessMessages;

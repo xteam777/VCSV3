@@ -34,7 +34,7 @@ type
     FDirtyCount: Integer;
   public
     Bitmap: TBitmap;
-    constructor Create;
+    constructor Create(var fCreated: Boolean);
     function GetFrame(var fNeedRecreate: Boolean): Boolean;
     function DrawFrame(var Bitmap: TBitmap): Boolean;
 //    function DrawFrameToDib(pBits: PByte): Boolean;
@@ -58,13 +58,16 @@ implementation
 
 { TDesktopDuplicationWrapper }
 
-constructor TDesktopDuplicationWrapper.Create;
+constructor TDesktopDuplicationWrapper.Create(var fCreated: Boolean);
 var
   GI: IDXGIDevice;
   GA: IDXGIAdapter;
   GO: IDXGIOutput;
   O1: IDXGIOutput1;
 begin
+  fCreated := False;
+
+//  Sleep(10000);
   FError := D3D11CreateDevice(
     nil, // Default adapter
     D3D_DRIVER_TYPE_HARDWARE, // A hardware driver, which implements Direct3D features in hardware.
@@ -77,31 +80,131 @@ begin
     FContext
   );
   if Failed(FError) then
+  begin
+    fCreated := False;
+//    xLog('D3D11CreateDevice Error: ' +
     Exit;
+  end;
 
   FError := FDevice.QueryInterface(IID_IDXGIDevice, GI);
   if Failed(FError) then
+  begin
+    fCreated := False;
+//    xLog('QueryInterface IID_IDXGIDevice Error: ' +
     Exit;
+  end;
 
   FError := GI.GetParent(IID_IDXGIAdapter, Pointer(GA));
   if Failed(FError) then
+  begin
+    fCreated := False;
+//    xLog('GI.GetParent Error: ' +
     Exit;
+  end;
 
   FError := GA.EnumOutputs(0, GO);
   if Failed(FError) then
+  begin
+    fCreated := False;
+//    xLog('EnumOutputs Error: ' +
     Exit;
+  end;
 
   FError := GO.GetDesc(FOutput);
   if Failed(FError) then
+  begin
+    fCreated := False;
+//    xLog('GetDesc Error: ' +
     Exit;
+  end;
 
   FError := GO.QueryInterface(IID_IDXGIOutput1, O1);
   if Failed(FError) then
+  begin
+    fCreated := False;
+//    xLog('QueryInterface IID_IDXGIOutput1 Error: ' +
     Exit;
+  end;
 
   FError := O1.DuplicateOutput(FDevice, FDuplicate);
   if Failed(FError) then
+  begin
+    fCreated := False;
+//    xLog('DuplicateOutput Error: ' +
     Exit;
+  end;
+
+  fCreated := True;
+end;
+
+function TDesktopDuplicationWrapper.GetFrame(var fNeedRecreate: Boolean): Boolean;
+var
+  FrameInfo: TDXGI_OUTDUPL_FRAME_INFO;
+  DesktopResource: IDXGIResource;
+  BufLen : Integer;
+  BufSize: Uint;
+begin
+  Result := False;
+  fNeedRecreate := False;
+
+  if FDuplicate = nil then
+  begin
+    fNeedRecreate := True;
+    Exit;
+  end
+  else
+    FDuplicate.ReleaseFrame;
+
+  Sleep(1);
+
+  DesktopResource := nil;
+
+  FError := FDuplicate.AcquireNextFrame(500, FrameInfo, DesktopResource);
+  if Failed(FError) then
+  begin
+//    if FError = DXGI_ERROR_ACCESS_LOST then
+//      fNeedRecreate := True;
+
+    Exit;
+  end;
+
+  if FTexture <> nil then
+  begin
+    FTexture := nil;
+  end;
+
+  FError := DesktopResource.QueryInterface(IID_ID3D11Texture2D, FTexture);
+  DesktopResource := nil;
+  if failed(FError) then
+    Exit;
+
+  if FrameInfo.TotalMetadataBufferSize > 0 then
+  begin
+    BufLen := FrameInfo.TotalMetadataBufferSize;
+    if Length(FMetaData) < BufLen then
+      SetLength(FMetaData, BufLen);
+
+    FMoveRects := Pointer(FMetaData);
+
+    FError := FDuplicate.GetFrameMoveRects(BufLen, FMoveRects, BufSize);
+    if Failed(FError) then
+      Exit;
+    FMoveCount := BufSize div sizeof(TDXGI_OUTDUPL_MOVE_RECT);
+
+    FDirtyRects := @FMetaData[BufSize];
+    Dec(BufLen, BufSize);
+
+    FError := FDuplicate.GetFrameDirtyRects(BufLen, FDirtyRects, BufSize);
+    if Failed(FError) then
+      Exit;
+    FDirtyCount := BufSize div sizeof(TRECT);
+
+    Result := True;
+  end
+  else
+  begin
+    FDuplicate.ReleaseFrame;
+  end;
 end;
 
 function TDesktopDuplicationWrapper.DrawFrame(var Bitmap: TBitmap): Boolean;
@@ -152,6 +255,7 @@ begin
     Inc(p, 4 * Desc.Width);
   end;
 
+  FContext.Unmap(FTexture, 0);
   FTexture := nil;
   FDuplicate.ReleaseFrame;
 end;
@@ -333,69 +437,5 @@ end;
 //    FDuplicate.ReleaseFrame;
 //  end;
 //end;
-
-function TDesktopDuplicationWrapper.GetFrame(var fNeedRecreate: Boolean): Boolean;
-var
-  FrameInfo: TDXGI_OUTDUPL_FRAME_INFO;
-  DesktopResource: IDXGIResource;
-  BufLen : Integer;
-  BufSize: Uint;
-begin
-  Result := False;
-  fNeedRecreate := False;
-
-  FDuplicate.ReleaseFrame;
-
-  Sleep(1);
-
-  DesktopResource := nil;
-
-  FError := FDuplicate.AcquireNextFrame(500, FrameInfo, DesktopResource);
-  if Failed(FError) then
-  begin
-//    if FError = DXGI_ERROR_ACCESS_LOST then
-//      fNeedRecreate := True;
-
-    Exit;
-  end;
-
-  if FTexture <> nil then
-  begin
-    FTexture := nil;
-  end;
-
-  FError := DesktopResource.QueryInterface(IID_ID3D11Texture2D, FTexture);
-  DesktopResource := nil;
-  if failed(FError) then
-    Exit;
-
-  if FrameInfo.TotalMetadataBufferSize > 0 then
-  begin
-    BufLen := FrameInfo.TotalMetadataBufferSize;
-    if Length(FMetaData) < BufLen then
-      SetLength(FMetaData, BufLen);
-
-    FMoveRects := Pointer(FMetaData);
-
-    FError := FDuplicate.GetFrameMoveRects(BufLen, FMoveRects, BufSize);
-    if Failed(FError) then
-      Exit;
-    FMoveCount := BufSize div sizeof(TDXGI_OUTDUPL_MOVE_RECT);
-
-    FDirtyRects := @FMetaData[BufSize];
-    Dec(BufLen, BufSize);
-
-    FError := FDuplicate.GetFrameDirtyRects(BufLen, FDirtyRects, BufSize);
-    if Failed(FError) then
-      Exit;
-    FDirtyCount := BufSize div sizeof(TRECT);
-
-    Result := True;
-  end
-  else
-  begin
-    FDuplicate.ReleaseFrame;
-  end;
-end;
 
 end.

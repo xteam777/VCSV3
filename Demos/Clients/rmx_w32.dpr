@@ -1,5 +1,7 @@
 program rmx_w32;
 
+//Переключение десктопа и снятие скриншота работает исключительно в потоке
+
 uses
   Winapi.Windows,
   Forms,
@@ -153,18 +155,28 @@ var
   CurrentPID: DWORD;
   HeaderSize: Integer;
   err: LongInt;
+  fHaveScreen: Boolean;
 
   dwFlags, wVk, wScan: DWORD;
   IOtype, dx, dy, mouseData: Integer;
 
   FShiftDown, FCtrlDown, FAltDown: Boolean;
 
-  FDesktopDuplicator: TDesktopDuplicationWrapper;
-
   function RpcRevertToSelf: RPC_STATUS; stdcall; external 'rpcrt4.dll';
   function RpcImpersonateClient(BindingHandle: RPC_BINDING_HANDLE): RPC_STATUS; stdcall; external 'rpcrt4.dll';
   function ProcessIdToSessionId(dwProcessId: DWORD; out pSessionId: DWORD): BOOL; stdcall; external 'kernel32.dll';
   function WTSGetActiveConsoleSessionId: THandle; external 'Kernel32.dll' name 'WTSGetActiveConsoleSessionId';
+
+function IsWindows8orLater: Boolean;
+begin
+  Result := False;
+
+  if Win32MajorVersion > 6 then
+    Result := True;
+  if Win32MajorVersion = 6 then
+    if Win32MinorVersion >= 2 then
+      Result := True;
+end;
 
 procedure keybdevent(key: word; Down: boolean = True; Extended: boolean=False);
 var
@@ -1945,6 +1957,8 @@ begin
 end;}
 
 procedure CreateBitmapData;
+var
+  cClrBits: Word;
 begin
   sWidth := GetSystemMetrics(SM_CXSCREEN);
   sHeight := GetSystemMetrics(SM_CYSCREEN);
@@ -1958,8 +1972,30 @@ begin
     biHeight := -sHeight; //Use negative height to scan top-down.
     biPlanes := 1;
     biBitCount := GetDeviceCaps(hScrDC, BITSPIXEL);
-    biSizeImage := 4 * sWidth * sHeight;
-    biCompression := BI_RGB;
+
+//    cClrBits := biPlanes * biBitCount;
+//    if (cClrBits = 1) then
+//      cClrBits := 1
+//    else if (cClrBits <= 4) then
+//      cClrBits := 4
+//    else if (cClrBits <= 8) then
+//      cClrBits := 8
+//    else if (cClrBits <= 16) then
+//      cClrBits := 16
+//    else if (cClrBits <= 24) then
+//      cClrBits := 24
+//    else
+//      cClrBits := 32;
+//
+//    if (cClrBits < 24) then
+//      biClrUsed := (1 shl cClrBits)
+//    else
+//      biClrUsed := 0;
+//
+////    biSizeImage := 4 * sWidth * sHeight;
+//    biSizeImage := ((biWidth * cClrBits + 31) and (not 31)) div 8 * biHeight;
+//    biClrImportant := 0;
+//    biCompression := BI_RGB;
   end;
   pBits := nil;
   hBmp := CreateDIBSection(hScrDC, bitmap_info, DIB_RGB_COLORS, pBits, 0, 0);
@@ -1978,7 +2014,7 @@ end;
 
 function SwitchToActiveDesktop: String;
 var
-  LogonDesktop, CurDesktop: HDESK;
+  InputDesktop, CurDesktop: HDESK;
   name: array[0..255] of Char;
   DesktopName: String;
   Count: DWORD;
@@ -1990,11 +2026,11 @@ begin
   Result := 'Default';
 //  CS.Acquire;
   try
-    LogonDesktop := OpenInputDesktop(DF_ALLOWOTHERACCOUNTHOOK, False, READ_CONTROL or WRITE_DAC or DESKTOP_WRITEOBJECTS or DESKTOP_READOBJECTS or DESKTOP_JOURNALPLAYBACK);
-    if LogonDesktop = 0 then
+    InputDesktop := OpenInputDesktop(DF_ALLOWOTHERACCOUNTHOOK, False, READ_CONTROL or WRITE_DAC or DESKTOP_WRITEOBJECTS or DESKTOP_READOBJECTS or DESKTOP_JOURNALPLAYBACK);
+    if InputDesktop = 0 then
     begin
       err := GetLastError;
-      LogIfError('OpenInputDesktop HANDLE = ' + IntToStr(LogonDesktop) + ' NAME = ' + GetUserObjectName(CurDesktop), err);
+      LogIfError('OpenInputDesktop HANDLE = ' + IntToStr(InputDesktop) + ' NAME = ' + GetUserObjectName(CurDesktop), err);
     end;
 
 //    err := GetLastError;
@@ -2006,9 +2042,9 @@ begin
       LogIfError('GetThreadDesktop: ' + GetUserObjectName(CurDesktop), GetLastError);
     end;
 
-    if (LogonDesktop <> 0) and (GetUserObjectName(LogonDesktop) <> GetUserObjectName(CurDesktop)) then
+    if (InputDesktop <> 0) and (GetUserObjectName(InputDesktop) <> GetUserObjectName(CurDesktop)) then
     begin
-      res := SetThreadDesktop(LogonDesktop);
+      res := SetThreadDesktop(InputDesktop);
       LogIfError('SetThreadDesktop', GetLastError);
 //      err := GetLastError;
 //      if res then
@@ -2038,8 +2074,8 @@ begin
 //        end;
     end;
   finally
-    if (LogonDesktop <> 0) then
-      CloseDesktop(LogonDesktop);
+    if (InputDesktop <> 0) then
+      CloseDesktop(InputDesktop);
 //    if hProcess <> 0 then
 //      CloseHandle(hProcess);
 //    CS.Release;
@@ -2302,178 +2338,6 @@ end;
 //    Application.ProcessMessages;
 //end;
 
-function ScreenShotThreadProc(pParam: Pointer): DWORD; stdcall;
-var
-  BitmapSize: Cardinal;
-  mResult, fRes, fHaveScreen, fNeedRecreate: Boolean;
-  CurOffset: Integer;
-  ci: TCursorInfo;
-  hProc: THandle;
-  PID: DWORD;
-  numberRead : SIZE_T;
-  WaitTimeout: DWORD;
-  SaveBitMap: TBitmap;
-  i: Integer;
-begin
-  WaitTimeout := 1000;
-  try
-    while True do
-    begin
-      try
-        try
-          WaitForSingleObject(EventWriteBegin, INFINITE);
-          ResetEvent(EventWriteBegin);
-          ResetEvent(EventReadBegin);
-          ResetEvent(EventReadEnd);
-
-          SelectInputWinStation;
-          SwitchToActiveDesktop;
-
-          CreateBitmapData;
-
-//          hOld := SelectObject(hMemDC, hBmp);
-//          mResult := BitBlt(hMemDC, 0, 0, sWidth, sHeight, hScrDC, 0, 0, SRCCOPY);
-//          if not mResult then
-//          begin
-//            err := GetLastError;
-//            xLog('BitBlt Error: ' + IntToStr(err) + ' ' + SysErrorMessage(err));
-//            Continue;
-//          end;
-
-          fHaveScreen := False;
-          while not fHaveScreen do
-          begin
-            fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
-            while fNeedRecreate do
-            begin
-              FDesktopDuplicator.Free;
-              FDesktopDuplicator := TDesktopDuplicationWrapper.Create;
-              fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
-
-              Sleep(1);
-            end;
-            if fRes then
-            begin
-              if FDesktopDuplicator.DrawFrame(FDesktopDuplicator.Bitmap) then
-                fHaveScreen := True;
-            end;
-            //else
-            //  Memo1.Lines.Add('no frame ' + IntToHex(FDuplication.Error));
-
-            Sleep(1);
-          end;
-
-//          FDesktopDuplicator.Bitmap.SaveToFile('C:\Rufus\dda.bmp');
-
-//          DrawDIB;
-//
-//          for i := 0 to 10000 do
-//            Application.ProcessMessages;
-
-//          SaveBitMap := TBitmap.Create;
-//          SaveBitMap.Width := sWidth;
-//          SaveBitMap.Height := sHeight;
-//
-          hOld := SelectObject(hMemDC, hBmp);
-          mResult := BitBlt(hMemDC, 0, 0, sWidth, sHeight, FDesktopDuplicator.Bitmap.Canvas.Handle, 0, 0, SRCCOPY);
-          if not mResult then
-          begin
-            err := GetLastError;
-            xLog('BitBlt Error: ' + IntToStr(err) + ' ' + SysErrorMessage(err));
-            Continue;
-          end;
-
-//  SaveBitMap := TBitmap.Create;
-//  SaveBitMap.Width := sWidth;
-//  SaveBitMap.Height := sHeight;
-//  BitBlt(SaveBitMap.Canvas.Handle, //куда
-//  0,0,sWidth,sHeight,//координаты и размер
-//  hMemDC, //откуда
-//  0,0, //координаты
-//  SRCCOPY); //режим копирования
-//  SaveBitMap.SaveToFile('C:\Screenshots\vcs_x64_' + StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
-//  SaveBitMap.Free;
-
-
-//  SaveBitMap.SaveToFile('C:\Screenshots\VH_' + StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
-
-          BitmapSize := sHeight * sWidth * 4;
-
-          ZeroMemory(@ci, SizeOf(TCursorInfo));
-          ci.cbSize := SizeOf(TCursorInfo);
-          ci.hCursor := 0;
-          GetCursorInfo(ci);
-
-          CurOffset := 0;
-          CopyMemory(pMap, @BitmapSize, sizeof(BitmapSize));
-          CurOffset := sizeof(BitmapSize);
-          CopyMemory(PByte(pMap) + CurOffset, @mResult, sizeof(mResult));
-          CurOffset := CurOffset + sizeof(mResult);
-          CopyMemory(PByte(pMap) + CurOffset, @sWidth, sizeof(sWidth));
-          CurOffset := CurOffset + sizeof(sWidth);
-          CopyMemory(PByte(pMap) + CurOffset, @sHeight, sizeof(sHeight));
-          CurOffset := CurOffset + sizeof(sHeight);
-          CopyMemory(PByte(pMap) + CurOffset, @bitmap_info.bmiHeader.biBitCount, sizeof(Word));
-          CurOffset := CurOffset + sizeof(Word);
-//          CopyMemory(@PID, PByte(pMap) + CurOffset, sizeof(PID));
-          CurOffset := CurOffset + sizeof(CurrentPID);
-//          CopyMemory(PByte(pMap) + CurOffset, @pBits, sizeof(pBits));
-          CurOffset := CurOffset + sizeof(pBits);
-          CopyMemory(PByte(pMap) + CurOffset, @ci.flags, sizeof(ci.flags));
-          CurOffset := CurOffset + sizeof(ci.flags);
-          CopyMemory(PByte(pMap) + CurOffset, @ci.hCursor, sizeof(ci.hCursor));
-          CurOffset := CurOffset + sizeof(ci.hCursor);
-          CopyMemory(PByte(pMap) + CurOffset, @ci.ptScreenPos.X, sizeof(ci.ptScreenPos.X));
-          CurOffset := CurOffset + sizeof(ci.ptScreenPos.X);
-          CopyMemory(PByte(pMap) + CurOffset, @ci.ptScreenPos.Y, sizeof(ci.ptScreenPos.Y));
-          CurOffset := CurOffset + sizeof(ci.ptScreenPos.Y);
-
-          SetEvent(EventWriteEnd);
-          if WaitForSingleObject(EventReadBegin, WaitTimeout) = WAIT_TIMEOUT then
-            Continue;
-
-          CurOffset := 0;
-//          CopyMemory(pMap, @BitmapSize, sizeof(BitmapSize));
-          CurOffset := sizeof(BitmapSize);
-//          CopyMemory(PByte(pMap) + CurOffset, @mResult, sizeof(mResult));
-          CurOffset := CurOffset + sizeof(mResult);
-//          CopyMemory(PByte(pMap) + CurOffset, @sWidth, sizeof(sWidth));
-          CurOffset := CurOffset + sizeof(sWidth);
-//          CopyMemory(PByte(pMap) + CurOffset, @sHeight, sizeof(sHeight));
-          CurOffset := CurOffset + sizeof(sHeight);
-//          CopyMemory(PByte(pMap) + CurOffset, @bitmap_info.bmiHeader.biBitCount, sizeof(Word));
-          CurOffset := CurOffset + sizeof(Word);
-          CopyMemory(@PID, PByte(pMap) + CurOffset, sizeof(PID));
-          CurOffset := CurOffset + sizeof(CurrentPID);
-          CopyMemory(@ipBase, PByte(pMap) + CurOffset, sizeof(ipBase));
-          CurOffset := CurOffset + sizeof(ipBase);
-
-          hProc := OpenProcess(PROCESS_VM_WRITE or PROCESS_VM_OPERATION, False, PID); // подключаемся к процессу зная его ID
-          if hProc <> 0 then // условие проверки подключения к процессу
-          try
-            WriteProcessMemory(hProc, ipBase, pBits, BitmapSize, numberRead); // чтение из памяти строки
-          finally
-            CloseHandle(hProc); // отсоединяемся от процесса
-          end;
-        except
-          on E: Exception do
-            xLog('ScreenShotThreadProc Error: ' + E.Message);
-        end;
-      finally
-        ResetEvent(EventWriteBegin);
-        ResetEvent(EventWriteEnd);
-        ResetEvent(EventReadBegin);
-        SetEvent(EventReadEnd);
-
-        SelectObject(hMemDC, hOld);
-        DestroyBitmapData;
-      end;
-    end;
-  finally
-    ExitThread(0);
-  end;
-end;
-
 function InputThreadProc(pParam: Pointer): DWORD; stdcall;
 var
   inputs: array[0..0] of TInput;
@@ -2710,10 +2574,204 @@ begin
    Result := (GetLastError <> ERROR_ALREADY_EXISTS);
 end;
 
+procedure ReadWriteMMFData;
+var
+  ci: TCursorInfo;
+  BitmapSize: Cardinal;
+  CurOffset: Integer;
+  PID: DWORD;
+  WaitTimeout: DWORD;
+  hProc: THandle;
+  numberRead : SIZE_T;
+begin
+  WaitTimeout := 1000;
+  BitmapSize := sHeight * sWidth * 4;
+
+  ZeroMemory(@ci, SizeOf(TCursorInfo));
+  ci.cbSize := SizeOf(TCursorInfo);
+  ci.hCursor := 0;
+  GetCursorInfo(ci);
+
+  CurOffset := 0;
+  CopyMemory(pMap, @BitmapSize, sizeof(BitmapSize));
+  CurOffset := sizeof(BitmapSize);
+  CopyMemory(PByte(pMap) + CurOffset, @fHaveScreen, sizeof(fHaveScreen));
+  CurOffset := CurOffset + sizeof(fHaveScreen);
+  CopyMemory(PByte(pMap) + CurOffset, @sWidth, sizeof(sWidth));
+  CurOffset := CurOffset + sizeof(sWidth);
+  CopyMemory(PByte(pMap) + CurOffset, @sHeight, sizeof(sHeight));
+  CurOffset := CurOffset + sizeof(sHeight);
+  CopyMemory(PByte(pMap) + CurOffset, @bitmap_info.bmiHeader.biBitCount, sizeof(Word));
+  CurOffset := CurOffset + sizeof(Word);
+//          CopyMemory(@PID, PByte(pMap) + CurOffset, sizeof(PID));
+  CurOffset := CurOffset + sizeof(CurrentPID);
+//          CopyMemory(PByte(pMap) + CurOffset, @pBits, sizeof(pBits));
+  CurOffset := CurOffset + sizeof(pBits);
+  CopyMemory(PByte(pMap) + CurOffset, @ci.flags, sizeof(ci.flags));
+  CurOffset := CurOffset + sizeof(ci.flags);
+  CopyMemory(PByte(pMap) + CurOffset, @ci.hCursor, sizeof(ci.hCursor));
+  CurOffset := CurOffset + sizeof(ci.hCursor);
+  CopyMemory(PByte(pMap) + CurOffset, @ci.ptScreenPos.X, sizeof(ci.ptScreenPos.X));
+  CurOffset := CurOffset + sizeof(ci.ptScreenPos.X);
+  CopyMemory(PByte(pMap) + CurOffset, @ci.ptScreenPos.Y, sizeof(ci.ptScreenPos.Y));
+  CurOffset := CurOffset + sizeof(ci.ptScreenPos.Y);
+
+  SetEvent(EventWriteEnd);
+  if WaitForSingleObject(EventReadBegin, WaitTimeout) = WAIT_TIMEOUT then
+    Exit;
+
+  CurOffset := 0;
+//          CopyMemory(pMap, @BitmapSize, sizeof(BitmapSize));
+  CurOffset := sizeof(BitmapSize);
+//          CopyMemory(PByte(pMap) + CurOffset, @mResult, sizeof(mResult));
+  CurOffset := CurOffset + sizeof(fHaveScreen);
+//          CopyMemory(PByte(pMap) + CurOffset, @sWidth, sizeof(sWidth));
+  CurOffset := CurOffset + sizeof(sWidth);
+//          CopyMemory(PByte(pMap) + CurOffset, @sHeight, sizeof(sHeight));
+  CurOffset := CurOffset + sizeof(sHeight);
+//          CopyMemory(PByte(pMap) + CurOffset, @bitmap_info.bmiHeader.biBitCount, sizeof(Word));
+  CurOffset := CurOffset + sizeof(Word);
+  CopyMemory(@PID, PByte(pMap) + CurOffset, sizeof(PID));
+  CurOffset := CurOffset + sizeof(CurrentPID);
+  CopyMemory(@ipBase, PByte(pMap) + CurOffset, sizeof(ipBase));
+  CurOffset := CurOffset + sizeof(ipBase);
+
+  hProc := OpenProcess(PROCESS_VM_WRITE or PROCESS_VM_OPERATION, False, PID); // подключаемся к процессу зная его ID
+  if hProc <> 0 then // условие проверки подключения к процессу
+  try
+    WriteProcessMemory(hProc, ipBase, pBits, BitmapSize, numberRead); // чтение из памяти строки
+  finally
+    CloseHandle(hProc); // отсоединяемся от процесса
+  end;
+end;
+
+function GetGDIScreenshot: Boolean;
+begin
+  hOld := SelectObject(hMemDC, hBmp);
+  Result := BitBlt(hMemDC, 0, 0, sWidth, sHeight, hScrDC, 0, 0, SRCCOPY);
+  if not Result then
+  begin
+    err := GetLastError;
+    xLog('BitBlt Error: ' + IntToStr(err) + ' ' + SysErrorMessage(err));
+    Exit;
+  end;
+end;
+
+function GetDDAScreenshot: Boolean;
+var
+  fRes, fCreated, fNeedRecreate: Boolean;
+  FDesktopDuplicator: TDesktopDuplicationWrapper;
+begin
+  Result := False;
+
+  if not IsWindows8orLater then
+    Exit;
+
+  try
+    FDesktopDuplicator := TDesktopDuplicationWrapper.Create(fCreated);
+    if not fCreated then
+      Exit;
+    fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
+    if (not fRes)
+      or fNeedRecreate then
+    begin
+      FDesktopDuplicator.Free;
+
+      FDesktopDuplicator := TDesktopDuplicationWrapper.Create(fCreated);
+      if not fCreated then
+        Exit;
+
+      fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
+      if not fRes then
+        Exit;
+    end;
+    if not FDesktopDuplicator.DrawFrame(FDesktopDuplicator.Bitmap) then
+      Exit;
+    if FDesktopDuplicator.Bitmap = nil then
+      Exit;
+
+    hOld := SelectObject(hMemDC, hBmp);
+    Result := BitBlt(hMemDC, 0, 0, sWidth, sHeight, FDesktopDuplicator.Bitmap.Canvas.Handle, 0, 0, SRCCOPY);
+    if not Result then
+    begin
+      err := GetLastError;
+      xLog('BitBlt Error: ' + IntToStr(err) + ' ' + SysErrorMessage(err));
+      Exit;
+    end;
+  finally
+    FDesktopDuplicator.Free;
+  end;
+end;
+
+function ScreenShotThreadProc(pParam: Pointer): DWORD; stdcall;
+//var
+//  SaveBitMap: TBitmap;
+begin
+  try
+    while True do
+    begin
+      try
+        try
+          WaitForSingleObject(EventWriteBegin, INFINITE);
+          ResetEvent(EventWriteBegin);
+          ResetEvent(EventReadBegin);
+          ResetEvent(EventReadEnd);
+
+          SelectInputWinStation;
+          SwitchToActiveDesktop;
+
+          CreateBitmapData;
+
+          if not GetDDAScreenshot then
+            if not GetGDIScreenshot then
+              Continue;
+
+
+//          if FDesktopDuplicator.Bitmap <> nil then
+//            FDesktopDuplicator.Bitmap.SaveToFile('C:\Rufus\rmx_x64_' + StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
+
+
+//          DrawDIB;
+
+//    SaveBitMap := TBitmap.Create;
+//    SaveBitMap.Width := sWidth;
+//    SaveBitMap.Height := sHeight;
+//    BitBlt(SaveBitMap.Canvas.Handle, //куда
+//    0,0,sWidth,sHeight,//координаты и размер
+//    hMemDC, //откуда
+//    0,0, //координаты
+//    SRCCOPY); //режим копирования
+//    SaveBitMap.SaveToFile('C:\Rufus\rmx_x64_' + StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
+//    SaveBitMap.Free;
+
+          ReadWriteMMFData;
+        except
+          on E: Exception do
+            xLog('ScreenShotThreadProc Error: ' + E.Message);
+        end;
+      finally
+        ResetEvent(EventWriteBegin);
+        ResetEvent(EventWriteEnd);
+        ResetEvent(EventReadBegin);
+        SetEvent(EventReadEnd);
+
+        SelectObject(hMemDC, hOld);
+        DestroyBitmapData;
+      end;
+    end;
+  finally
+    ExitThread(0);
+  end;
+end;
+
 
 begin
+//  Sleep(10000);
+
   hBmp := 0;
   hMemDC := 0;
+
+  fHaveScreen := False;
 
   FShiftDown := False;
   FCtrlDown := False;
@@ -2773,8 +2831,6 @@ begin
   hThreadSS := CreateThread(nil, 0, @ScreenShotThreadProc, nil, 0, tidSS);
   hThreadIN := CreateThread(nil, 0, @InputThreadProc, nil, 0, tidIN);
 
-  FDesktopDuplicator := TDesktopDuplicationWrapper.Create;
-
   try
     FHelper := THelper.Create;
     FIPCServer := TIPCServer.Create;
@@ -2789,7 +2845,6 @@ begin
     FIPCServer.Stop;
     FIPCServer.Free;
     FHelper.Free;
-    FDesktopDuplicator.Free;
   finally
     if EventWriteBegin <> 0 then
     begin
