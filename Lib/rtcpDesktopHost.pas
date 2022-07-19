@@ -2239,6 +2239,17 @@ begin
   end;
 end;}
 
+function IsWindows8orLater: Boolean;
+begin
+  Result := False;
+
+  if Win32MajorVersion > 6 then
+    Result := True;
+  if Win32MajorVersion = 6 then
+    if Win32MinorVersion >= 2 then
+      Result := True;
+end;
+
 function TRtcScreenEncoder.GetScreenFromHelperByMMF(OnlyGetScreenParams: Boolean = False): Boolean;
 var
   h, hMap: THandle;
@@ -2260,6 +2271,9 @@ var
   i, j: LongInt;
   fScreenGrabbed: Boolean;
 begin
+  if not IsWindows8orLater then
+    Exit;
+
   WaitTimeout := 1000;
 
   CS.Acquire;
@@ -2448,7 +2462,7 @@ begin
 //        CloseHandle(hProc); // отсоединяемся от процесса
 //      end;
 
-//      if fScreenGrabbed then
+      if fScreenGrabbed then
         Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FHelper_Width, FHelper_Height, hMemDC, 0, 0, SRCCOPY);
 //      FNewImage.Invalidate;
 //      SelectObject(hMemDC, hOld);
