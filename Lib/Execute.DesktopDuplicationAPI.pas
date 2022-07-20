@@ -207,7 +207,7 @@ begin
   else
   begin
     FDuplicate.ReleaseFrame;
-    fNeedRecreate := True;
+//    fNeedRecreate := True;
   end;
 end;
 

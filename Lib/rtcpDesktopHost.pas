@@ -2681,7 +2681,7 @@ var
 
   function CaptureNow: boolean;
   var
-    i: Integer;
+    i, j: Integer;
   begin
     SwitchToActiveDesktop; //Если под SYSTEM
 //  SetWinSta0Desktop;
@@ -2760,7 +2760,8 @@ var
               //Application.ProcessMessages;
               FDesktopDuplicator.Free;
               FDesktopDuplicator := TDesktopDuplicationWrapper.Create(FDDACreated);
-              fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
+              if FDDACreated then
+                fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
 
 //              Application.ProcessMessages;
 
@@ -2771,7 +2772,7 @@ var
             if fRes
               and (not fNeedRecreate) then
             begin
-              fHaveScreen := FDesktopDuplicator.DrawFrame(FNewImage);
+              fHaveScreen := FDesktopDuplicator.DrawFrame(FDesktopDuplicator.Bitmap);
               fHaveScreen := fHaveScreen;
 //            end
 //            else
@@ -2824,6 +2825,10 @@ var
 //            finally
 //              ReleaseDC(DW, SDC);
 //            end;
+
+          if fHaveScreen then
+            FNewImage.Assign(FDesktopDuplicator.Bitmap);
+          fHaveScreen := True;
           ScrCap.HaveScreen := fHaveScreen;
           Result := fHaveScreen;
       end;
