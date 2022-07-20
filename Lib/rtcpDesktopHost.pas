@@ -2655,10 +2655,16 @@ begin
 //      if not fRes then
 //        Exit;
     end;
-    if not FDesktopDuplicator.DrawFrame(FNewImage) then
+    if not FDesktopDuplicator.DrawFrame(FNewImage {FDesktopDuplicator.Bitmap}) then
       Exit;
 //    if FDesktopDuplicator.Bitmap = nil then
 //      Exit;
+
+//FDesktopDuplicator.Bitmap.SaveToFile('C:\Rufus\scr.bmp1');
+
+//      Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FNewImage.Width,
+//        FNewImage.Height, FDesktopDuplicator.Bitmap.Canvas.Handle, 0, 0,
+//        FCaptureMask);
 
     Result := True;
   finally
@@ -2722,28 +2728,6 @@ var
       end
       else
       begin
-        DW := GetCaptureWindow;
-//        try
-//          SDC := GetDC(DW);
-//        except
-//          SDC := 0;
-//        end;
-//        if (DW <> 0) and (SDC = 0) then
-//        begin
-//          DW := 0;
-//          try
-//            SDC := GetDC(DW);
-//          except
-//            SDC := 0;
-//          end;
-//          if SDC = 0 then
-//          begin
-//            Result := False;
-//            ScrCap.HaveScreen := False;
-//            Exit;
-//          end;
-//        end;
-        try
 //          Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FNewImage.Width,
 //            FNewImage.Height, SDC, FCaptureLeft, FCaptureTop + BlockTop,
 //            FCaptureMask);
@@ -2765,6 +2749,7 @@ var
 //          ScrCap.HaveScreen := FDesktopDuplicator.IsScreenshotReady;
 
           fHaveScreen := GetDDAScreenshot;
+          ScrCap.HaveScreen := fHaveScreen;
 //          fHaveScreen := False;
 //            fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
 //            while fNeedRecreate do
@@ -2785,27 +2770,51 @@ var
 //              //Memo1.Lines.Add('no frame ' + IntToHex(FDuplication.Error));
 //            end;
 
-            //Get GDI screenshot
-            if not fHaveScreen then
-            begin
-              Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FNewImage.Width,
-                FNewImage.Height, SDC, FCaptureLeft, FCaptureTop + BlockTop,
-                FCaptureMask);
-
-              if not Result then
-              begin
-                err := GetLastError;
-                xLog('BitBlt Error: ' + IntToStr(err) + ' ' + SysErrorMessage(err));
-              end;
-
-              fHaveScreen := Result;
-            end;
-           ScrCap.HaveScreen := fHaveScreen;
-
-//          ScrCap.HaveScreen := True;
-        finally
-//          ReleaseDC(DW, SDC);
-        end;
+                //FNewImage.SaveToFile('C:\Rufus\scr2.bmp');
+//            try
+//              //Get GDI screenshot
+//              if not fHaveScreen then
+//              begin
+//                DW := GetCaptureWindow;
+//                try
+//                  SDC := GetDC(DW);
+//                except
+//                  SDC := 0;
+//                end;
+//                if (DW <> 0) and (SDC = 0) then
+//                begin
+//                  DW := 0;
+//                  try
+//                    SDC := GetDC(DW);
+//                  except
+//                    SDC := 0;
+//                  end;
+//                  if SDC = 0 then
+//                  begin
+//                    Result := False;
+//                    ScrCap.HaveScreen := False;
+//                    Exit;
+//                  end;
+//                end;
+//
+//                Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FNewImage.Width,
+//                  FNewImage.Height, SDC, FCaptureLeft, FCaptureTop + BlockTop,
+//                  FCaptureMask);
+//
+//                if not Result then
+//                begin
+//                  err := GetLastError;
+//                  xLog('BitBlt Error: ' + IntToStr(err) + ' ' + SysErrorMessage(err));
+//                end;
+//
+//                fHaveScreen := Result;
+//              end;
+//              ScrCap.HaveScreen := fHaveScreen;
+//
+//  //          ScrCap.HaveScreen := True;
+//            finally
+//              ReleaseDC(DW, SDC);
+//            end;
       end;
     finally
       FNewImage.Canvas.Unlock;
