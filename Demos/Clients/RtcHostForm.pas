@@ -238,7 +238,7 @@ type
     nCopyPass: TMenuItem;
     N3: TMenuItem;
     resGetState: TRtcResult;
-    btnViewDesktop: TColorSpeedButton;
+    btnNewConnection: TColorSpeedButton;
     iAppIconOnline: TImage;
     iAppIconOffline: TImage;
     iBkgLeft: TImage;
@@ -336,7 +336,7 @@ type
     procedure eRealNameChange(Sender: TObject);
     procedure btnRestartServiceClick(Sender: TObject);
     procedure cPriority_ControlChange(Sender: TObject);
-    procedure btnViewDesktopClick(Sender: TObject);
+    procedure btnNewConnectionClick(Sender: TObject);
     procedure xHideWallpaperClick(Sender: TObject);
     procedure xReduceColorsClick(Sender: TObject);
     procedure cbControlModeChange(Sender: TObject);
@@ -436,8 +436,8 @@ type
       Shift: TShiftState);
     procedure twDevicesFocusChanged(Sender: TBaseVirtualTree;
       Node: PVirtualNode; Column: TColumnIndex);
-    procedure btnViewDesktopMouseLeave(Sender: TObject);
-    procedure btnViewDesktopMouseEnter(Sender: TObject);
+    procedure btnNewConnectionMouseLeave(Sender: TObject);
+    procedure btnNewConnectionMouseEnter(Sender: TObject);
     procedure aAboutExecute(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure tCheckLockedStateTimer(Sender: TObject);
@@ -539,7 +539,7 @@ type
     procedure DeleteAllPendingRequests;
     procedure DeleteLastPendingItem;
     function GetCurrentPendingItemUserName: String;
-    procedure UpdatePendingStatus;
+//    procedure UpdatePendingStatus;
     function GetPendingRequestsCount: Integer;
 
     function CheckService(bServiceFilename: Boolean = True {False = Service Name} ): String;
@@ -3140,16 +3140,16 @@ begin
 
     if GetPendingRequestsCount > 0 then
     begin
-      btnViewDesktop.Caption := 'ПРЕРВАТЬ';
-      btnViewDesktop.Color := RGB(232, 17, 35);
+      btnNewConnection.Caption := 'ПРЕРВАТЬ';
+      btnNewConnection.Color := RGB(232, 17, 35);
     end
     else
     begin
-      btnViewDesktop.Caption := 'ПОДКЛЮЧИТЬСЯ';
-      btnViewDesktop.Color := $00A39323;
+      btnNewConnection.Caption := 'ПОДКЛЮЧИТЬСЯ';
+      btnNewConnection.Color := $00A39323;
     end;
 
-    btnViewDesktop.Enabled := LoggedIn;
+    btnNewConnection.Enabled := ConnectedToAllGateways;
     btnAccountLogin.Enabled := (not LoggedIn) and ConnectedToAllGateways;
 
     bmp := TBitmap.Create;
@@ -6036,7 +6036,7 @@ begin
 //  XLog('ePartnerIDKeyUp');
 
   if Key = 13 then
-    btnViewDesktopClick(nil);
+    btnNewConnectionClick(nil);
 end;
 
 procedure TMainForm.ePasswordChange(Sender: TObject);
@@ -6563,7 +6563,7 @@ begin
 //    SetLastError(EleavateSupport.RunElevated(ParamStr(0), '/UNINSTALL /SILENT', Handle, Application.ProcessMessages));
 end;
 
-procedure TMainForm.btnViewDesktopClick(Sender: TObject);
+procedure TMainForm.btnNewConnectionClick(Sender: TObject);
 var
   user, pass, action: String;
   Data: PDeviceData;
@@ -6578,7 +6578,7 @@ begin
     Exit;
   end;
 
-  if btnViewDesktop.Caption = 'ПРЕРВАТЬ' then
+  if btnNewConnection.Caption = 'ПРЕРВАТЬ' then
   begin
     DeleteLastPendingItem;
 
@@ -6642,13 +6642,13 @@ begin
   end;
 end;
 
-procedure TMainForm.btnViewDesktopMouseEnter(Sender: TObject);
+procedure TMainForm.btnNewConnectionMouseEnter(Sender: TObject);
 begin
 //  XLog('btnViewDesktopMouseEnter');
 
   CS_Status.Acquire;
   try
-    if btnViewDesktop.Caption = 'ПОДКЛЮЧИТЬСЯ' then
+    if btnNewConnection.Caption = 'ПОДКЛЮЧИТЬСЯ' then
       if TColorSpeedButton(Sender).Enabled then
         TColorSpeedButton(Sender).Color := $00B3A332
       else
@@ -6663,13 +6663,13 @@ begin
   end;
 end;
 
-procedure TMainForm.btnViewDesktopMouseLeave(Sender: TObject);
+procedure TMainForm.btnNewConnectionMouseLeave(Sender: TObject);
 begin
 //  XLog('btnViewDesktopMouseLeave');
 
   CS_Status.Acquire;
   try
-    if btnViewDesktop.Caption = 'ПОДКЛЮЧИТЬСЯ' then
+    if btnNewConnection.Caption = 'ПОДКЛЮЧИТЬСЯ' then
       TColorSpeedButton(Sender).Color := $00A39322
     else
       TColorSpeedButton(Sender).Color := RGB(232, 17, 35);
@@ -9227,7 +9227,7 @@ begin
   case status of
     rtccClosed:
     begin
-      xLog('PClientStatusPut: ' + Sender.Name + ': rtccClosed');
+//      xLog('PClientStatusPut: ' + Sender.Name + ': rtccClosed');
       sStatus1.Brush.Color := clGray;
 //      if not isClosing then
 //      begin
@@ -9237,7 +9237,7 @@ begin
     end;
     rtccOpen:
     begin
-      xLog('PClientStatusPut: ' + Sender.Name + ': rtccOpen');
+//      xLog('PClientStatusPut: ' + Sender.Name + ': rtccOpen');
       sStatus1.Brush.Color := clNavy;
     end;
     rtccSending:
@@ -9384,7 +9384,7 @@ procedure TMainForm.PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttp
   case status of
     rtccClosed:
     begin
-      xLog('PClientStatusGet: ' + Sender.Name + ': rtccClosed');
+//      xLog('PClientStatusGet: ' + Sender.Name + ': rtccClosed');
       sStatus2.Brush.Color:=clRed;
       sStatus2.Pen.Color:=clMaroon;
 //      if not isClosing then
@@ -9398,7 +9398,7 @@ procedure TMainForm.PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttp
     end;
     rtccOpen:
     begin
-      xLog('PClientStatusGet: ' + Sender.Name + ': rtccOpen');
+//      xLog('PClientStatusGet: ' + Sender.Name + ': rtccOpen');
       sStatus2.Brush.Color:=clNavy;
 
 //      if Sender = PClient then
@@ -9513,7 +9513,7 @@ begin
     CS_Pending.Release;
   end;
 
-  UpdatePendingStatus;
+//  UpdatePendingStatus;
 
   Result := PRItem;
 end;
@@ -9567,7 +9567,7 @@ begin
     CS_Pending.Release;
   end;
 
-  UpdatePendingStatus;
+//  UpdatePendingStatus;
 end;
 
 function TMainForm.PartnerIsPending(uname, action, gateway: String): Boolean;
@@ -9633,7 +9633,7 @@ begin
     CS_Pending.Release;
   end;
 
-  UpdatePendingStatus;
+//  UpdatePendingStatus;
 end;
 
 procedure TMainForm.DeletePendingRequests(uname: String);
@@ -9659,7 +9659,7 @@ begin
     CS_Pending.Release;
   end;
 
-  UpdatePendingStatus;
+//  UpdatePendingStatus;
 end;
 
 procedure TMainForm.DeleteAllPendingRequests;
@@ -9682,7 +9682,7 @@ begin
     CS_Pending.Release;
   end;
 
-  UpdatePendingStatus;
+//  UpdatePendingStatus;
 end;
 
 procedure TMainForm.OnCustomFormOpen(AForm: TForm);
@@ -9737,28 +9737,28 @@ begin
   end;
 end;
 
-procedure TMainForm.UpdatePendingStatus;
-begin
-  //xLog('UpdatePendingStatus');
-
-  CS_Status.Acquire;
-  try
-    if GetPendingRequestsCount > 0 then
-    begin
-//      SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True);
-      btnViewDesktop.Caption := 'ПРЕРВАТЬ';
-      btnViewDesktop.Color := RGB(232, 17, 35);
-    end
-    else
-    begin
-//      SetStatusString('Готов к подключению');
-      btnViewDesktop.Caption := 'ПОДКЛЮЧИТЬСЯ';
-      btnViewDesktop.Color := $00A39323;
-    end;
-  finally
-    CS_Status.Release;
-  end;
-end;
+//procedure TMainForm.UpdatePendingStatus;
+//begin
+//  //xLog('UpdatePendingStatus');
+//
+//  CS_Status.Acquire;
+//  try
+//    if GetPendingRequestsCount > 0 then
+//    begin
+////      SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True);
+//      btnNewConnection.Caption := 'ПРЕРВАТЬ';
+//      btnNewConnection.Color := RGB(232, 17, 35);
+//    end
+//    else
+//    begin
+////      SetStatusString('Готов к подключению');
+//      btnNewConnection.Caption := 'ПОДКЛЮЧИТЬСЯ';
+//      btnNewConnection.Color := $00A39323;
+//    end;
+//  finally
+//    CS_Status.Release;
+//  end;
+//end;
 
 procedure TMainForm.PDesktopControlNewUI(Sender: TRtcPDesktopControl; const user: String);
 //  var
