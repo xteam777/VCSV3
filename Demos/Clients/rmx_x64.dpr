@@ -2653,7 +2653,6 @@ begin
   begin
     err := GetLastError;
     xLog('BitBlt Error: ' + IntToStr(err) + ' ' + SysErrorMessage(err));
-    Exit;
   end;
 end;
 

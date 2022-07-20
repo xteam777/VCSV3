@@ -11,7 +11,7 @@ uses
   DX12.D3DCommon,
   DX12.DXGI,
   DX12.DXGI1_2,
-  Vcl.Graphics;
+  Vcl.Graphics, rtcLog, SysUtils;
 
 type
 {$POINTERMATH ON} // Pointer[x]
@@ -82,7 +82,7 @@ begin
   if Failed(FError) then
   begin
     fCreated := False;
-//    xLog('D3D11CreateDevice Error: ' +
+    xLog('D3D11CreateDevice Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
     Exit;
   end;
 
@@ -90,7 +90,7 @@ begin
   if Failed(FError) then
   begin
     fCreated := False;
-//    xLog('QueryInterface IID_IDXGIDevice Error: ' +
+    xLog('QueryInterface IID_IDXGIDevice Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
     Exit;
   end;
 
@@ -98,7 +98,7 @@ begin
   if Failed(FError) then
   begin
     fCreated := False;
-//    xLog('GI.GetParent Error: ' +
+    xLog('GI.GetParent Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
     Exit;
   end;
 
@@ -106,7 +106,7 @@ begin
   if Failed(FError) then
   begin
     fCreated := False;
-//    xLog('EnumOutputs Error: ' +
+    xLog('EnumOutputs Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
     Exit;
   end;
 
@@ -114,7 +114,7 @@ begin
   if Failed(FError) then
   begin
     fCreated := False;
-//    xLog('GetDesc Error: ' +
+    xLog('GetDesc Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
     Exit;
   end;
 
@@ -122,7 +122,7 @@ begin
   if Failed(FError) then
   begin
     fCreated := False;
-//    xLog('QueryInterface IID_IDXGIOutput1 Error: ' +
+    xLog('QueryInterface IID_IDXGIOutput1 Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
     Exit;
   end;
 
@@ -130,7 +130,7 @@ begin
   if Failed(FError) then
   begin
     fCreated := False;
-//    xLog('DuplicateOutput Error: ' +
+    xLog('DuplicateOutput Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
     Exit;
   end;
 
@@ -162,6 +162,7 @@ begin
   FError := FDuplicate.AcquireNextFrame(500, FrameInfo, DesktopResource);
   if Failed(FError) then
   begin
+    xLog('AcquireNextFrame Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
 //    if FError = DXGI_ERROR_ACCESS_LOST then
       fNeedRecreate := True;
 
@@ -175,8 +176,11 @@ begin
 
   FError := DesktopResource.QueryInterface(IID_ID3D11Texture2D, FTexture);
   DesktopResource := nil;
-  if failed(FError) then
+  if Failed(FError) then
+  begin
+    xLog('QueryInterface.IID_ID3D11Texture2D Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
     Exit;
+  end;
 
   if FrameInfo.TotalMetadataBufferSize > 0 then
   begin
@@ -234,6 +238,7 @@ begin
   FError := FDevice.CreateTexture2D(@Desc, nil, Temp);
   if Failed(FError) then
   begin
+    xLog('CreateTexture2D Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
     FTexture := nil;
     FDuplicate.ReleaseFrame;
 

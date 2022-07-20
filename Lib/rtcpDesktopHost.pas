@@ -2671,6 +2671,7 @@ var
   BlockTop: integer;
   DW: HWND;
   SDC: HDC;
+  err: HRESULT;
   fNeedRecreate, fHaveScreen, fRes: Boolean;
 
   function CaptureNow: boolean;
@@ -2790,6 +2791,13 @@ var
               Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FNewImage.Width,
                 FNewImage.Height, SDC, FCaptureLeft, FCaptureTop + BlockTop,
                 FCaptureMask);
+
+              if not Result then
+              begin
+                err := GetLastError;
+                xLog('BitBlt Error: ' + IntToStr(err) + ' ' + SysErrorMessage(err));
+              end;
+
               fHaveScreen := Result;
             end;
            ScrCap.HaveScreen := fHaveScreen;
