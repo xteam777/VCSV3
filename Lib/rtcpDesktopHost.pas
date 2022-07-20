@@ -112,7 +112,7 @@ type
 
 //    FImageCatcher: TImageCatcher;
     FDDACreated: Boolean;
-    FDesktopDuplicator: TDesktopDuplicationWrapper;
+//    FDesktopDuplicator: TDesktopDuplicationWrapper;
 
     function CreateBitmap(index: integer): TBitmap;
 
@@ -122,6 +122,7 @@ type
 
     procedure SetBlockIndex(index: integer);
     function CaptureBlock: boolean;
+    function GetDDAScreenshot: Boolean;
 
     function CompressBlock_Initial: RtcByteArray;
     function CompressBlock_Normal: RtcByteArray;
@@ -1288,7 +1289,7 @@ begin
   SetLength(FMarked, 0);
 
 //  FImageCatcher := TImageCatcher.Create;
-  FDesktopDuplicator := TDesktopDuplicationWrapper.Create(FDDACreated);
+//  FDesktopDuplicator := TDesktopDuplicationWrapper.Create(FDDACreated);
 
 //TRtcScreenEncoder.Create берет ScrCap.HaveScreen а ScrCap = nil. Белый экран вначале
 //  while not ScrCap.HaveScreen do
@@ -1328,7 +1329,7 @@ begin
 
 //  FImageCatcher.Free;
 
-  FDesktopDuplicator.Free;
+//  FDesktopDuplicator.Free;
 
   inherited;
 end;
@@ -2239,6 +2240,17 @@ begin
   end;
 end;}
 
+function IsWindows8orLater: Boolean;
+begin
+  Result := False;
+
+  if Win32MajorVersion > 6 then
+    Result := True;
+  if Win32MajorVersion = 6 then
+    if Win32MinorVersion >= 2 then
+      Result := True;
+end;
+
 function TRtcScreenEncoder.GetScreenFromHelperByMMF(OnlyGetScreenParams: Boolean = False): Boolean;
 var
   h, hMap: THandle;
@@ -2260,6 +2272,9 @@ var
   i, j: LongInt;
   fScreenGrabbed: Boolean;
 begin
+  if not IsWindows8orLater then
+    Exit;
+
   WaitTimeout := 1000;
 
   CS.Acquire;
@@ -2448,7 +2463,7 @@ begin
 //        CloseHandle(hProc); // отсоединяемся от процесса
 //      end;
 
-//      if fScreenGrabbed then
+      if fScreenGrabbed then
         Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FHelper_Width, FHelper_Height, hMemDC, 0, 0, SRCCOPY);
 //      FNewImage.Invalidate;
 //      SelectObject(hMemDC, hOld);
@@ -2610,6 +2625,45 @@ begin
   end;
 end;
 
+function TRtcScreenEncoder.GetDDAScreenshot: Boolean;
+var
+  fRes, fCreated, fNeedRecreate: Boolean;
+  FDesktopDuplicator: TDesktopDuplicationWrapper;
+begin
+  Result := False;
+
+  if not IsWindows8orLater then
+    Exit;
+
+  try
+    FDesktopDuplicator := TDesktopDuplicationWrapper.Create(fCreated);
+    if not fCreated then
+      Exit;
+    fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
+    if (not fRes)
+      or fNeedRecreate then
+    begin
+      FDesktopDuplicator.Free;
+
+      FDesktopDuplicator := TDesktopDuplicationWrapper.Create(fCreated);
+      if not fCreated then
+        Exit;
+
+      fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
+      if not fRes then
+        Exit;
+    end;
+    if not FDesktopDuplicator.DrawFrame(FNewImage) then
+      Exit;
+//    if FDesktopDuplicator.Bitmap = nil then
+//      Exit;
+
+    Result := True;
+  finally
+    FDesktopDuplicator.Free;
+  end;
+end;
+
 function TRtcScreenEncoder.CaptureBlock: boolean;
 var
   BlockTop: integer;
@@ -2707,32 +2761,38 @@ var
 //          end;
 //          ScrCap.HaveScreen := FDesktopDuplicator.IsScreenshotReady;
 
-          fHaveScreen := False;
-          while not fHaveScreen do
-          begin
-            fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
-            while fNeedRecreate do
-            begin
-              FDesktopDuplicator.Free;
-              FDesktopDuplicator := TDesktopDuplicationWrapper.Create(FDDACreated);
-              fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
+          fHaveScreen := GetDDAScreenshot;
+//          fHaveScreen := False;
+//            fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
+//            while fNeedRecreate do
+//            begin
+//              FDesktopDuplicator.Free;
+//              FDesktopDuplicator := TDesktopDuplicationWrapper.Create(FDDACreated);
+//              fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
+//
+//              Application.ProcessMessages;
+//            end;
+//            if fRes then
+//            begin
+//              if FDesktopDuplicator.DrawFrame(FNewImage) then
+//                fHaveScreen := True;
+////            end
+////            else
+////            begin
+//              //Memo1.Lines.Add('no frame ' + IntToHex(FDuplication.Error));
+//            end;
 
-              Application.ProcessMessages;
-            end;
-            if fRes then
+            //Get GDI screenshot
+            if not fHaveScreen then
             begin
-              if FDesktopDuplicator.DrawFrame(FNewImage) then
-                fHaveScreen := True;
-            end
-            else
-            begin
-              //Memo1.Lines.Add('no frame ' + IntToHex(FDuplication.Error));
+              Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FNewImage.Width,
+                FNewImage.Height, SDC, FCaptureLeft, FCaptureTop + BlockTop,
+                FCaptureMask);
+              fHaveScreen := Result;
             end;
+           ScrCap.HaveScreen := fHaveScreen;
 
-        //    Sleep(1);
-            Application.ProcessMessages;
-          end;
-          ScrCap.HaveScreen := True;
+//          ScrCap.HaveScreen := True;
         finally
 //          ReleaseDC(DW, SDC);
         end;

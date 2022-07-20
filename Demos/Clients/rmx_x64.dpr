@@ -2722,9 +2722,13 @@ begin
 
           CreateBitmapData;
 
+          fHaveScreen := False;
+
           if not GetDDAScreenshot then
             if not GetGDIScreenshot then
               Continue;
+
+          fHaveScreen := True;
 
 
 //          if FDesktopDuplicator.Bitmap <> nil then
