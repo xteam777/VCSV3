@@ -11,7 +11,8 @@ uses
   DX12.D3DCommon,
   DX12.DXGI,
   DX12.DXGI1_2,
-  Vcl.Graphics, rtcLog, SysUtils;
+  Vcl.Graphics;
+//  , rtcLog, SysUtils;
 
 type
 {$POINTERMATH ON} // Pointer[x]
@@ -82,7 +83,7 @@ begin
   if Failed(FError) then
   begin
     fCreated := False;
-    xLog('D3D11CreateDevice Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
+//    xLog('D3D11CreateDevice Error: ' + SysErrorMessage(FError));
     Exit;
   end;
 
@@ -90,7 +91,7 @@ begin
   if Failed(FError) then
   begin
     fCreated := False;
-    xLog('QueryInterface IID_IDXGIDevice Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
+//    xLog('QueryInterface IID_IDXGIDevice Error: ' + SysErrorMessage(FError));
     Exit;
   end;
 
@@ -98,7 +99,7 @@ begin
   if Failed(FError) then
   begin
     fCreated := False;
-    xLog('GI.GetParent Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
+//    xLog('GI.GetParent Error: ' + SysErrorMessage(FError));
     Exit;
   end;
 
@@ -106,7 +107,7 @@ begin
   if Failed(FError) then
   begin
     fCreated := False;
-    xLog('EnumOutputs Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
+//    xLog('EnumOutputs Error: ' + SysErrorMessage(FError));
     Exit;
   end;
 
@@ -114,7 +115,7 @@ begin
   if Failed(FError) then
   begin
     fCreated := False;
-    xLog('GetDesc Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
+//    xLog('GetDesc Error: ' + SysErrorMessage(FError));
     Exit;
   end;
 
@@ -122,7 +123,7 @@ begin
   if Failed(FError) then
   begin
     fCreated := False;
-    xLog('QueryInterface IID_IDXGIOutput1 Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
+//    xLog('QueryInterface IID_IDXGIOutput1 Error: ' + SysErrorMessage(FError));
     Exit;
   end;
 
@@ -130,7 +131,7 @@ begin
   if Failed(FError) then
   begin
     fCreated := False;
-    xLog('DuplicateOutput Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
+//    xLog('DuplicateOutput Error: ' + SysErrorMessage(FError));
     Exit;
   end;
 
@@ -162,7 +163,7 @@ begin
   FError := FDuplicate.AcquireNextFrame(500, FrameInfo, DesktopResource);
   if Failed(FError) then
   begin
-    xLog('AcquireNextFrame Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
+//    xLog('AcquireNextFrame Error: ' + SysErrorMessage(FError));
 //    if FError = DXGI_ERROR_ACCESS_LOST then
       fNeedRecreate := True;
 
@@ -170,44 +171,43 @@ begin
   end;
 
   if FTexture <> nil then
-  begin
     FTexture := nil;
-  end;
 
   FError := DesktopResource.QueryInterface(IID_ID3D11Texture2D, FTexture);
   DesktopResource := nil;
   if Failed(FError) then
   begin
-    xLog('QueryInterface.IID_ID3D11Texture2D Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
+//    xLog('QueryInterface.IID_ID3D11Texture2D Error: ' + SysErrorMessage(FError));
     Exit;
   end;
 
   if FrameInfo.TotalMetadataBufferSize > 0 then
   begin
-    BufLen := FrameInfo.TotalMetadataBufferSize;
-    if Length(FMetaData) < BufLen then
-      SetLength(FMetaData, BufLen);
-
-    FMoveRects := Pointer(FMetaData);
-
-    FError := FDuplicate.GetFrameMoveRects(BufLen, FMoveRects, BufSize);
-    if Failed(FError) then
-      Exit;
-    FMoveCount := BufSize div sizeof(TDXGI_OUTDUPL_MOVE_RECT);
-
-    FDirtyRects := @FMetaData[BufSize];
-    Dec(BufLen, BufSize);
-
-    FError := FDuplicate.GetFrameDirtyRects(BufLen, FDirtyRects, BufSize);
-    if Failed(FError) then
-      Exit;
-    FDirtyCount := BufSize div sizeof(TRECT);
+//    BufLen := FrameInfo.TotalMetadataBufferSize;
+//    if Length(FMetaData) < BufLen then
+//      SetLength(FMetaData, BufLen);
+//
+//    FMoveRects := Pointer(FMetaData);
+//
+//    FError := FDuplicate.GetFrameMoveRects(BufLen, FMoveRects, BufSize);
+//    if Failed(FError) then
+//      Exit;
+//    FMoveCount := BufSize div sizeof(TDXGI_OUTDUPL_MOVE_RECT);
+//
+//    FDirtyRects := @FMetaData[BufSize];
+//    Dec(BufLen, BufSize);
+//
+//    FError := FDuplicate.GetFrameDirtyRects(BufLen, FDirtyRects, BufSize);
+//    if Failed(FError) then
+//      Exit;
+//    FDirtyCount := BufSize div SizOof(TRECT);
 
     Result := True;
   end
   else
   begin
     FDuplicate.ReleaseFrame;
+    fNeedRecreate := True;
   end;
 end;
 
@@ -219,7 +219,7 @@ var
   i: Integer;
   p: PByte;
 begin
-  Result := True;
+  Result := False;
 
   FTexture.GetDesc(Desc);
 
@@ -238,11 +238,10 @@ begin
   FError := FDevice.CreateTexture2D(@Desc, nil, Temp);
   if Failed(FError) then
   begin
-    xLog('CreateTexture2D Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
+//    xLog('CreateTexture2D Error: ' + SysErrorMessage(FError));
     FTexture := nil;
     FDuplicate.ReleaseFrame;
 
-    Result := False;
     Exit;
   end;
 
@@ -260,9 +259,11 @@ begin
     Inc(p, 4 * Desc.Width);
   end;
 
-  FContext.Unmap(FTexture, 0);
+  FContext.Unmap(FTexture, 0); //Это нужно?
   FTexture := nil;
   FDuplicate.ReleaseFrame;
+
+  Result := True;
 end;
 
 //procedure TDesktopDuplicationWrapper.FreeDIB(BitmapInfo: PBitmapInfo;
