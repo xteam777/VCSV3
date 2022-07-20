@@ -112,7 +112,7 @@ type
 
 //    FImageCatcher: TImageCatcher;
     FDDACreated: Boolean;
-//    FDesktopDuplicator: TDesktopDuplicationWrapper;
+    FDesktopDuplicator: TDesktopDuplicationWrapper;
 
     function CreateBitmap(index: integer): TBitmap;
 
@@ -122,7 +122,7 @@ type
 
     procedure SetBlockIndex(index: integer);
     function CaptureBlock: boolean;
-    function GetDDAScreenshot: Boolean;
+//    function GetDDAScreenshot: Boolean;
 
     function CompressBlock_Initial: RtcByteArray;
     function CompressBlock_Normal: RtcByteArray;
@@ -286,7 +286,6 @@ type
 
   public
 //    tCursorInfoThrd: TCursorInfoThread;
-//    FDesktopDuplicator: TDesktopDuplicator;
 //++
 //    fSASInit: Boolean;
 //    procedure CheckSAS(value : Boolean; name : String);
@@ -1289,7 +1288,7 @@ begin
   SetLength(FMarked, 0);
 
 //  FImageCatcher := TImageCatcher.Create;
-//  FDesktopDuplicator := TDesktopDuplicationWrapper.Create(FDDACreated);
+  FDesktopDuplicator := TDesktopDuplicationWrapper.Create(FDDACreated);
 
 //TRtcScreenEncoder.Create берет ScrCap.HaveScreen а ScrCap = nil. Белый экран вначале
 //  while not ScrCap.HaveScreen do
@@ -1329,7 +1328,7 @@ begin
 
 //  FImageCatcher.Free;
 
-//  FDesktopDuplicator.Free;
+  FDesktopDuplicator.Free;
 
   inherited;
 end;
@@ -2625,52 +2624,52 @@ begin
   end;
 end;
 
-function TRtcScreenEncoder.GetDDAScreenshot: Boolean;
-var
-  fRes, fCreated, fNeedRecreate: Boolean;
-  FDesktopDuplicator: TDesktopDuplicationWrapper;
-begin
-  Result := False;
-
-  if not IsWindows8orLater then
-    Exit;
-
-  try
-    FDesktopDuplicator := TDesktopDuplicationWrapper.Create(fCreated);
-    if not fCreated then
-      Exit;
-    fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
-    if (not fRes)
-      or fNeedRecreate then
-    begin
-      Exit;
-
-//      FDesktopDuplicator.Free;
+//function TRtcScreenEncoder.GetDDAScreenshot: Boolean;
+//var
+//  fRes, fCreated, fNeedRecreate: Boolean;
+//  FDesktopDuplicator: TDesktopDuplicationWrapper;
+//begin
+//  Result := False;
 //
-//      FDesktopDuplicator := TDesktopDuplicationWrapper.Create(fCreated);
-//      if not fCreated then
-//        Exit;
+//  if not IsWindows8orLater then
+//    Exit;
 //
-//      fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
-//      if not fRes then
-//        Exit;
-    end;
-    if not FDesktopDuplicator.DrawFrame(FNewImage {FDesktopDuplicator.Bitmap}) then
-      Exit;
-//    if FDesktopDuplicator.Bitmap = nil then
+//  try
+//    FDesktopDuplicator := TDesktopDuplicationWrapper.Create(fCreated);
+//    if not fCreated then
 //      Exit;
-
-//FDesktopDuplicator.Bitmap.SaveToFile('C:\Rufus\scr.bmp1');
-
-//      Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FNewImage.Width,
-//        FNewImage.Height, FDesktopDuplicator.Bitmap.Canvas.Handle, 0, 0,
-//        FCaptureMask);
-
-    Result := True;
-  finally
-    FDesktopDuplicator.Free;
-  end;
-end;
+//    fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
+//    if (not fRes)
+//      or fNeedRecreate then
+//    begin
+//      Exit;
+//
+////      FDesktopDuplicator.Free;
+////
+////      FDesktopDuplicator := TDesktopDuplicationWrapper.Create(fCreated);
+////      if not fCreated then
+////        Exit;
+////
+////      fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
+////      if not fRes then
+////        Exit;
+//    end;
+//    if not FDesktopDuplicator.DrawFrame(FNewImage {FDesktopDuplicator.Bitmap}) then
+//      Exit;
+////    if FDesktopDuplicator.Bitmap = nil then
+////      Exit;
+//
+////FDesktopDuplicator.Bitmap.SaveToFile('C:\Rufus\scr.bmp1');
+//
+////      Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FNewImage.Width,
+////        FNewImage.Height, FDesktopDuplicator.Bitmap.Canvas.Handle, 0, 0,
+////        FCaptureMask);
+//
+//    Result := True;
+//  finally
+//    FDesktopDuplicator.Free;
+//  end;
+//end;
 
 function TRtcScreenEncoder.CaptureBlock: boolean;
 var
@@ -2710,7 +2709,7 @@ var
 //        CS.Acquire;
 //i := GetTickCount;
         Result := GetScreenFromHelperByMMF;
-        ScrCap.HaveScreen := Result;
+//        ScrCap.HaveScreen := Result;
 //i := GetTickCount - i;
 //i := i;
 //        FNewImage.SaveToFile('C:\Screenshots\' + StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
@@ -2748,27 +2747,27 @@ var
 //          end;
 //          ScrCap.HaveScreen := FDesktopDuplicator.IsScreenshotReady;
 
-          fHaveScreen := GetDDAScreenshot;
-          ScrCap.HaveScreen := fHaveScreen;
-//          fHaveScreen := False;
-//            fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
-//            while fNeedRecreate do
+//          fHaveScreen := GetDDAScreenshot;
+//          ScrCap.HaveScreen := True; //fHaveScreen;
+            fHaveScreen := False;
+            fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
+            while fNeedRecreate do
+            begin
+              FDesktopDuplicator.Free;
+              FDesktopDuplicator := TDesktopDuplicationWrapper.Create(FDDACreated);
+              fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
+
+              Application.ProcessMessages;
+            end;
+            if fRes then
+            begin
+              if FDesktopDuplicator.DrawFrame(FNewImage) then
+                fHaveScreen := True;
+//            end
+//            else
 //            begin
-//              FDesktopDuplicator.Free;
-//              FDesktopDuplicator := TDesktopDuplicationWrapper.Create(FDDACreated);
-//              fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
-//
-//              Application.ProcessMessages;
-//            end;
-//            if fRes then
-//            begin
-//              if FDesktopDuplicator.DrawFrame(FNewImage) then
-//                fHaveScreen := True;
-////            end
-////            else
-////            begin
-//              //Memo1.Lines.Add('no frame ' + IntToHex(FDuplication.Error));
-//            end;
+              //Memo1.Lines.Add('no frame ' + IntToHex(FDuplication.Error));
+            end;
 
                 //FNewImage.SaveToFile('C:\Rufus\scr2.bmp');
 //            try
@@ -2811,11 +2810,14 @@ var
 //              end;
 //              ScrCap.HaveScreen := fHaveScreen;
 //
-//  //          ScrCap.HaveScreen := True;
+//              ScrCap.HaveScreen := True;
 //            finally
 //              ReleaseDC(DW, SDC);
 //            end;
       end;
+
+      ScrCap.HaveScreen := not (LowerCase(GetInputDesktopName) <> 'default') //Мы либо на экране блокировки / UAC
+        and (not IsServiceStarted(RTC_HOSTSERVICE_NAME));
     finally
       FNewImage.Canvas.Unlock;
     end;
