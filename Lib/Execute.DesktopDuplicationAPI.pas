@@ -163,7 +163,7 @@ begin
   if Failed(FError) then
   begin
 //    if FError = DXGI_ERROR_ACCESS_LOST then
-//      fNeedRecreate := True;
+      fNeedRecreate := True;
 
     Exit;
   end;

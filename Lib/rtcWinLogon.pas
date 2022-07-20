@@ -631,7 +631,7 @@ end;
 //Если клиент запущен под SYSTEM. Иначе бессмысленно
 procedure SwitchToActiveDesktop;
 var
-  LogonDesktop, CurDesktop: HDESK;
+  InputDesktop, CurDesktop: HDESK;
 //  name: array[0..255] of Char;
 //  DesktopName: String;
 //  Count: DWORD;
@@ -643,7 +643,7 @@ begin
   try
     SelectInputWinStation;
 
-    LogonDesktop := OpenInputDesktop(DF_ALLOWOTHERACCOUNTHOOK, False,
+    InputDesktop := OpenInputDesktop(DF_ALLOWOTHERACCOUNTHOOK, False, READ_CONTROL or WRITE_DAC or DESKTOP_WRITEOBJECTS or DESKTOP_READOBJECTS or DESKTOP_JOURNALPLAYBACK);
       {DESKTOP_ALL} {DESKTOP_CREATEMENU or
                           DESKTOP_CREATEWINDOW or
                           DESKTOP_ENUMERATE or
@@ -651,22 +651,22 @@ begin
                           DESKTOP_WRITEOBJECTS or
                           DESKTOP_READOBJECTS or
                           DESKTOP_SWITCHDESKTOP or
-                          GENERIC_WRITE} MAXIMUM_ALLOWED);
+                          GENERIC_WRITE} //MAXIMUM_ALLOWED);
 
 //    err := GetLastError;
 //    xLog('OpenInputDesktop LogonDesktop Err code = ' + IntToStr(err) + ' Desc = ' + SysErrorMessage(err));
 
     CurDesktop := GetThreadDesktop(GetCurrentThreadID);
 
-    if (LogonDesktop <> 0) and (GetUserObjectName(LogonDesktop) <> GetUserObjectName(CurDesktop)) then
+    if (InputDesktop <> 0) and (GetUserObjectName(InputDesktop) <> GetUserObjectName(CurDesktop)) then
     begin
 //      xLog('Try to Change ' + GetUserObjectName(CurDesktop) + ' to ' + GetUserObjectName(LogonDesktop));
-      SetThreadDesktop(LogonDesktop);
+      SetThreadDesktop(InputDesktop);
 //      err := GetLastError;
 //      xLog('Current desktop is ' + GetUserObjectName(GetThreadDesktop(GetCurrentThreadID)) + ' with error ' + IntToStr(err));
     end;
     CloseDesktop(CurDesktop);
-    CloseDesktop(LogonDesktop);
+    CloseDesktop(InputDesktop);
   finally
     CS.Release;
   end;
