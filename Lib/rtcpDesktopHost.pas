@@ -2643,15 +2643,17 @@ begin
     if (not fRes)
       or fNeedRecreate then
     begin
-      FDesktopDuplicator.Free;
+      Exit;
 
-      FDesktopDuplicator := TDesktopDuplicationWrapper.Create(fCreated);
-      if not fCreated then
-        Exit;
-
-      fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
-      if not fRes then
-        Exit;
+//      FDesktopDuplicator.Free;
+//
+//      FDesktopDuplicator := TDesktopDuplicationWrapper.Create(fCreated);
+//      if not fCreated then
+//        Exit;
+//
+//      fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
+//      if not fRes then
+//        Exit;
     end;
     if not FDesktopDuplicator.DrawFrame(FNewImage) then
       Exit;
