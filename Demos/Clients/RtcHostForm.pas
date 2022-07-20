@@ -732,7 +732,7 @@ var
   BlockInputHook_Keyboard, BlockInputHook_Mouse, BlockZOrderHook: HHOOK;
   CurConnectionsPendingMinuteCount: Cardinal;
   DateAllowConnectionPending: TDateTime;
-  PowerStateSaved, ActivationInProcess: Boolean;
+  PowerStateSaved, ActivationInProcess, AccountLoginInProcess: Boolean;
   LowPowerState, PowerOffState, ScreenSaverState: Integer;
   UseConnectionsLimit: Boolean = False;
   ChangedDragFullWindows: Boolean = False;
@@ -2570,6 +2570,7 @@ begin
   hwndNextViewer := SetClipboardViewer(Handle);
 
   ActivationInProcess := False;
+  AccountLoginInProcess := False;
 
   CurStatus := STATUS_NO_CONNECTION;
   FStatusUpdateThread := TStatusUpdateThread.Create(False, UpdateStatus);
@@ -3150,7 +3151,7 @@ begin
     end;
 
     btnNewConnection.Enabled := ConnectedToAllGateways;
-    btnAccountLogin.Enabled := (not LoggedIn) and ConnectedToAllGateways;
+    btnAccountLogin.Enabled := (not LoggedIn) and ConnectedToAllGateways and (not AccountLoginInProcess);
 
     bmp := TBitmap.Create;
     if CurStatus >= 0 then
@@ -4620,7 +4621,8 @@ var
 begin
 //  xLog('DoAccountLogin');
 
-  btnAccountLogin.Enabled := False;
+//  btnAccountLogin.Enabled := False;
+  AccountLoginInProcess := True;
 
   StartAccountLogin;
 
@@ -8185,7 +8187,8 @@ end;
 procedure TMainForm.resLoginRequestAborted(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 begin
-  btnAccountLogin.Enabled := True;
+  AccountLoginInProcess := False;
+//  btnAccountLogin.Enabled := True;
 end;
 
 procedure TMainForm.resLoginReturn(Sender: TRtcConnection; Data,
@@ -8336,7 +8339,8 @@ begin
 //    HostPingTimer.Enabled := True;
   end;
 
-  btnAccountLogin.Enabled := True;
+  AccountLoginInProcess := False;
+//  btnAccountLogin.Enabled := True;
 end;
 
 procedure TMainForm.resLogoutReturn(Sender: TRtcConnection; Data,
