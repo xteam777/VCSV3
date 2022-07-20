@@ -2643,15 +2643,17 @@ begin
     if (not fRes)
       or fNeedRecreate then
     begin
-      FDesktopDuplicator.Free;
+      Exit;
 
-      FDesktopDuplicator := TDesktopDuplicationWrapper.Create(fCreated);
-      if not fCreated then
-        Exit;
-
-      fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
-      if not fRes then
-        Exit;
+//      FDesktopDuplicator.Free;
+//
+//      FDesktopDuplicator := TDesktopDuplicationWrapper.Create(fCreated);
+//      if not fCreated then
+//        Exit;
+//
+//      fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
+//      if not fRes then
+//        Exit;
     end;
     if not FDesktopDuplicator.DrawFrame(FNewImage) then
       Exit;
@@ -2669,6 +2671,7 @@ var
   BlockTop: integer;
   DW: HWND;
   SDC: HDC;
+  err: HRESULT;
   fNeedRecreate, fHaveScreen, fRes: Boolean;
 
   function CaptureNow: boolean;
@@ -2788,6 +2791,13 @@ var
               Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FNewImage.Width,
                 FNewImage.Height, SDC, FCaptureLeft, FCaptureTop + BlockTop,
                 FCaptureMask);
+
+              if not Result then
+              begin
+                err := GetLastError;
+                xLog('BitBlt Error: ' + IntToStr(err) + ' ' + SysErrorMessage(err));
+              end;
+
               fHaveScreen := Result;
             end;
            ScrCap.HaveScreen := fHaveScreen;
