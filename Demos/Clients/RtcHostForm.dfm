@@ -3,7 +3,7 @@ object MainForm: TMainForm
   Top = 309
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'Remox'
-  ClientHeight = 470
+  ClientHeight = 485
   ClientWidth = 839
   Color = clBtnFace
   DoubleBuffered = True
@@ -48,7 +48,7 @@ object MainForm: TMainForm
     Left = 0
     Top = 0
     Width = 839
-    Height = 470
+    Height = 485
     Margins.Left = 0
     Margins.Top = 0
     Margins.Right = 0
@@ -61,9 +61,10 @@ object MainForm: TMainForm
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
+    ExplicitHeight = 470
     DesignSize = (
       839
-      470)
+      485)
     object lblStatus: TLabel
       AlignWithMargins = True
       Left = 46
@@ -87,7 +88,7 @@ object MainForm: TMainForm
       ExplicitWidth = 793
     end
     object iStatus1: TImage
-      Left = 1
+      Left = 2
       Top = 471
       Width = 8
       Height = 8
@@ -455,7 +456,7 @@ object MainForm: TMainForm
         010002110311003F001DBF2AD4F2AEFD6B5AE6A2CDF5E6FA854786BA3FFFD9}
     end
     object iStatus2: TImage
-      Left = 11
+      Left = 12
       Top = 471
       Width = 8
       Height = 8
@@ -823,7 +824,7 @@ object MainForm: TMainForm
         010002110311003F001DBF2AD4F2AEFD6B5AE6A2CDF5E6FA854786BA3FFFD9}
     end
     object iStatus3: TImage
-      Left = 21
+      Left = 22
       Top = 471
       Width = 8
       Height = 8
