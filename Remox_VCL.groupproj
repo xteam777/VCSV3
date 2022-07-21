@@ -3,7 +3,7 @@
         <ProjectGuid>{27CEBA2A-AF03-442F-8F46-C9C97592F242}</ProjectGuid>
     </PropertyGroup>
     <ItemGroup>
-        <Projects Include="Demos\Clients\Vircess.dproj">
+        <Projects Include="Demos\Clients\Remox.dproj">
             <Dependencies/>
         </Projects>
     </ItemGroup>
@@ -14,23 +14,23 @@
             <Default.Personality/>
         </BorlandProject>
     </ProjectExtensions>
-    <Target Name="Vircess">
-        <MSBuild Projects="Demos\Clients\Vircess.dproj"/>
+    <Target Name="Remox">
+        <MSBuild Projects="Demos\Clients\Remox.dproj"/>
     </Target>
-    <Target Name="Vircess:Clean">
-        <MSBuild Projects="Demos\Clients\Vircess.dproj" Targets="Clean"/>
+    <Target Name="Remox:Clean">
+        <MSBuild Projects="Demos\Clients\Remox.dproj" Targets="Clean"/>
     </Target>
-    <Target Name="Vircess:Make">
-        <MSBuild Projects="Demos\Clients\Vircess.dproj" Targets="Make"/>
+    <Target Name="Remox:Make">
+        <MSBuild Projects="Demos\Clients\Remox.dproj" Targets="Make"/>
     </Target>
     <Target Name="Build">
-        <CallTarget Targets="Vircess"/>
+        <CallTarget Targets="Remox"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="Vircess:Clean"/>
+        <CallTarget Targets="Remox:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="Vircess:Make"/>
+        <CallTarget Targets="Remox:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

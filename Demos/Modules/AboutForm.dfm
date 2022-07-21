@@ -20,9 +20,10 @@ object fAboutForm: TfAboutForm
   TextHeight = 13
   object ProgramIcon: TImage
     Left = 0
-    Top = -2
-    Width = 388
-    Height = 420
+    Top = 0
+    Width = 382
+    Height = 271
+    Align = alClient
     Picture.Data = {
       0A544A504547496D616765467F0000FFD8FFE10AC74578696600004D4D002A00
       000008000C010000030000000102530000010100030000000101A40000010200
@@ -1046,6 +1047,9 @@ object fAboutForm: TfAboutForm
     Proportional = True
     Stretch = True
     IsControl = True
+    ExplicitTop = -2
+    ExplicitWidth = 388
+    ExplicitHeight = 420
   end
   object Copyright: TLabel
     Left = 22
