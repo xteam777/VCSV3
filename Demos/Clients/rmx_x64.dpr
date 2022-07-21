@@ -3,7 +3,7 @@ program rmx_w32;
 //Переключение десктопа и снятие скриншота работает исключительно в потоке
 
 uses
-  FastMM4,
+//  FastMM4,
   Winapi.Windows,
   Forms,
   System.SysUtils,
