@@ -3,6 +3,7 @@ program rmx_w32;
 //Переключение десктопа и снятие скриншота работает исключительно в потоке
 
 uses
+  FastMM4,
   Winapi.Windows,
   Forms,
   System.SysUtils,
@@ -2752,6 +2753,10 @@ begin
           on E: Exception do
             xLog('ScreenShotThreadProc Error: ' + E.Message);
         end;
+
+//        SelectObject(hMemDC, hOld);
+//        DestroyBitmapData;
+//        ExitThread(0);
       finally
         ResetEvent(EventWriteBegin);
         ResetEvent(EventWriteEnd);
@@ -2844,6 +2849,8 @@ begin
     while GetMessage(msg, 0, 0, 0) do
       if msg.message <> WM_QUIT then
       DispatchMessage(msg);
+
+//  Sleep(500);
 
     FIPCServer.Stop;
     FIPCServer.Free;

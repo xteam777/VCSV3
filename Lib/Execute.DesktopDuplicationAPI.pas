@@ -36,6 +36,7 @@ type
   public
     Bitmap: TBitmap;
     constructor Create(var fCreated: Boolean);
+    destructor Destroy; override;
     function GetFrame(var fNeedRecreate: Boolean): Boolean;
     function DrawFrame(var Bitmap: TBitmap): Boolean;
 //    function DrawFrameToDib(pBits: PByte): Boolean;
@@ -138,6 +139,17 @@ begin
   fCreated := True;
 end;
 
+destructor TDesktopDuplicationWrapper.Destroy;
+begin
+  inherited;
+
+  if FTexture <> nil then
+    FTexture := nil;
+
+  if Bitmap <> nil then
+    Bitmap.Free;
+end;
+
 function TDesktopDuplicationWrapper.GetFrame(var fNeedRecreate: Boolean): Boolean;
 var
   FrameInfo: TDXGI_OUTDUPL_FRAME_INFO;
@@ -205,10 +217,7 @@ begin
     Result := True;
   end
   else
-  begin
     FDuplicate.ReleaseFrame;
-//    fNeedRecreate := True;
-  end;
 end;
 
 function TDesktopDuplicationWrapper.DrawFrame(var Bitmap: TBitmap): Boolean;
