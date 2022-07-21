@@ -3,7 +3,7 @@ object MainForm: TMainForm
   Top = 309
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'Remox'
-  ClientHeight = 490
+  ClientHeight = 470
   ClientWidth = 839
   Color = clBtnFace
   DoubleBuffered = True
@@ -48,7 +48,7 @@ object MainForm: TMainForm
     Left = 0
     Top = 0
     Width = 839
-    Height = 490
+    Height = 470
     Margins.Left = 0
     Margins.Top = 0
     Margins.Right = 0
@@ -61,10 +61,9 @@ object MainForm: TMainForm
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
-    ExplicitHeight = 453
     DesignSize = (
       839
-      490)
+      470)
     object lblStatus: TLabel
       AlignWithMargins = True
       Left = 46
@@ -5867,7 +5866,7 @@ object MainForm: TMainForm
     Left = 391
     Top = 10
     object miShowForm: TMenuItem
-      Caption = #1055#1086#1082#1072#1079#1072#1090#1100' Vircess'
+      Caption = #1055#1086#1082#1072#1079#1072#1090#1100' Remox'
       Default = True
       OnClick = miShowFormClick
       OnDrawItem = miWebSite2DrawItem
@@ -5891,7 +5890,7 @@ object MainForm: TMainForm
       OnDrawItem = miWebSite2DrawItem
     end
     object miWebSite: TMenuItem
-      Caption = #1042#1077#1073'-'#1089#1072#1081#1090' Vircess'
+      Caption = #1042#1077#1073'-'#1089#1072#1081#1090' Remox'
       OnClick = miWebSiteClick
       OnDrawItem = miWebSite2DrawItem
     end
@@ -5991,7 +5990,7 @@ object MainForm: TMainForm
     Left = 11
     Top = 44
     Bitmap = {
-      494C010102001400D00508000800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C010102001400D40508000800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000200000000800000001002000000000000004
       000000000000000000000000000000000000846BEF006B63E700635AE7006B5A
       EF006B5AEF006B63EF006B63E7007B6BEF00C6B52900BDAD1800BDAD1800BDAD
