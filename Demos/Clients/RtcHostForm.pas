@@ -279,10 +279,6 @@ type
     tActivateHost: TTimer;
     ApplicationEvents: TApplicationEvents;
     tCleanConnections: TTimer;
-    tGetDirectorySize: TTimer;
-    tFileSend: TTimer;
-    ser_: TIdTCPServer;
-    cle_: TIdTCPClient;
     rDestroyClient: TRtcResult;
     Button4: TButton;
     Button1: TButton;
@@ -497,9 +493,6 @@ type
     procedure Button3Click(Sender: TObject);
     procedure resLoginRequestAborted(Sender: TRtcConnection; Data,
       Result: TRtcValue);
-    procedure tGetDirectorySizeTimer(Sender: TObject);
-    procedure tFileSendTimer(Sender: TObject);
-    procedure ser_Execute(AContext: TIdContext);
     procedure Button4Click(Sender: TObject);
 
   protected
@@ -571,9 +564,6 @@ type
     procedure OnCustomFormOpen(AForm: TForm);
     procedure OnCustomFormClose;
 
-    procedure WMChangeCbChain(var Message: TWMChangeCBChain); message WM_CHANGECBCHAIN;
-    procedure WMDrawClipboard(var Message: TMessage); message WM_DRAWCLIPBOARD;
-    function cf_(Sender: TObject): TStringDynArray;
   public
     { Public declarations }
 //    SilentMode: Boolean;
@@ -741,8 +731,6 @@ var
   RealName, DisplayName: String;
 //  FInputThread: TInputThread;
   CS_GW, CS_Status, CS_Pending, CS_ActivateHost: TCriticalSection; //CS_SetConnectedState
-  T_, host_ip: String;
-  bf_, bf: TStringDynArray;
 
 implementation
 
@@ -3749,51 +3737,55 @@ begin
 
     if Assigned(info) then
     begin
-      if (RecordType = 'ALL')
-        or (RecordType = 'REGULAR_PASS') then
-        RegularPassword := info.asString['RegularPassword'];
+      try
+        if (RecordType = 'ALL')
+          or (RecordType = 'REGULAR_PASS') then
+          RegularPassword := info.asString['RegularPassword'];
 
-      if (RecordType = 'ALL') then
-      begin
-        ProxyOption := info.asString['ProxyOption'];
-        if ProxyOption = 'Automatic' then
-//        begin
-//          PClient.Gate_WinHttp := True;
-//          hcAccounts.UseWinHTTP := True;
-//          TimerClient.UseWinHTTP := True;
-//          HostTimerClient.UseWinHTTP := True;
-//        end
-//        else
+        if (RecordType = 'ALL') then
         begin
-          PClient.Gate_WinHttp := True;
-          hcAccounts.UseWinHTTP := True;
-          TimerClient.UseWinHTTP := True;
-          HostTimerClient.UseWinHTTP := True;
+          ProxyOption := info.asString['ProxyOption'];
+          if ProxyOption = 'Automatic' then
+  //        begin
+  //          PClient.Gate_WinHttp := True;
+  //          hcAccounts.UseWinHTTP := True;
+  //          TimerClient.UseWinHTTP := True;
+  //          HostTimerClient.UseWinHTTP := True;
+  //        end
+  //        else
+          begin
+            PClient.Gate_WinHttp := True;
+            hcAccounts.UseWinHTTP := True;
+            TimerClient.UseWinHTTP := True;
+            HostTimerClient.UseWinHTTP := True;
+          end;
+
+          //Доделать. Удалить фикс прокси?
+  //        info.asBoolean['Proxy'] := True;
+  //        info.asString['ProxyAddr'] := 'socks=127.0.0.1:9050';
+
+          PClient.Gate_Proxy := info.asBoolean['Proxy'];
+          PClient.Gate_ProxyAddr := info.asString['ProxyAddr'];
+          PClient.Gate_ProxyUserName := info.asString['ProxyUsername'];
+          PClient.Gate_ProxyPassword := info.asString['ProxyPassword'];
+
+          hcAccounts.UseProxy := info.asBoolean['Proxy'];
+          hcAccounts.UserLogin.ProxyAddr := info.asString['ProxyAddr'];
+          hcAccounts.UserLogin.ProxyUserName := info.asString['ProxyUsername'];
+          hcAccounts.UserLogin.ProxyPassword := info.asString['ProxyPassword'];
+
+          TimerClient.UseProxy := info.asBoolean['Proxy'];
+          TimerClient.UserLogin.ProxyAddr := info.asString['ProxyAddr'];
+          TimerClient.UserLogin.ProxyUserName := info.asString['ProxyUsername'];
+          TimerClient.UserLogin.ProxyPassword := info.asString['ProxyPassword'];
+
+          HostTimerClient.UseProxy := info.asBoolean['Proxy'];
+          HostTimerClient.UserLogin.ProxyAddr := info.asString['ProxyAddr'];
+          HostTimerClient.UserLogin.ProxyUserName := info.asString['ProxyUsername'];
+          HostTimerClient.UserLogin.ProxyPassword := info.asString['ProxyPassword'];
         end;
-
-        //Доделать. Удалить фикс прокси?
-//        info.asBoolean['Proxy'] := True;
-//        info.asString['ProxyAddr'] := 'socks=127.0.0.1:9050';
-
-        PClient.Gate_Proxy := info.asBoolean['Proxy'];
-        PClient.Gate_ProxyAddr := info.asString['ProxyAddr'];
-        PClient.Gate_ProxyUserName := info.asString['ProxyUsername'];
-        PClient.Gate_ProxyPassword := info.asString['ProxyPassword'];
-
-        hcAccounts.UseProxy := info.asBoolean['Proxy'];
-        hcAccounts.UserLogin.ProxyAddr := info.asString['ProxyAddr'];
-        hcAccounts.UserLogin.ProxyUserName := info.asString['ProxyUsername'];
-        hcAccounts.UserLogin.ProxyPassword := info.asString['ProxyPassword'];
-
-        TimerClient.UseProxy := info.asBoolean['Proxy'];
-        TimerClient.UserLogin.ProxyAddr := info.asString['ProxyAddr'];
-        TimerClient.UserLogin.ProxyUserName := info.asString['ProxyUsername'];
-        TimerClient.UserLogin.ProxyPassword := info.asString['ProxyPassword'];
-
-        HostTimerClient.UseProxy := info.asBoolean['Proxy'];
-        HostTimerClient.UserLogin.ProxyAddr := info.asString['ProxyAddr'];
-        HostTimerClient.UserLogin.ProxyUserName := info.asString['ProxyUsername'];
-        HostTimerClient.UserLogin.ProxyPassword := info.asString['ProxyPassword'];
+      finally
+        info.Free;
       end;
     end;
   end;
@@ -4757,7 +4749,7 @@ begin
 //    end;
 //  end;
 
-  TerminateProcess(GetCurrentProcess, ExitCode);
+//  TerminateProcess(GetCurrentProcess, ExitCode);
 end;
 
 procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -5340,23 +5332,23 @@ var
 begin
 //  XLog('tStatusTimer');
 
-  s := ' ';
-  if Pos(' . . . . .', lblStatus.Caption) > 0 then
-    lblStatus.Caption := StringReplace(lblStatus.Caption, ' . . . . .', ' .', [rfReplaceAll])
-  else
-  if Pos(' . . . .', lblStatus.Caption) > 0 then
-    lblStatus.Caption := StringReplace(lblStatus.Caption, ' . . . .', ' . . . . .', [rfReplaceAll])
-  else
-  if Pos(' . . .', lblStatus.Caption) > 0 then
-    lblStatus.Caption := StringReplace(lblStatus.Caption, ' . . .', ' . . . .', [rfReplaceAll])
-  else
-  if Pos(' . .', lblStatus.Caption) > 0 then
-    lblStatus.Caption := StringReplace(lblStatus.Caption, ' . .', ' . . .', [rfReplaceAll])
-  else
-  if Pos(' .', lblStatus.Caption) > 0 then
-    lblStatus.Caption := StringReplace(lblStatus.Caption, ' .', ' . .', [rfReplaceAll])
-  else
-    lblStatus.Caption := lblStatus.Caption + ' .';
+//  s := ' ';
+//  if Pos(' . . . . .', lblStatus.Caption) > 0 then
+//    lblStatus.Caption := StringReplace(lblStatus.Caption, ' . . . . .', ' .', [rfReplaceAll])
+//  else
+//  if Pos(' . . . .', lblStatus.Caption) > 0 then
+//    lblStatus.Caption := StringReplace(lblStatus.Caption, ' . . . .', ' . . . . .', [rfReplaceAll])
+//  else
+//  if Pos(' . . .', lblStatus.Caption) > 0 then
+//    lblStatus.Caption := StringReplace(lblStatus.Caption, ' . . .', ' . . . .', [rfReplaceAll])
+//  else
+//  if Pos(' . .', lblStatus.Caption) > 0 then
+//    lblStatus.Caption := StringReplace(lblStatus.Caption, ' . .', ' . . .', [rfReplaceAll])
+//  else
+//  if Pos(' .', lblStatus.Caption) > 0 then
+//    lblStatus.Caption := StringReplace(lblStatus.Caption, ' .', ' . .', [rfReplaceAll])
+//  else
+//    lblStatus.Caption := lblStatus.Caption + ' .';
 end;
 
 procedure TMainForm.tTimerClientReconnectTimer(Sender: TObject);
@@ -6508,7 +6500,7 @@ begin
         begin
           asWideString['User'] := PClient.LoginUserInfo.asText['RealName'];
           asString['Gateway'] := PClient.GateAddr + ':' + PClient.GatePort;
-          asRecord['Passwords'] := PassRec;
+          //asRecord['Passwords'] := PassRec;
           asInteger['LockedState'] := ScreenLockedState;
           asBoolean['IsService'] := IsService;
           Call(resHostPing);
@@ -6518,9 +6510,8 @@ begin
           Data.Clear;
       end;
     finally
-      PassRec.Free
+      FreeAndNil(PassRec);
     end;
-//  end;
 end;
 
 procedure TMainForm.HostTimerClientConnect(Sender: TRtcConnection);
@@ -8101,24 +8092,6 @@ begin
     end;
   finally
     PassRec.Free;
-  end;
-end;
-
-procedure TMainForm.ser_Execute(AContext: TIdContext);
-var
-  s, f, t: String;
-begin
-  s := AContext.Connection.Socket.ReadLn(IndyTextEncoding(IdTextEncodingType.encOSDefault));
-  try
-    if copy(s, 1, 7) = 'copy_f:' then
-    begin
-      delete(s, 1, 7);
-      T_ := s;
-      tFileSend.Enabled := True;
-    end;
-
-  finally
-    AContext.Connection.Disconnect;
   end;
 end;
 
@@ -10261,183 +10234,6 @@ begin
     res := SystemParametersInfo(SPI_SETDRAGFULLWINDOWS, 0, nil, SPIF_UPDATEINIFILE);
   ChangedDragFullWindows := False;
 end;
-
-//+++++++++++++++++++++++++++++++++++++++++++++++CLIPBOARD COPYING+++++++++++++++++++++++++++++++++++++++++++++++//
-function GetFileSize(const FileName: String): LongInt;
-var
-  SearchRec: TSearchRec;
-begin
-  if FindFirst(ExpandFileName(FileName), faAnyFile, SearchRec) = 0 then
-    result := SearchRec.size
-  else
-    result := -1;
-  FindClose(SearchRec);
-end;
-
-procedure TMainForm.tGetDirectorySizeTimer(Sender: TObject);
-var s,_: string;
-    i: integer;
-
- function getDirSize(d: String): Int64;
- var
-    ff: TStringDynArray; s: String;
- begin
-    result := 0;
-    ff := TDirectory.GetFiles(d, '*', TSearchOption.soAllDirectories);
-    for s in ff do
-    begin
-      Application.ProcessMessages;
-      result:= result + GetFileSize(s)
-    end;
- end;
-
-begin
-  tGetDirectorySize.Enabled:= False;
-  try
-    s:= '';
-    for i:=0 to high(bf) do
-    begin
-      Application.ProcessMessages;
-
-      s:= s + bf[i];
-      if i < high(bf) then
-         s:= s + '|';
-
-      if directoryExists(bf[i]) then
-        _:= _ + bf[i] + '*' + getDirsize(bf[i]).tostring
-      else
-        _:= _ + bf[i] + '*' + getfilesize(bf[i]).tostring;
-
-      if i < high(bf) then
-         _:= _ + '|';
-    end;
-
-    cle_.Host := HOST_IP;
-    cle_.Connect;
-    try
-      cle_.Socket.WriteLn('f:' + s, IndyTextEncoding(IdTextEncodingType.encOSDefault));
-      cle_.Socket.WriteLn('s:' + _, IndyTextEncoding(IdTextEncodingType.encOSDefault));
-    finally
-      cle_.Disconnect;
-    end;
-  except
-  end;
-end;
-
-procedure TMainForm.tFileSendTimer(Sender: TObject);
-var ff: TStringList;
-  s: String;
-  cn, i: Integer;
-  h: HWND;
-begin
-  tFileSend.Enabled:= False;
-
-  if FindWindow('TrdFileBrowser', nil) <> 0 then
-  begin
-    ff := TStringList.Create;
-    for i := 0 to High(bf) do
-      ff.Add(bf[i]);
-
-    h := FindWindow('TrdFileTransfer',nil);
-    if h <> 0 then
-      SetWindowPos(h, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE or SWP_NOMOVE);
-
-    for i := 0 to ff.count - 1 do
-//    if FileExists(ff[i]) or
-//      (DirectoryExists(ff[i])) then
-//      MyUI.Send(ff[i], T_);
-    ff.free;
-
-    if h <> 0 then
-      SetWindowPos(h, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE or SWP_NOMOVE);
-  end
-  else
-    MessageBox(Handle, PChar('Вначале включите режим передачи файлов "File Explorer"'), 'Remox', MB_TOPMOST + MB_ICONWARNING + MB_OK);
-end;
-
-procedure TMainForm.WMChangeCbChain(var Message: TWMChangeCBChain);
-begin
-  with Message do
-  begin
-    // If the next window is closing, repair the chain.
-    if Remove = hwndNextViewer then
-      hwndNextViewer := Next
-    // Otherwise, pass the message to the next link.
-    else
-      if hwndNextViewer <> 0 then
-        SendMessage(hwndNextViewer, Msg, Remove, Next);
-  end;
-end;
-
-procedure TMainForm.WMDrawClipboard(var Message: TMessage);
-var
-  i: Integer;
-begin
-  try
-    bf:= cf_(nil);
-    if high(bf)>-1 then
-    begin
-      setlength(bf_,length(bf));
-      for i:=0 to high(bf) do
-        bf_[i]:= bf[i];
-    end
-    else
-    begin
-      setlength(bf,length(bf_));
-      for i:=0 to high(bf_) do
-        bf[i]:= bf_[i];
-    end;
-  except
-  end;
-
-  with Message do
-   SendMessage(hwndNextViewer, Msg, WParam, LParam);
-end;
-
-function TMainForm.cf_(Sender: TObject): TStringDynArray;
-var
-  f: THandle;
-  buffer: array [0..MAX_PATH] of Char;
-  i, numFiles: Integer;
-begin
-  setLength(result, 0);
-
-  try
-    try
-      Clipboard.Open;
-    except
-    end;
-    try
-      f := Clipboard.GetAsHandle(CF_HDROP);
-      if f <> 0 then
-      begin
-        numFiles := DragQueryFile(f, $FFFFFFFF, nil, 0);
-        for i := 0 to numfiles - 1 do
-        begin
-          buffer[0] := #0;
-          DragQueryFile(f, i, buffer, SizeOf(buffer));
-
-          if fileexists(buffer) or (directoryExists(buffer)) then
-          begin
-            setLength(result, Length(result)+1);
-            result[high(result)]:= buffer;
-          end;
-        end;
-      end;
-    finally
-      try
-        Clipboard.Close;
-      except
-      end;
-
-      if length(result) > 0 then
-        if getforegroundwindow <> findwindow('TrdDesktopViewer', 'rdDesktopViewer') then
-          tGetDirectorySize.Enabled:= True;
-    end;
-  except
-  end;
-end;
-//-----------------------------------------------CLIPBOARD COPYING-----------------------------------------------//
 
 initialization
   CS_GW := TCriticalSection.Create;
