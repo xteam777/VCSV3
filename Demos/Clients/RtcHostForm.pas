@@ -732,6 +732,7 @@ var
   RealName, DisplayName: String;
 //  FInputThread: TInputThread;
   CS_GW, CS_Status, CS_Pending, CS_ActivateHost: TCriticalSection; //CS_SetConnectedState
+  ConsoleId: String;
 
 implementation
 
@@ -2561,6 +2562,8 @@ var
 begin
   //XLog('FormCreate');
 
+  ConsoleId := '';
+
   hwndNextViewer := SetClipboardViewer(Handle);
 
   ActivationInProcess := False;
@@ -3234,6 +3237,7 @@ begin
       eConsoleID.Text := '-';
       eUserName.Text := '-';
       ePassword.Text := '-';
+      ConsoleId := '';
 
       LoggedIn := False;
       ShowDevicesPanel;
@@ -6506,7 +6510,9 @@ begin
         begin
           asWideString['User'] := PClient.LoginUserInfo.asText['RealName'];
           asString['Gateway'] := PClient.GateAddr + ':' + PClient.GatePort;
-          //asRecord['Passwords'] := PassRec;
+          asRecord['Passwords'] := PassRec;
+          if ActiveConsoleSessionID = CurrentProcessID then
+            asString['ConsoleId'] := ConsoleId;
           asInteger['LockedState'] := ScreenLockedState;
           asBoolean['IsService'] := IsService;
           Call(resHostPing);
@@ -6900,7 +6906,7 @@ begin
       begin
 //        AddPendingRequest(asWideString['user'], asString['action'], asString['Address'] + ':' +  asString['Port'], 0);
         TSendDestroyClientToGatewayThread.Create(False, asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['user'] + '_' + asWideString['action'] + '_', False);
-        PortalThread := TPortalThread.Create(False, asWideString['user'], asWideString['action'], asString['Address'], True); //Для каждого соединения новый клиент
+        PortalThread := TPortalThread.Create(False, asWideString['UserToConnect'], asWideString['action'], asString['Address'], True); //Для каждого соединения новый клиент
         PRItem^.Gateway := asString['Address'];
         PRItem^.ThreadID := PortalThread.ThreadID;
 //        New(PRItem);
@@ -7808,7 +7814,7 @@ begin
   //  if cmAccounts.Data = nil then
   //    Exit;
 
-    try
+{    try
       HWID := THardwareId.Create(False);
       if (not IsService)
         or (not IsWinServer) then
@@ -7845,6 +7851,28 @@ begin
           on E: Exception do
             Data.Clear;
         end;
+      end;
+    finally
+     HWID.Free;
+    end;}
+
+    try
+      HWID := THardwareId.Create(False);
+      with cmAccounts do
+      try
+        with Data.NewFunction('Host.Activate') do
+        begin
+          HWID.AddUserProfileName := True;
+          HWID.GenerateHardwareId;
+          asString['Hash'] := HWID.HardwareIdHex;
+          HWID.AddUserProfileName := False;
+          HWID.GenerateHardwareId;
+          asString['Hash_Console'] := HWID.HardwareIdHex;
+          Call(rActivate);
+        end;
+      except
+        on E: Exception do
+          Data.Clear;
       end;
     finally
      HWID.Free;
@@ -7922,6 +7950,8 @@ begin
         sUserName := '';
         sConsoleName := '';
 
+        ConsoleId := IntToStr(asInteger['ID_Console']);
+
         if IsWinServer then
         begin
           RealName := IntToStr(asInteger['ID']);
@@ -7944,6 +7974,7 @@ begin
 
           eUserName.Text := sUserName;
           eConsoleID.Text := sConsoleName;
+          ConsoleId := sConsoleName;
         end
         else
         if IsServiceStarting(RTC_HOSTSERVICE_NAME)
@@ -8037,6 +8068,8 @@ begin
                 asWideString['User'] := LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]));
                 asRecord['Passwords'] := PassRec;
                 asString['Gateway'] := PClient.GateAddr + ':' + PClient.GatePort; //asString['Gateway'] + ':' + asString['Port'];
+                if ActiveConsoleSessionID = CurrentProcessID then
+                  asString['ConsoleId'] := ConsoleId;
                 asInteger['LockedState'] := ScreenLockedState;
                 asBoolean['IsService'] := False;
                 Call(resHostLogin);
@@ -8052,6 +8085,8 @@ begin
                 asWideString['User'] := LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]));
                 asRecord['Passwords'] := PassRec;
                 asString['Gateway'] := PClient.GateAddr + ':' + PClient.GatePort; //asString['Gateway'] + ':' + asString['Port'];
+                if ActiveConsoleSessionID = CurrentProcessID then
+                  asString['ConsoleId'] := ConsoleId;
                 asInteger['LockedState'] := ScreenLockedState;
                 asBoolean['IsService'] := False;
                 Call(resHostTimerLogin);
