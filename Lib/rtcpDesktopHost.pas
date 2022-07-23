@@ -2751,7 +2751,7 @@ var
 //          fHaveScreen := GetDDAScreenshot;
 //          ScrCap.HaveScreen := True; //fHaveScreen;
 
-{            fHaveScreen := False;
+            fHaveScreen := False;
             fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
             i := 0;
             while fNeedRecreate do
@@ -2778,10 +2778,10 @@ var
 //            else
 //            begin
               //Memo1.Lines.Add('no frame ' + IntToHex(FDuplication.Error));
-            end; }
+            end;
 
                 //FNewImage.SaveToFile('C:\Rufus\scr2.bmp');
-            try
+{            try
                 DW := GetCaptureWindow;
               //Get GDI screenshot
               //if not fHaveScreen then
@@ -2819,18 +2819,19 @@ var
                 end;
 
                 fHaveScreen := Result;
+                ScrCap.HaveScreen := fHaveScreen;
               end;
 //
 ////              ScrCap.HaveScreen := True;
             finally
               ReleaseDC(DW, SDC);
-            end;
+            end;}
 
-          {if fHaveScreen then
+          if fHaveScreen then
             FNewImage.Assign(FDesktopDuplicator.Bitmap);
           fHaveScreen := True;
           ScrCap.HaveScreen := fHaveScreen;
-          Result := fHaveScreen;}
+          Result := fHaveScreen;
       end;
 
 //      ScrCap.HaveScreen := not (LowerCase(GetInputDesktopName) <> 'default') //Мы либо на экране блокировки / UAC
