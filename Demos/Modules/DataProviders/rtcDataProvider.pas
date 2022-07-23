@@ -466,17 +466,22 @@ begin
     else
       asString['Result'] := 'PASS_NOT_VALID';
     asString['User'] := Param.asString['User'];
-    if Param.asString['Action'] <> 'desc' then //Если подключение к службе передачи файлов или чата и у службы указан активный консольный клиент передаем его
+    if (Param.asString['Action'] <> 'desc')
+      and Users.HostIsService(Param.asString['User']) then //Если подключение к службе передачи файлов или чата и у службы указан активный консольный клиент передаем его
     begin
       ActiveConsoleClientId := Users.GetUserActiveConsoleClient(Param.asString['User']);
-      if (ActiveConsoleClientId <> '')
-        and Users.isHostLoggedIn(ActiveConsoleClientId) then
-        asString['UserToConnect'] := ActiveConsoleClientId
-      else
+      if (ActiveConsoleClientId <> '') then
       begin
-        asString['UserToConnect'] := '';
-        asString['Result'] := 'IS_OFFLINE';
-      end;
+        if Users.isHostLoggedIn(ActiveConsoleClientId) then
+          asString['UserToConnect'] := ActiveConsoleClientId
+        else
+        begin
+          asString['UserToConnect'] := '';
+          asString['Result'] := 'IS_OFFLINE';
+        end;
+      end
+      else
+        asString['UserToConnect'] := Param.asString['User'];
     end
     else
       asString['UserToConnect'] := Param.asString['User'];
@@ -508,7 +513,7 @@ begin
 
 //      b := Users.CheckPassword('100001125', '555');
 
-      Users.HostLogin2(Param['user'], Param['Gateway'], Param['ConsoleId'], Param['IsService'], FriendList, Session.ID);
+      Users.HostLogin2(Param.asWideString['user'], Param.asString['Gateway'], Param.asString['ConsoleId'], Param.asBoolean['IsService'], FriendList, Session.ID);
 
       Users.SetPasswords(Param['user'], Session.ID, Param);
 
@@ -534,7 +539,7 @@ begin
   if Assigned(FStartForceUserLogoutThread) then
     FStartForceUserLogoutThread(Param['User'], True);
 
-  if DoHostLogin(Sender, Param['User'], Param['Gateway'], Param['ConsoleId'], Param['IsService'], Param) then
+  if DoHostLogin(Sender, Param.asWideString['User'], Param.asString['Gateway'], Param.asString['ConsoleId'], Param.asBoolean['IsService'], Param) then
     Result.asString := 'OK';
 end;
 
@@ -649,7 +654,7 @@ begin
     else
       asBoolean['NeedHostRelogin'] := False;
 
-  HostCheckLogin(Sender, Param['User'], Param['Gateway'], Param['ConsoleId'], Param['IsService'], Param);
+  HostCheckLogin(Sender, Param.asWideString['User'], Param.asString['Gateway'], Param.asString['ConsoleId'], Param.asBoolean['IsService'], Param);
 
   Users.SetPasswords(Param['User'], Sender.Session.ID, Param);
 
@@ -658,7 +663,7 @@ begin
   Users.SetLastHostActiveTime(Param['User'], Now);
 
   if (not Param['IsService']) then
-    Users.SetServiceActiveConsoleClient(Param['User'], Param['ConsoleId']);
+    Users.SetServiceActiveConsoleClient(Param['User'], Param.asString['ConsoleId']);
 
 //  UserName := 'Ping - ' + Param['User'] + ' - ' + DateTimeToStr(Now);
 

@@ -111,6 +111,8 @@ type
 
     function IsHostExists(uname: String): Boolean;
 
+    function HostIsService(uname: String): Boolean;
+
     procedure EraseGatewayList;
     function GetAvailableGateway: String;
     function GetUserGateway(uname: String): String;
@@ -1343,9 +1345,24 @@ begin
   userCS.Acquire;
   try
     Result := False;
+
     if uname <> '' then
       if HostsList.isType[uname] = rtc_Record then // user exists
         Result := True;
+  finally
+    userCS.Release;
+  end;
+end;
+
+function TVircessUsers.HostIsService(uname: String): Boolean;
+begin
+  userCS.Acquire;
+  try
+    Result := False;
+
+    if uname <> '' then
+      if HostsInfo.Child[uname] <> nil then // user exists
+        Result := HostsInfo.Child[uname].asBoolean['IsService'];
   finally
     userCS.Release;
   end;
