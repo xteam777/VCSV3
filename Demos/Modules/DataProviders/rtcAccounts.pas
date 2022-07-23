@@ -56,9 +56,9 @@ type
 
     procedure TriggerCallback(uname: String);
 
-    procedure doHostLogIn(uname, gateway: String; isService: Boolean; Friends: TRtcRecord; sessid: RtcString);
-    procedure doHostLogIn2(uname, gateway: String; isService: Boolean; Friends: TRtcRecord; sessid: RtcString); // 2nd connnection
-    procedure doHostLogOut(uname, gateway: String; Friends: TRtcRecord; sessid: RtcString; DisconnectAll: Boolean = False);
+    procedure doHostLogIn(uname, gateway, ConsoleId: String; isService: Boolean; Friends: TRtcRecord; sessid: RtcString);
+    procedure doHostLogIn2(uname, gateway, ConsoleId: String; isService: Boolean; Friends: TRtcRecord; sessid: RtcString); // 2nd connnection
+    procedure doHostLogOut(uname, gateway, ConsoleId: String; Friends: TRtcRecord; sessid: RtcString; DisconnectAll: Boolean = False);
 
     procedure NotifyAccountsOnHostLogIn(uname: String; Friends: TRtcRecord);
     procedure NotifyAccountsOnHostLogOut(uname: String; Friends: TRtcRecord; log_out: Boolean);
@@ -102,11 +102,11 @@ type
     function isHostLoggedIn(uname: String; sessid: RtcString): Boolean; overload;
     function isHostLoggedIn(uname: String): Boolean; overload;
 
-    procedure HostLogin(uname, gateway: String; isService: Boolean; Friends: TRtcRecord; sessid: RtcString);
-    procedure HostLogin2(uname, gateway: String; isService: Boolean; Friends: TRtcRecord; sessid: RtcString); // 2nd connection
-    procedure HostLogout(uname, gateway: String; Friends: TRtcRecord; sessid: RtcString);
+    procedure HostLogin(uname, gateway, ConsoleId: String; isService: Boolean; Friends: TRtcRecord; sessid: RtcString);
+    procedure HostLogin2(uname, gateway, ConsoleId: String; isService: Boolean; Friends: TRtcRecord; sessid: RtcString); // 2nd connection
+    procedure HostLogout(uname, gateway, ConsoleId: String; Friends: TRtcRecord; sessid: RtcString);
 
-    procedure HostRegUser(uname, gateway: String; isService: Boolean; Friends: TRtcRecord; sessid: RtcString);
+    procedure HostRegUser(uname, gateway, ConsoleId: String; isService: Boolean; Friends: TRtcRecord; sessid: RtcString);
     procedure HostDelUser(uname: String);
 
     function IsHostExists(uname: String): Boolean;
@@ -117,6 +117,10 @@ type
 
     procedure AddUserToGateway(uname, gateway: String);
     procedure DelUserFromGateway(uname, gateway: String);
+
+    procedure SetServiceActiveConsoleClient(uname, ConsoleId: String);
+    function GetUserActiveConsoleClient(uname: String): String;
+    procedure RemoveActiveConsoleClientFromService(uname: String);
 
     procedure SetHostLockedState(uname: String; Friends: TRtcRecord; sessid: RtcString; Param: TRtcFunctionInfo);
     function GetHostLockedState(uname: String): Integer;
@@ -1003,14 +1007,14 @@ begin
   end;
 end;
 
-procedure TVircessUsers.doHostLogIn2(uname, gateway: String; isService: Boolean; Friends: TRtcRecord; sessid: RtcString);
+procedure TVircessUsers.doHostLogIn2(uname, gateway, ConsoleId: String; isService: Boolean; Friends: TRtcRecord; sessid: RtcString);
 begin
   userCS.Acquire;
   try
     // Remember new session ID
     if HostsInfo.Child[uname] = nil then
 //      raise Exception.Create('User ' + uname + ' not logged in.')
-      HostRegUser(uname, gateway, isService, Friends, sessid)
+      HostRegUser(uname, gateway, ConsoleId, isService, Friends, sessid)
     else
     begin
       with HostsInfo.Child[uname] do
@@ -1058,6 +1062,78 @@ begin
   end;
 end;
 
+procedure TVircessUsers.SetServiceActiveConsoleClient(uname, ConsoleId: String);
+begin
+  if uname = ConsoleId then
+    Exit;
+  if ConsoleId = '' then
+    Exit;
+
+  userCS.Acquire;
+  try
+    //Указываем хосту ид его консоли
+    if HostsInfo.Child[uname] = nil then
+      Exit
+    else
+      HostsInfo.Child[uname].asString['ConsoleId'] := ConsoleId;
+
+    //Указываем службе ее активный консольный клиент
+    if HostsInfo.Child[ConsoleId] = nil then
+      Exit
+    else
+      HostsInfo.Child[ConsoleId].asString['ActiveConsoleClientId'] := uname;
+  finally
+    userCS.Release;
+  end;
+end;
+
+function TVircessUsers.GetUserActiveConsoleClient(uname: String): String;
+begin
+  Result:= '';
+
+  userCS.Acquire;
+  try
+    //Получаем ид консоли хоста
+    if HostsInfo.Child[uname] = nil then
+      Exit
+    else
+      Result := HostsInfo.Child[uname].asString['ActiveConsoleClientId'];
+  finally
+    userCS.Release;
+  end;
+end;
+
+procedure TVircessUsers.RemoveActiveConsoleClientFromService(uname: String);
+var
+  ConsoleId: String;
+begin
+  if uname = ConsoleId then
+    Exit;
+  if ConsoleId = '' then
+    Exit;
+
+  userCS.Acquire;
+  try
+    //Получаем ид консоли хоста
+    if HostsInfo.Child[uname] = nil then
+      Exit
+    else
+      ConsoleId := HostsInfo.Child[uname].asString['ConsoleId'];
+
+    if ConsoleId = '' then
+      Exit;
+
+    //Убираем у службы ее активного консольного клиента если этот переданный хост
+    if HostsInfo.Child[ConsoleId] = nil then
+      Exit
+    else
+    if HostsInfo.Child[ConsoleId].asString['ActiveConsoleClientId'] = uname then
+      HostsInfo.Child[ConsoleId].asString['ActiveConsoleClientId'] := '';
+  finally
+    userCS.Release;
+  end;
+end;
+
 procedure TVircessUsers.SetHostLockedState(uname: String; Friends: TRtcRecord; sessid: RtcString; Param: TRtcFunctionInfo);
 var
   cb: TRtcDelayedCall;
@@ -1095,7 +1171,7 @@ begin
   NotifyAccountsOnHostLockedUpdate(uname, Friends, Param['LockedState']);
 end;
 
-procedure TVircessUsers.doHostLogIn(uname, gateway: string; isService: Boolean; Friends: TRtcRecord; sessid: RtcString);
+procedure TVircessUsers.doHostLogIn(uname, gateway, ConsoleId: string; isService: Boolean; Friends: TRtcRecord; sessid: RtcString);
 var
   cb: TRtcDelayedCall;
 begin
@@ -1137,7 +1213,7 @@ begin
     cb.WakeUp;
 end;
 
-procedure TVircessUsers.doHostLogOut(uname, gateway: String; Friends: TRtcRecord; sessid: RtcString; DisconnectAll: Boolean = False);
+procedure TVircessUsers.doHostLogOut(uname, gateway, ConsoleId: String; Friends: TRtcRecord; sessid: RtcString; DisconnectAll: Boolean = False);
 var
   log_out: Boolean;
   cb: TRtcDelayedCall;
@@ -1157,6 +1233,7 @@ begin
         DelUserFromGateway(uname, gateway);
       DelUserFromGateway(uname, HostsInfo.Child[uname]['gateway']);
       DelUserFromAccountsID(uname);
+      RemoveActiveConsoleClientFromService(uname);
       HostDelUser(uname);
 
       FHostsCount := FHostsCount - 1;
@@ -1211,7 +1288,7 @@ begin
   end;
 end;
 
-procedure TVircessUsers.HostLogin(uname, gateway: String; isService: Boolean; Friends: TRtcRecord; sessid: RtcString);
+procedure TVircessUsers.HostLogin(uname, gateway, ConsoleId: String; isService: Boolean; Friends: TRtcRecord; sessid: RtcString);
 begin
   userCS.Acquire;
   try
@@ -1221,14 +1298,14 @@ begin
     begin
       if HostsList.isType[uname] <> rtc_Record then // user doesn't exist
         //raise Exception.Create('User "'+uname+'" not registered.')
-        HostRegUser(uname, gateway, isService, Friends, sessid)
+        HostRegUser(uname, gateway, ConsoleId, isService, Friends, sessid)
       else
   //    begin
         with HostsList.asRecord[uname] do
   //        if asText['pass']<>upass then
   //          raise Exception.Create('Wrong password for user "'+uname+'".')
   //        else
-            doHostLogIn(uname, gateway, isService, Friends, sessid);
+            doHostLogIn(uname, gateway, ConsoleId, isService, Friends, sessid);
   //    end;
     end;
   finally
@@ -1236,7 +1313,7 @@ begin
   end;
 end;
 
-procedure TVircessUsers.HostLogin2(uname, gateway: String; isService: Boolean; Friends: TRtcRecord; sessid: RtcString);
+procedure TVircessUsers.HostLogin2(uname, gateway, ConsoleId: String; isService: Boolean; Friends: TRtcRecord; sessid: RtcString);
 begin
   userCS.Acquire;
   try
@@ -1246,14 +1323,14 @@ begin
       begin
       if HostsList.isType[uname] <> rtc_Record then // user doesn't exist
         //raise Exception.Create('User "'+uname+'" not registered.')
-        HostRegUser(uname, gateway, isService, Friends, sessid)
+        HostRegUser(uname, gateway, ConsoleId, isService, Friends, sessid)
       else
       begin
 //        with UserList.asRecord[uname] do
 //          if asText['pass']<>upass then
 //            raise Exception.Create('Wrong password for user "'+uname+'".')
 //          else
-        doHostLogIn2(uname, gateway, isService, Friends, sessid);
+        doHostLogIn2(uname, gateway, ConsoleId, isService, Friends, sessid);
       end;
     end;
   finally
@@ -1274,7 +1351,7 @@ begin
   end;
 end;
 
-procedure TVircessUsers.HostRegUser(uname, gateway: String; isService: Boolean; Friends: TRtcRecord; sessid: RtcString);
+procedure TVircessUsers.HostRegUser(uname, gateway, ConsoleId: String; isService: Boolean; Friends: TRtcRecord; sessid: RtcString);
 begin
   userCS.Acquire;
   try
@@ -1290,7 +1367,7 @@ begin
 //      begin
         with HostsList.NewRecord(uname) do
         //begin
-          doHostLogIn(uname, gateway, isService, Friends, sessid);
+          doHostLogIn(uname, gateway, ConsoleId, isService, Friends, sessid);
         //end;
       end;
 //    end;
@@ -1310,9 +1387,9 @@ begin
   end;
 end;
 
-procedure TVircessUsers.HostLogout(uname, gateway: String; Friends: TRtcRecord; sessid: RtcString);
+procedure TVircessUsers.HostLogout(uname, gateway, ConsoleId: String; Friends: TRtcRecord; sessid: RtcString);
 begin
-  doHostLogOut(uname, gateway, Friends, sessid);
+  doHostLogOut(uname, gateway, ConsoleId, Friends, sessid);
 end;
 
 procedure TVircessUsers.CheckDisconnectedHosts;
@@ -1334,7 +1411,7 @@ begin
         if (IncSecond(HostsInfo.Child[HostsList.FieldName[i]].asDateTime['LastActive'], FPingTimeout) < Now) then
             begin
               xLog('HostLogOutExecute by CheckDisconnectedHosts ' + HostsList.FieldName[i]);
-              doHostLogOut(HostsList.FieldName[i], '', GetFriendList_Func(HostsList.FieldName[i]), '', True);
+              doHostLogOut(HostsList.FieldName[i], '', '', GetFriendList_Func(HostsList.FieldName[i]), '', True);
             end;
 
         i := i - 1;
