@@ -7,12 +7,13 @@
 
 
 
-
-
+{$define FullDebugMode}
+{$define LogMemoryLeakDetailToFile}
 
 {$R *.dres}
 
 uses
+  FastMM4,
   rtcLog,
   SysUtils,
   rtcInfo,

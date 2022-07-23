@@ -2751,7 +2751,7 @@ var
 //          fHaveScreen := GetDDAScreenshot;
 //          ScrCap.HaveScreen := True; //fHaveScreen;
 
-            fHaveScreen := False;
+{            fHaveScreen := False;
             fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
             i := 0;
             while fNeedRecreate do
@@ -2778,59 +2778,59 @@ var
 //            else
 //            begin
               //Memo1.Lines.Add('no frame ' + IntToHex(FDuplication.Error));
-            end;
+            end; }
 
                 //FNewImage.SaveToFile('C:\Rufus\scr2.bmp');
-//            try
-//                DW := GetCaptureWindow;
-//              //Get GDI screenshot
-//              //if not fHaveScreen then
-//              begin
-//                DW := GetCaptureWindow;
-//                try
-//                  SDC := GetDC(DW);
-//                except
-//                  SDC := 0;
-//                end;
-//                if (DW <> 0) and (SDC = 0) then
-//                begin
-//                  DW := 0;
-//                  try
-//                    SDC := GetDC(DW);
-//                  except
-//                    SDC := 0;
-//                  end;
-//                  if SDC = 0 then
-//                  begin
-//                    Result := False;
-//                    ScrCap.HaveScreen := False;
-//                    Exit;
-//                  end;
-//                end;
-//
-//                Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FNewImage.Width,
-//                  FNewImage.Height, SDC, FCaptureLeft, FCaptureTop + BlockTop,
-//                  FCaptureMask);
-//
-//                if not Result then
-//                begin
-//                  err := GetLastError;
-//                  xLog('BitBlt Error: ' + IntToStr(err) + ' ' + SysErrorMessage(err));
-//                end;
-//
-//                fHaveScreen := Result;
-//              end;
+            try
+                DW := GetCaptureWindow;
+              //Get GDI screenshot
+              //if not fHaveScreen then
+              begin
+                DW := GetCaptureWindow;
+                try
+                  SDC := GetDC(DW);
+                except
+                  SDC := 0;
+                end;
+                if (DW <> 0) and (SDC = 0) then
+                begin
+                  DW := 0;
+                  try
+                    SDC := GetDC(DW);
+                  except
+                    SDC := 0;
+                  end;
+                  if SDC = 0 then
+                  begin
+                    Result := False;
+                    ScrCap.HaveScreen := False;
+                    Exit;
+                  end;
+                end;
+
+                Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FNewImage.Width,
+                  FNewImage.Height, SDC, FCaptureLeft, FCaptureTop + BlockTop,
+                  FCaptureMask);
+
+                if not Result then
+                begin
+                  err := GetLastError;
+                  xLog('BitBlt Error: ' + IntToStr(err) + ' ' + SysErrorMessage(err));
+                end;
+
+                fHaveScreen := Result;
+              end;
 //
 ////              ScrCap.HaveScreen := True;
-//            finally
-//              ReleaseDC(DW, SDC);
-//            end;
+            finally
+              ReleaseDC(DW, SDC);
+            end;
 
-          if fHaveScreen then
+          {if fHaveScreen then
             FNewImage.Assign(FDesktopDuplicator.Bitmap);
           fHaveScreen := True;
           ScrCap.HaveScreen := fHaveScreen;
-          Result := fHaveScreen;
+          Result := fHaveScreen;}
       end;
 
 //      ScrCap.HaveScreen := not (LowerCase(GetInputDesktopName) <> 'default') //Мы либо на экране блокировки / UAC

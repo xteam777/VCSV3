@@ -3,7 +3,7 @@ object MainForm: TMainForm
   Top = 309
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'Remox'
-  ClientHeight = 485
+  ClientHeight = 465
   ClientWidth = 839
   Color = clBtnFace
   DoubleBuffered = True
@@ -48,7 +48,7 @@ object MainForm: TMainForm
     Left = 0
     Top = 0
     Width = 839
-    Height = 485
+    Height = 465
     Margins.Left = 0
     Margins.Top = 0
     Margins.Right = 0
@@ -61,10 +61,9 @@ object MainForm: TMainForm
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
-    ExplicitHeight = 470
     DesignSize = (
       839
-      485)
+      465)
     object lblStatus: TLabel
       AlignWithMargins = True
       Left = 46
@@ -5991,7 +5990,7 @@ object MainForm: TMainForm
     Left = 11
     Top = 44
     Bitmap = {
-      494C010102001400D40508000800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C010102001400D80508000800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000200000000800000001002000000000000004
       000000000000000000000000000000000000846BEF006B63E700635AE7006B5A
       EF006B5AEF006B63EF006B63E7007B6BEF00C6B52900BDAD1800BDAD1800BDAD
@@ -6222,8 +6221,8 @@ object MainForm: TMainForm
   object HostPingTimer: TTimer
     Enabled = False
     OnTimer = HostPingTimerTimer
-    Left = 319
-    Top = 42
+    Left = 121
+    Top = 116
   end
   object resHostLogin: TRtcResult
     OnReturn = resHostLoginReturn
@@ -6295,7 +6294,7 @@ object MainForm: TMainForm
   object tConnLimit: TTimer
     Interval = 60000
     OnTimer = tConnLimitTimer
-    Left = 262
+    Left = 318
     Top = 42
   end
   object tStatus: TTimer
@@ -6439,34 +6438,6 @@ object MainForm: TMainForm
     OnTimer = tCleanConnectionsTimer
     Left = 206
     Top = 116
-  end
-  object tGetDirectorySize: TTimer
-    Enabled = False
-    OnTimer = tGetDirectorySizeTimer
-    Left = 12
-    Top = 12
-  end
-  object tFileSend: TTimer
-    Enabled = False
-    OnTimer = tFileSendTimer
-    Left = 41
-    Top = 12
-  end
-  object ser_: TIdTCPServer
-    Active = True
-    Bindings = <>
-    DefaultPort = 12340
-    OnExecute = ser_Execute
-    Left = 70
-    Top = 12
-  end
-  object cle_: TIdTCPClient
-    ConnectTimeout = 0
-    IPVersion = Id_IPv4
-    Port = 12340
-    ReadTimeout = 3000
-    Left = 95
-    Top = 12
   end
   object rDestroyClient: TRtcResult
     Left = 322
