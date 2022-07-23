@@ -6718,7 +6718,9 @@ end;
 
 procedure TMainForm.Button4Click(Sender: TObject);
 begin
-  TSendDestroyClientToGatewayThread.Create(False, '95.216.96.8:443', '111222333', False);
+//  PDesktopControl.Open('34343434');
+
+//  TSendDestroyClientToGatewayThread.Create(False, '95.216.96.8:443', '111222333', False);
 end;
 
 procedure TMainForm.ConnectToPartnerStart(user, username, pass, action: String);
@@ -8471,7 +8473,7 @@ begin
 //  xLog('PFileTransExplorerNewUI');
 
   FWin := TrdFileTransfer.Create(nil);
-  FWin.UI.Module.UIVisible := True;
+  FWin.UIVisible := True;
   FWin.OnUIOpen := OnUIOpen;
   FWin.OnUIClose := OnUIClose;
 //  FWin.Parent := Self;
@@ -8532,7 +8534,7 @@ begin
 //  xLog('PFileTransExplorerNewUI');
 
   FWin := TrdFileTransfer.Create(nil);
-  FWin.UI.Module.UIVisible := False;
+  FWin.UIVisible := False;
   FWin.OnUIOpen := OnUIOpen;
   FWin.OnUIClose := OnUIClose;
 //  FWin.Parent := Self;
