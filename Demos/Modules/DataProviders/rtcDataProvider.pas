@@ -451,6 +451,7 @@ begin
     begin
       asString['Result'] := 'IS_OFFLINE';
       asString['User'] := Param.asString['User'];
+      asString['Action'] := Param.asString['Action'];
       asString['Pass'] := CurPass;
 
       Exit;
