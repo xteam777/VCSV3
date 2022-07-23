@@ -6512,7 +6512,9 @@ begin
           asString['Gateway'] := PClient.GateAddr + ':' + PClient.GatePort;
           asRecord['Passwords'] := PassRec;
           if ActiveConsoleSessionID = CurrentProcessID then
-            asString['ConsoleId'] := ConsoleId;
+            asString['ConsoleId'] := ConsoleId
+          else
+            asString['ConsoleId'] := '';
           asInteger['LockedState'] := ScreenLockedState;
           asBoolean['IsService'] := IsService;
           Call(resHostPing);
@@ -8069,7 +8071,9 @@ begin
                 asRecord['Passwords'] := PassRec;
                 asString['Gateway'] := PClient.GateAddr + ':' + PClient.GatePort; //asString['Gateway'] + ':' + asString['Port'];
                 if ActiveConsoleSessionID = CurrentProcessID then
-                  asString['ConsoleId'] := ConsoleId;
+                  asString['ConsoleId'] := ConsoleId
+                else
+                  asString['ConsoleId'] := '';
                 asInteger['LockedState'] := ScreenLockedState;
                 asBoolean['IsService'] := False;
                 Call(resHostLogin);
@@ -8086,7 +8090,9 @@ begin
                 asRecord['Passwords'] := PassRec;
                 asString['Gateway'] := PClient.GateAddr + ':' + PClient.GatePort; //asString['Gateway'] + ':' + asString['Port'];
                 if ActiveConsoleSessionID = CurrentProcessID then
-                  asString['ConsoleId'] := ConsoleId;
+                  asString['ConsoleId'] := ConsoleId
+                else
+                  asString['ConsoleId'] := '';
                 asInteger['LockedState'] := ScreenLockedState;
                 asBoolean['IsService'] := False;
                 Call(resHostTimerLogin);
