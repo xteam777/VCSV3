@@ -1503,7 +1503,7 @@ begin
   gatewayCS.Acquire;
   try
     for i := 0 to GatewaysList.Count - 1 do
-      if GatewaysList.isType[GatewaysList.FieldName[i]] <> rtc_Null then
+      if GatewaysList.isType[GatewaysList.FieldName[i]] = rtc_Null then
         Continue;
       if GatewaysList[GatewaysList.FieldName[i]].Address = gateway then
         GatewaysList[GatewaysList.FieldName[i]].asRecord['users'].is_Null[uname] := True;
