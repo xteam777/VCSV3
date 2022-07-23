@@ -463,12 +463,10 @@ begin
       asString['Result'] := 'OK'
     else
       asString['Result'] := 'PASS_NOT_VALID';
+    asString['User'] := Param.asString['User'];
+    asString['Action'] := Param.asString['Action'];
     if UserGateway <> '' then
-    begin
-      asString['User'] := Param.asString['User'];
-      asString['Action'] := Param.asString['Action'];
       asString['Address'] := UserGateway;
-    end;
     asString['Pass'] := CurPass;
     asInteger['LockedState'] := Users.GetHostLockedState(Param.asString['User']);
   end;
