@@ -528,7 +528,7 @@ type
     function PartnerIsPending(uname, action, gateway: String): Boolean; overload;
     function PartnerIsPending(uname, action: String): Boolean; overload;
     function PartnerIsPending(uname: String): Boolean; overload;
-    procedure DeletePendingRequestByItem(Item: PPendingRequestItem);
+//    procedure DeletePendingRequestByItem(Item: PPendingRequestItem);
     procedure DeletePendingRequests(uname: String);
     procedure DeleteAllPendingRequests;
     procedure DeleteLastPendingItem;
@@ -6872,24 +6872,28 @@ begin
   else
   with Result.asRecord do
   begin
-    PRItem := GetPendingItemByUserName(asWideString['user'], asString['action']);
-    if PRItem = nil then
-      Exit;
-
     if asString['Result'] = 'IS_OFFLINE' then
     begin
 //      MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'Remox', MB_ICONWARNING or MB_OK);
       SetStatusStringDelayed('Партнер не в сети. Подключение невозможно');
 //      SetStatusStringDelayed('Готов к подключению', 2000);
 
-      DoGetDeviceState(eAccountUserName.Text,
-        PClient.LoginUserName,
-        eAccountPassword.Text,
-        asWideString['user']);
+    PRItem := GetPendingItemByUserName(asWideString['user'], asString['action']);
+    if PRItem = nil then
+      Exit;
+
+//      DoGetDeviceState(eAccountUserName.Text,
+//        PClient.LoginUserName,
+//        eAccountPassword.Text,
+//        asWideString['user']);
     end
     else
     if asString['Result'] = 'OK' then
     begin
+      PRItem := GetPendingItemByUserName(asWideString['user'], asString['action']);
+      if PRItem = nil then
+        Exit;
+
       username := GetUserNameByID(asWideString['user']);
 
       if not PartnerIsPending(asWideString['user'], asString['action'], asString['Address']) then
@@ -7082,6 +7086,10 @@ begin
     else
     if asString['Result'] = 'PASS_NOT_VALID' then
     begin
+      PRItem := GetPendingItemByUserName(asWideString['user'], asString['action']);
+      if PRItem = nil then
+        Exit;
+
       username := GetUserNameByID(asWideString['user']);
 
       PassForm := TfIdentification.Create(Self);
@@ -9661,7 +9669,7 @@ begin
   end;
 end;
 
-procedure TMainForm.DeletePendingRequestByItem(Item: PPendingRequestItem);
+{procedure TMainForm.DeletePendingRequestByItem(Item: PPendingRequestItem);
 var
   i: Integer;
 begin
@@ -9681,7 +9689,7 @@ begin
   end;
 
 //  UpdatePendingStatus;
-end;
+end;}
 
 procedure TMainForm.DeletePendingRequests(uname: String);
 var
