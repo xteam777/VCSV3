@@ -677,7 +677,7 @@ begin
 
   panOptionsVisible := True;
   MiniPanelDraggging := False;
-  aStretchScreen.Checked := False;
+  aStretchScreen.Checked := True;
 
   aOptimizeQuality.Checked := True;
 
