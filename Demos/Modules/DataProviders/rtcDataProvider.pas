@@ -144,11 +144,11 @@ type
   private
     FOnUserLogin: TUserEvent;
     FOnUserLogOut: TUserEvent;
-    function DoHostLogin(Sender: TRtcConnection; uname, gateway: String; isService: Boolean; Param: TRtcFunctionInfo): Boolean;
+    function DoHostLogin(Sender: TRtcConnection; uname, gateway, ConsoleId: String; isService: Boolean; Param: TRtcFunctionInfo): Boolean;
     function DoGatewayReLogin(Sender: TRtcConnection; address: String; maxUsers: Integer; Param: TRtcFunctionInfo): Boolean;
   protected
     procedure CheckLogin(Sender: TRtcConnection; const account, uname, pass: String);
-    procedure HostCheckLogin(Sender: TRtcConnection; const uname, gateway: String; isService: Boolean; Param: TRtcFunctionInfo);
+    procedure HostCheckLogin(Sender: TRtcConnection; const uname, gateway, ConsoleId: String; isService: Boolean; Param: TRtcFunctionInfo);
     function LoadUserInfo(account, RealName, AccountUID: String): TRtcRecord;
     function AccountIsValid(name, pwd: String; var RealName, AccountUID: String): Boolean;
     function AccountIsExists(email: String): Boolean;
@@ -442,6 +442,7 @@ procedure TData_Provider.HostGetUserInfoExecute(
 var
   CurPass: String;
   UserGateway: String;
+  ActiveConsoleClientId: String;
 begin
   CurPass := Param.asString['Pass'];
   DeCrypt(CurPass, '@VCS@');
@@ -465,6 +466,20 @@ begin
     else
       asString['Result'] := 'PASS_NOT_VALID';
     asString['User'] := Param.asString['User'];
+    if Param.asString['Action'] <> 'desc' then //Если подключение к службе передачи файлов или чата и у службы указан активный консольный клиент передаем его
+    begin
+      ActiveConsoleClientId := Users.GetUserActiveConsoleClient(Param.asString['User']);
+      if (ActiveConsoleClientId <> '')
+        and Users.isHostLoggedIn(ActiveConsoleClientId) then
+        asString['UserToConnect'] := ActiveConsoleClientId
+      else
+      begin
+        asString['UserToConnect'] := '';
+        asString['Result'] := 'IS_OFFLINE';
+      end;
+    end
+    else
+      asString['UserToConnect'] := Param.asString['User'];
     asString['Action'] := Param.asString['Action'];
     if UserGateway <> '' then
       asString['Address'] := UserGateway;
@@ -493,7 +508,7 @@ begin
 
 //      b := Users.CheckPassword('100001125', '555');
 
-      Users.HostLogin2(Param['user'], Param['Gateway'], Param['IsService'], FriendList, Session.ID);
+      Users.HostLogin2(Param['user'], Param['Gateway'], Param['ConsoleId'], Param['IsService'], FriendList, Session.ID);
 
       Users.SetPasswords(Param['user'], Session.ID, Param);
 
@@ -519,11 +534,11 @@ begin
   if Assigned(FStartForceUserLogoutThread) then
     FStartForceUserLogoutThread(Param['User'], True);
 
-  if DoHostLogin(Sender, Param['User'], Param['Gateway'], Param['IsService'], Param) then
+  if DoHostLogin(Sender, Param['User'], Param['Gateway'], Param['ConsoleId'], Param['IsService'], Param) then
     Result.asString := 'OK';
 end;
 
-function TData_Provider.DoHostLogin(Sender: TRtcConnection; uname, gateway: String; isService: Boolean; Param: TRtcFunctionInfo): Boolean;
+function TData_Provider.DoHostLogin(Sender: TRtcConnection; uname, gateway, ConsoleId: String; isService: Boolean; Param: TRtcFunctionInfo): Boolean;
 var
   FriendList: TRtcRecord;
 //  b: Boolean;
@@ -542,7 +557,7 @@ begin
 
 //      b := Users.CheckPassword('100001125', '555');
 
-      Users.HostLogin(uname, gateway, isService, FriendList, Session.ID);
+      Users.HostLogin(uname, gateway, ConsoleId, isService, FriendList, Session.ID);
 
   //    HostLoginProcedure(Param['User'], GetFriendListFunction(Param['User']));
 
@@ -551,6 +566,9 @@ begin
 //      b := Users.CheckPassword('100001125', '555');
 
       Users.SetHostLockedState(uname, FriendList, Session.ID, Param);
+
+      if (not isService) then
+        Users.SetServiceActiveConsoleClient(uname, ConsoleId);
 
       Session['$MSG:HostLogin'] := 'OK';
       Session['$MSG:User'] := Param['User'];
@@ -576,7 +594,7 @@ begin
           if Users.isHostLoggedIn(Param.asText['user'], Session.ID) then
           begin
 //xLog('HostLogOutExecute ' + Param.asText['user']);
-            Users.HostLogOut(Param.asText['user'], Session['$MSG:Gateway'], GetFriendList(Param.asText['user']), Session.ID);
+            Users.HostLogOut(Param.asText['user'], Session['$MSG:Gateway'], '', GetFriendList(Param.asText['user']), Session.ID);
             Session['$MSG:HostLogin']:= '';
             Session['$MSG:User']:= '';
             Session['$MSG:Gateway']:= '';
@@ -631,13 +649,16 @@ begin
     else
       asBoolean['NeedHostRelogin'] := False;
 
-  HostCheckLogin(Sender, Param['User'], Param['Gateway'], Param['IsService'], Param);
+  HostCheckLogin(Sender, Param['User'], Param['Gateway'], Param['ConsoleId'], Param['IsService'], Param);
 
   Users.SetPasswords(Param['User'], Sender.Session.ID, Param);
 
 //  b := Users.CheckPassword('100001125', '555');
 
   Users.SetLastHostActiveTime(Param['User'], Now);
+
+  if (not Param['IsService']) then
+    Users.SetServiceActiveConsoleClient(Param['User'], Param['ConsoleId']);
 
 //  UserName := 'Ping - ' + Param['User'] + ' - ' + DateTimeToStr(Now);
 
@@ -652,7 +673,7 @@ begin
 //    LogMemo.Lines.Insert(0, UserName);
 end;
 
-procedure TData_Provider.HostCheckLogin(Sender: TRtcConnection; const uname, gateway: String; isService: Boolean; Param: TRtcFunctionInfo);
+procedure TData_Provider.HostCheckLogin(Sender: TRtcConnection; const uname, gateway, ConsoleId: String; isService: Boolean; Param: TRtcFunctionInfo);
 //var
 //  FriendList: TRtcRecord;
 begin
@@ -668,7 +689,7 @@ begin
       else
       if not Users.isHostLoggedIn(uname, Session.ID) then
       begin
-        DoHostLogin(Sender, uname, gateway, isService, Param);
+        DoHostLogin(Sender, uname, gateway, ConsoleId, isService, Param);
 //        raise Exception.Create('Logged out.');
 //        Users.HostRegUser(uname, gateway, GetFriendList(uname), Session.ID);
         //Users.HostLogin(uname, gateway, GetFriendList(uname), Session.ID);
