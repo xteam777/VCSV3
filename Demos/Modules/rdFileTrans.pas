@@ -699,6 +699,7 @@ procedure TrdFileTransfer.myUIOpen(Sender: TRtcPFileTransferUI);
     Exit;
   end
   else
+  if myUI.Module.UIVisible then
   begin
     Show;
 //    BringToFront;

@@ -190,6 +190,8 @@ type
 
     FHostMode: boolean;
 
+    FUIVisible: Boolean;
+
     procedure InitData;
 
     function LockUI(const UserName: String): TRtcAbsPFileTransferUI;
@@ -376,7 +378,7 @@ type
     destructor Destroy; override;
 
     // Prepare File Transfer with user "username"
-    procedure Open(const UserName: String; Sender: TObject = nil);
+    procedure Open(const UserName: String; UIVisible: Boolean; Sender: TObject = nil);
     // Terminate File Transfer with user "username"
     procedure Close(const UserName: String; Sender: TObject = nil);
 
@@ -419,6 +421,8 @@ type
       On the other hand, if two clients have BeTheHost=True, the one to initiate
       file transfer will become the host for the duration of file transfer. }
     property BeTheHost: boolean read FHostMode write FHostMode default False;
+
+    property UIVisible: Boolean read FUIVisible write FUIVisible default False;
 
     { Set to TRUE if you wish to store access right parameters on the Gateway
       and load parameters from the Gateway after Activating the component.
@@ -755,7 +759,7 @@ begin
   end;
 end;
 
-procedure TRtcPFileTransfer.Open(const UserName: String; Sender: TObject = nil);
+procedure TRtcPFileTransfer.Open(const UserName: String; UIVisible: Boolean; Sender: TObject = nil);
 var
   fn: TRtcFunctionInfo;
 begin
@@ -766,6 +770,7 @@ begin
     // data to send to the user ...
     fn := TRtcFunctionInfo.Create;
     fn.FunctionName := 'files';
+    fn.asBoolean['v'] := UIVisible;
     Client.SendToUser(Sender, UserName, fn);
   end;
 end;
@@ -836,7 +841,7 @@ begin
       CS.Release;
     end;
 
-    Open(UserName, Sender);
+    Open(UserName, UIVisible, Sender);
   end
   else
   begin
@@ -1426,6 +1431,7 @@ begin
   end
   else if Data.FunctionName = 'files' then
   begin
+    UIVisible := Data.asBoolean['v'];
     // New "File Transfer" subscriber ...
     if BeTheHost then
       // Allow subscriptions only if "CanUpload/DownloadFiles" is enabled.
@@ -2823,7 +2829,7 @@ end;
 procedure TRtcAbsPFileTransferUI.Open(Sender: TObject = nil);
 begin
   if (UserName <> '') and assigned(FModule) then
-    FModule.Open(UserName, Sender);
+    FModule.Open(UserName, FModule.UIVisible, Sender);
 end;
 
 procedure TRtcAbsPFileTransferUI.Close(Sender: TObject = nil);

@@ -58,7 +58,7 @@ type
     { Private declarations }
     function GetUniqueString: String;
   protected
-    constructor Create(CreateSuspended: Boolean; AUserName, AAction, AGateway: String); overload;
+    constructor Create(CreateSuspended: Boolean; AUserName, AAction, AGateway: String; UIVisible: Boolean); overload;
     destructor Destroy; override;
     procedure Execute; override;
     procedure ProcessMessage(MSG: TMSG);
@@ -933,7 +933,7 @@ begin
     AClient.GatePort := '80';
 end;
 
-constructor TPortalThread.Create(CreateSuspended: Boolean; AUserName, AAction, AGateway: String);
+constructor TPortalThread.Create(CreateSuspended: Boolean; AUserName, AAction, AGateway: String; UIVisible: Boolean);
 begin
   inherited Create(CreateSuspended);
 
@@ -1075,7 +1075,7 @@ begin
   end
   else
   if FAction = 'file' then
-    FFileTransfer.Open(FUserName)
+    FFileTransfer.Open(FUserName, UIVisible)
   else
   if FAction = 'chat' then
     FChat.Open(FUserName);
@@ -1117,6 +1117,8 @@ begin
   end;
 
   TSendDestroyClientToGatewayThread.Create(False, FGateway, MainForm.PClient.LoginUserName + '_' + FUserName + '_' + FAction + '_' + FUID, False);
+
+  TerminateThread(ThreadID, ExitCode);
 end;
 
 procedure TPortalThread.Execute;
@@ -4749,7 +4751,7 @@ begin
 //    end;
 //  end;
 
-//  TerminateProcess(GetCurrentProcess, ExitCode);
+  TerminateProcess(GetCurrentProcess, ExitCode);
 end;
 
 procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -6888,7 +6890,7 @@ begin
       begin
 //        AddPendingRequest(asWideString['user'], asString['action'], asString['Address'] + ':' +  asString['Port'], 0);
         TSendDestroyClientToGatewayThread.Create(False, asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['user'] + '_' + asWideString['action'] + '_', False);
-        PortalThread := TPortalThread.Create(False, asWideString['user'], asWideString['action'], asString['Address']); //Для каждого соединения новый клиент
+        PortalThread := TPortalThread.Create(False, asWideString['user'], asWideString['action'], asString['Address'], True); //Для каждого соединения новый клиент
         PRItem^.Gateway := asString['Address'];
         PRItem^.ThreadID := PortalThread.ThreadID;
 //        New(PRItem);

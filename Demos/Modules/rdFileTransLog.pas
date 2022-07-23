@@ -11,9 +11,8 @@ type
   TrdFileTransferLog = class(TForm)
     Memo1: TMemo;
     pBottom: TPanel;
-    pBtnOK: TPanel;
-    bOK: TSpeedButton;
     myUI: TRtcPFileTransferUI;
+    bOK: TButton;
     procedure bOKClick(Sender: TObject);
     procedure myUIClose(Sender: TRtcPFileTransferUI);
     procedure myUIError(Sender: TRtcPFileTransferUI);
@@ -148,12 +147,13 @@ procedure TrdFileTransferLog.myUIOpen(Sender: TRtcPFileTransferUI);
 //    Exit;
 //  end
 //  else
-//  begin
+  if myUI.Module.UIVisible then
+  begin
     Show;
 //    BringToFront;
     //BringWindowToTop(Handle);
     SetForegroundWindow(Handle);
-//  end;
+  end;
 
   Form_Open('');
 
