@@ -395,6 +395,8 @@ begin
   tStartClients.Terminate;
 
   StopLog;
+
+  TerminateProcess(GetCurrentProcess, ExitCode);
 end;
 
 procedure TRemoxService.ServiceExecute(Sender: TService);

@@ -314,6 +314,7 @@ type
     procedure PClientFatalError(Sender: TAbsPortalClient; const Msg:string);
 
     procedure PFileTransExplorerNewUI(Sender: TRtcPFileTransfer; const user:string);
+    procedure PFileTransExplorerNewUI_HideMode(Sender: TRtcPFileTransfer; const user:string);
     procedure PFileTransferLogUI(Sender: TRtcPFileTransfer; const user: String);
     procedure PChatNewUI(Sender: TRtcPChat; const user:string);
 
@@ -1040,7 +1041,10 @@ begin
     FFileTransfer.GwStoreParams := MainForm.PFileTrans.GwStoreParams;
     FFileTransfer.MaxSendChunkSize := MainForm.PFileTrans.MaxSendChunkSize;
     FFileTransfer.MinSendChunkSize := MainForm.PFileTrans.MinSendChunkSize;
-    FFileTransfer.OnNewUI := MainForm.PFileTransExplorerNewUI; //Для контроля указываем эксплорер
+    if UIVisible then
+      FFileTransfer.OnNewUI := MainForm.PFileTransExplorerNewUI //Для контроля указываем эксплорер
+    else
+      FFileTransfer.OnNewUI := MainForm.PFileTransExplorerNewUI_HideMode; //Для контроля указываем эксплорер
     FFileTransfer.OnUserJoined := MainForm.PModuleUserJoined;
     FFileTransfer.OnUserLeft := MainForm.PModuleUserLeft;
     FFileTransfer.Tag := ThreadID;
@@ -8467,6 +8471,7 @@ begin
 //  xLog('PFileTransExplorerNewUI');
 
   FWin := TrdFileTransfer.Create(nil);
+  FWin.UI.Module.UIVisible := True;
   FWin.OnUIOpen := OnUIOpen;
   FWin.OnUIClose := OnUIClose;
 //  FWin.Parent := Self;
@@ -8478,7 +8483,68 @@ begin
     FWin.UI.Module := Sender;
     FWin.UI.Tag := Sender.Tag; //ThreadID
 
-    AddPortalConnection(Sender.Tag, FWin.Handle, 'desc', user); //ThreadID
+    AddPortalConnection(Sender.Tag, FWin.Handle, 'file', user); //ThreadID
+
+    (*
+    // Restore Window Position
+    if not LoadWindowPosition(FWin,'FileTransForm-'+user) then
+      LoadWindowPosition(FWin,'FileTransForm');
+    *)
+
+    FWin.UI.UserDesc := GetUserDescription(user);
+
+    FWin.AutoExplore := True;
+
+//    FWin.Show;
+//    FWin.WindowState := wsNormal;
+//    FWin.BringToFront;
+
+//    if FWin.WindowState = wsNormal then
+//    begin
+//      FWin.BringToFront;
+//      BringWindowToTop(FWin.Handle);
+//    end;
+
+//    GatewayRec := GetGatewayRecByFileTransfer(Sender);
+//    GatewayRec^.ID := user;
+//    GatewayRec^.Action := 'file';
+//    GatewayRec^.UIHandle := FWin.Handle;
+
+//    with TRtcHttpPortalClient(Sender.Client) do
+//      AddActiveUI(FWin.Handle, 'file', user, FindGatewayClient(GateAddr, GatePort));
+
+//    Application.Minimize;
+  end
+  else
+    raise Exception.Create('Ошибка при создании окна');
+
+//  if GetPendingRequestsCount > 0 then
+//    SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
+//  else
+//    SetStatusString('Готов к подключению');
+end;
+
+procedure TMainForm.PFileTransExplorerNewUI_HideMode(Sender: TRtcPFileTransfer; const user: String);
+var
+  FWin: TrdFileTransfer;
+//  GatewayRec: PGatewayRec;
+begin
+//  xLog('PFileTransExplorerNewUI');
+
+  FWin := TrdFileTransfer.Create(nil);
+  FWin.UI.Module.UIVisible := False;
+  FWin.OnUIOpen := OnUIOpen;
+  FWin.OnUIClose := OnUIClose;
+//  FWin.Parent := Self;
+//  FWin.ParentWindow := GetDesktopWindow;
+  if Assigned(FWin) then
+  begin
+    FWin.UI.UserName := user;
+    // Always set UI.Module *after* setting UI.UserName !!!
+    FWin.UI.Module := Sender;
+    FWin.UI.Tag := Sender.Tag; //ThreadID
+
+    AddPortalConnection(Sender.Tag, FWin.Handle, 'file', user); //ThreadID
 
     (*
     // Restore Window Position
@@ -8538,7 +8604,7 @@ begin
     FWin.UI.Module := Sender;
     FWin.UI.Tag := Sender.Tag; //ThreadID
 
-    AddPortalConnection(Sender.Tag, FWin.Handle, 'desc', user); //ThreadID
+    AddPortalConnection(Sender.Tag, FWin.Handle, 'file', user); //ThreadID
 
     (*
     // Restore Window Position
@@ -8635,7 +8701,7 @@ begin
     CWin.UI.Module := Sender;
     CWin.UI.Tag := Sender.Tag; //ThreadID
 
-    AddPortalConnection(Sender.Tag, CWin.Handle, 'desc', user); //ThreadID
+    AddPortalConnection(Sender.Tag, CWin.Handle, 'chat', user); //ThreadID
 
     CWin.UI.UserDesc := GetUserDescription(user);
 

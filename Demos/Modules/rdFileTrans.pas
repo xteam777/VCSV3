@@ -156,6 +156,7 @@ type
     procedure Form_Close(const mode:string);
 
   public
+    UIVisible: Boolean;
     property UI:TRtcPFileTransferUI read myUI;
 
     // Automatically open a Remote File Explorer / Browser window when File Transfer window opens?
@@ -699,7 +700,7 @@ procedure TrdFileTransfer.myUIOpen(Sender: TRtcPFileTransferUI);
     Exit;
   end
   else
-  if myUI.Module.UIVisible then
+  if UIVisible then
   begin
     Show;
 //    BringToFront;
