@@ -1486,10 +1486,10 @@ begin
   gatewayCS.Acquire;
   try
     for i := 0 to GatewaysList.Count - 1 do
-      if GatewaysList.isType[GatewaysList.FieldName[i]] <> rtc_Null then
+      if GatewaysList.isType[GatewaysList.FieldName[i]] = rtc_Null then
         Continue;
 
-      if GatewaysList[GatewaysList.FieldName[i]].Address = gateway then
+      if GatewaysList.FieldName[i] = gateway then
         GatewaysList[GatewaysList.FieldName[i]].asRecord['users'].asString[uname] := uname;
   finally
     gatewayCS.Release;
@@ -1503,9 +1503,10 @@ begin
   gatewayCS.Acquire;
   try
     for i := 0 to GatewaysList.Count - 1 do
-      if GatewaysList.isType[GatewaysList.FieldName[i]] <> rtc_Null then
+      if GatewaysList.isType[GatewaysList.FieldName[i]] = rtc_Null then
         Continue;
-      if GatewaysList[GatewaysList.FieldName[i]].Address = gateway then
+
+      if GatewaysList.FieldName[i] = gateway then
         GatewaysList[GatewaysList.FieldName[i]].asRecord['users'].is_Null[uname] := True;
   finally
     gatewayCS.Release;
@@ -1520,10 +1521,10 @@ begin
   try
     if GatewaysInfo.Child[address] = nil then
     begin
-      if GatewaysList.isType[address] = rtc_Null then
+//      if GatewaysList.isType[address] = rtc_Null then
         GatewaysList.NewRecord(address);
+        GatewaysInfo.NewChild(address);
 
-      GatewaysInfo.NewChild(address);
       GatewaysInfo.Child[address].asInteger['maxUsers'] := MaxUsers;
       GatewaysInfo.Child[address].NewRecord('users').AutoCreate := True;
 
