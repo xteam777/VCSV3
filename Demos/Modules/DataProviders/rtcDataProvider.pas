@@ -466,7 +466,7 @@ begin
     else
       asString['Result'] := 'PASS_NOT_VALID';
     asString['User'] := Param.asString['User'];
-    if (Param.asString['Action'] <> 'desc')
+    if (Param.asString['Action'] <> 'desk')
       and Users.HostIsService(Param.asString['User']) then //Если подключение к службе передачи файлов или чата и у службы указан активный консольный клиент передаем его
     begin
       ActiveConsoleClientId := Users.GetUserActiveConsoleClient(Param.asString['User']);
