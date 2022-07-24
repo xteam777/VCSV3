@@ -920,7 +920,7 @@ begin
   FFileTransfer.MaxSendChunkSize := 102400;
   FFileTransfer.MinSendChunkSize := 4096;
 //  if UIVisible then
-    FFileTransfer.OnNewUI := MainForm.PFileTransExplorerNewUI; //Для контроля указываем эксплорер
+    FFileTransfer.OnNewUI := MainForm.PFileTransferLogUI; //Для хоста указываем лог
 //  else
 //    FFileTransfer.OnNewUI := MainForm.PFileTransExplorerNewUI_HideMode; //Для контроля указываем невидимый эксплорер
   FFileTransfer.OnUserJoined := MainForm.PModuleUserJoined;
