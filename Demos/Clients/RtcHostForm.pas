@@ -2908,10 +2908,10 @@ begin
 //    try
 //      for i := 0 to GatewayClientsList.Count - 1 do
 //      begin
-        PClient.Disconnect;
-        if (PClient.LoginUserName <> '')
-          and (PClient.LoginUserName <> '') then
-          PClient.Active := False;
+//        PClient.Disconnect;
+//        if (PClient.LoginUserName <> '')
+//          and (PClient.LoginUserName <> '') then
+//          PClient.Active := False;
         PClient.Gate_Proxy := ProxyEnabled;
         PClient.Gate_ProxyAddr := CurProxy;
   //      PClient.GParamsLoaded:=True;
@@ -5301,8 +5301,8 @@ begin
 
     AccountLogOut(nil);
 
-    PClient.Disconnect;
-    PClient.Active := False;
+//    PClient.Disconnect;
+//    PClient.Active := False;
     PClient.Active := True;
 
     tPClientReconnect.Enabled := False;
@@ -6687,8 +6687,8 @@ end;
 
 procedure TMainForm.Button1Click(Sender: TObject);
 begin
-    PClient.Disconnect;
-    PClient.Active := False;
+//    PClient.Disconnect;
+//    PClient.Active := False;
 //    PClient.Stop;
 //    PClient.GParamsLoaded:=True;
     PClient.Active := True;
@@ -8011,8 +8011,8 @@ begin
           eUserName.Text := sUserName;
         end;
 
-          PClient.Disconnect;
-          PClient.Active := False;
+//          PClient.Disconnect;
+//          PClient.Active := False;
 
           TSendDestroyClientToGatewayThread.Create(False, asString['Gateway'], PClient.LoginUserName + '_' + asWideString['user'] + '_' + asWideString['action'] + '_', True);
 

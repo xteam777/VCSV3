@@ -783,8 +783,8 @@ begin
 
       xLog('ID = ' + UserName);
 
-      PClient.Disconnect;
-      PClient.Active := False;
+//      PClient.Disconnect;
+//      PClient.Active := False;
       PClient.LoginUserName := UserName;
       PClient.GateAddr := asString['Gateway'];
       PClient.GatePort := '443';
@@ -870,8 +870,8 @@ begin
 
   if Result.asRecord.asBoolean['NeedHostRelogin'] then
   begin
-    PClient.Disconnect;
-    PClient.Active := False;
+//    PClient.Disconnect;
+//    PClient.Active := False;
     PClient.Active := True;
 //    tPClientReconnectTimer(nil);
 //    hcAccounts.DisconnectNow(True);
@@ -1523,8 +1523,8 @@ begin
     if (GetStatus = STATUS_READY) then
       SetStatus(STATUS_CONNECTING_TO_GATE);
 
-    PClient.Disconnect;
-    PClient.Active := False;
+//    PClient.Disconnect;
+//    PClient.Active := False;
     PClient.Active := True;
 
     tPClientReconnect.Enabled := False;
