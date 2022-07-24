@@ -2997,8 +2997,7 @@ object rdDesktopViewer: TrdDesktopViewer
         OnMouseDown = pImageMouseDown
         OnMouseMove = pImageMouseMove
         OnMouseUp = pImageMouseUp
-        ExplicitWidth = 411
-        ExplicitHeight = 342
+        ExplicitTop = 1
       end
       object iMiniPanelHide: TImage
         Left = 10
@@ -3091,9 +3090,9 @@ object rdDesktopViewer: TrdDesktopViewer
         Visible = False
       end
       object panOptions: TPanel
-        Left = 166
+        Left = 376
         Top = 0
-        Width = 431
+        Width = 341
         Height = 39
         BevelOuter = bvNone
         ParentBackground = False
@@ -3102,9 +3101,9 @@ object rdDesktopViewer: TrdDesktopViewer
         TabOrder = 0
         OnMouseLeave = panOptionsMouseLeave
         object ammbActions: TActionMainMenuBar
-          Left = 3
-          Top = 2
-          Width = 501
+          Left = 0
+          Top = 1
+          Width = 343
           Height = 34
           UseSystemFont = False
           ActionManager = ActionManagerTop
@@ -4220,16 +4219,12 @@ object rdDesktopViewer: TrdDesktopViewer
             CommandProperties.ParentFont = False
           end
           item
-            Action = aFileTransfer
-            Caption = #1055#1077#1088#1077#1076#1072#1095#1072' '#1092#1072#1081#1083#1086#1074
-            ImageIndex = 2
-          end
-          item
-            Color = clBtnFace
-            Caption = '-'
-          end
-          item
             Items = <
+              item
+                Action = aFileTransfer
+                Caption = #1055#1077#1088#1077#1076#1072#1095#1072' '#1092#1072#1081#1083#1086#1074
+                ImageIndex = 2
+              end
               item
                 Items = <
                   item
@@ -4274,7 +4269,7 @@ object rdDesktopViewer: TrdDesktopViewer
                 Visible = False
                 Caption = #1059#1076#1072#1083#1077#1085#1085#1086#1077' '#1086#1073#1085#1086#1074#1083#1077#1085#1080#1077
               end>
-            Caption = #1045#1097#1077
+            Caption = #1044#1086#1087#1086#1083#1085#1080#1090#1077#1083#1100#1085#1086
             CommandStyle = csMenu
             ImageIndex = 4
             CommandProperties.Width = -1
@@ -4402,7 +4397,7 @@ object rdDesktopViewer: TrdDesktopViewer
     Left = 8
     Top = 152
     Bitmap = {
-      494C010105001400280218001800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C0101050014002C0218001800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000600000003000000001002000000000000048
       000000000000000000000000000000000000C4AE1300C4AE1300C4AE1300C4AE
       1300C4AE1300C4AE1300C4AE1300C4AE1300C4AE1300C4AE1300C4AE1300C4AE
@@ -5016,7 +5011,7 @@ object rdDesktopViewer: TrdDesktopViewer
     Left = 48
     Top = 264
     Bitmap = {
-      494C010102000800D40010001000FFFFFFFFFE00FFFFFFFFFFFFFFFF424D3600
+      494C010102000800D80010001000FFFFFFFFFE00FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000001000000001002000000000000010
       000000000000000000000000000000000000737373006C6C6C006C6C6C006C6C
       6C006C6C6C006C6C6C00B5B5B500FFFFFF00FFFFFF00B5B5B5006C6C6C006C6C
