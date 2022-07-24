@@ -39,12 +39,12 @@ const
   S_DEMO_EXCEEDED:String = 'DEMO user limit (5) exceeded.';
 
 type
-  {TDoWorkProc = procedure of object;
+  TDoWorkProc = procedure of object;
   TCheckPingsThread = class(TThread)
   protected
     FDoWork: TDoWorkProc;
     procedure Execute; override;
-  end;}
+  end;
 
   TForceUserLogOut = procedure(uname: String; AAllConnectionsById: Boolean) of Object;
 
@@ -206,11 +206,11 @@ type
 
     FWriteLog: boolean;
 
-{    FPingTimeout_Services: Integer;
+    FPingTimeout_Services: Integer;
     FPingTimeout_Users: Integer;
 //    FOnUserPing: TRtcPortalUserEvent;
 //    FOnUserPingTimeout: TRtcPortalUserEvent;
-    tCPThread: TCheckPingsThread;}
+    tCPThread: TCheckPingsThread;
 
     FLoggedInCount: Integer;
 
@@ -325,7 +325,7 @@ type
     function GetUsersCount: Integer;
     procedure ForceUserLogOutByPattern(uname: String; AAllConnectionsById: Boolean);
     procedure ForceUserLogOut(uname: String);
-{    procedure CheckDisconnectedHosts;}
+    procedure CheckDisconnectedHosts;
     procedure StartForceUserLogoutThread(AUserName: String; AAllConnectionsById: Boolean);
 
   published
@@ -635,7 +635,7 @@ begin
   Inherited Create(ACreateSuspended);
 end;
 
-{procedure TCheckPingsThread.Execute;
+procedure TCheckPingsThread.Execute;
 begin
   while not Terminated do
   begin
@@ -643,7 +643,7 @@ begin
       FDoWork;
     Sleep(1000);
   end;
-end;}
+end;
 
 function TRtcPortalGateway.GetUsersCount: Integer;
 var
@@ -715,7 +715,7 @@ procedure TRtcPortalGateway.ForceUserLogOut(uname: String);
 //    end;
   end;
 
-{procedure TRtcPortalGateway.CheckDisconnectedHosts;
+procedure TRtcPortalGateway.CheckDisconnectedHosts;
 var
   i: Integer;
 begin
@@ -735,7 +735,7 @@ begin
 
 //          if Assigned(FOnUserPingTimeout) then
 //            FOnUserPingTimeout(LoggedIn.FieldName[i] + ' - Last: ' + DateTimeToStr(LoggedIn.asRecord[LoggedIn.FieldName[i]].asDateTime['LastActiveTime']) + ' - Cur: ' + DateTimeToStr(Now));
-            StartForceUserLogoutThread(LoggedIn.FieldName[i]);
+            StartForceUserLogoutThread(LoggedIn.FieldName[i], True);
 //          ForceUserLogOut(LoggedIn.FieldName[i]);
     //      ClearWakeGet(uname;
     //      ClearWakePut(uname);
@@ -747,7 +747,7 @@ begin
   finally
     CS.Release;
   end;
-end;}
+end;
 
 procedure TRtcPortalGateway.StartForceUserLogoutThread(AUserName: String; AAllConnectionsById: Boolean);
 var
@@ -855,17 +855,17 @@ constructor TRtcPortalGateway.Create(AOwner: TComponent);
   FResponseTimeout:=20;
   FDataSendTimeout:=20;
 
-{  FPingTimeout_Services := 20;
+  FPingTimeout_Services := 20;
   FPingTimeout_Users := 20;
   tCPThread := TCheckPingsThread.Create(True);
   tCPThread.FDoWork := CheckDisconnectedHosts;
   tCPThread.FreeOnTerminate := True;
-//  tCPThread.Resume; //Доделать}
+  tCPThread.Resume;
   end;
 
 destructor TRtcPortalGateway.Destroy;
   begin
-//  tCPThread.Terminate;
+  tCPThread.Terminate;
 
   FunctionGroup:=nil;
 
