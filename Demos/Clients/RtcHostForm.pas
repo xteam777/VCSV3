@@ -1071,10 +1071,10 @@ begin
 
   if FAction = 'desk' then
   begin
-    FDesktopControl.ChgDesktop_Begin;
-    FDesktopControl.ChgDesktop_UseMouseDriver(False);
-    FDesktopControl.ChgDesktop_CaptureLayeredWindows(False);
-    FDesktopControl.ChgDesktop_End(FUserName);
+//    FDesktopControl.ChgDesktop_Begin;
+//    FDesktopControl.ChgDesktop_UseMouseDriver(False);
+//    FDesktopControl.ChgDesktop_CaptureLayeredWindows(False);
+//    FDesktopControl.ChgDesktop_End(FUserName);
 
     FDesktopControl.Open(FUserName);
   end
