@@ -9539,9 +9539,9 @@ begin
         HostTimerClient.ReconnectOn.ConnectFail := False;
         HostTimerClient.DisconnectNow(True);
 
+        SetConnectedState(False);  //Доделать. Надо менять статус
         tActivateHost.Enabled := False;
         SetStatus(STATUS_NO_CONNECTION);
-        SetConnectedState(False);  //Доделать. Надо менять статус
 
     //    HTTPClient^.ServerAddr := RtcString(Trim(eAddress.Text));
     //    TimerClient.ServerAddr := RtcString(Trim(eAddress.Text));
@@ -9630,8 +9630,6 @@ begin
           HostTimerClient.UserLogin.ProxyPassword := '';
         end;
 
-        tPHostThread.Restart;
-
         hcAccounts.AutoConnect := True;
         hcAccounts.ReconnectOn.ConnectError := True;
         hcAccounts.ReconnectOn.ConnectLost := True;
@@ -9649,6 +9647,8 @@ begin
         HostTimerClient.ReconnectOn.ConnectLost := True;
         HostTimerClient.ReconnectOn.ConnectFail := True;
         HostTimerClient.Connect(True, True);
+
+        tPHostThread.Restart;
 
         tActivateHost.Enabled := True;
       end;
