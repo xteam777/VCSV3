@@ -325,7 +325,7 @@ type
     function GetUsersCount: Integer;
     procedure ForceUserLogOutByPattern(uname: String; AAllConnectionsById: Boolean);
     procedure ForceUserLogOut(uname: String);
-    procedure CheckDisconnectedHosts;
+//    procedure CheckDisconnectedHosts;
     procedure StartForceUserLogoutThread(AUserName: String; AAllConnectionsById: Boolean);
 
   published
@@ -715,7 +715,8 @@ procedure TRtcPortalGateway.ForceUserLogOut(uname: String);
 //    end;
   end;
 
-procedure TRtcPortalGateway.CheckDisconnectedHosts;
+//Не нужно в этом модуле. Выкидывание вызывается из модуля rtcAccounts Main Gate
+{procedure TRtcPortalGateway.CheckDisconnectedHosts;
 var
   i: Integer;
 begin
@@ -747,7 +748,7 @@ begin
   finally
     CS.Release;
   end;
-end;
+end;}
 
 procedure TRtcPortalGateway.StartForceUserLogoutThread(AUserName: String; AAllConnectionsById: Boolean);
 var
@@ -855,17 +856,17 @@ constructor TRtcPortalGateway.Create(AOwner: TComponent);
   FResponseTimeout:=20;
   FDataSendTimeout:=20;
 
-  FPingTimeout_Services := 20;
+{  FPingTimeout_Services := 20;
   FPingTimeout_Users := 20;
   tCPThread := TCheckPingsThread.Create(True);
   tCPThread.FDoWork := CheckDisconnectedHosts;
   tCPThread.FreeOnTerminate := True;
-  tCPThread.Resume;
+  tCPThread.Resume;}
   end;
 
 destructor TRtcPortalGateway.Destroy;
   begin
-  tCPThread.Terminate;
+  //tCPThread.Terminate;
 
   FunctionGroup:=nil;
 
