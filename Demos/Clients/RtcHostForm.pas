@@ -9914,7 +9914,7 @@ procedure TMainForm.PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttp
 //      end;
 
       if (Sender = tPHostThread.FGatewayClient)
-        and (GetStatus = STATUS_CONNECTING_TO_GATE) then
+        and (CurStatus = STATUS_READY) then
       begin
         SetHostGatewayClientActive(False);
         tPClientReconnect.Enabled := True;
