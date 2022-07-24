@@ -6788,7 +6788,7 @@ begin
           asWideString['User'] := DeviceId;
           asString['Gateway'] := tPHostThread.Gateway + ':' + tPHostThread.Port;
           asRecord['Passwords'] := PassRec;
-          if ActiveConsoleSessionID = CurrentProcessID then
+          if ActiveConsoleSessionID = CurrentSessionID then
             asString['ConsoleId'] := ConsoleId
           else
             asString['ConsoleId'] := '';
@@ -8350,7 +8350,7 @@ begin
                 asWideString['User'] := LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]));
                 asRecord['Passwords'] := PassRec;
                 asString['Gateway'] := tPHostThread.Gateway + ':' + tPHostThread.Port; //asString['Gateway'] + ':' + asString['Port'];
-                if ActiveConsoleSessionID = CurrentProcessID then
+                if ActiveConsoleSessionID = CurrentSessionID then
                   asString['ConsoleId'] := ConsoleId
                 else
                   asString['ConsoleId'] := '';
@@ -8369,7 +8369,7 @@ begin
                 asWideString['User'] := LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]));
                 asRecord['Passwords'] := PassRec;
                 asString['Gateway'] := tPHostThread.Gateway + ':' + tPHostThread.Port; //asString['Gateway'] + ':' + asString['Port'];
-                if ActiveConsoleSessionID = CurrentProcessID then
+                if ActiveConsoleSessionID = CurrentSessionID then
                   asString['ConsoleId'] := ConsoleId
                 else
                   asString['ConsoleId'] := '';
