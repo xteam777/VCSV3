@@ -61,18 +61,21 @@ type
     procedure cbStoreHistoryClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure eProxyAddrChange(Sender: TObject);
+    procedure eProxyUsernameChange(Sender: TObject);
+    procedure eProxyPasswordChange(Sender: TObject);
+    procedure cbAutoRunClick(Sender: TObject);
 
   private
     { Private declarations }
 
   public
     { Public declarations }
-    ProxyOption, CurProxyOption: String;
-    PClient: PRtcHTTPPortalClient;
-    HTTPClient, TimerClient, TimerClient2: PRtcHTTPClient;
-    NetParamsChanged: Boolean;
-    StateProcedure: TStateProcedure;
-    PrevAutoRun: Boolean;
+    PrevProxyOption, CurProxyOption: String;
+    PrevProxyAddr, CurProxyAddr: String;
+    PrevProxyUserName, CurProxyUserName: String;
+    PrevProxyPassword, CurProxyPassword: String;
+    PrevAutoRun, CurAutoRun: Boolean;
     FOnCustomFormClose: TOnCustomFormEvent;
 
     procedure Setup;
@@ -101,20 +104,28 @@ procedure TrdClientSettings.Setup;
 var
   i: Integer;
 begin
-  CurProxyOption := ProxyOption;
-  if ProxyOption = 'NoProxy' then
+  if (Win32MajorVersion >= 6 {vista\server 2k8}) then
+    PrevAutoRun := IsServiceStarted(RTC_HOSTSERVICE_NAME)
+  else
+    PrevAutoRun := IsRegistryAutoRun;
+  cbAutoRun.Checked := PrevAutoRun;
+
+  CurProxyOption := PrevProxyOption;
+  if CurProxyOption = 'NoProxy' then
   begin
     rbNoProxy.Checked := True;
     rbAutomatic.Checked := False;
     rbManual.Checked := False;
   end
-  else if ProxyOption = 'Automatic' then
+  else
+  if CurProxyOption = 'Automatic' then
   begin
     rbNoProxy.Checked := False;
     rbAutomatic.Checked := True;
     rbManual.Checked := False;
   end
-  else if ProxyOption = 'Manual' then
+  else
+  if CurProxyOption = 'Manual' then
   begin
     rbNoProxy.Checked := False;
     rbAutomatic.Checked := False;
@@ -126,16 +137,16 @@ begin
 
 //  if PClient.Gate_Proxy or PClient.Gate_WinHttp then
 //    begin
-  i := Pos(':', PClient.Gate_ProxyAddr);
+  i := Pos(':', PrevProxyAddr);
   if i > 0 then
   begin
-    eProxyAddr.Text := Copy(PClient.Gate_ProxyAddr, 0, i - 1);
-    eProxyPort.Text := Copy(PClient.Gate_ProxyAddr, i + 1, Length(PClient.Gate_ProxyAddr) - i);
+    eProxyAddr.Text := Copy(PrevProxyAddr, 0, i - 1);
+    eProxyPort.Text := Copy(PrevProxyAddr, i + 1, Length(PrevProxyAddr) - i);
   end
   else
-    eProxyAddr.Text := PClient.Gate_ProxyAddr;
-  eProxyUsername.Text := PClient^.Gate_ProxyUserName;
-  eProxyPassword.Text := PClient^.Gate_ProxyPassword;
+    eProxyAddr.Text := PrevProxyAddr;
+  eProxyUsername.Text := PrevProxyUsername;
+  eProxyPassword.Text := PrevProxyPassword;
 //    end
 //  else
 //    begin
@@ -172,20 +183,34 @@ begin
 end;
 
 function TrdClientSettings.ConnectionParamsChanged: Boolean;
+begin
+  Result := (CurProxyOption <> PrevProxyOption)
+    or (CurAutoRun <> PrevAutoRun)
+    or (CurProxyAddr <> PrevProxyAddr)
+    or (CurProxyUserName <> PrevProxyUserName)
+    or (CurProxyPassword <> PrevProxyPassword);
+end;
+
+procedure TrdClientSettings.eProxyAddrChange(Sender: TObject);
 var
-  s: String;
+  sProxyAddr: String;
 begin
   if Trim(eProxyAddr.Text) + ':' + Trim(eProxyPort.Text) <> ':' then
-    s := Trim(eProxyAddr.Text) + ':' + Trim(eProxyPort.Text)
+    sProxyAddr := Trim(eProxyAddr.Text) + ':' + Trim(eProxyPort.Text)
   else
-    s := '';
+    sProxyAddr := '';
 
-  Result := //(HTTPClient^.ServerAddr <> Trim(eAddress.Text))
-    //or
-    (CurProxyOption <> ProxyOption)
-    or (PClient^.Gate_ProxyAddr <> s)
-    or (PClient^.Gate_ProxyUserName <> Trim(eProxyUsername.Text))
-    or (PClient^.Gate_ProxyPassword <> Trim(eProxyPassword.Text));
+  CurProxyAddr := sProxyAddr;
+end;
+
+procedure TrdClientSettings.eProxyPasswordChange(Sender: TObject);
+begin
+  CurProxyPassword := Trim(eProxyPassword.Text);
+end;
+
+procedure TrdClientSettings.eProxyUsernameChange(Sender: TObject);
+begin
+  CurProxyUserName := Trim(eProxyUsername.Text);
 end;
 
 //function TrdClientSettings.CheckService(bServiceFilename: Boolean = True {False = Service Name} ): String;
@@ -306,152 +331,14 @@ begin
     else
       SetRegistryAutoRun(cbAutoRun.Checked);
 
-  NetParamsChanged := ConnectionParamsChanged();
-
-  if NetParamsChanged then
-  begin
-    if PClient^.Active then
-    begin
-//        PGatewayRec(GatewayClientsList^[i]).GatewayClient^.Module.SkipRequests;
-      PClient^.Disconnect;
-      PClient^.Active := False;
-//        PGatewayRec(GatewayClientsList^[i]).GatewayClient^.Stop;
-    end;
-
-    HTTPClient^.AutoConnect := False;
-    HTTPClient^.ReconnectOn.ConnectError := False;
-    HTTPClient^.ReconnectOn.ConnectLost := False;
-    HTTPClient^.ReconnectOn.ConnectFail := False;
-    HTTPClient^.DisconnectNow(True);
-
-    TimerClient^.AutoConnect := False;
-    TimerClient^.ReconnectOn.ConnectError := False;
-    TimerClient^.ReconnectOn.ConnectLost := False;
-    TimerClient^.ReconnectOn.ConnectFail := False;
-    TimerClient^.DisconnectNow(True);
-
-    TimerClient2^.AutoConnect := False;
-    TimerClient2^.ReconnectOn.ConnectError := False;
-    TimerClient2^.ReconnectOn.ConnectLost := False;
-    TimerClient2^.ReconnectOn.ConnectFail := False;
-    TimerClient2^.DisconnectNow(True);
-
-    StateProcedure(False);  //Доделать. Надо менять статус
-
-//    HTTPClient^.ServerAddr := RtcString(Trim(eAddress.Text));
-//    TimerClient^.ServerAddr := RtcString(Trim(eAddress.Text));
-//    TimerClient2^.ServerAddr := RtcString(Trim(eAddress.Text));
-
-  //  PClient.Gate_Proxy := xProxy.Checked;
-  //  HTTPClient^.UseProxy := xProxy.Checked;
-
-  //  if PClient.Gate_Proxy or PClient.Gate_WinHttp then
-  //    begin
-
-    if CurProxyOption = 'Automatic' then
-    begin
-      PClient^.Gate_WinHttp := True;
-      PClient^.Gate_Proxy := False;
-      PClient^.Gate_ProxyAddr := '';
-      PClient^.Gate_ProxyUserName := '';
-      PClient^.Gate_ProxyPassword := '';
-
-      HTTPClient^.UseWinHTTP := True;
-      HTTPClient^.UseProxy := False;
-      HTTPClient^.UserLogin.ProxyAddr := '';
-      HTTPClient^.UserLogin.ProxyUserName := '';
-      HTTPClient^.UserLogin.ProxyPassword := '';
-
-      TimerClient^.UseWinHTTP := True;
-      TimerClient^.UseProxy := False;
-      TimerClient^.UserLogin.ProxyAddr := '';
-      TimerClient^.UserLogin.ProxyUserName := '';
-      TimerClient^.UserLogin.ProxyPassword := '';
-
-      TimerClient2^.UseWinHTTP := True;
-      TimerClient2^.UseProxy := False;
-      TimerClient2^.UserLogin.ProxyAddr := '';
-      TimerClient2^.UserLogin.ProxyUserName := '';
-      TimerClient2^.UserLogin.ProxyPassword := '';
-    end
-    else
-    if CurProxyOption = 'Manual' then
-    begin
-      PClient^.Gate_WinHttp := True;
-      PClient^.Gate_Proxy := True;
-      PClient^.Gate_ProxyAddr := Trim(eProxyAddr.Text) + ':' + Trim(eProxyPort.Text);
-      PClient^.Gate_ProxyUserName := Trim(eProxyUsername.Text);
-      PClient^.Gate_ProxyPassword := Trim(eProxyPassword.Text);
-
-      HTTPClient^.UseWinHTTP := True;
-      HTTPClient^.UseProxy := True;
-      HTTPClient^.UserLogin.ProxyAddr := Trim(eProxyAddr.Text) + ':' + Trim(eProxyPort.Text);
-      HTTPClient^.UserLogin.ProxyUserName := Trim(eProxyUsername.Text);
-      HTTPClient^.UserLogin.ProxyPassword := Trim(eProxyPassword.Text);
-
-      TimerClient^.UseWinHTTP := True;
-      TimerClient^.UseProxy := True;
-      TimerClient^.UserLogin.ProxyAddr := Trim(eProxyAddr.Text) + ':' + Trim(eProxyPort.Text);
-      TimerClient^.UserLogin.ProxyUserName := Trim(eProxyUsername.Text);
-      TimerClient^.UserLogin.ProxyPassword := Trim(eProxyPassword.Text);
-
-      TimerClient2^.UseWinHTTP := True;
-      TimerClient2^.UseProxy := True;
-      TimerClient2^.UserLogin.ProxyAddr := Trim(eProxyAddr.Text) + ':' + Trim(eProxyPort.Text);
-      TimerClient2^.UserLogin.ProxyUserName := Trim(eProxyUsername.Text);
-      TimerClient2^.UserLogin.ProxyPassword := Trim(eProxyPassword.Text);
-    end
-    else
-    begin
-      PClient^.Gate_WinHttp := True;
-      PClient^.Gate_Proxy := False;
-      PClient^.Gate_ProxyAddr := '';
-      PClient^.Gate_ProxyUserName := '';
-      PClient^.Gate_ProxyPassword := '';
-
-      HTTPClient^.UseWinHTTP := True;
-      HTTPClient^.UseProxy := False;
-      HTTPClient^.UserLogin.ProxyAddr := '';
-      HTTPClient^.UserLogin.ProxyUserName := '';
-      HTTPClient^.UserLogin.ProxyPassword := '';
-
-      TimerClient^.UseWinHTTP := True;
-      TimerClient^.UseProxy := False;
-      TimerClient^.UserLogin.ProxyAddr := '';
-      TimerClient^.UserLogin.ProxyUserName := '';
-      TimerClient^.UserLogin.ProxyPassword := '';
-
-      TimerClient2^.UseWinHTTP := True;
-      TimerClient2^.UseProxy := False;
-      TimerClient2^.UserLogin.ProxyAddr := '';
-      TimerClient2^.UserLogin.ProxyUserName := '';
-      TimerClient2^.UserLogin.ProxyPassword := '';
-    end;
-
-    PClient^.Active := True;
-
-    HTTPClient^.AutoConnect := True;
-    HTTPClient^.ReconnectOn.ConnectError := True;
-    HTTPClient^.ReconnectOn.ConnectLost := True;
-    HTTPClient^.ReconnectOn.ConnectFail := True;
-    HTTPClient^.Connect(True, True);
-
-    TimerClient^.AutoConnect := True;
-    TimerClient^.ReconnectOn.ConnectError := True;
-    TimerClient^.ReconnectOn.ConnectLost := True;
-    TimerClient^.ReconnectOn.ConnectFail := True;
-    TimerClient^.Connect(True, True);
-
-    TimerClient2^.AutoConnect := True;
-    TimerClient2^.ReconnectOn.ConnectError := True;
-    TimerClient2^.ReconnectOn.ConnectLost := True;
-    TimerClient2^.ReconnectOn.ConnectFail := True;
-    TimerClient2^.Connect(True, True);
-  end;
-
   ModalResult := mrOk;
 
   Hide;
+end;
+
+procedure TrdClientSettings.cbAutoRunClick(Sender: TObject);
+begin
+  CurAutoRun := cbAutoRun.Checked;
 end;
 
 procedure TrdClientSettings.cbAutoRunKeyDown(Sender: TObject; var Key: Word;
@@ -558,13 +445,7 @@ begin
 //    end;
 //  end;
 
-  if (Win32MajorVersion >= 6 {vista\server 2k8}) then
-    cbAutoRun.Checked := IsServiceStarted(RTC_HOSTSERVICE_NAME)
-  else
-    cbAutoRun.Checked := IsRegistryAutoRun;
-  PrevAutoRun := cbAutoRun.Checked;
-
-  xProxyClick(nil);
+//  xProxyClick(nil);
 
   if (tcSettings.ActivePage.Name = 'tsSequrity')
     and Visible then

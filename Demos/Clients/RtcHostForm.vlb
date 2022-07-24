@@ -2,7 +2,7 @@
 Coordinates=701,610,88,36
 
 []
-Coordinates=400,527,61,58
+Coordinates=1266,606,96,36
 Visible=True
 LayerNames=
 
@@ -338,9 +338,6 @@ Coordinates=1122,867,40,36
 [miShowForm]
 Coordinates=1266,551,90,36
 
-[PDesktopHost]
-Coordinates=1266,606,96,36
-
 [btnViewDesktop]
 Coordinates=1266,661,107,36
 
@@ -373,13 +370,4 @@ Coordinates=731,309,60,58
 
 [tHcAccountsReconnect]
 Coordinates=714,719,66,36
-
-[PClient]
-Coordinates=528,309,56,36
-
-[PFileTrans]
-Coordinates=378,719,77,36
-
-[PChat]
-Coordinates=1141,826,50,36
 

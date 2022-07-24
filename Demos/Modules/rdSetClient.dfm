@@ -82,6 +82,7 @@ object rdClientSettings: TrdClientSettings
           Hint = #1042#1074#1077#1076#1080#1090#1077' '#1072#1076#1088#1077#1089' '#1087#1088#1086#1082#1089#1080', '#1074#1082#1083#1102#1095#1072#1103' http:// or https://'
           Color = clMenu
           TabOrder = 3
+          OnChange = eProxyAddrChange
           OnKeyDown = cbAutoRunKeyDown
         end
         object eProxyUsername: TEdit
@@ -92,6 +93,7 @@ object rdClientSettings: TrdClientSettings
           Hint = 'Enter Username needed to log in to the Proxy'
           Color = clMenu
           TabOrder = 5
+          OnChange = eProxyUsernameChange
           OnKeyDown = cbAutoRunKeyDown
         end
         object eProxyPassword: TEdit
@@ -103,6 +105,7 @@ object rdClientSettings: TrdClientSettings
           Color = clMenu
           PasswordChar = '*'
           TabOrder = 6
+          OnChange = eProxyPasswordChange
           OnKeyDown = cbAutoRunKeyDown
         end
         object rbNoProxy: TRadioButton
@@ -148,6 +151,7 @@ object rdClientSettings: TrdClientSettings
           Height = 24
           Color = clMenu
           TabOrder = 4
+          OnChange = eProxyAddrChange
           OnKeyDown = cbAutoRunKeyDown
         end
       end
@@ -158,16 +162,13 @@ object rdClientSettings: TrdClientSettings
         Height = 17
         Caption = #1047#1072#1087#1091#1089#1082#1072#1090#1100' '#1087#1088#1080' '#1089#1090#1072#1088#1090#1077' Windows'
         TabOrder = 1
+        OnClick = cbAutoRunClick
         OnKeyDown = cbAutoRunKeyDown
       end
     end
     object tsSequrity: TTabSheet
       Caption = #1041#1077#1079#1086#1087#1072#1089#1085#1086#1089#1090#1100
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 232
       object cbOnlyAdminChanges: TCheckBox
         Left = 7
         Top = 147

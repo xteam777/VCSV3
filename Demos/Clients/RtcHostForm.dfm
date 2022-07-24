@@ -5783,75 +5783,10 @@ object MainForm: TMainForm
       OnClick = Button3Click
     end
   end
-  object PClient: TRtcHttpPortalClient
-    UserVisible = True
-    UserNotify = True
-    GwStoreParams = True
-    OnLogIn = PClientLogIn
-    OnLogOut = PClientLogOut
-    OnParams = PClientParams
-    OnStart = PClientStart
-    OnError = PClientError
-    OnFatalError = PClientFatalError
-    OnUserLoggedIn = PClientUserLoggedIn
-    OnUserLoggedOut = PClientUserLoggedOut
-    AutoSyncEvents = True
-    DataCompress = rtcpCompMax
-    DataEncrypt = 16
-    DataSecureKey = '2240897'
-    DataForceEncrypt = True
-    RetryOtherCalls = 1
-    MultiThreaded = True
-    GatePort = '443'
-    Gate_Timeout = 300
-    OnStatusGet = PClientStatusGet
-    OnStatusPut = PClientStatusPut
-    Left = 38
-    Top = 44
-  end
-  object PFileTrans: TRtcPFileTransfer
-    Client = PClient
-    BeTheHost = True
-    GUploadAnywhere = True
-    GUploadAnywhere_Super = True
-    GAllowFileMove = True
-    GAllowFileMove_Super = True
-    GAllowFileRename = True
-    GAllowFileRename_Super = True
-    GAllowFileDelete = True
-    GAllowFileDelete_Super = True
-    GAllowFolderCreate = True
-    GAllowFolderCreate_Super = True
-    GAllowFolderMove = True
-    GAllowFolderMove_Super = True
-    GAllowFolderRename = True
-    GAllowFolderRename_Super = True
-    GAllowFolderDelete = True
-    GAllowFolderDelete_Super = True
-    GAllowShellExecute = True
-    GAllowShellExecute_Super = True
-    AccessControl = False
-    OnUserJoined = PModuleUserJoined
-    OnUserLeft = PModuleUserLeft
-    OnNewUI = PFileTransferLogUI
-    Left = 64
-    Top = 42
-  end
-  object PChat: TRtcPChat
-    Client = PClient
-    BeTheHost = True
-    AccessControl = False
-    OnNewUI = PChatNewUI
-    OnUserJoined = PModuleUserJoined
-    OnUserLeft = PModuleUserLeft
-    Left = 92
-    Top = 42
-  end
   object PDesktopControl: TRtcPDesktopControl
-    Client = PClient
     OnNewUI = PDesktopControlNewUI
-    Left = 148
-    Top = 42
+    Left = 40
+    Top = 44
   end
   object tHcAccountsReconnect: TTimer
     Enabled = False
@@ -6114,17 +6049,6 @@ object MainForm: TMainForm
     RequestAborted = rGetPartnerInfoRequestAborted
     Left = 383
     Top = 120
-  end
-  object PDesktopHost: TRtcPDesktopHost
-    Client = PClient
-    AccessControl = False
-    FileTransfer = PFileTrans
-    OnQueryAccess = PDesktopHostQueryAccess
-    OnUserJoined = PModuleUserJoined
-    OnUserLeft = PModuleUserLeft
-    OnHaveScreeenChanged = PDesktopHostHaveScreeenChanged
-    Left = 120
-    Top = 42
   end
   object TimerClient: TRtcHttpClient
     MultiThreaded = True
@@ -6419,14 +6343,14 @@ object MainForm: TMainForm
   object tPClientReconnect: TTimer
     Interval = 100
     OnTimer = tPClientReconnectTimer
-    Left = 208
-    Top = 43
+    Left = 98
+    Top = 41
   end
   object tActivateHost: TTimer
     Interval = 100
     OnTimer = tActivateHostTimer
-    Left = 178
-    Top = 42
+    Left = 68
+    Top = 44
   end
   object ApplicationEvents: TApplicationEvents
     OnRestore = ApplicationEventsRestore

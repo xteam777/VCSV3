@@ -80,14 +80,6 @@ type
 //    Stopped: Boolean;
 //  end;
 
-  PPortalConnection = ^TPortalConnection;
-  TPortalConnection = record
-    ThreadID: Cardinal;
-    ID: String;
-    Action: String;
-    UIHandle: THandle;
-  end;
-
   PGatewayServerRec = ^TGatewayServerRec;
   TGatewayServerRec = record
     Address: String;
