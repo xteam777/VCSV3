@@ -1023,26 +1023,34 @@ end;
 procedure TPortalHostThread.Execute;
 var
   msg: TMsg;
+  lNeedRestartThread: Boolean;
 begin
   while (not Terminated) do
   begin
     FCS.Acquire;
     try
-      if FNeedRestartThread then
-      begin
-//          FGatewayClient.Disconnect;
-        FGatewayClient.Active := False;
-        FGatewayClient.GateAddr := Gateway;
-        FGatewayClient.Gate_Proxy := ProxyEnabled;
-        FGatewayClient.Gate_ProxyAddr := ProxyAddr;
-        FGatewayClient.Gate_ProxyUserName := ProxyUserName;
-        FGatewayClient.Gate_ProxyPassword := ProxyPassword;
-        FGatewayClient.Active := True;
-
-        FNeedRestartThread := False;
-      end;
+      lNeedRestartThread := FNeedRestartThread;
     finally
       FCS.Release;
+    end;
+
+    if lNeedRestartThread then
+    begin
+      FGatewayClient.Disconnect;
+      FGatewayClient.Active := False;
+      FGatewayClient.GateAddr := Gateway;
+      FGatewayClient.Gate_Proxy := ProxyEnabled;
+      FGatewayClient.Gate_ProxyAddr := ProxyAddr;
+      FGatewayClient.Gate_ProxyUserName := ProxyUserName;
+      FGatewayClient.Gate_ProxyPassword := ProxyPassword;
+      FGatewayClient.Active := True;
+
+      FCS.Acquire;
+      try
+        FNeedRestartThread := False;
+      finally
+        FCS.Release;
+      end;
     end;
 
     Sleep(1);
