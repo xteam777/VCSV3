@@ -564,6 +564,7 @@ type
     function PartnerIsPending(uname, action, gateway: String): Boolean; overload;
     function PartnerIsPending(uname, action: String): Boolean; overload;
     function PartnerIsPending(uname: String): Boolean; overload;
+    procedure ChangePendingRequestUser(action, userFrom, userTo: String);
 //    procedure DeletePendingRequestByItem(Item: PPendingRequestItem);
     procedure DeletePendingRequests(uname: String);
     procedure DeleteAllPendingRequests;
@@ -7193,6 +7194,9 @@ begin
 
       username := GetUserNameByID(asWideString['user']);
 
+      if asWideString['UserToConnect'] <> asWideString['user'] then
+        ChangePendingRequestUser(asWideString['action'], asWideString['user'], asWideString['UserToConnect']);
+
       if not PartnerIsPending(asWideString['user'], asString['action'], asString['Address']) then
       begin
 //        AddPendingRequest(asWideString['user'], asString['action'], asString['Address'] + ':' +  asString['Port'], 0);
@@ -10127,6 +10131,26 @@ begin
     if PPendingRequestItem(PendingRequests[i])^.UserName = uname then
       begin
         Result := True;
+        Exit;
+      end;
+  finally
+    CS_Pending.Release;
+  end;
+end;
+
+procedure TMainForm.ChangePendingRequestUser(action, userFrom, userTo: String);
+var
+  i: Integer;
+begin
+//  xLog('ChangePendingRequestUser');
+
+  CS_Pending.Acquire;
+  try
+    for i := 0 to PendingRequests.Count - 1 do
+    if (PPendingRequestItem(PendingRequests[i])^.action = action)
+      and (PPendingRequestItem(PendingRequests[i])^.UserName = userFrom) then
+      begin
+        PPendingRequestItem(PendingRequests[i])^.UserName := userTo;
         Exit;
       end;
   finally
