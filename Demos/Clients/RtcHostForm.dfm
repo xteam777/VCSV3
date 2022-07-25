@@ -3555,9 +3555,9 @@ object MainForm: TMainForm
     end
     object pLeft: TPanel
       Left = 0
-      Top = 151
+      Top = 142
       Width = 264
-      Height = 310
+      Height = 319
       BevelInner = bvSpace
       BevelOuter = bvNone
       Color = 16645629
@@ -4475,9 +4475,9 @@ object MainForm: TMainForm
     end
     object pRight: TPanel
       Left = 271
-      Top = 151
+      Top = 142
       Width = 267
-      Height = 310
+      Height = 319
       BevelInner = bvSpace
       BevelOuter = bvNone
       Color = 16645629
@@ -5085,8 +5085,8 @@ object MainForm: TMainForm
         OnClick = lDesktopControlClick
       end
       object lFileTrans: TLabel
-        Left = 35
-        Top = 206
+        Left = 34
+        Top = 210
         Width = 219
         Height = 16
         AutoSize = False
@@ -5156,7 +5156,7 @@ object MainForm: TMainForm
       object btnNewConnection: TColorSpeedButton
         Tag = 1
         Left = 10
-        Top = 256
+        Top = 262
         Width = 243
         Height = 34
         Caption = #1055#1054#1044#1050#1051#1070#1063#1048#1058#1068#1057#1071
@@ -5210,8 +5210,8 @@ object MainForm: TMainForm
         OnClick = rbDesktopControlClick
       end
       object rbFileTrans: TRadioButton
-        Left = 13
-        Top = 206
+        Left = 12
+        Top = 210
         Width = 16
         Height = 18
         Color = clWhite
@@ -6042,7 +6042,7 @@ object MainForm: TMainForm
   object tInternetActive: TTimer
     OnTimer = tInternetActiveTimer
     Left = 178
-    Top = 116
+    Top = 94
   end
   object rGetPartnerInfo: TRtcResult
     OnReturn = rGetPartnerInfoReturn
@@ -6072,7 +6072,7 @@ object MainForm: TMainForm
     Enabled = False
     OnTimer = pingTimerTimer
     Left = 149
-    Top = 116
+    Top = 94
   end
   object resPing: TRtcResult
     OnReturn = resPingReturn
@@ -6147,7 +6147,7 @@ object MainForm: TMainForm
     Enabled = False
     OnTimer = HostPingTimerTimer
     Left = 121
-    Top = 116
+    Top = 94
   end
   object resHostLogin: TRtcResult
     OnReturn = resHostLoginReturn
@@ -6362,7 +6362,7 @@ object MainForm: TMainForm
     Interval = 5000
     OnTimer = tCleanConnectionsTimer
     Left = 206
-    Top = 116
+    Top = 94
   end
   object rDestroyClient: TRtcResult
     Left = 322
