@@ -3408,10 +3408,10 @@ var
 begin
   //XLog('SetStatus: ' + IntToStr(CurStatus));
 
-  SetConnectedState(CurStatus >= STATUS_CONNECTING_TO_GATE);
-
   CS_Status.Acquire;
   try
+    SetConnectedState(CurStatus >= STATUS_CONNECTING_TO_GATE);
+
     if DelayedStatus <> '' then
       lblStatus.Caption := DelayedStatus
     else if GetPendingRequestsCount > 0 then
