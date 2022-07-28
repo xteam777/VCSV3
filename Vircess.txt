@@ -1,4 +1,5 @@
 ﻿REMOX
+PPortalConnection(PortalConnectionsList[i])^.ThisThread.Terminate; cant termonate ext thead
 при завершении клиента ав если долго висел
 вначале подключения тупит
 	изза убирания обоев?

@@ -8836,7 +8836,7 @@ begin
 
     FWin.UI.UserDesc := GetUserDescription(user);
 
-    FWin.AutoExplore := True;
+//    FWin.AutoExplore := True;
 
 //    FWin.Show;
 //    FWin.WindowState := wsNormal;
@@ -8897,7 +8897,7 @@ begin
 
     FWin.UI.UserDesc := GetUserDescription(user);
 
-    FWin.AutoExplore := True;
+//    FWin.AutoExplore := True;
 
 //    FWin.Show;
 //    FWin.WindowState := wsNormal;

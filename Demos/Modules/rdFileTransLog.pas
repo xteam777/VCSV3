@@ -43,6 +43,7 @@ type
     procedure MyOnFileList(Sender:TRtcPFileTransferUI);
   public
     { Public declarations }
+    UIVisible: Boolean;
     property UI:TRtcPFileTransferUI read myUI;
 
     property OnUIOpen: TUIOpenEvent read FOnUIOpen write FOnUIOpen;
@@ -147,7 +148,7 @@ procedure TrdFileTransferLog.myUIOpen(Sender: TRtcPFileTransferUI);
 //    Exit;
 //  end
 //  else
-  if myUI.Module.UIVisible then
+  if UIVisible then
   begin
     Show;
 //    BringToFront;
