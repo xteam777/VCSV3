@@ -33,7 +33,7 @@ object rdFileTransfer: TrdFileTransfer
   PixelsPerInch = 96
   TextHeight = 13
   object Splitter1: TSplitter
-    Left = 520
+    Left = 0
     Top = 0
     Width = 2
     Height = 423
@@ -42,10 +42,11 @@ object rdFileTransfer: TrdFileTransfer
     ParentColor = False
     ResizeStyle = rsLine
     OnMoved = Splitter1Moved
+    ExplicitLeft = 520
     ExplicitHeight = 475
   end
   object Panel: TPanel
-    Left = 0
+    Left = 2
     Top = 0
     Width = 520
     Height = 423
@@ -60,6 +61,7 @@ object rdFileTransfer: TrdFileTransfer
     ParentFont = False
     TabOrder = 0
     StyleElements = []
+    ExplicitLeft = 0
     object Panel3: TPanel
       Left = 0
       Top = 52

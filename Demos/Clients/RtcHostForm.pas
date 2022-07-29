@@ -73,6 +73,7 @@ type
     procedure Execute; override;
   end;
 
+  PPortalThread = ^TPortalThread;
   TPortalThread = class(TThread)
   private
     FUserName: String;
@@ -95,7 +96,7 @@ type
 
   PPortalConnection = ^TPortalConnection;
   TPortalConnection = record
-    ThisThread: TPortalThread;
+    ThisThread: PPortalThread;
     ThreadID: Cardinal;
     ID: String;
     Action: String;
@@ -581,7 +582,8 @@ type
 //    function GetGatewayRecByChat(Chat: TRtcPChat): PGatewayRec;
 //    procedure FreeGatewayRec(AGatewayRec: PGatewayRec);
 //
-    procedure AddPortalConnection(AThreadID: Cardinal; AHandle: THandle; AAction: String; AID: String);
+    procedure AddPortalConnection(AThreadID: Cardinal; AAction: String; AID: String; AThread: PPortalThread);
+    procedure SetPortalConnectionUIHandle(AThreadID: Cardinal; AUIHandle: THandle);
     function GetPortalConnection(AAction: String; AID: String): PPortalConnection;
 //    procedure SetActiveUIRecStoppedByPClient(AClient: TAbsPortalClient);
     //procedure RemovePortalConnectionByUIHandle(AUIHandle: THandle);
@@ -1378,6 +1380,8 @@ begin
   else
   if FAction = 'chat' then
     FChat.Open(FUserName);
+
+  MainForm.AddPortalConnection(ThreadID, FAction, FUserName, @Self);
 end;
 
 destructor TPortalThread.Destroy;
@@ -2164,7 +2168,24 @@ begin
   end;
 end;}
 
-procedure TMainForm.AddPortalConnection(AThreadID: Cardinal; AHandle: THandle; AAction: String; AID: String);
+procedure TMainForm.SetPortalConnectionUIHandle(AThreadID: Cardinal; AUIHandle: THandle);
+var
+  i: Integer;
+begin
+  CS_GW.Acquire;
+  try
+    for i := 0 to PortalConnectionsList.Count - 1 do
+      if (PPortalConnection(PortalConnectionsList[i])^.ThreadID = AThreadID) then
+      begin
+        PPortalConnection(PortalConnectionsList[i]).UIHandle := AUIHandle;
+        Break;
+      end;
+  finally
+    CS_GW.Release;
+  end;
+end;
+
+procedure TMainForm.AddPortalConnection(AThreadID: Cardinal; AAction: String; AID: String; AThread: PPortalThread);
 var
   pPC: PPortalConnection;
 begin
@@ -2172,9 +2193,9 @@ begin
   try
     New(pPC);
     pPC^.ThreadID := AThreadID;
-    pPC^.UIHandle := AHandle;
     pPC^.Action := AAction;
     pPC^.ID := AID;
+    pPC^.ThisThread := AThread;
     PortalConnectionsList.Add(pPC);
   finally
     CS_GW.Release;
@@ -2346,8 +2367,11 @@ begin
       if PPortalConnection(PortalConnectionsList[i])^.ThreadId = AThreadId then
       begin
         if (PPortalConnection(PortalConnectionsList[i])^.ThisThread <> nil)
-          and (not PPortalConnection(PortalConnectionsList[i])^.ThisThread.Terminated) then
-          PPortalConnection(PortalConnectionsList[i])^.ThisThread.Terminate;
+          and (not PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Terminated) then
+        begin
+          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Terminate;
+          PPortalConnection(PortalConnectionsList[i])^.ThisThread := nil;
+        end;
         //PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_DESTROY, 0, 0); //Закрываем поток с пклиентом
         if ACloseFUI then
           PostMessage(PPortalConnection(PortalConnectionsList[i])^.UIHandle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
@@ -2380,8 +2404,11 @@ begin
       if PPortalConnection(PortalConnectionsList[i])^.ID = ID then
       begin
         if (PPortalConnection(PortalConnectionsList[i])^.ThisThread <> nil)
-          and (not PPortalConnection(PortalConnectionsList[i])^.ThisThread.Terminated) then
-          PPortalConnection(PortalConnectionsList[i])^.ThisThread.Terminate;
+          and (not PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Terminated) then
+        begin
+          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Terminate;
+          PPortalConnection(PortalConnectionsList[i])^.ThisThread := nil;
+        end;
         //PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_DESTROY, 0, 0); //Закрываем поток с пклиентом
         PostMessage(PPortalConnection(PortalConnectionsList[i])^.UIHandle, WM_CLOSE, 0, 0); //Закрываем форму UI
 
@@ -7012,7 +7039,7 @@ end;
 
 procedure TMainForm.Button3Click(Sender: TObject);
 begin
-  PPortalConnection(PortalConnectionsList[0])^.ThisThread.Terminate;
+  PPortalConnection(PortalConnectionsList[0])^.ThisThread^.Terminate;
 //  PostThreadMessage(PPortalConnection(PortalConnectionsList[0])^.ThreadID, WM_DESTROY, 0, 0);
 end;
 
@@ -8826,7 +8853,8 @@ begin
     FWin.UI.Module := Sender;
     FWin.UI.Tag := Sender.Tag; //ThreadID
 
-    AddPortalConnection(Sender.Tag, FWin.Handle, 'file', user); //ThreadID
+//    AddPortalConnection(Sender.Tag, FWin.Handle, 'file', user); //ThreadID
+    SetPortalConnectionUIHandle(Sender.Tag, FWin.Handle);
 
     (*
     // Restore Window Position
@@ -8887,7 +8915,8 @@ begin
     FWin.UI.Module := Sender;
     FWin.UI.Tag := Sender.Tag; //ThreadID
 
-    AddPortalConnection(Sender.Tag, FWin.Handle, 'file', user); //ThreadID
+//    AddPortalConnection(Sender.Tag, FWin.Handle, 'file', user); //ThreadID
+    SetPortalConnectionUIHandle(Sender.Tag, FWin.Handle);
 
     (*
     // Restore Window Position
@@ -8936,6 +8965,7 @@ begin
 //  xLog('PFileTransferLogUI');
 
   FWin := TrdFileTransferLog.Create(nil);
+  FWin.UIVisible := True;
   FWin.OnUIOpen := OnUIOpen;
   FWin.OnUIClose := OnUIClose;
 //  FWin.Parent := Self;
@@ -8947,7 +8977,8 @@ begin
     FWin.UI.Module := Sender;
     FWin.UI.Tag := Sender.Tag; //ThreadID
 
-    AddPortalConnection(Sender.Tag, FWin.Handle, 'file', user); //ThreadID
+//    AddPortalConnection(Sender.Tag, FWin.Handle, 'file', user); //ThreadID
+    SetPortalConnectionUIHandle(Sender.Tag, FWin.Handle);
 
     (*
     // Restore Window Position
@@ -9044,7 +9075,8 @@ begin
     CWin.UI.Module := Sender;
     CWin.UI.Tag := Sender.Tag; //ThreadID
 
-    AddPortalConnection(Sender.Tag, CWin.Handle, 'chat', user); //ThreadID
+//    AddPortalConnection(Sender.Tag, CWin.Handle, 'chat', user); //ThreadID
+    SetPortalConnectionUIHandle(Sender.Tag, CWin.Handle);
 
     CWin.UI.UserDesc := GetUserDescription(user);
 
@@ -10369,7 +10401,8 @@ begin
     CDesk.UI.ExactCursor := True;
     CDesk.UI.Tag := Sender.Tag; //ThreadID
 
-    AddPortalConnection(Sender.Tag, CDesk.Handle, 'desc', user); //ThreadID
+//    AddPortalConnection(Sender.Tag, CDesk.Handle, 'desc', user); //ThreadID
+    SetPortalConnectionUIHandle(Sender.Tag, CDesk.Handle);
 
     //{$IFNDEF RtcViewer}
 //    case cbControlMode.ItemIndex of

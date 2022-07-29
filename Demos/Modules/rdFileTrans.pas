@@ -292,6 +292,8 @@ procedure TrdFileTransfer.Form_Open(const mode: string);
 //  cUserName.Caption:=myUI.UserName;
 //  cTitleBar.Caption:=mode+'Files';
 
+  b_ppClick(nil);
+
   FReady:=True;
   end;
 
