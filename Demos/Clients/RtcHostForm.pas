@@ -1239,7 +1239,7 @@ constructor TPortalThread.Create(CreateSuspended: Boolean; AUserName, AAction, A
 begin
   inherited Create(CreateSuspended);
 
-  FreeOnTerminate := True;
+  FreeOnTerminate := False;
 
   FUserName := AUserName;
   FGateway := AGateway;
@@ -1447,6 +1447,7 @@ var
 begin
   while (not Terminated) do
     Sleep(1);
+  msg := msg;
 end;
 
 {procedure TPortalThread.ProcessMessage(MSG: TMSG);
@@ -2370,9 +2371,11 @@ begin
           and (not PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Terminated) then
         begin
           PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Terminate;
+          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.WaitFor;
+          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Free;
           PPortalConnection(PortalConnectionsList[i])^.ThisThread := nil;
         end;
-        //PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_DESTROY, 0, 0); //Закрываем поток с пклиентом
+        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_DESTROY, 0, 0); //Закрываем поток с пклиентом
         if ACloseFUI then
           PostMessage(PPortalConnection(PortalConnectionsList[i])^.UIHandle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
 
@@ -2407,6 +2410,8 @@ begin
           and (not PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Terminated) then
         begin
           PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Terminate;
+          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.WaitFor;
+          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Free;
           PPortalConnection(PortalConnectionsList[i])^.ThisThread := nil;
         end;
         //PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_DESTROY, 0, 0); //Закрываем поток с пклиентом
