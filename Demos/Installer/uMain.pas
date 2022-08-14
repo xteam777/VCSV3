@@ -4,8 +4,9 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics, ComObj, ActiveX,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.Imaging.pngimage, Vcl.ExtCtrls, ShlObj, rtcWinlogon, uVircessTypes,
-  Vcl.StdCtrls, Vcl.Buttons, ShellApi, rtcSystem, CommonUtils, rtcInfo, rtcCrypt, DateUtils, ServiceMgr, Registry;
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.Imaging.pngimage, Vcl.ExtCtrls, ShlObj, rtcWinlogon,
+  Vcl.StdCtrls, Vcl.Buttons, ShellApi, rtcSystem, rtcInfo, rtcCrypt, DateUtils, Registry,
+  IOUtils, CommonUtils, ServiceMgr;
 
 type
   TfMain = class(TForm)
@@ -15,7 +16,6 @@ type
     bClose: TSpeedButton;
     iBkgTop: TImage;
     lLink: TLabel;
-    Button1: TButton;
     pInstall: TPanel;
     rgAction: TRadioGroup;
     rbSetup: TRadioButton;
@@ -29,21 +29,27 @@ type
     ePassword: TEdit;
     pDelete: TPanel;
     Label5: TLabel;
+    rn: TCheckBox;
+    pBtnDel: TPanel;
+    bDel: TSpeedButton;
     procedure lLinkClick(Sender: TObject);
     procedure lLinkMouseEnter(Sender: TObject);
     procedure lLinkMouseLeave(Sender: TObject);
     procedure rbSetupClick(Sender: TObject);
     procedure bCloseClick(Sender: TObject);
     procedure bOKClick(Sender: TObject);
-    procedure Button1Click(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure bDelClick(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private
     { Private declarations }
-    procedure SaveSetup;
+    procedure SaveSetup(pass:string; cfg: string='CSIDL_PROGRAM_FILES'; add:string='95.216.96.39');
     procedure AddToRegistry;
     function GetSpecialPath(CSIDL: Integer): String;
     function CreateShortcut(const CmdLine, Args, WorkDir, LinkFile: String): IPersistFile;
     procedure CreateShortcuts(DestinationPath: String);
     procedure DeleteShortcuts(DestinationPath: String);
+    function kill_all(no_check:boolean=False): boolean;
   public
     { Public declarations }
   end;
@@ -107,6 +113,7 @@ begin
     DeleteFile(FPath);
 end;
 
+
 procedure TfMain.AddToRegistry;
 var
   reg: TRegistry;
@@ -126,9 +133,183 @@ begin
   reg.CloseKey;
 end;
 
-procedure TfMain.SaveSetup;
+procedure TfMain.bCloseClick(Sender: TObject);
+begin
+  Close;
+end;
+
+procedure TfMain.bOKClick(Sender: TObject);
 var
-  CfgFileName: String;
+  RASFileName, HelperFileName, AppFileName, PFPath,PFPath_,TMP: String;
+begin
+  if not kill_all then EXIT;
+
+  if rbRun.Checked then
+  begin
+
+    TMP:= GetTempDirectory+'\Vircess\';
+    ForceDirectories(tmp);
+
+    RASFileName := tmp + 'VcsInstall.exe';
+    HelperFileName := tmp + 'vcs_w32.exe';
+    AppFileName := tmp + 'Vircess.exe';
+
+    if not File_Exists(AppFileName) then
+      CommonUtils.SaveResourceToFile('APP', AppFileName);
+
+    if not File_Exists(RASFileName) then
+      CommonUtils.SaveResourceToFile('RUNASSYS', RASFileName);
+
+    if not File_Exists(HelperFileName) then
+      CommonUtils.SaveResourceToFile('HELPER', HelperFileName);
+
+
+    if not FileExists(  tmp + 'Vircess.inf') then
+           SaveSetup('',tmp + 'Vircess.inf');
+
+    ShellExecute(0, 'open', PChar(RASFileName), '/user:SYSTEM vcs_w32.exe', PChar(tmp), SW_SHOWNORMAL);
+    ShellExecute(0, 'open', PChar(AppFileName), nil, nil, SW_SHOWNORMAL); // /ONLYRUN //ShellExecute(0, 'open', PChar(HelperFileName), '', '', SW_SHOWNORMAL);
+  end
+  else //________________________________________________________________________
+
+  begin
+
+    if ePassword.Text <> eConfirm.Text then
+    begin
+      MessageBox(Handle, 'ѕароль и подтверждение не совпадают', '”становка Vircess', MB_OK + MB_ICONEXCLAMATION);
+      EXIT;
+    end;
+    {
+    rtcKillProcess('vcs_w32');
+    rtcKillProcess('vcs_x64');
+    rtcKillProcess('Vircess.exe');
+    }
+    PFPath := GetSpecialPath(CSIDL_PROGRAM_FILES)+'\Vircess\';
+    if not DirectoryExists(PFPath)     then CreateDir(PFPath);
+
+    if File_Exists(PFPath + 'Vircess.exe')    then Delete_File(PFPath + 'Vircess.exe');
+    if File_Exists(PFPath + 'vcs_w32.exe')    then Delete_File(PFPath + 'vcs_w32.exe');
+    if File_Exists(PFPath + 'vcs_w64.exe')    then Delete_File(PFPath + 'vcs_w64.exe');
+    if File_Exists(PFPath + 'VcsInstall.exe') then Delete_File(PFPath + 'VcsInstall.exe');
+    if File_Exists(PFPath + 'vcs_w32_run as SYSTEM.BAT')
+                                              then Delete_File(PFPath + 'vcs_w32_run as SYSTEM.BAT');
+
+      CommonUtils.SaveResourceToFile('APP',      PFPath + 'Vircess.exe');
+      CommonUtils.SaveResourceToFile('RUNASSYS', PFPath + 'VcsInstall.exe');
+      CommonUtils.SaveResourceToFile('HELPER',   PFPath + 'vcs_w32.exe');
+      CommonUtils.SaveResourceToFile('BAT',      PFPath + 'vcs_w32_run as SYSTEM.BAT');
+
+    SaveSetup(ePassword.Text);
+
+    PFPath_ := GetSpecialPath(CSIDL_COMMON_DESKTOPDIRECTORY);
+    CreateShortcuts(PFPath_);
+    PFPath_ := GetSpecialPath(CSIDL_COMMON_PROGRAMS);
+    if not DirectoryExists(PFPath_ + '\Vircess') then
+      CreateDir(PFPath_ + '\Vircess');
+      CreateShortcuts(PFPath_ + '\Vircess');
+
+    if rn.checked then
+    begin
+      sleep(500);
+      shellExecute(0, 'open', PChar(PFPath + 'VcsInstall.exe'), '/user:SYSTEM vcs_w32.exe',
+                              PChar(PFPath), SW_SHOWNORMAL);
+      sleep(500);
+      shellExecute(0, 'open', PChar(PFPath + 'Vircess.exe'), nil, nil, SW_SHOWNORMAL);
+    end else
+      shellExecute(0, 'open', PChar('Explorer.exe'),PChar(PFPath), nil, SW_SHOWNORMAL);
+
+//    if not ServiceInstalled(nil, RTC_HOSTSERVICE_NAME) then showmessage('-');
+//      ShellExecute(0, 'open', PChar(PFPath + '\Vircess\Vircess.exe'), '/INSTALL', '', SW_HIDE);
+//    ShellExecute(0, 'open', PChar(PFPath + '\Vircess\Vircess.exe'), '/START', '', SW_HIDE);
+//    ShellExecute(0, 'open', PChar(PFPath + '\Vircess\Vircess.exe'), '/ONLYRUN', '', SW_SHOWNORMAL);
+  end;
+
+  Close;
+end;
+
+procedure TfMain.lLinkClick(Sender: TObject);
+begin
+  ShellExecute(0, 'open', PChar('http://vircess.com'), '', nil, SW_SHOW);
+end;
+
+procedure TfMain.lLinkMouseEnter(Sender: TObject);
+begin
+  Screen.Cursor := crHandPoint;
+end;
+
+procedure TfMain.lLinkMouseLeave(Sender: TObject);
+begin
+  Screen.Cursor := crDefault;
+end;
+
+procedure TfMain.rbSetupClick(Sender: TObject);
+begin
+  pPass.Visible := rbSetup.Checked;
+  if rbSetup.Checked then
+  begin
+ if pBtnDel.visible then
+    bOK.caption:= 'ѕ≈–≈”—“јЌќ¬»“№' else
+    bOK.caption:= '”—“јЌќ¬»“№';
+    ePassword.SetFocus;
+  end
+  else
+    bOK.Caption := '«јѕ”—“»“№';
+    rn.visible:= rbSetup.Checked;
+end;
+
+procedure TfMain.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if key=27 then Close;
+end;
+
+procedure TfMain.FormShow(Sender: TObject);
+begin
+ pBtnDel.visible:= directoryExists(GetSpecialPath(CSIDL_PROGRAM_FILES)+'\Vircess\');
+
+ if pBtnDel.visible then
+    bOK.caption:= 'ѕ≈–≈”—“јЌќ¬»“№' else
+    bOK.caption:= '”—“јЌќ¬»“№';
+
+ if sender = nil then EXIT;
+end;
+
+function TfMain.kill_all(no_check:boolean=False): boolean;
+begin
+  result:= False;
+  if no_check or (rtcGetProcessID('Vircess.exe')<>0) then
+  begin
+    if MessageBox(Handle, 'ѕеред продолжением необходимо закрыть программу Vircess и сопуствующие процессы.'#13#13'ѕродолжить ?', 'Vircess', MB_ICONQUESTION + MB_OKCANCEL)<>IDOK then EXIT;
+    rtcKillProcess('Vircess.exe');
+    rtcKillProcess('vcs_w32.exe');
+    rtcKillProcess('vcs_x64.exe'); sleep(500);
+
+  if (rtcGetProcessID('vcs_w32.exe')<>0) or (rtcGetProcessID('vcs_w64.exe')<>0) then
+  begin
+     MessageBox(Handle, '“екущий диалог должен быть открыт с повышенными привилеги€ми.'#13'ѕерезапустите мастер от имени администратора', 'Vircess', MB_ICONWARNING + MB_OK);
+     if no_check then HALT;
+  end;
+
+  end;
+  result:= True;
+end;
+
+procedure TfMain.bDelClick(Sender: TObject);
+begin
+  if not kill_all(True) then EXIT;
+  sleep(500);
+  if DirectoryExists(GetSpecialPath(CSIDL_PROGRAM_FILES)+'\Vircess\') then
+  begin
+     TDirectory.Delete(GetSpecialPath(CSIDL_PROGRAM_FILES)+'\Vircess\', True);
+  end;
+
+  DeleteShortcuts(GetSpecialPath(CSIDL_COMMON_DESKTOPDIRECTORY));
+  DeleteShortcuts(GetSpecialPath(CSIDL_COMMON_PROGRAMS) + '\Vircess');
+  FormShow(nil);
+end;
+
+procedure TfMain.SaveSetup(pass:string; cfg: string='CSIDL_PROGRAM_FILES'; add:string='95.216.96.39');
+var
   infos: RtcString;
   s2: RtcByteArray;
   info: TRtcRecord;
@@ -136,13 +317,14 @@ var
 begin
   info := TRtcRecord.Create;
   try
-    info.asString['Address'] := '95.216.96.39';
+    info.asString['Address'] :=  add;
     info.asBoolean['WinHTTP'] := True;
 
-    info.asWideString['RegularPassword'] := ePassword.Text;
+    info.asString['RegularPassword'] := pass; //ePassword.Text;//
+
     info.asBoolean['StoreHistory'] := True;
     info.asBoolean['StorePasswords'] := True;
-    info.asBoolean['OnlyAdminChanges'] := True;
+    info.asBoolean['OnlyAdminChanges'] := False;
 
     info.asBoolean['DevicesPanelVisible'] := True;
 
@@ -166,108 +348,17 @@ begin
     info.Free;
   end;
 
-  CfgFileName := GetSpecialPath(CSIDL_PROGRAM_FILES) + '\Vircess\Vircess.inf';
+  if Cfg = 'CSIDL_PROGRAM_FILES' then
+     Cfg:= GetSpecialPath(CSIDL_PROGRAM_FILES) + '\Vircess\Vircess.inf';
 
   SetLength(s2, 4);
   len2 := Length(infos);
   Move(len2, s2[0], 4);
   infos := infos + RtcBytesToString(s2) + '@VCS@';
-  Write_File(CfgFileName, infos);
-end;
-
-procedure TfMain.bCloseClick(Sender: TObject);
-begin
-  Close;
-end;
-
-procedure TfMain.bOKClick(Sender: TObject);
-var
-  RASFileName, HelperFileName, AppFileName, PFPath: String;
-begin
-  if rbRun.Checked then
-  begin
-    RASFileName := GetTempDirectory + 'VcsInstall.exe';
-    HelperFileName := GetTempDirectory + 'vcs_w32.exe';
-    AppFileName := GetTempDirectory + 'Vircess.exe';
-    if not File_Exists(RASFileName) then
-      CommonUtils.SaveResourceToFile('RUNASSYS', RASFileName);
-    if not File_Exists(HelperFileName) then
-      CommonUtils.SaveResourceToFile('HELPER', HelperFileName);
-    if not File_Exists(HelperFileName) then
-      CommonUtils.SaveResourceToFile('APP', AppFileName);
-    ShellExecute(0, 'open', PChar(AppFileName), '/ONLYRUN', '', SW_SHOWNORMAL);
-    ShellExecute(0, 'open', PChar(RASFileName), PChar(HelperFileName), PChar(GetTempDirectory), SW_SHOWNORMAL);
-  end
-  else
-  begin
-    if ePassword.Text <> eConfirm.Text then
-    begin
-      MessageBox(Handle, 'ѕароль и подтверждение не совпадают', '”становка Vircess', MB_OK + MB_ICONEXCLAMATION);
-      Exit;
-    end;
-
-//    rtcKillProcess('vcs_w32');
-//    rtcKillProcess('vcs_x64');
-//    rtcKillProcess('Vircess.exe');
-
-    PFPath := GetSpecialPath(CSIDL_PROGRAM_FILES);
-    if not DirectoryExists(PFPath + '\Vircess') then
-      CreateDir(PFPath + '\Vircess');
-    if File_Exists(PFPath + '\Vircess\Vircess.exe') then
-      Delete_File(PFPath + '\Vircess\Vircess.exe');
-//    CommonUtils.SaveResourceToFile('APP', PFPath + '\Vircess\Vircess.exe');
-
-    SaveSetup;
-
-    PFPath := GetSpecialPath(CSIDL_COMMON_DESKTOPDIRECTORY);
-    CreateShortcuts(PFPath);
-
-    PFPath := GetSpecialPath(CSIDL_COMMON_PROGRAMS);
-    if not DirectoryExists(PFPath + '\Vircess') then
-      CreateDir(PFPath + '\Vircess');
-    CreateShortcuts(PFPath + '\Vircess');
-
-//    if not ServiceInstalled(nil, RTC_HOSTSERVICE_NAME) then
-//      ShellExecute(0, 'open', PChar(PFPath + '\Vircess\Vircess.exe'), '/INSTALL', '', SW_HIDE);
-//    ShellExecute(0, 'open', PChar(PFPath + '\Vircess\Vircess.exe'), '/START', '', SW_HIDE);
-//    ShellExecute(0, 'open', PChar(PFPath + '\Vircess\Vircess.exe'), '/ONLYRUN', '', SW_SHOWNORMAL);
-  end;
-
-  Close;
-end;
-
-procedure TfMain.Button1Click(Sender: TObject);
-begin
-//  CreateShortcuts;
-//  DeleteShortcuts;
-end;
-
-procedure TfMain.lLinkClick(Sender: TObject);
-begin
-  ShellExecute(0, 'open', PChar('http://vircess.com'), '', nil, SW_SHOW);
-end;
-
-procedure TfMain.lLinkMouseEnter(Sender: TObject);
-begin
-  Screen.Cursor := crHandPoint;
+  Write_File(Cfg, infos);
 end;
 
 
-procedure TfMain.lLinkMouseLeave(Sender: TObject);
-begin
-  Screen.Cursor := crDefault;
-end;
 
-procedure TfMain.rbSetupClick(Sender: TObject);
-begin
-  pPass.Visible := rbSetup.Checked;
-  if rbSetup.Checked then
-  begin
-    bOK.Caption := '”—“јЌќ¬»“№';
-    ePassword.SetFocus;
-  end
-  else
-    bOK.Caption := '«јѕ”—“»“№';
-end;
 
 end.

@@ -3,7 +3,7 @@ object fMain: TfMain
   Top = 0
   BorderStyle = bsDialog
   Caption = #1059#1089#1090#1072#1085#1086#1074#1082#1072' Vircess'
-  ClientHeight = 307
+  ClientHeight = 440
   ClientWidth = 538
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -11,8 +11,11 @@ object fMain: TfMain
   Font.Height = -13
   Font.Name = 'Tahoma'
   Font.Style = []
+  KeyPreview = True
   OldCreateOrder = False
   Position = poDesktopCenter
+  OnKeyDown = FormKeyDown
+  OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 16
   object iBkgTop: TImage
@@ -1259,68 +1262,77 @@ object fMain: TfMain
     OnMouseLeave = lLinkMouseLeave
   end
   object pBtnOK: TPanel
-    Left = 306
-    Top = 271
-    Width = 107
+    Left = 249
+    Top = 399
+    Width = 164
     Height = 29
+    Align = alCustom
+    BevelEdges = []
     BevelKind = bkFlat
     BevelOuter = bvNone
-    BevelWidth = 2
-    Color = clWhite
+    Color = 5878528
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clBlack
+    Font.Height = -13
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
     ParentBackground = False
-    TabOrder = 0
+    ParentFont = False
+    TabOrder = 3
     object bOK: TSpeedButton
       Tag = 1
       Left = 0
       Top = 0
-      Width = 103
-      Height = 25
+      Width = 164
+      Height = 29
+      Cursor = crHandPoint
+      Align = alClient
       Caption = #1059#1057#1058#1040#1053#1054#1042#1048#1058#1068
       Flat = True
       Font.Charset = DEFAULT_CHARSET
-      Font.Color = cl3DDkShadow
+      Font.Color = clWhite
       Font.Height = -13
       Font.Name = 'Arial'
       Font.Style = [fsBold]
       ParentFont = False
       OnClick = bOKClick
+      ExplicitLeft = 4
+      ExplicitWidth = 107
     end
   end
   object pBtnClose: TPanel
     Left = 423
-    Top = 271
+    Top = 399
     Width = 107
     Height = 29
+    BevelEdges = []
     BevelKind = bkFlat
     BevelOuter = bvNone
-    Color = clWhite
+    Color = clBlack
+    Ctl3D = False
     ParentBackground = False
-    TabOrder = 1
+    ParentCtl3D = False
+    TabOrder = 4
     object bClose: TSpeedButton
       Tag = 1
       Left = 0
       Top = 0
-      Width = 103
-      Height = 25
+      Width = 107
+      Height = 29
+      Cursor = crHandPoint
+      Align = alClient
       Caption = #1054#1058#1052#1045#1053#1040
       Flat = True
       Font.Charset = DEFAULT_CHARSET
-      Font.Color = cl3DDkShadow
+      Font.Color = clWhite
       Font.Height = -13
       Font.Name = 'Arial'
       Font.Style = [fsBold]
       ParentFont = False
       OnClick = bCloseClick
+      ExplicitWidth = 103
+      ExplicitHeight = 25
     end
-  end
-  object Button1: TButton
-    Left = 44
-    Top = 271
-    Width = 75
-    Height = 25
-    Caption = 'Button1'
-    TabOrder = 2
-    OnClick = Button1Click
   end
   object pInstall: TPanel
     Left = 0
@@ -1328,13 +1340,13 @@ object fMain: TfMain
     Width = 539
     Height = 159
     BevelOuter = bvNone
-    TabOrder = 3
+    TabOrder = 0
     object rgAction: TRadioGroup
       Left = 0
       Top = 0
       Width = 539
       Height = 75
-      Caption = #1042#1099#1073#1077#1088#1080#1090#1077', '#1095#1090#1086' '#1074#1099' '#1093#1086#1090#1080#1090#1077' '#1089#1076#1077#1083#1072#1090#1100
+      Caption = '  '#1042#1099#1073#1077#1088#1080#1090#1077', '#1095#1090#1086' '#1074#1099' '#1093#1086#1090#1080#1090#1077' '#1089#1076#1077#1083#1072#1090#1100'  '
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -12
@@ -1345,10 +1357,11 @@ object fMain: TfMain
     end
     object rbSetup: TRadioButton
       Left = 13
-      Top = 22
-      Width = 513
+      Top = 26
+      Width = 400
       Height = 17
-      Caption = #1059#1089#1090#1072#1085#1086#1074#1080#1090#1100' '#1080' '#1085#1072#1089#1090#1088#1086#1080#1090#1100' '#1087#1086#1089#1090#1086#1103#1085#1085#1099#1081' '#1076#1086#1089#1090#1091#1087' '#1082' '#1101#1090#1086#1084#1091' '#1082#1086#1084#1087#1100#1102#1090#1077#1088#1091
+      Cursor = crHandPoint
+      Caption = #1059#1089#1090#1072#1085#1086#1074#1080#1090#1100', '#1085#1072#1089#1090#1088#1086#1080#1090#1100' '#1087#1086#1089#1090#1086#1103#1085#1085#1099#1081' '#1076#1086#1089#1090#1091#1087' '#1082' '#1101#1090#1086#1084#1091' '#1082#1086#1084#1087#1100#1102#1090#1077#1088#1091
       Checked = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -1362,9 +1375,10 @@ object fMain: TfMain
     end
     object rbRun: TRadioButton
       Left = 13
-      Top = 45
+      Top = 50
       Width = 513
       Height = 17
+      Cursor = crHandPoint
       Caption = #1058#1086#1083#1100#1082#1086' '#1079#1072#1087#1091#1089#1090#1080#1090#1100
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -1372,16 +1386,16 @@ object fMain: TfMain
       Font.Name = 'Tahoma'
       Font.Style = []
       ParentFont = False
-      TabOrder = 2
+      TabOrder = 3
       OnClick = rbSetupClick
     end
     object pPass: TPanel
       Left = 8
       Top = 81
       Width = 522
-      Height = 65
+      Height = 78
       BevelOuter = bvNone
-      TabOrder = 3
+      TabOrder = 4
       object Label2: TLabel
         Left = 12
         Top = 26
@@ -1391,7 +1405,7 @@ object fMain: TfMain
       end
       object Label4: TLabel
         Left = 102
-        Top = 53
+        Top = 64
         Width = 333
         Height = 13
         Caption = #1054#1089#1090#1072#1074#1100#1090#1077' '#1087#1072#1088#1086#1083#1100' '#1087#1091#1089#1090#1099#1084', '#1077#1089#1083#1080' '#1085#1077' '#1093#1086#1090#1080#1090#1077' '#1088#1072#1079#1088#1077#1096#1072#1090#1100' '#1091#1087#1088#1072#1074#1083#1077#1085#1080#1077
@@ -1403,14 +1417,14 @@ object fMain: TfMain
         ParentFont = False
       end
       object Label3: TLabel
-        Left = 241
+        Left = 249
         Top = 26
         Width = 99
         Height = 16
         Caption = #1055#1086#1076#1090#1074#1077#1088#1078#1076#1077#1085#1080#1077':'
       end
       object Label1: TLabel
-        Left = 150
+        Left = 126
         Top = 0
         Width = 255
         Height = 13
@@ -1423,35 +1437,88 @@ object fMain: TfMain
         ParentFont = False
       end
       object eConfirm: TEdit
-        Left = 346
+        Left = 354
         Top = 23
         Width = 159
-        Height = 24
+        Height = 22
+        Ctl3D = False
+        ParentColor = True
+        ParentCtl3D = False
         PasswordChar = '*'
-        TabOrder = 0
+        ReadOnly = True
+        TabOrder = 1
       end
       object ePassword: TEdit
         Left = 66
         Top = 23
         Width = 159
-        Height = 24
+        Height = 22
+        Ctl3D = False
+        ParentColor = True
+        ParentCtl3D = False
         PasswordChar = '*'
-        TabOrder = 1
+        ReadOnly = True
+        TabOrder = 0
       end
+    end
+    object rn: TCheckBox
+      Left = 419
+      Top = 26
+      Width = 97
+      Height = 17
+      Cursor = crHandPoint
+      Caption = ' '#1080' '#1079#1072#1087#1091#1089#1090#1080#1090#1100
+      TabOrder = 2
     end
   end
   object pDelete: TPanel
-    Left = 0
-    Top = 106
-    Width = 539
-    Height = 159
-    TabOrder = 4
+    Left = 1
+    Top = 274
+    Width = 538
+    Height = 72
+    Align = alCustom
+    BevelEdges = [beTop, beBottom]
+    BevelKind = bkFlat
+    BevelOuter = bvNone
+    TabOrder = 1
     object Label5: TLabel
-      Left = 13
+      Left = 19
       Top = 12
       Width = 378
       Height = 16
       Caption = #1044#1083#1103' '#1091#1076#1072#1083#1077#1085#1080#1103' Vircess '#1089' '#1082#1086#1084#1087#1100#1102#1090#1077#1088#1072' '#1085#1072#1078#1084#1080#1090#1077' '#1082#1085#1086#1087#1082#1091' "'#1059#1076#1072#1083#1080#1090#1100'".'
+    end
+  end
+  object pBtnDel: TPanel
+    Left = 18
+    Top = 399
+    Width = 107
+    Height = 29
+    BevelEdges = []
+    BevelKind = bkFlat
+    BevelOuter = bvNone
+    Color = clMaroon
+    ParentBackground = False
+    TabOrder = 2
+    object bDel: TSpeedButton
+      Tag = 1
+      Left = 0
+      Top = 0
+      Width = 107
+      Height = 29
+      Cursor = crHandPoint
+      Align = alClient
+      Caption = #1059#1044#1040#1051#1048#1058#1068' '
+      Flat = True
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWhite
+      Font.Height = -13
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentFont = False
+      OnClick = bDelClick
+      ExplicitWidth = 103
+      ExplicitHeight = 25
     end
   end
 end
