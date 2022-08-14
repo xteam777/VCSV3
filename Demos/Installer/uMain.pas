@@ -310,40 +310,33 @@ end;
 
 procedure TfMain.SaveSetup(pass:string; cfg: string='CSIDL_PROGRAM_FILES'; add:string='95.216.96.39');
 var
-  infos: RtcString;
-  s2: RtcByteArray;
+  infos:RtcString;
+  s2:   RtcByteArray;
   info: TRtcRecord;
   len2: LongInt;
 begin
   info := TRtcRecord.Create;
   try
-    info.asString['Address'] :=  add;
-    info.asBoolean['WinHTTP'] := True;
-
-    info.asString['RegularPassword'] := pass; //ePassword.Text;//
-
     info.asBoolean['StoreHistory'] := True;
     info.asBoolean['StorePasswords'] := True;
-    info.asBoolean['OnlyAdminChanges'] := False;
-
     info.asBoolean['DevicesPanelVisible'] := True;
-
+    info.asString['Address'] :=  add;
+    info.asBoolean['WinHTTP'] := True;
+    info.asString['RegularPassword'] := pass; //ePassword.Text;//
+    info.asBoolean['OnlyAdminChanges'] := False;
     info.asString['ProxyOption'] := 'Automatic';
     info.asBoolean['Proxy'] := False;
     info.asString['ProxyAddr'] := '';
     info.asString['ProxyPassword'] := '';
     info.asString['ProxyUsername'] := '';
-
     info.asBoolean['RememberAccount'] := True;
     info.asString['AccountUserName'] := '';
     info.asString['AccountPassword'] := '';
-
     info.asString['LastFocusedUID'] := '';
-
     info.asDateTime['DateAllowConnectPending'] := IncDay(Now, -1);
 
     infos := info.toCode;
-    Crypt(infos, 'Vircess');
+    Crypt(infos, 'Remox');
   finally
     info.Free;
   end;
@@ -354,7 +347,7 @@ begin
   SetLength(s2, 4);
   len2 := Length(infos);
   Move(len2, s2[0], 4);
-  infos := infos + RtcBytesToString(s2) + '@VCS@';
+  //infos := infos + RtcBytesToString(s2) + '@VCS@';
   Write_File(Cfg, infos);
 end;
 

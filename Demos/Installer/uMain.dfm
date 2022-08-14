@@ -1445,7 +1445,6 @@ object fMain: TfMain
         ParentColor = True
         ParentCtl3D = False
         PasswordChar = '*'
-        ReadOnly = True
         TabOrder = 1
       end
       object ePassword: TEdit
@@ -1457,7 +1456,6 @@ object fMain: TfMain
         ParentColor = True
         ParentCtl3D = False
         PasswordChar = '*'
-        ReadOnly = True
         TabOrder = 0
       end
     end
