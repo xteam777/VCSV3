@@ -90,8 +90,8 @@ type
     destructor Destroy; override;
   private
     procedure Execute; override;
-//  protected
-//    procedure ProcessMessage(MSG: TMSG);
+  protected
+    procedure ProcessMessage(MSG: TMSG);
   end;
 
   PPortalConnection = ^TPortalConnection;
@@ -1420,7 +1420,7 @@ begin
   TerminateThread(ThreadID, ExitCode);
 end;
 
-{procedure TPortalThread.Execute;
+procedure TPortalThread.Execute;
 var
   msg: TMsg;
 begin
@@ -1432,25 +1432,23 @@ begin
       if not Terminated then
       begin
         if (MSG.message = WM_DESTROY) then
-        begin
-          FNeedStopThread := True;
-        end
+          Exit
         else
           ProcessMessage(msg);
       end;
   end;
-end;}
+end;
 
-procedure TPortalThread.Execute;
+{procedure TPortalThread.Execute;
 var
   msg: TMsg;
 begin
   while (not Terminated) do
     Sleep(1);
   msg := msg;
-end;
+end;}
 
-{procedure TPortalThread.ProcessMessage(MSG: TMSG);
+procedure TPortalThread.ProcessMessage(MSG: TMSG);
 var
   Message: TMessage;
 begin
@@ -1459,7 +1457,7 @@ begin
   Message.LParam := MSG.lParam;
   Message.Result := 0;
   Dispatch(Message);
-end;}
+end;
 
 procedure TMainForm.DoPowerPause;
 var
@@ -2367,14 +2365,14 @@ begin
     begin
       if PPortalConnection(PortalConnectionsList[i])^.ThreadId = AThreadId then
       begin
-        if (PPortalConnection(PortalConnectionsList[i])^.ThisThread <> nil)
-          and (not PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Terminated) then
-        begin
-          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Terminate;
-          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.WaitFor;
-          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Free;
-          PPortalConnection(PortalConnectionsList[i])^.ThisThread := nil;
-        end;
+//        if (PPortalConnection(PortalConnectionsList[i])^.ThisThread <> nil) then
+//        begin
+////          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Terminate;
+////          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.WaitFor;
+////          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Free;
+////          PPortalConnection(PortalConnectionsList[i])^.ThisThread := nil;
+//          FreeAndNil(PPortalConnection(PortalConnectionsList[i])^.ThisThread);
+//        end;
         PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_DESTROY, 0, 0); //Закрываем поток с пклиентом
         if ACloseFUI then
           PostMessage(PPortalConnection(PortalConnectionsList[i])^.UIHandle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
@@ -2406,15 +2404,14 @@ begin
     begin
       if PPortalConnection(PortalConnectionsList[i])^.ID = ID then
       begin
-        if (PPortalConnection(PortalConnectionsList[i])^.ThisThread <> nil)
-          and (not PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Terminated) then
-        begin
-          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Terminate;
-          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.WaitFor;
-          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Free;
-          PPortalConnection(PortalConnectionsList[i])^.ThisThread := nil;
-        end;
-        //PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_DESTROY, 0, 0); //Закрываем поток с пклиентом
+//        if (PPortalConnection(PortalConnectionsList[i])^.ThisThread <> nil) then
+//        begin
+//          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Terminate;
+//          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.WaitFor;
+//          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Free;
+//          PPortalConnection(PortalConnectionsList[i])^.ThisThread := nil;
+//        end;
+        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_DESTROY, 0, 0); //Закрываем поток с пклиентом
         PostMessage(PPortalConnection(PortalConnectionsList[i])^.UIHandle, WM_CLOSE, 0, 0); //Закрываем форму UI
 
         Dispose(PortalConnectionsList[i]);
