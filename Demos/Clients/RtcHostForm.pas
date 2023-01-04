@@ -1080,7 +1080,7 @@ begin
     else
       rtcClient.ServerAddr := AGateway;
     rtcClient.ServerPort := '9000';
-    rtcClient.Blocking := True;
+    rtcClient.Blocking := False;
     rtcClient.UseWinHttp := True;
     rtcClient.ReconnectOn.ConnectError := True;
     rtcClient.ReconnectOn.ConnectFail := True;
@@ -1112,6 +1112,7 @@ begin
         asString['UserName'] := AClientName;
         asBoolean['AllConnectionsById'] := AAllConnectionsById;
         Call(rtcRes);
+//        WaitForCompletion(True, 10);
       end;
     except
       on E: Exception do
@@ -1239,7 +1240,7 @@ constructor TPortalThread.Create(CreateSuspended: Boolean; AUserName, AAction, A
 begin
   inherited Create(CreateSuspended);
 
-  FreeOnTerminate := False;
+  FreeOnTerminate := True;
 
   FUserName := AUserName;
   FGateway := AGateway;
@@ -1431,8 +1432,8 @@ begin
 
       if not Terminated then
       begin
-        if (MSG.message = WM_DESTROY) then
-          Exit
+        if (MSG.message = WM_CLOSE) then
+          Terminate
         else
           ProcessMessage(msg);
       end;
@@ -2373,7 +2374,7 @@ begin
 ////          PPortalConnection(PortalConnectionsList[i])^.ThisThread := nil;
 //          FreeAndNil(PPortalConnection(PortalConnectionsList[i])^.ThisThread);
 //        end;
-        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_DESTROY, 0, 0); //Закрываем поток с пклиентом
+        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, 0, 0); //Закрываем поток с пклиентом
         if ACloseFUI then
           PostMessage(PPortalConnection(PortalConnectionsList[i])^.UIHandle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
 
@@ -2411,7 +2412,7 @@ begin
 //          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Free;
 //          PPortalConnection(PortalConnectionsList[i])^.ThisThread := nil;
 //        end;
-        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_DESTROY, 0, 0); //Закрываем поток с пклиентом
+        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, 0, 0); //Закрываем поток с пклиентом
         PostMessage(PPortalConnection(PortalConnectionsList[i])^.UIHandle, WM_CLOSE, 0, 0); //Закрываем форму UI
 
         Dispose(PortalConnectionsList[i]);
