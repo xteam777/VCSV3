@@ -8,7 +8,7 @@ uses
   procedure SaveResourceToFile(AResourceName, AFileName: String);
   //function SetSoftwareSASGeneration(AValue: Integer): Integer;
   function GetDOSEnvVar(const VarName: string): string;
-  procedure AddFireWallRules;
+  procedure AddFireWallRules(Path: String);
   procedure AddExceptionToFireWall;
   function IsInternetConnected: Boolean;
   function InternetGetConnectedState(lpdwFlags: LPDWORD; dwReserved:DWORD):BOOL; stdcall; external 'wininet.dll' name 'InternetGetConnectedState';
@@ -103,14 +103,14 @@ begin
   end;
 end;
 
-procedure AddFireWallRules;
+procedure AddFireWallRules(Path: String);
 var
   fw: TFireWall;
 begin
   fw := TFireWall.Create;
   fw.RemoveRule('Remox');
-  fw.AddRule('Remox', ParamStr(0), NET_FW_RULE_DIR_IN);
-  fw.AddRule('Remox', ParamStr(0), NET_FW_RULE_DIR_OUT);
+  fw.AddRule('Remox', Path, NET_FW_RULE_DIR_IN);
+  fw.AddRule('Remox', Path, NET_FW_RULE_DIR_OUT);
   fw.Free;
 end;
 

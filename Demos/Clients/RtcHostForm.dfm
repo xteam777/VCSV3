@@ -5711,9 +5711,9 @@ object MainForm: TMainForm
       end
     end
     object pBtnDevices: TPanel
-      Left = 421
+      Left = 426
       Top = 6
-      Width = 117
+      Width = 112
       Height = 28
       BevelOuter = bvNone
       Color = 15001320
@@ -5729,7 +5729,7 @@ object MainForm: TMainForm
       object bDevices: TColorSpeedButton
         Left = 0
         Top = 0
-        Width = 117
+        Width = 112
         Height = 28
         Caption = #1052#1086#1080' '#1091#1089#1090#1088#1086#1081#1089#1090#1074#1072' <<'
         Color = 15001320
@@ -5781,6 +5781,41 @@ object MainForm: TMainForm
       TabOrder = 7
       OnClick = Button3Click
     end
+    object pBtnSetup: TPanel
+      Left = 271
+      Top = 108
+      Width = 267
+      Height = 28
+      BevelOuter = bvNone
+      Color = 6381297
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clBlack
+      Font.Height = -11
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentBackground = False
+      ParentFont = False
+      TabOrder = 8
+      StyleElements = [seFont, seBorder]
+      object bSetup: TColorSpeedButton
+        Left = 0
+        Top = 0
+        Width = 267
+        Height = 28
+        Caption = #1059#1089#1090#1072#1085#1086#1074#1080#1090#1100' Remox '#1085#1072' '#1101#1090#1086' '#1091#1089#1090#1088#1086#1081#1089#1090#1074#1086
+        Color = 6381297
+        Flat = True
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWhite
+        Font.Height = -11
+        Font.Name = 'Arial'
+        Font.Style = [fsBold]
+        ParentFont = False
+        OnClick = bSetupClick
+        OnMouseEnter = bSetupMouseEnter
+        OnMouseLeave = bSetupMouseLeave
+      end
+    end
   end
   object PDesktopControl: TRtcPDesktopControl
     OnNewUI = PDesktopControlNewUI
@@ -5798,8 +5833,8 @@ object MainForm: TMainForm
     Alignment = paRight
     OwnerDraw = True
     OnPopup = pmIconMenuPopup
-    Left = 391
-    Top = 10
+    Left = 261
+    Top = 42
     object miShowForm: TMenuItem
       Caption = #1055#1086#1082#1072#1079#1072#1090#1100' Remox'
       Default = True
@@ -5853,8 +5888,8 @@ object MainForm: TMainForm
     BiDiMode = bdLeftToRight
     OwnerDraw = True
     ParentBiDiMode = False
-    Left = 333
-    Top = 10
+    Left = 203
+    Top = 42
     object miAddDevice: TMenuItem
       Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1091#1089#1090#1088#1086#1081#1089#1090#1074#1086
       OnClick = miAddDeviceClick
@@ -5967,8 +6002,8 @@ object MainForm: TMainForm
   end
   object pmDevice: TPopupMenu
     OwnerDraw = True
-    Left = 305
-    Top = 10
+    Left = 175
+    Top = 42
     object miDesktopControl: TMenuItem
       Caption = #1059#1076#1072#1083#1077#1085#1085#1086#1077' '#1091#1087#1088#1072#1074#1083#1077#1085#1080#1077
       Default = True
@@ -6001,19 +6036,19 @@ object MainForm: TMainForm
   end
   object rDeleteDevice: TRtcResult
     OnReturn = rDeleteDeviceReturn
-    Left = 467
-    Top = 90
+    Left = 353
+    Top = 4
   end
   object bhMain: TBalloonHint
     Delay = 100
     HideAfter = 2000
-    Left = 362
-    Top = 10
+    Left = 232
+    Top = 42
   end
   object pmGroup: TPopupMenu
     OwnerDraw = True
-    Left = 277
-    Top = 10
+    Left = 147
+    Top = 42
     object N9: TMenuItem
       Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1082#1086#1084#1087#1100#1102#1090#1077#1088
       OnClick = miAddDeviceClick
@@ -6075,13 +6110,13 @@ object MainForm: TMainForm
   end
   object resPing: TRtcResult
     OnReturn = resPingReturn
-    Left = 295
-    Top = 121
+    Left = 265
+    Top = 79
   end
   object resTimerLogin: TRtcResult
     OnReturn = resTimerLoginReturn
-    Left = 296
-    Top = 93
+    Left = 298
+    Top = 75
   end
   object resLogout: TRtcResult
     OnReturn = resLogoutReturn
@@ -6091,8 +6126,8 @@ object MainForm: TMainForm
   object resLogin: TRtcResult
     OnReturn = resLoginReturn
     RequestAborted = resLoginRequestAborted
-    Left = 437
-    Top = 90
+    Left = 181
+    Top = 8
   end
   object TimerModule: TRtcClientModule
     AutoSyncEvents = True
@@ -6150,8 +6185,8 @@ object MainForm: TMainForm
   end
   object resHostLogin: TRtcResult
     OnReturn = resHostLoginReturn
-    Left = 467
-    Top = 120
+    Left = 221
+    Top = 6
   end
   object resHostLogout: TRtcResult
     Left = 381
@@ -6159,13 +6194,13 @@ object MainForm: TMainForm
   end
   object resHostTimerLogin: TRtcResult
     OnReturn = resHostTimerLoginReturn
-    Left = 410
-    Top = 121
+    Left = 146
+    Top = 5
   end
   object resHostTimer: TRtcResult
     OnReturn = resHostTimerReturn
-    Left = 324
-    Top = 92
+    Left = 326
+    Top = 74
   end
   object resHostPing: TRtcResult
     OnReturn = resHostPingReturn
@@ -6173,13 +6208,13 @@ object MainForm: TMainForm
     Top = 91
   end
   object resHostPassUpdate: TRtcResult
-    Left = 409
-    Top = 91
+    Left = 111
+    Top = 9
   end
   object pmPassword: TPopupMenu
     OwnerDraw = True
-    Left = 253
-    Top = 9
+    Left = 115
+    Top = 71
     object nCopyPass: TMenuItem
       Caption = #1057#1082#1086#1087#1080#1088#1086#1074#1072#1090#1100' '#1074' '#1073#1091#1092#1077#1088' '#1086#1073#1084#1077#1085#1072
       OnClick = nCopyPassClick
@@ -6196,12 +6231,12 @@ object MainForm: TMainForm
     end
   end
   object resGetState: TRtcResult
-    Left = 438
-    Top = 120
+    Left = 320
+    Top = 10
   end
   object rHostLockedStateUpdate: TRtcResult
-    Left = 495
-    Top = 91
+    Left = 251
+    Top = 9
   end
   object tCheckLockedState: TTimer
     Interval = 100
@@ -6212,8 +6247,8 @@ object MainForm: TMainForm
   object rGetHostLockedState: TRtcResult
     OnReturn = rGetHostLockedStateReturn
     RequestAborted = rGetHostLockedStateRequestAborted
-    Left = 497
-    Top = 121
+    Left = 289
+    Top = 9
   end
   object tConnLimit: TTimer
     Interval = 60000
@@ -6353,8 +6388,8 @@ object MainForm: TMainForm
   end
   object ApplicationEvents: TApplicationEvents
     OnRestore = ApplicationEventsRestore
-    Left = 188
-    Top = 8
+    Left = 142
+    Top = 72
   end
   object tCleanConnections: TTimer
     Enabled = False
@@ -6364,7 +6399,7 @@ object MainForm: TMainForm
     Top = 94
   end
   object rDestroyClient: TRtcResult
-    Left = 322
-    Top = 122
+    Left = 234
+    Top = 78
   end
 end

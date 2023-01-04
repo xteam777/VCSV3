@@ -59,7 +59,8 @@ uses
   uMessageBox in '..\Modules\uMessageBox.pas' {fMessageBox},
   uPowerWatcher in '..\Modules\uPowerWatcher.pas',
   rdFileTransLog in '..\Modules\rdFileTransLog.pas' {rdFileTransferLog},
-  rtcBlankOutForm in '..\Modules\rtcBlankOutForm.pas' {fmBlankoutForm};
+  rtcBlankOutForm in '..\Modules\rtcBlankOutForm.pas' {fmBlankoutForm},
+  uSetup in 'uSetup.pas';
 
 {$R rtcportaluac.res rtcportaluac.rc}
 {$R *.res}
@@ -71,7 +72,7 @@ var
   hPrev: THandle;
   err: LongInt;
   strParams: String;
-  EleavateSupport: TEleavateSupport;
+//  EleavateSupport: TEleavateSupport;
 //  TorControlSocket: TIdTCPClient;
 
 function UniqueApp(const Title: AnsiString): Boolean;
@@ -234,7 +235,7 @@ begin
   try
     if Pos('/ADDRULES', UpperCase(CmdLine)) <> 0 then
     begin
-      AddFireWallRules;
+      AddFireWallRules(ParamStr(0));
       Exit;
     end;
 
@@ -295,6 +296,12 @@ begin
       if not IsServiceExisted(RTC_HOSTSERVICE_NAME) then
         CreateServices(RTC_HOSTSERVICE_NAME, RTC_HOSTSERVICE_DISPLAY_NAME, ParamStr(0));
       StartServices(RTC_HOSTSERVICE_NAME);
+
+      CreateProgramFolder;
+      CreateRegistryKey;
+      CreateShortcuts;
+
+      AddFireWallRules('%programfiles(x86)%\Remox\Remox.exe');
     end
     else
     if Pos('/START', UpperCase(CmdLine)) > 0 then
@@ -311,6 +318,10 @@ begin
     begin
 //      DeleteServices(RTC_HOSTSERVICE_NAME);
       UninstallService(RTC_HOSTSERVICE_NAME, 0);
+
+      DeleteShortcuts;
+      DeleteRegistryKey;
+      DeleteProgramFolder;
     end
     else
     begin

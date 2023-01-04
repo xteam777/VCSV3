@@ -318,6 +318,8 @@ type
     Button1: TButton;
     Button2: TButton;
     Button3: TButton;
+    bSetup: TColorSpeedButton;
+    pBtnSetup: TPanel;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -529,6 +531,9 @@ type
     procedure resLoginRequestAborted(Sender: TRtcConnection; Data,
       Result: TRtcValue);
     procedure Button4Click(Sender: TObject);
+    procedure bSetupMouseEnter(Sender: TObject);
+    procedure bSetupMouseLeave(Sender: TObject);
+    procedure bSetupClick(Sender: TObject);
 
   protected
 
@@ -813,6 +818,41 @@ begin
   Result := StringReplace(Result, '{', '', [rfReplaceAll]);
   Result := StringReplace(Result, '-', '', [rfReplaceAll]);
   Result := StringReplace(Result, '}', '', [rfReplaceAll]);
+end;
+
+procedure TMainForm.bSetupClick(Sender: TObject);
+var
+  err: LongInt;
+  EleavateSupport: TEleavateSupport;
+begin
+  if (Win32MajorVersion >= 6 {vista\server 2k8}) then
+  begin
+    if not ServiceInstalled(nil, RTC_HOSTSERVICE_NAME) then
+    begin
+      EleavateSupport := TEleavateSupport.Create(nil);
+      try
+        SetLastError(EleavateSupport.RunElevated(ParamStr(0), '/INSTALL', Handle, True, Application.ProcessMessages));
+        err := GetLastError;
+        if err <> ERROR_SUCCESS then
+          xLog('ServiceInstall error = ' + IntToStr(err) + ' ' + SysErrorMessage(err));
+  //      SetServiceMenuAttributes;
+      finally
+        EleavateSupport.Free;
+      end;
+    end;
+  end;
+
+  pBtnSetup.Visible := not IsServiceExisted(RTC_HOSTSERVICE_NAME);
+end;
+
+procedure TMainForm.bSetupMouseEnter(Sender: TObject);
+begin
+  bSetup.Color := RGB(231, 84, 87);
+end;
+
+procedure TMainForm.bSetupMouseLeave(Sender: TObject);
+begin
+  bSetup.Color := RGB(241, 94, 97);
 end;
 
 function TMainForm.ConnectedToAllGateways: Boolean;
@@ -2902,6 +2942,8 @@ begin
   tActivateHost.Enabled := False;
 
   isClosing := False;
+
+  pBtnSetup.Visible := not IsServiceExisted(RTC_HOSTSERVICE_NAME);
 
 //  EleavateSupport := TEleavateSupport.Create(DoElevatedTask);
 
