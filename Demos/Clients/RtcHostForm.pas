@@ -830,8 +830,20 @@ var
 begin
   fAcceptEULA := TfAcceptEULA.Create(nil);
   try
+    fAcceptEULA.ePassword.Text := RegularPassword;
+    fAcceptEULA.ePasswordConfirm.Text := RegularPassword;
+
     if fAcceptEULA.ShowModal = mrCancel then
-      Exit;
+      Exit
+    else
+    if fAcceptEULA.ePassword.Text <> RegularPassword then
+    begin
+      RegularPassword := fAcceptEULA.ePassword.Text;
+      ShowRegularPasswordState();
+      SendPasswordsToGateway;
+
+      SaveSetup;
+    end;
   finally
     FreeAndNil(fAcceptEULA);
   end;
@@ -5783,22 +5795,20 @@ begin
 
   with TargetCanvas do
   begin
+    Font.Color := clBlack;
     Pen.Color := cl3DDkShadow;
     if DData.HighLight
       and (not Sender.Selected[Node]) then
     begin
-      Font.Color := clBlack;
       Brush.Color := RGB(229, 243, 255);//$DDDDDD;//$E0E0E0;
     end
     else
     if Sender.Selected[Node] then
     begin
-      Font.Color := clBlack;//clWhite;
       Brush.Color := RGB(204, 232, 255);//RGB(19, 174, 196);
     end
     else
     begin
-      Font.Color := clBlack;
       Brush.Color := $00FDFDFD;
     end;
 

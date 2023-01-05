@@ -45,6 +45,7 @@ type
     ePasswordConfirm: TEdit;
     bOK: TButton;
     bClose: TButton;
+    Label8: TLabel;
 
     procedure xSSLClick(Sender: TObject);
     procedure btnCancelClick(Sender: TObject);
