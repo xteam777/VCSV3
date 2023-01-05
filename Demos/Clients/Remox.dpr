@@ -15,6 +15,7 @@
 uses
   FastMM4,
   rtcLog,
+  Classes,
   SysUtils,
   rtcInfo,
   rtcService,
@@ -30,6 +31,7 @@ uses
   IdContext,
   IdComponent,
   IdTCPClient,
+  ShlObj,
   RtcHostForm in 'RtcHostForm.pas' {MainForm},
   RtcHostSvc in 'RtcHostSvc.pas' {RemoxService: TService},
   dmSetRegion in '..\Modules\dmSetRegion.pas' {dmSelectRegion},
@@ -71,7 +73,7 @@ var
 //  s: RtcString;
   hPrev: THandle;
   err: LongInt;
-  strParams: String;
+  strParams, pfFolder, fn: String;
 //  EleavateSupport: TEleavateSupport;
 //  TorControlSocket: TIdTCPClient;
 
@@ -301,7 +303,10 @@ begin
       CreateRegistryKey;
       CreateShortcuts;
 
-      AddFireWallRules('%programfiles(x86)%\Remox\Remox.exe');
+      pfFolder := GetSpecialFolderLocation(CSIDL_PROGRAM_FILESX86);
+      AddFireWallRules(pfFolder + '\Remox\Remox.exe');
+
+      StartProcessInDesktopMode;
     end
     else
     if Pos('/START', UpperCase(CmdLine)) > 0 then
@@ -316,6 +321,9 @@ begin
     else
     if Pos('/UNINSTALL', UpperCase(CmdLine)) > 0 then
     begin
+      if MessageBox(Application.Handle, 'Remox будет удален из системы. Продолжить?', 'Remox', MB_OKCANCEL) = ID_CANCEL then
+        Exit;
+
 //      DeleteServices(RTC_HOSTSERVICE_NAME);
       UninstallService(RTC_HOSTSERVICE_NAME, 0);
 

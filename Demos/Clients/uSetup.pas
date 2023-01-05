@@ -14,7 +14,8 @@ uses
   rtcWinLogon,
   uVircessTypes,
   RunElevatedSupport,
-  ShellApi;
+  ShellApi,
+  CommonData;
 
 procedure CreateShortcuts;
 procedure DeleteShortcuts;
@@ -83,7 +84,7 @@ begin
 //    EleavateSupport.Free;
 //  end;
 
-  Halt;
+  Application.Terminate;
 
 //  rtcStartProcess('cmd /c "' + fn + '"');
 end;
@@ -122,6 +123,8 @@ begin
     // ... uninstaller lives in Windows directory
     Registry.WriteString('DisplayName', 'Remox');
     Registry.WriteString('DisplayIcon', pfFolder + '\Remox\Remox.exe');
+    Registry.WriteString('Publisher', 'Remox');
+    Registry.WriteString('Version', RMX_VERSION);
     Registry.WriteString('UninstallString', '"' + pfFolder + '\Remox\Remox.exe" /UNINSTALL');
   finally
     Registry.Free;

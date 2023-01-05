@@ -6,6 +6,8 @@ uses
   Windows, Classes, Messages, SyncObjs, uVircessTypes, RunElevatedSupport;
 
 const
+  RMX_VERSION = '3.0';
+
   WM_SETCURRENTFRAME = WM_USER + 1001;
   WM_TASKBAREVENT = WM_USER + 1002;
   WM_CHANGE_LOCKED_STATUS = WM_USER + 1003;

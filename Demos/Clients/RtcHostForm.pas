@@ -824,14 +824,30 @@ procedure TMainForm.bSetupClick(Sender: TObject);
 var
   err: LongInt;
   EleavateSupport: TEleavateSupport;
+  fn: String;
+//  err: LongInt;
 begin
+  if MessageBox(Handle, 'Remox будет установлен в систему. Продолжить?', 'Remox', MB_OKCANCEL) = ID_CANCEL then
+    Exit;
+
+  with TStringList.Create do
+  try
+    Add('PING 127.0.0.1 -n 2 > NUL');
+    Add(ParamStr(0) + ' /INSTALL');
+    fn := GetTempFile + '.bat';
+    Add('DEL "' + fn + '"');
+    SaveToFile(fn, TEncoding.GetEncoding(866));
+  finally
+    Free;
+  end;
+
   if (Win32MajorVersion >= 6 {vista\server 2k8}) then
   begin
     if not ServiceInstalled(nil, RTC_HOSTSERVICE_NAME) then
     begin
       EleavateSupport := TEleavateSupport.Create(nil);
       try
-        SetLastError(EleavateSupport.RunElevated(ParamStr(0), '/INSTALL', Handle, True, Application.ProcessMessages));
+        SetLastError(EleavateSupport.RunElevated(fn, '', Handle, False, Application.ProcessMessages));
         err := GetLastError;
         if err <> ERROR_SUCCESS then
           xLog('ServiceInstall error = ' + IntToStr(err) + ' ' + SysErrorMessage(err));
@@ -843,6 +859,8 @@ begin
   end;
 
   pBtnSetup.Visible := not IsServiceExisted(RTC_HOSTSERVICE_NAME);
+
+  Application.Terminate;
 end;
 
 procedure TMainForm.bSetupMouseEnter(Sender: TObject);
