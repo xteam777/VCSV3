@@ -5230,7 +5230,6 @@ object MainForm: TMainForm
       Top = 6
       Width = 298
       Height = 455
-      Hint = '-'
       Margins.Top = 6
       Margins.Right = 5
       Margins.Bottom = 5
