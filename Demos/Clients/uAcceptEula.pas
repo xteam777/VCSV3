@@ -4,10 +4,11 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, ShellApi;
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, ShellApi, Vcl.ExtCtrls;
 
 type
   TfAcceptEULA = class(TForm)
+    Panel1: TPanel;
     bOK: TButton;
     bClose: TButton;
     Label6: TLabel;
@@ -16,12 +17,14 @@ type
     ePasswordConfirm: TEdit;
     Label3: TLabel;
     Label7: TLabel;
-    Label4: TLabel;
+    lEULA: TLabel;
     Label5: TLabel;
     Label8: TLabel;
-    procedure Label4Click(Sender: TObject);
+    procedure lEULAClick(Sender: TObject);
     procedure bOKClick(Sender: TObject);
     procedure bCloseClick(Sender: TObject);
+    procedure lEULAMouseEnter(Sender: TObject);
+    procedure lEULAMouseLeave(Sender: TObject);
   private
     { Private declarations }
   public
@@ -55,9 +58,19 @@ begin
   Hide;
 end;
 
-procedure TfAcceptEULA.Label4Click(Sender: TObject);
+procedure TfAcceptEULA.lEULAClick(Sender: TObject);
 begin
   ShellExecute(Handle, 'open', 'http://remox.com/eula', '', '', SW_SHOWNORMAL);
+end;
+
+procedure TfAcceptEULA.lEULAMouseEnter(Sender: TObject);
+begin
+  Screen.Cursor := crHandPoint;
+end;
+
+procedure TfAcceptEULA.lEULAMouseLeave(Sender: TObject);
+begin
+  Screen.Cursor := crDefault;
 end;
 
 end.
