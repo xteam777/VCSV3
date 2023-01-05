@@ -4006,12 +4006,13 @@ object rdDesktopViewer: TrdDesktopViewer
         end
       end
       object Button1: TButton
-        Left = 184
-        Top = 240
+        Left = 26
+        Top = 348
         Width = 75
         Height = 25
         Caption = 'Button1'
         TabOrder = 3
+        Visible = False
         OnClick = Button1Click
       end
     end

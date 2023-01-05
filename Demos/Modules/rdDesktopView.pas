@@ -1092,7 +1092,7 @@ procedure TrdDesktopViewer.btnSettingsClick(Sender: TObject);
 
 procedure TrdDesktopViewer.Button1Click(Sender: TObject);
 begin
-  myUI.Send('C:\Rufus\rufus.log', 'C:\Rufus\');
+//  myUI.Send('C:\Rufus\rufus.log', 'C:\Rufus\');
 end;
 
 procedure TrdDesktopViewer.btnCancelClick(Sender: TObject);
