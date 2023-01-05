@@ -337,7 +337,6 @@ begin
       if MessageBox(Application.Handle, 'Remox будет удален из системы. Продолжить?', 'Remox', MB_OKCANCEL) = ID_CANCEL then
         Exit;
 
-//      DeleteServices(RTC_HOSTSERVICE_NAME);
       UninstallService(RTC_HOSTSERVICE_NAME, 0);
 
       DeleteShortcuts;
