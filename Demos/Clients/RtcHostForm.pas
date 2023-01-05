@@ -15,7 +15,7 @@ uses
   Classes, Graphics, Controls, Forms, DateUtils, CommonUtils, WtsApi, uSysAccount,
   Dialogs, StdCtrls, ExtCtrls, ShellApi, BlackLayered, rdFileTransLog,
   ComCtrls, Registry, Math, RtcIdentification, SyncObjs,
-  rtcSystem, rtcInfo, uMessageBox, rtcScrUtils, IOUtils,
+  rtcSystem, rtcInfo, uMessageBox, rtcScrUtils, IOUtils, uAcceptEula,
 
 {$IFDEF IDE_XE3up}
   UITypes,
@@ -826,9 +826,18 @@ var
   EleavateSupport: TEleavateSupport;
   fn: String;
 //  err: LongInt;
+  fAcceptEULA: TfAcceptEULA;
 begin
-  if MessageBox(Handle, 'Remox будет установлен в систему. Продолжить?', 'Remox', MB_OKCANCEL) = ID_CANCEL then
-    Exit;
+  fAcceptEULA := TfAcceptEULA.Create(nil);
+  try
+    if fAcceptEULA.ShowModal = mrCancel then
+      Exit;
+  finally
+    FreeAndNil(fAcceptEULA);
+  end;
+
+//  if MessageBox(Handle, 'Remox будет установлен в систему. Продолжить?', 'Remox', MB_OKCANCEL) = ID_CANCEL then
+//    Exit;
 
   with TStringList.Create do
   try
@@ -9784,10 +9793,10 @@ begin
 
       SaveSetup;
 
-      if sett.cbAutoRun.Checked <> sett.PrevAutoRun then
-      begin
-        TaskBarRemoveIcon;
-      end;
+//      if sett.cbAutoRun.Checked <> sett.PrevAutoRun then
+//      begin
+//        TaskBarRemoveIcon;
+//      end;
     end;
 
     SettingsFormOpened := False;

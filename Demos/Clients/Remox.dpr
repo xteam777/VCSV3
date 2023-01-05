@@ -62,7 +62,8 @@ uses
   uPowerWatcher in '..\Modules\uPowerWatcher.pas',
   rdFileTransLog in '..\Modules\rdFileTransLog.pas' {rdFileTransferLog},
   rtcBlankOutForm in '..\Modules\rtcBlankOutForm.pas' {fmBlankoutForm},
-  uSetup in 'uSetup.pas';
+  uSetup in 'uSetup.pas',
+  uAcceptEula in 'uAcceptEula.pas' {fAcceptEULA};
 
 {$R rtcportaluac.res rtcportaluac.rc}
 {$R *.res}
@@ -107,6 +108,7 @@ begin
   Application.Title := 'Remox';
   Forms.Application.ShowMainForm := (Pos('/SILENT', UpperCase(CmdLine)) = 0);
   Forms.Application.CreateForm(TMainForm, MainForm);
+  Application.CreateForm(TfAcceptEULA, fAcceptEULA);
   Forms.Application.Run;
 //    else
 //    begin

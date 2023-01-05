@@ -4,7 +4,7 @@ object rdClientSettings: TrdClientSettings
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = #1053#1072#1089#1090#1088#1086#1081#1082#1080
-  ClientHeight = 273
+  ClientHeight = 249
   ClientWidth = 384
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -26,8 +26,8 @@ object rdClientSettings: TrdClientSettings
     Left = 0
     Top = 2
     Width = 385
-    Height = 235
-    ActivePage = tsNetwork
+    Height = 207
+    ActivePage = tsSequrity
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -13
@@ -37,10 +37,11 @@ object rdClientSettings: TrdClientSettings
     ParentFont = False
     TabOrder = 0
     object tsNetwork: TTabSheet
-      Caption = #1054#1089#1085#1086#1074#1085#1086#1077
+      Caption = #1057#1077#1090#1100
+      ExplicitHeight = 204
       object gProxy: TGroupBox
         Left = 3
-        Top = 26
+        Top = 0
         Width = 371
         Height = 177
         Caption = #1053#1072#1089#1090#1088#1086#1081#1082#1080' '#1087#1088#1086#1082#1089#1080
@@ -155,20 +156,11 @@ object rdClientSettings: TrdClientSettings
           OnKeyDown = cbAutoRunKeyDown
         end
       end
-      object cbAutoRun: TCheckBox
-        Left = 12
-        Top = 3
-        Width = 350
-        Height = 17
-        Caption = #1047#1072#1087#1091#1089#1082#1072#1090#1100' '#1087#1088#1080' '#1089#1090#1072#1088#1090#1077' Windows'
-        TabOrder = 1
-        OnClick = cbAutoRunClick
-        OnKeyDown = cbAutoRunKeyDown
-      end
     end
     object tsSequrity: TTabSheet
       Caption = #1041#1077#1079#1086#1087#1072#1089#1085#1086#1089#1090#1100
       ImageIndex = 1
+      ExplicitHeight = 204
       object cbOnlyAdminChanges: TCheckBox
         Left = 7
         Top = 147
@@ -200,7 +192,7 @@ object rdClientSettings: TrdClientSettings
       end
       object GroupBox1: TGroupBox
         Left = 3
-        Top = 2
+        Top = 0
         Width = 371
         Height = 93
         Caption = #1055#1086#1089#1090#1086#1103#1085#1085#1099#1081' '#1087#1072#1088#1086#1083#1100
@@ -245,8 +237,8 @@ object rdClientSettings: TrdClientSettings
     end
   end
   object bOK: TButton
-    Left = 156
-    Top = 239
+    Left = 158
+    Top = 215
     Width = 107
     Height = 29
     Caption = #1054#1050
@@ -260,8 +252,8 @@ object rdClientSettings: TrdClientSettings
     OnClick = btnOKClick
   end
   object bClose: TButton
-    Left = 269
-    Top = 239
+    Left = 271
+    Top = 215
     Width = 107
     Height = 29
     Caption = #1054#1058#1052#1045#1053#1040
@@ -276,7 +268,7 @@ object rdClientSettings: TrdClientSettings
   end
   object ApplicationEvents1: TApplicationEvents
     OnMessage = ApplicationEvents1Message
-    Left = 10
-    Top = 240
+    Left = 44
+    Top = 200
   end
 end

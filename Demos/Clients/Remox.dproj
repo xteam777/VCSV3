@@ -165,6 +165,10 @@
             <Form>fmBlankoutForm</Form>
         </DCCReference>
         <DCCReference Include="uSetup.pas"/>
+        <DCCReference Include="uAcceptEula.pas">
+            <Form>fAcceptEULA</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <RcItem Include="rmx_w32.exe">
             <ContainerId>ResourceItem</ContainerId>
             <ResourceType>RCDATA</ResourceType>

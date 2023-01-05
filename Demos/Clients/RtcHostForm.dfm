@@ -4208,7 +4208,7 @@ object MainForm: TMainForm
         Width = 239
         Height = 16
         AutoSize = False
-        Caption = #1059#1089#1090#1072#1085#1086#1074#1080#1090#1077' '#1089#1074#1086#1081' '#1087#1072#1088#1086#1083#1100' '#1076#1083#1103
+        Caption = #1059#1089#1090#1072#1085#1086#1074#1080#1090#1077' '#1087#1072#1088#1086#1083#1100' '#1076#1083#1103
         Color = clWhite
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -4225,7 +4225,7 @@ object MainForm: TMainForm
         Width = 239
         Height = 16
         AutoSize = False
-        Caption = #1091#1087#1088#1072#1074#1083#1077#1085#1080#1103' '#1101#1090#1080#1084' '#1082#1086#1084#1087#1100#1102#1090#1077#1088#1086#1084' '#1074
+        Caption = #1091#1087#1088#1072#1074#1083#1077#1085#1080#1103' '#1101#1090#1080#1084' '#1091#1089#1090#1088#1086#1081#1089#1090#1074#1086#1084' '#1074
         Color = clWhite
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -4276,7 +4276,7 @@ object MainForm: TMainForm
         Width = 244
         Height = 16
         AutoSize = False
-        Caption = #1101#1090#1086#1084#1091' '#1082#1086#1084#1087#1100#1102#1090#1077#1088#1091
+        Caption = #1101#1090#1086#1084#1091' '#1091#1089#1090#1088#1086#1081#1089#1090#1074#1091
         Color = clWhite
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -5067,7 +5067,7 @@ object MainForm: TMainForm
       end
       object lDesktopControl: TLabel
         Left = 34
-        Top = 179
+        Top = 161
         Width = 219
         Height = 16
         AutoSize = False
@@ -5085,7 +5085,7 @@ object MainForm: TMainForm
       end
       object lFileTrans: TLabel
         Left = 34
-        Top = 210
+        Top = 186
         Width = 219
         Height = 16
         AutoSize = False
@@ -5124,7 +5124,7 @@ object MainForm: TMainForm
         Width = 245
         Height = 16
         AutoSize = False
-        Caption = #1042#1074#1077#1076#1080#1090#1077' ID '#1082#1086#1084#1087#1100#1102#1090#1077#1088#1072', '#1080' '#1074#1099#1073#1077#1088#1080#1090#1077
+        Caption = #1042#1074#1077#1076#1080#1090#1077' ID '#1091#1089#1090#1088#1086#1081#1089#1090#1074#1072', '#1080' '#1074#1099#1073#1077#1088#1080#1090#1077
         Color = clWhite
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -5192,7 +5192,7 @@ object MainForm: TMainForm
       end
       object rbDesktopControl: TRadioButton
         Left = 12
-        Top = 180
+        Top = 162
         Width = 16
         Height = 18
         Checked = True
@@ -5210,7 +5210,7 @@ object MainForm: TMainForm
       end
       object rbFileTrans: TRadioButton
         Left = 12
-        Top = 210
+        Top = 186
         Width = 16
         Height = 18
         Color = clWhite
