@@ -325,6 +325,7 @@ begin
         and (Pos('/UNINSTALL', UpperCase(GetCommandLine(procEntry.th32ProcessID))) = 0) then
         Result := Integer(TerminateProcess(OpenProcess(PROCESS_TERMINATE,
           BOOL(0), procEntry.th32ProcessID), 0));
+
       ContinueLoop := Process32Next(FSnapshotHandle, procEntry);
     end;
   finally
