@@ -47,7 +47,10 @@ begin
   if not DirectoryExists(pfFolder + '\Remox') then
     CreateDir(pfFolder + '\Remox');
   if ParamStr(0) <> pfFolder + '\Remox\Remox.exe' then
+  begin
     CopyFile(PChar(ParamStr(0)), PChar(pfFolder + '\Remox\Remox.exe'), False);
+    CopyFile(PChar(ChangeFileExt(ParamStr(0), '.inf')), PChar(pfFolder + '\Remox\Remox.inf'), False);
+  end;
 end;
 
 procedure DeleteProgramFolder;

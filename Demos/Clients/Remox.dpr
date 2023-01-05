@@ -295,18 +295,31 @@ begin
 
     if Pos('/INSTALL', UpperCase(CmdLine)) > 0 then
     begin
-      if not IsServiceExisted(RTC_HOSTSERVICE_NAME) then
-        CreateServices(RTC_HOSTSERVICE_NAME, RTC_HOSTSERVICE_DISPLAY_NAME, ParamStr(0));
-      StartServices(RTC_HOSTSERVICE_NAME);
+      pfFolder := GetSpecialFolderLocation(CSIDL_PROGRAM_FILESX86);
 
-      CreateProgramFolder;
       CreateRegistryKey;
       CreateShortcuts;
 
-      pfFolder := GetSpecialFolderLocation(CSIDL_PROGRAM_FILESX86);
+      CreateProgramFolder;
+
+      if not IsServiceExisted(RTC_HOSTSERVICE_NAME) then
+        CreateServices(RTC_HOSTSERVICE_NAME, RTC_HOSTSERVICE_DISPLAY_NAME, pfFolder + '\Remox\Remox.exe');
+      StartServices(RTC_HOSTSERVICE_NAME);
+
       AddFireWallRules(pfFolder + '\Remox\Remox.exe');
 
-      StartProcessInDesktopMode;
+      with TStringList.Create do
+      try
+        Add('PING 127.0.0.1 -n 2 > NUL');
+        Add('"' + pfFolder + '\Remox\Remox.exe"');
+        fn := GetTempFile + '.bat';
+        Add('DEL "' + fn + '"');
+        SaveToFile(fn, TEncoding.GetEncoding(866));
+      finally
+        Free;
+      end;
+
+      ShellExecute(Application.Handle, 'open', PChar(fn), '', '', SW_HIDE);
     end
     else
     if Pos('/START', UpperCase(CmdLine)) > 0 then
