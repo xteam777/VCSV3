@@ -564,7 +564,7 @@ type
     function GetUserDescription(aUserName: String): String;
     function GetUserPassword(aUserName: String): String;
     function UIIsPending(username: String): Boolean;
-    function AddPendingRequest(uname, action: String): PPendingRequestItem;
+    function AddPendingRequest(uname, desc, action: String): PPendingRequestItem;
     procedure DeletePendingRequest(uname, action: String);
     function GetPendingItemByUserName(uname, action: String): PPendingRequestItem;
     function PartnerIsPending(uname, action, gateway: String): Boolean; overload;
@@ -2602,7 +2602,7 @@ begin
 //    pAccUserName := eAccountUserName.Text
 //  else
 //    pAccUserName := '';                    //PChar('mailto:support@remox.com?body=<BR><BR><BR>Account:' + AccountName + '<BR>Device ID:' + PClient.LoginUserInfo.asText['RealName'])
-  ShellExecute(Application.Handle, 'open', 'mailto:support@remox.com', nil, nil, SW_SHOW);
+  ShellExecute(Application.Handle, 'open', 'http://remox.com/feedback', nil, nil, SW_SHOW);
 end;
 
 procedure TMainForm.aMinimizeExecute(Sender: TObject);
@@ -7232,7 +7232,7 @@ begin
     Exit;
   end;
 
-  AddPendingRequest(user, action);
+  AddPendingRequest(user, username, action);
 
   DoGetDeviceState(eAccountUserName.Text,
     LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll])),
@@ -8807,6 +8807,7 @@ begin
   if Assigned(FWin) then
   begin
     FWin.UI.UserName := user;
+    FWin.UI.UserDesc := GetPendingItemByUserName(user, 'file')^.UserDesc;
     // Always set UI.Module *after* setting UI.UserName !!!
     FWin.UI.Module := Sender;
     FWin.UI.Tag := Sender.Tag; //ThreadID
@@ -8819,9 +8820,6 @@ begin
     if not LoadWindowPosition(FWin,'FileTransForm-'+user) then
       LoadWindowPosition(FWin,'FileTransForm');
     *)
-
-    FWin.UI.UserDesc := GetUserDescription(user);
-
 //    FWin.AutoExplore := True;
 
 //    FWin.Show;
@@ -8869,6 +8867,7 @@ begin
   if Assigned(FWin) then
   begin
     FWin.UI.UserName := user;
+    FWin.UI.UserDesc := GetPendingItemByUserName(user, 'file')^.UserDesc;
     // Always set UI.Module *after* setting UI.UserName !!!
     FWin.UI.Module := Sender;
     FWin.UI.Tag := Sender.Tag; //ThreadID
@@ -8881,8 +8880,6 @@ begin
     if not LoadWindowPosition(FWin,'FileTransForm-'+user) then
       LoadWindowPosition(FWin,'FileTransForm');
     *)
-
-    FWin.UI.UserDesc := GetUserDescription(user);
 
 //    FWin.AutoExplore := True;
 
@@ -8931,6 +8928,7 @@ begin
   if Assigned(FWin) then
   begin
     FWin.UI.UserName := user;
+    FWin.UI.UserDesc := GetPendingItemByUserName(user, 'file')^.UserDesc;
     // Always set UI.Module *after* setting UI.UserName !!!
     FWin.UI.Module := Sender;
     FWin.UI.Tag := Sender.Tag; //ThreadID
@@ -9029,14 +9027,13 @@ begin
 //    {$ENDIF}
 
     CWin.UI.UserName := user;
+    CWin.UI.UserDesc := GetPendingItemByUserName(user, 'chat')^.UserDesc;
     // Always set UI.Module *after* setting UI.UserName !!!
     CWin.UI.Module := Sender;
     CWin.UI.Tag := Sender.Tag; //ThreadID
 
 //    AddPortalConnection(Sender.Tag, CWin.Handle, 'chat', user); //ThreadID
     SetPortalConnectionUIHandle(Sender.Tag, CWin.Handle);
-
-    CWin.UI.UserDesc := GetUserDescription(user);
 
     (*
     LoadWindowPosition(CWin,'ChatForm');
@@ -10017,7 +10014,7 @@ begin
   end;
 end;
 
-function TMainForm.AddPendingRequest(uname, action: String): PPendingRequestItem;
+function TMainForm.AddPendingRequest(uname, desc, action: String): PPendingRequestItem;
 var
   PRItem: PPendingRequestItem;
 begin
@@ -10027,6 +10024,7 @@ begin
   try
     New(PRItem);
     PRItem.UserName := uname;
+    PRItem.UserDesc := desc;
     PRItem.Action := action;
 //    PRItem.Gateway := gateway;
 //    ThreadID := ThreadID;
@@ -10045,7 +10043,7 @@ begin
   CS_Pending.Acquire;
   try
     if PendingRequests.Count > 0 then
-      Result := PPendingRequestItem(PendingRequests[PendingRequests.Count - 1])^.UserName;
+      Result := PPendingRequestItem(PendingRequests[PendingRequests.Count - 1])^.UserDesc;
   finally
     CS_Pending.Release;
   end;
@@ -10373,10 +10371,9 @@ begin
     //{$ENDIF}
 
     CDesk.UI.UserName := user;
+    CDesk.UI.UserDesc := GetPendingItemByUserName(user, 'desk8')^.UserDesc;
     // Always set UI.Module *after* setting UI.UserName !!!
     CDesk.UI.Module := Sender;
-
-    CDesk.UI.UserDesc := GetUserDescription(user);
 
 //    GatewayRec := GetGatewayRecByDesktopControl(Sender);
 //    GatewayRec^.ID := user;

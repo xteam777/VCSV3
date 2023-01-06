@@ -25,7 +25,6 @@ type
     btnReload: TSpeedButton;
     Panel5: TPanel;
     btnViewStyle: TSpeedButton;
-    btnBack: TSpeedButton;
     pmFiles: TPopupMenu;
     mnNewFolder: TMenuItem;
     mnRefresh: TMenuItem;
@@ -61,7 +60,6 @@ type
     Panel6: TPanel;
     btnReload_: TSpeedButton;
     SpeedButton2: TSpeedButton;
-    SpeedButton3: TSpeedButton;
     b_hm_: TSpeedButton;
     b_up_: TSpeedButton;
     Shape2: TShape;
@@ -127,7 +125,6 @@ type
     procedure DownLabelDragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure eFilesListDragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
-    procedure btnBackClick(Sender: TObject);
     procedure mnRefreshClick(Sender: TObject);
     procedure mnNewFolderClick(Sender: TObject);
     procedure eFilesListEditing(Sender: TObject; Item: TListItem;
@@ -299,8 +296,6 @@ procedure TrdFileTransfer.Form_Open(const mode: string);
 //  cUserName.Caption:=myUI.UserName;
 //  cTitleBar.Caption:=mode+'Files';
 
-  b_ppClick(nil);
-
   FReady:=True;
   end;
 
@@ -357,6 +352,8 @@ procedure TrdFileTransfer.FormCreate(Sender: TObject);
 begin
   application.HintHidePause := 10000;
   cur_files := TStringList.Create;
+
+  b_ppClick(nil);
 
   DragAcceptFiles(Handle, True);
 end;
@@ -575,11 +572,6 @@ procedure TrdFileTransfer.DownLabelDragDrop(Sender, Source: TObject; X, Y: Integ
       for a:=0 to myFiles.Count-1 do
         myUI.Fetch(myFiles.Strings[a]);
     end;
-  end;
-
-procedure TrdFileTransfer.btnBackClick(Sender: TObject);
-  begin
-  eFilesList.OneLevelUp;
   end;
 
 procedure TrdFileTransfer.mnRefreshClick(Sender: TObject);
@@ -1524,8 +1516,8 @@ begin
 
     if eFilesList.items.count>0 then add_lg(timetostr(now)+':  Соединение успешно установлено.');
 
-  eDirectory. Text:= 'C:\1\';  btnReloadClick(nil);
-  eDirectory_.Text:= 'C:\1\';  btnReload_Click(nil);
+  eDirectory. Text:= 'C:\';  btnReloadClick(nil);
+  eDirectory_.Text:= 'C:\';  btnReload_Click(nil);
 
   end;
 end;
@@ -1852,13 +1844,15 @@ begin
 try
  sz:= 0; p:= 0;
 
-   for i:=0 to lv.Items.Count-1 do with lv.Items[i] do
-   if Selected then
-   begin
-     application.ProcessMessages;
-     inc(p);
-     sz:= sz + get_size(SubItems[1]);
-   end;
+  for i:=0 to lv.Items.Count-1 do
+    with lv.Items[i] do
+      if Selected then
+      begin
+       Application.ProcessMessages;
+       inc(p);
+       if SubItems.Count > 0 then
+        sz := sz + get_size(SubItems[1]);
+      end;
 
  result:= sz;
 

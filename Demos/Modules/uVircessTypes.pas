@@ -90,6 +90,7 @@ type
 
   TPendingRequestItem = record
     UserName: String;
+    UserDesc: String;
     Gateway: String;
     Action: String;
     Handle: THandle;
