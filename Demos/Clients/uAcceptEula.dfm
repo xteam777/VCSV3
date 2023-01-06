@@ -14,6 +14,7 @@ object fAcceptEULA: TfAcceptEULA
   Font.Style = []
   OldCreateOrder = False
   Position = poScreenCenter
+  OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 16
   object Panel1: TPanel
@@ -180,6 +181,20 @@ object fAcceptEULA: TfAcceptEULA
       end
       object ePasswordConfirm: TEdit
         Left = 171
+        Top = 78
+        Width = 246
+        Height = 24
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -13
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+        PasswordChar = '*'
+        TabOrder = 1
+      end
+      object ePassword: TEdit
+        Left = 171
         Top = 45
         Width = 246
         Height = 24
@@ -191,20 +206,6 @@ object fAcceptEULA: TfAcceptEULA
         ParentFont = False
         PasswordChar = '*'
         TabOrder = 0
-      end
-      object ePassword: TEdit
-        Left = 171
-        Top = 75
-        Width = 246
-        Height = 24
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -13
-        Font.Name = 'Tahoma'
-        Font.Style = []
-        ParentFont = False
-        PasswordChar = '*'
-        TabOrder = 1
       end
     end
   end

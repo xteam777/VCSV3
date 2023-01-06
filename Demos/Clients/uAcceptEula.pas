@@ -25,6 +25,7 @@ type
     procedure bCloseClick(Sender: TObject);
     procedure lEULAMouseEnter(Sender: TObject);
     procedure lEULAMouseLeave(Sender: TObject);
+    procedure FormShow(Sender: TObject);
   private
     { Private declarations }
   public
@@ -56,6 +57,11 @@ begin
 
   ModalResult := mrOk;
   Hide;
+end;
+
+procedure TfAcceptEULA.FormShow(Sender: TObject);
+begin
+  ePassword.SetFocus;
 end;
 
 procedure TfAcceptEULA.lEULAClick(Sender: TObject);
