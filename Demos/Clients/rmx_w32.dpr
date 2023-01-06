@@ -21,7 +21,7 @@ uses
   Execute.DesktopDuplicationAPI,
   rtcWinLogon,
   WtsApi,
-  uVircessTypes;
+  DateUtils;
 
 //  rtcWinlogon,
   //FastDIB in 'Lib\FastDIB.pas';
@@ -107,6 +107,11 @@ type
 
 const
   VCS_MAGIC_NUMBER = 777;
+
+  LCK_STATE_UNLOCKED = 0;
+  LCK_STATE_SAS = 1;
+  LCK_STATE_LOCKED = 2;
+  LCK_STATE_SCREENSAVER = 3;
 
   DESKTOP_ALL = DESKTOP_CREATEMENU or DESKTOP_CREATEWINDOW or
     DESKTOP_ENUMERATE or DESKTOP_HOOKCONTROL or DESKTOP_WRITEOBJECTS or
@@ -2570,14 +2575,20 @@ begin
   else
   if Request.Data.ReadInteger('QueryType') = QT_GETDATA then
   begin
+//    if (LowerCase(GetInputDesktopName) <> 'default') then
+//      Response.Data.WriteInteger('LockedState', LCK_STATE_LOCKED)
+//    else
+//    if {tPHostThread.FDesktopHost.HaveScreen
+//      and} (GetCurrentSesstionState = WTSActive) then
+//      Response.Data.WriteInteger('LockedState', LCK_STATE_UNLOCKED)
+//    else
+//      Response.Data.WriteInteger('LockedState', LCK_STATE_LOCKED);
+
+//    Response.ID := Format('Response nr. %d', [MilliSecondsBetween(Now, 0)]);
     if (LowerCase(GetInputDesktopName) <> 'default') then
       Response.Data.WriteInteger('LockedState', LCK_STATE_LOCKED)
     else
-    if {tPHostThread.FDesktopHost.HaveScreen
-      and} (GetCurrentSesstionState = WTSActive) then
-      Response.Data.WriteInteger('LockedState', LCK_STATE_UNLOCKED)
-    else
-      Response.Data.WriteInteger('LockedState', LCK_STATE_LOCKED);
+      Response.Data.WriteInteger('LockedState', LCK_STATE_UNLOCKED);
   end;
 end;
 
