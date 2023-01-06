@@ -3,7 +3,7 @@ program rmx_w32;
 //Переключение десктопа и снятие скриншота работает исключительно в потоке
 
 uses
-//  FastMM4,
+  //FastMM4,
   Winapi.Windows,
   Forms,
   System.SysUtils,
@@ -18,7 +18,10 @@ uses
   Cromis.Comm.Custom,
   Cromis.Comm.IPC,
   Cromis.Threading,
-  Execute.DesktopDuplicationAPI;
+  Execute.DesktopDuplicationAPI,
+  rtcWinLogon,
+  WtsApi,
+  DateUtils;
 
 //  rtcWinlogon,
   //FastDIB in 'Lib\FastDIB.pas';
@@ -104,6 +107,11 @@ type
 
 const
   VCS_MAGIC_NUMBER = 777;
+
+  LCK_STATE_UNLOCKED = 0;
+  LCK_STATE_SAS = 1;
+  LCK_STATE_LOCKED = 2;
+  LCK_STATE_SCREENSAVER = 3;
 
   DESKTOP_ALL = DESKTOP_CREATEMENU or DESKTOP_CREATEWINDOW or
     DESKTOP_ENUMERATE or DESKTOP_HOOKCONTROL or DESKTOP_WRITEOBJECTS or
@@ -2563,6 +2571,24 @@ begin
   begin
     // Lock System
     LogoffSystem;
+  end
+  else
+  if Request.Data.ReadInteger('QueryType') = QT_GETDATA then
+  begin
+//    if (LowerCase(GetInputDesktopName) <> 'default') then
+//      Response.Data.WriteInteger('LockedState', LCK_STATE_LOCKED)
+//    else
+//    if {tPHostThread.FDesktopHost.HaveScreen
+//      and} (GetCurrentSesstionState = WTSActive) then
+//      Response.Data.WriteInteger('LockedState', LCK_STATE_UNLOCKED)
+//    else
+//      Response.Data.WriteInteger('LockedState', LCK_STATE_LOCKED);
+
+//    Response.ID := Format('Response nr. %d', [MilliSecondsBetween(Now, 0)]);
+    if (LowerCase(GetInputDesktopName) <> 'default') then
+      Response.Data.WriteInteger('LockedState', LCK_STATE_LOCKED)
+    else
+      Response.Data.WriteInteger('LockedState', LCK_STATE_UNLOCKED);
   end;
 end;
 

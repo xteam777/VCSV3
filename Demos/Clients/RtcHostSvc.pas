@@ -127,9 +127,9 @@ type
     procedure SetRegularPassword(AValue: String);
 
     procedure SendLockedStateToGateway;
-    property RegularPassword: String read FRegularPassword write SetRegularPassword;
-    function GetDataFromHelperByIPC(QueryType: Cardinal): Integer;
+    procedure GetDataFromHelperByIPC(QueryType: Cardinal);
     procedure SetScreenLockedState(AValue: Integer);
+    property RegularPassword: String read FRegularPassword write SetRegularPassword;
     property ScreenLockedState: Integer read FScreenLockedState write SetScreenLockedState;
   end;
 
@@ -174,7 +174,7 @@ begin
     try
       with Data.NewFunction('Host.LockedStateUpdate') do
       begin
-        Value['User'] := LowerCase(StringReplace(UserName, ' ' , '', [rfReplaceAll]));
+        Value['User'] := LowerCase(UserName);
         AsInteger['LockedState'] := ScreenLockedState;
         Call(rHostLockedStateUpdate);
       end;
@@ -192,16 +192,18 @@ procedure TRemoxService.tCheckLockedStateTimer(Sender: TObject);
 begin
 //  XLog('tCheckLockedStateTimer');
 
+  GetDataFromHelperByIPC(QT_GETDATA);
+
 //  if (not IsServiceStarted(RTC_HOSTSERVICE_NAME))
 //    and
-  if (LowerCase(GetInputDesktopName) <> 'default') then
-    ScreenLockedState := LCK_STATE_LOCKED
-  else
-  if {tPHostThread.FDesktopHost.HaveScreen
-    and} (GetCurrentSesstionState = WTSActive) then
-    ScreenLockedState := LCK_STATE_UNLOCKED
-  else
-    ScreenLockedState := LCK_STATE_LOCKED;
+//  if (LowerCase(GetInputDesktopName) = 'default') then
+//    ScreenLockedState := LCK_STATE_UNLOCKED
+//  else
+//  if {tPHostThread.FDesktopHost.HaveScreen
+//    and} (GetCurrentSesstionState = WTSActive) then
+//    ScreenLockedState := LCK_STATE_UNLOCKED
+//  else
+//    ScreenLockedState := LCK_STATE_LOCKED;
 
 {  if IsScreenSaverRunning then
   begin
@@ -262,7 +264,7 @@ begin
   end;
 end;
 
-function TRemoxService.GetDataFromHelperByIPC(QueryType: Cardinal): Integer;
+procedure TRemoxService.GetDataFromHelperByIPC(QueryType: Cardinal);
 var
   SessionID: DWORD;
   Request, Response: IIPCData;
@@ -274,8 +276,6 @@ begin
     SessionID := ActiveConsoleSessionID;
 //  else
 //    SessionID := CurrentSessionID;
-
-  Result := 0;
 
   IPCClient := TIPCClient.Create;
   try
@@ -290,7 +290,7 @@ begin
         Response := IPCClient.ExecuteConnectedRequest(Request);
 
         if IPCClient.AnswerValid then
-          ScreenLockedState := Response.Data.ReadInteger('LockedStatus');
+          ScreenLockedState := Response.Data.ReadInteger('LockedState');
 
 //          if IPCClient.LastError <> 0 then
 //            ListBox1.Items.Add(Format('Error: Code %d', [IPCClient.LastError]));
@@ -763,8 +763,8 @@ procedure TStartThread.StartClientInSession(SessionID: Cardinal; doStartHelper, 
 var
   ProcessId: Cardinal;
 begin
-//HelperConsoleTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_x64.exe';
-//HelperTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_w32.exe';
+HelperConsoleTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_x64.exe';
+HelperTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_w32.exe';
 
   if doStartHelper then
   begin
