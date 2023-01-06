@@ -8438,7 +8438,8 @@ begin
 //    or ((not IsServiceStarted(RTC_HOSTSERVICE_NAME))
 //      and (not IsServiceStarting(RTC_HOSTSERVICE_NAME))) then
 //  begin
-    if eUserName.Text = '-' then
+    if (eUserName.Text = '-')
+      or (eUserName.Text = '') then
       Exit;
 
     with cmAccounts do
@@ -10371,7 +10372,7 @@ begin
     //{$ENDIF}
 
     CDesk.UI.UserName := user;
-    CDesk.UI.UserDesc := GetPendingItemByUserName(user, 'desk8')^.UserDesc;
+    CDesk.UI.UserDesc := GetPendingItemByUserName(user, 'desk')^.UserDesc;
     // Always set UI.Module *after* setting UI.UserName !!!
     CDesk.UI.Module := Sender;
 

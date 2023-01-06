@@ -3,6 +3,7 @@ unit Execute.DesktopDuplicationAPI;
   Desktop Duplication (c)2017 Execute SARL
   http://www.execute.fr
 }
+{$INLINE AUTO}
 interface
 
 uses
@@ -38,7 +39,8 @@ type
     BytesInRow : integer;
     BitmapP1, BitmapP2 : PByte;
     FirstDraw : boolean;
-    procedure DrawArea(X1, Y1, X2, Y2 : Integer);
+    FLastChangedX1, FLastChangedY1, FLastChangedX2, FLastChangedY2: Integer;
+    procedure DrawArea(X1, Y1, X2, Y2 : Integer); //inline;
 
   public
     Bitmap: TBitmap;
@@ -62,6 +64,10 @@ type
     property MoveRects: PDXGI_OUTDUPL_MOVE_RECT read FMoveRects;
     property DirtyCount: Integer read FDirtyCount;
     property DirtyRects: PRect read FDirtyRects;
+    property LastChangedX1: Integer read FLastChangedX1;
+    property LastChangedY1: Integer read FLastChangedY1;
+    property LastChangedX2: Integer read FLastChangedX2;
+    property LastChangedY2: Integer read FLastChangedY2;
   end;
 
 implementation
@@ -205,24 +211,24 @@ begin
 
   if FrameInfo.TotalMetadataBufferSize > 0 then
   begin
-//    BufLen := FrameInfo.TotalMetadataBufferSize;
-//    if Length(FMetaData) < BufLen then
-//      SetLength(FMetaData, BufLen);
-//
-//    FMoveRects := Pointer(FMetaData);
-//
-//    FError := FDuplicate.GetFrameMoveRects(BufLen, FMoveRects, BufSize);
-//    if Failed(FError) then
-//      Exit;
-//    FMoveCount := BufSize div sizeof(TDXGI_OUTDUPL_MOVE_RECT);
-//
-//    FDirtyRects := @FMetaData[BufSize];
-//    Dec(BufLen, BufSize);
-//
-//    FError := FDuplicate.GetFrameDirtyRects(BufLen, FDirtyRects, BufSize);
-//    if Failed(FError) then
-//      Exit;
-//    FDirtyCount := BufSize div SizOof(TRECT);
+    BufLen := FrameInfo.TotalMetadataBufferSize;
+    if Length(FMetaData) < BufLen then
+      SetLength(FMetaData, BufLen);
+
+    FMoveRects := Pointer(FMetaData);
+
+    FError := FDuplicate.GetFrameMoveRects(BufLen, FMoveRects, BufSize);
+    if Failed(FError) then
+      Exit;
+    FMoveCount := BufSize div sizeof(TDXGI_OUTDUPL_MOVE_RECT);
+
+    FDirtyRects := @FMetaData[BufSize];
+    Dec(BufLen, BufSize);
+
+    FError := FDuplicate.GetFrameDirtyRects(BufLen, FDirtyRects, BufSize);
+    if Failed(FError) then
+     Exit;
+    FDirtyCount := BufSize div SizeOf(TRECT);
 
     Result := True;
   end
@@ -230,7 +236,7 @@ begin
     FDuplicate.ReleaseFrame;
 end;
 
-procedure TDesktopDuplicationWrapper.DrawArea(X1, Y1, X2, Y2 : Integer);
+procedure TDesktopDuplicationWrapper.DrawArea(X1, Y1, X2, Y2 : Integer); //inline;
 var
   i, BytesToCopy : integer;
   P1Cur, P2Cur : PByte;
@@ -253,7 +259,7 @@ var
   Desc: TD3D11_TEXTURE2D_DESC;
   Temp: ID3D11Texture2D;
   Resource: TD3D11_MAPPED_SUBRESOURCE;
-  i, RId, X1, Y1, X2, Y2 : Integer;
+  i, RId: Integer;
   p : pbyte;
 begin
   Result := False;
@@ -299,18 +305,30 @@ begin
   end else
     case OptimDrawAlg of
     0 : begin // default algorithm
+        FLastChangedX1 := 0;
+        FLastChangedY1 := 0;
+        FLastChangedX2 := Desc.Width;
+        FLastChangedY2 := Desc.Height;
+
          DrawArea(0, 0, Desc.Width, Desc.Height);
         end;
     1 : begin // objects almost do not cross with each other
 
           // Painting MoveRects
           for RId := 0 to MoveCount - 1 do
-            DrawArea(MoveRects[RId].DestinationRect.Left, MoveRects[RId].DestinationRect.Top,
-              MoveRects[RId].DestinationRect.Right, MoveRects[RId].DestinationRect.Bottom);{Min(MoveRects[RId].SourcePoint.X, Min(MoveRects[RId].DestinationRect.Left, MoveRects[RId].DestinationRect.Right)),
+            DrawArea(Min(MoveRects[RId].SourcePoint.X, MoveRects[RId].DestinationRect.Left),
+              Min(MoveRects[RId].SourcePoint.Y, MoveRects[RId].DestinationRect.Top),
+              Max(MoveRects[RId].SourcePoint.X + MoveRects[RId].DestinationRect.Right - MoveRects[RId].DestinationRect.Left, MoveRects[RId].DestinationRect.Right),
+              Max(MoveRects[RId].SourcePoint.Y + MoveRects[RId].DestinationRect.Bottom - MoveRects[RId].DestinationRect.Top, MoveRects[RId].DestinationRect.Bottom));{Min(MoveRects[RId].SourcePoint.X, Min(MoveRects[RId].DestinationRect.Left, MoveRects[RId].DestinationRect.Right)),
                      Min(MoveRects[RId].SourcePoint.Y, Min(MoveRects[RId].DestinationRect.Top, MoveRects[RId].DestinationRect.Bottom)),
                      Max(MoveRects[RId].SourcePoint.X, Max(MoveRects[RId].DestinationRect.Left, MoveRects[RId].DestinationRect.Right)),
                      Max(MoveRects[RId].SourcePoint.Y, Max(MoveRects[RId].DestinationRect.Top, MoveRects[RId].DestinationRect.Bottom)));
                       }
+
+        FLastChangedX1 := 0;
+        FLastChangedY1 := 0;
+        FLastChangedX2 := Desc.Width;
+        FLastChangedY2 := Desc.Height;
 
           // Painting DirtyRects
           for RId := 0 to DirtyCount - 1 do
@@ -321,28 +339,29 @@ begin
     2 : begin // objects crosses with each other much
           // Ischem koordinati priamougolnika, kotorii vkluchaet
           // vse priamougolniki MoveRects i DrityRects
-          X1 := 1 shl 30;
-          Y1 := 1 shl 30;
-          X2 := 0;
-          Y2 := 0;
+          FLastChangedX1 := 1 shl 30;
+          FLastChangedY1 := 1 shl 30;
+          FLastChangedX2 := 0;
+          FLastChangedY2 := 0;
 
           for RId := 0 to MoveCount - 1 do
           begin
-            X1 := Min(X1, MoveRects[RId].DestinationRect.Left);
-            Y1 := Min(Y1, MoveRects[RId].DestinationRect.Top);
-            X2 := Max(X2, MoveRects[RId].DestinationRect.Right);
-            Y2 := Max(Y2, MoveRects[RId].DestinationRect.Bottom);
+            FLastChangedX1 := Min(FLastChangedX1, Min(MoveRects[RId].SourcePoint.X, MoveRects[RId].DestinationRect.Left));
+            FLastChangedY1 := Min(FLastChangedY1, Min(MoveRects[RId].SourcePoint.Y, MoveRects[RId].DestinationRect.Top));
+            FLastChangedX2 := Max(FLastChangedX2, Max(MoveRects[RId].SourcePoint.X + MoveRects[RId].DestinationRect.Right - MoveRects[RId].DestinationRect.Left, MoveRects[RId].DestinationRect.Right));
+            FLastChangedY2 := Max(FLastChangedY2, Max(MoveRects[RId].SourcePoint.Y + MoveRects[RId].DestinationRect.Bottom - MoveRects[RId].DestinationRect.Top, MoveRects[RId].DestinationRect.Bottom));
+            {Min(MoveRects[RId].SourcePoint.X, Min(MoveRects[RId].DestinationRect.Left, MoveRects[RId].DestinationRect.Right)),    }
           end;
 
           for RId := 0 to DirtyCount - 1 do
           begin
-            X1 := Min(X1, DirtyRects[RId].Left);
-            Y1 := Min(Y1, DirtyRects[RId].Top);
-            X2 := Max(X2, DirtyRects[RId].Right);
-            Y2 := Max(Y2, DirtyRects[RId].Bottom);
+            FLastChangedX1 := Min(FLastChangedX1, DirtyRects[RId].Left);
+            FLastChangedY1 := Min(FLastChangedY1, DirtyRects[RId].Top);
+            FLastChangedX2 := Max(FLastChangedX2, DirtyRects[RId].Right);
+            FLastChangedY2 := Max(FLastChangedY2, DirtyRects[RId].Bottom);
           end;
 
-          DrawArea(X1, Y1, X2, Y2);
+          DrawArea(FLastChangedX1, FLastChangedY1, FLastChangedX2, FLastChangedY2);
         end;
     end;
   // copy pixels - we assume a 32bits bitmap !
@@ -353,7 +372,6 @@ begin
     Move(p^, Bitmap.ScanLine[i]^, 4 * Desc.Width);
     Inc(p, 4 * Desc.Width);
   end; }
-
 
   FContext.Unmap(FTexture, 0); //Это нужно?
   FTexture := nil;
