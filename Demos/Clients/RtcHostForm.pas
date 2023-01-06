@@ -8438,8 +8438,8 @@ begin
 //    or ((not IsServiceStarted(RTC_HOSTSERVICE_NAME))
 //      and (not IsServiceStarting(RTC_HOSTSERVICE_NAME))) then
 //  begin
-//    if eUserName.Text = '-' then
-//      Exit;
+    if eUserName.Text = '-' then
+      Exit;
 
     with cmAccounts do
     try
