@@ -27,7 +27,7 @@ object rdClientSettings: TrdClientSettings
     Top = 2
     Width = 431
     Height = 217
-    ActivePage = tsNetwork
+    ActivePage = tsSequrity
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -13
@@ -201,7 +201,7 @@ object rdClientSettings: TrdClientSettings
         TabOrder = 1
         object Label7: TLabel
           Left = 11
-          Top = 86
+          Top = 82
           Width = 151
           Height = 16
           AutoSize = False
@@ -210,7 +210,7 @@ object rdClientSettings: TrdClientSettings
         end
         object Label6: TLabel
           Left = 11
-          Top = 56
+          Top = 52
           Width = 151
           Height = 16
           AutoSize = False
@@ -222,11 +222,12 @@ object rdClientSettings: TrdClientSettings
           Top = 22
           Width = 390
           Height = 17
+          Alignment = taCenter
           AutoSize = False
           Caption = #1045#1089#1083#1080' '#1085#1077' '#1093#1086#1090#1080#1090#1077' '#1088#1072#1079#1088#1077#1096#1072#1090#1100' '#1087#1086#1076#1082#1083#1102#1095#1077#1085#1080#1077', '#1086#1089#1090#1072#1074#1100#1090#1077' '#1087#1086#1083#1103' '#1087#1091#1089#1090#1099#1084#1080
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -13
+          Font.Height = -11
           Font.Name = 'Tahoma'
           Font.Style = []
           ParentFont = False
@@ -235,7 +236,7 @@ object rdClientSettings: TrdClientSettings
         end
         object ePassword: TEdit
           Left = 173
-          Top = 53
+          Top = 49
           Width = 228
           Height = 24
           PasswordChar = '*'
@@ -244,7 +245,7 @@ object rdClientSettings: TrdClientSettings
         end
         object ePasswordConfirm: TEdit
           Left = 173
-          Top = 83
+          Top = 79
           Width = 228
           Height = 24
           PasswordChar = '*'

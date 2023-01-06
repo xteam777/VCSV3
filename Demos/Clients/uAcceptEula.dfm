@@ -4,8 +4,8 @@ object fAcceptEULA: TfAcceptEULA
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = #1059#1089#1090#1072#1085#1086#1074#1082#1072
-  ClientHeight = 240
-  ClientWidth = 413
+  ClientHeight = 249
+  ClientWidth = 440
   Color = clWhite
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -19,8 +19,8 @@ object fAcceptEULA: TfAcceptEULA
   object Panel1: TPanel
     Left = 0
     Top = 0
-    Width = 413
-    Height = 240
+    Width = 440
+    Height = 249
     Align = alClient
     BevelOuter = bvNone
     Color = 16645629
@@ -52,56 +52,9 @@ object fAcceptEULA: TfAcceptEULA
       ParentFont = False
       Transparent = True
     end
-    object Label1: TLabel
-      Left = 6
-      Top = 34
-      Width = 401
-      Height = 17
-      Alignment = taCenter
-      AutoSize = False
-      Caption = #1042#1074#1077#1076#1080#1090#1077' '#1087#1072#1088#1086#1083#1100' '#1076#1083#1103' '#1091#1076#1072#1083#1077#1085#1085#1086#1075#1086' '#1087#1086#1076#1082#1083#1102#1095#1077#1085#1080#1103' '#1082' '#1101#1090#1086#1084#1091' '#1091#1089#1090#1088#1086#1081#1089#1090#1074#1091
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -13
-      Font.Name = 'Tahoma'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-      WordWrap = True
-    end
-    object Label3: TLabel
-      Left = 7
-      Top = 84
-      Width = 151
-      Height = 16
-      AutoSize = False
-      Caption = #1055#1072#1088#1086#1083#1100':'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -13
-      Font.Name = 'Tahoma'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-    end
-    object Label7: TLabel
-      Left = 7
-      Top = 110
-      Width = 151
-      Height = 16
-      AutoSize = False
-      Caption = #1055#1086#1076#1090#1074#1077#1088#1078#1076#1077#1085#1080#1077' '#1087#1072#1088#1086#1083#1103':'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -13
-      Font.Name = 'Tahoma'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-    end
     object lEULA: TLabel
       Left = 8
-      Top = 142
+      Top = 154
       Width = 399
       Height = 16
       Alignment = taCenter
@@ -123,8 +76,8 @@ object fAcceptEULA: TfAcceptEULA
     end
     object Label5: TLabel
       Left = 8
-      Top = 164
-      Width = 399
+      Top = 176
+      Width = 425
       Height = 33
       Alignment = taCenter
       AutoSize = False
@@ -140,26 +93,9 @@ object fAcceptEULA: TfAcceptEULA
       Transparent = True
       WordWrap = True
     end
-    object Label8: TLabel
-      Left = 6
-      Top = 54
-      Width = 401
-      Height = 17
-      Alignment = taCenter
-      AutoSize = False
-      Caption = #1045#1089#1083#1080' '#1085#1077' '#1093#1086#1090#1080#1090#1077' '#1088#1072#1079#1088#1077#1096#1072#1090#1100' '#1087#1086#1076#1082#1083#1102#1095#1077#1085#1080#1077', '#1086#1089#1090#1072#1074#1100#1090#1077' '#1087#1086#1083#1103' '#1087#1091#1089#1090#1099#1084#1080
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -13
-      Font.Name = 'Tahoma'
-      Font.Style = []
-      ParentFont = False
-      Transparent = True
-      WordWrap = True
-    end
     object bOK: TButton
-      Left = 187
-      Top = 203
+      Left = 213
+      Top = 215
       Width = 107
       Height = 29
       Caption = #1054#1050
@@ -173,8 +109,8 @@ object fAcceptEULA: TfAcceptEULA
       OnClick = bOKClick
     end
     object bClose: TButton
-      Left = 300
-      Top = 203
+      Left = 326
+      Top = 215
       Width = 107
       Height = 29
       Caption = #1054#1058#1052#1045#1053#1040
@@ -188,33 +124,88 @@ object fAcceptEULA: TfAcceptEULA
       TabOrder = 1
       OnClick = bCloseClick
     end
-    object ePassword: TEdit
-      Left = 169
-      Top = 81
-      Width = 238
-      Height = 24
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -13
-      Font.Name = 'Tahoma'
-      Font.Style = []
-      ParentFont = False
-      PasswordChar = '*'
+    object GroupBox1: TGroupBox
+      Left = 8
+      Top = 34
+      Width = 425
+      Height = 111
+      Caption = #1042#1074#1077#1076#1080#1090#1077' '#1087#1072#1088#1086#1083#1100' '#1076#1083#1103' '#1091#1076#1072#1083#1077#1085#1085#1086#1075#1086' '#1087#1086#1076#1082#1083#1102#1095#1077#1085#1080#1103' '#1082' '#1101#1090#1086#1084#1091' '#1091#1089#1090#1088#1086#1081#1089#1090#1074#1091
       TabOrder = 2
-    end
-    object ePasswordConfirm: TEdit
-      Left = 169
-      Top = 107
-      Width = 238
-      Height = 24
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -13
-      Font.Name = 'Tahoma'
-      Font.Style = []
-      ParentFont = False
-      PasswordChar = '*'
-      TabOrder = 3
+      object Label8: TLabel
+        Left = 0
+        Top = 22
+        Width = 413
+        Height = 17
+        Alignment = taCenter
+        AutoSize = False
+        Caption = #1045#1089#1083#1080' '#1085#1077' '#1093#1086#1090#1080#1090#1077' '#1088#1072#1079#1088#1077#1096#1072#1090#1100' '#1087#1086#1076#1082#1083#1102#1095#1077#1085#1080#1077', '#1086#1089#1090#1072#1074#1100#1090#1077' '#1087#1086#1083#1103' '#1087#1091#1089#1090#1099#1084#1080
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+        Transparent = True
+        WordWrap = True
+      end
+      object Label3: TLabel
+        Left = 9
+        Top = 48
+        Width = 151
+        Height = 16
+        AutoSize = False
+        Caption = #1055#1072#1088#1086#1083#1100':'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -13
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+        Transparent = True
+      end
+      object Label7: TLabel
+        Left = 9
+        Top = 83
+        Width = 151
+        Height = 16
+        AutoSize = False
+        Caption = #1055#1086#1076#1090#1074#1077#1088#1078#1076#1077#1085#1080#1077' '#1087#1072#1088#1086#1083#1103':'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -13
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+        Transparent = True
+      end
+      object ePasswordConfirm: TEdit
+        Left = 171
+        Top = 45
+        Width = 246
+        Height = 24
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -13
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+        PasswordChar = '*'
+        TabOrder = 0
+      end
+      object ePassword: TEdit
+        Left = 171
+        Top = 75
+        Width = 246
+        Height = 24
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -13
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+        PasswordChar = '*'
+        TabOrder = 1
+      end
     end
   end
 end
