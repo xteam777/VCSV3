@@ -11,7 +11,8 @@ uses
   DX12.D3DCommon,
   DX12.DXGI,
   DX12.DXGI1_2,
-  Vcl.Graphics;
+  Vcl.Graphics,
+  Math;
 //  , rtcLog, SysUtils;
 
 type
@@ -33,8 +34,15 @@ type
     FMoveCount: Integer;
     FDirtyRects: PRECT; // array of
     FDirtyCount: Integer;
+
+    BytesInRow : integer;
+    BitmapP1, BitmapP2 : PByte;
+    FirstDraw : boolean;
+    procedure DrawArea(X1, Y1, X2, Y2 : Integer);
+
   public
     Bitmap: TBitmap;
+    OptimDrawAlg : integer; // 0 - default, 1 - draw algorithm #1, 2 - draw algorithm #2
     constructor Create(var fCreated: Boolean);
     destructor Destroy; override;
     function GetFrame(var fNeedRecreate: Boolean): Boolean;
@@ -68,6 +76,8 @@ var
   O1: IDXGIOutput1;
 begin
   fCreated := False;
+
+  FirstDraw := true;
 
 //  Sleep(10000);
   FError := D3D11CreateDevice(
@@ -220,13 +230,31 @@ begin
     FDuplicate.ReleaseFrame;
 end;
 
+procedure TDesktopDuplicationWrapper.DrawArea(X1, Y1, X2, Y2 : Integer);
+var
+  i, BytesToCopy : integer;
+  P1Cur, P2Cur : PByte;
+begin
+  P1Cur := BitmapP1 + (X1 shl 2) + Y1 * BytesInRow;
+  P2Cur := BitmapP2 + (X1 shl 2) - Y1 * BytesInRow;
+  BytesToCopy := (X2 - X1) shl 2;
+
+  for i := Y1 to Y2 - 1 do
+  begin
+    Move(P1Cur^, P2Cur^, BytesToCopy);
+    Inc(P1Cur, BytesInRow);
+    Dec(P2Cur, BytesInRow);
+  end;
+end;
+
+
 function TDesktopDuplicationWrapper.DrawFrame(var Bitmap: TBitmap): Boolean;
 var
   Desc: TD3D11_TEXTURE2D_DESC;
   Temp: ID3D11Texture2D;
   Resource: TD3D11_MAPPED_SUBRESOURCE;
-  i: Integer;
-  p: PByte;
+  i, RId, X1, Y1, X2, Y2 : Integer;
+  p : pbyte;
 begin
   Result := False;
 
@@ -259,14 +287,73 @@ begin
 
   // get texture bits
   FContext.Map(Temp, 0, D3D11_MAP_READ_WRITE, 0, Resource);
-  p := Resource.pData;
 
+  BytesInRow := Desc.Width shl 2;
+  BitmapP1 := Resource.pData;
+  BitmapP2 := Bitmap.ScanLine[0];
+
+  if FirstDraw then
+  begin
+    FirstDraw := false;
+    DrawArea(0, 0, Desc.Width, Desc.Height);
+  end else
+    case OptimDrawAlg of
+    0 : begin // default algorithm
+         DrawArea(0, 0, Desc.Width, Desc.Height);
+        end;
+    1 : begin // objects almost do not cross with each other
+
+          // Painting MoveRects
+          for RId := 0 to MoveCount - 1 do
+            DrawArea(MoveRects[RId].DestinationRect.Left, MoveRects[RId].DestinationRect.Top,
+              MoveRects[RId].DestinationRect.Right, MoveRects[RId].DestinationRect.Bottom);{Min(MoveRects[RId].SourcePoint.X, Min(MoveRects[RId].DestinationRect.Left, MoveRects[RId].DestinationRect.Right)),
+                     Min(MoveRects[RId].SourcePoint.Y, Min(MoveRects[RId].DestinationRect.Top, MoveRects[RId].DestinationRect.Bottom)),
+                     Max(MoveRects[RId].SourcePoint.X, Max(MoveRects[RId].DestinationRect.Left, MoveRects[RId].DestinationRect.Right)),
+                     Max(MoveRects[RId].SourcePoint.Y, Max(MoveRects[RId].DestinationRect.Top, MoveRects[RId].DestinationRect.Bottom)));
+                      }
+
+          // Painting DirtyRects
+          for RId := 0 to DirtyCount - 1 do
+            DrawArea(DirtyRects[RId].Left, DirtyRects[RId].Top,
+                     DirtyRects[RId].Right, DirtyRects[RId].Bottom);
+
+        end;
+    2 : begin // objects crosses with each other much
+          // Ischem koordinati priamougolnika, kotorii vkluchaet
+          // vse priamougolniki MoveRects i DrityRects
+          X1 := 1 shl 30;
+          Y1 := 1 shl 30;
+          X2 := 0;
+          Y2 := 0;
+
+          for RId := 0 to MoveCount - 1 do
+          begin
+            X1 := Min(X1, MoveRects[RId].DestinationRect.Left);
+            Y1 := Min(Y1, MoveRects[RId].DestinationRect.Top);
+            X2 := Max(X2, MoveRects[RId].DestinationRect.Right);
+            Y2 := Max(Y2, MoveRects[RId].DestinationRect.Bottom);
+          end;
+
+          for RId := 0 to DirtyCount - 1 do
+          begin
+            X1 := Min(X1, DirtyRects[RId].Left);
+            Y1 := Min(Y1, DirtyRects[RId].Top);
+            X2 := Max(X2, DirtyRects[RId].Right);
+            Y2 := Max(Y2, DirtyRects[RId].Bottom);
+          end;
+
+          DrawArea(X1, Y1, X2, Y2);
+        end;
+    end;
   // copy pixels - we assume a 32bits bitmap !
+  {
+  p := Resource.pData;
   for i := 0 to Desc.Height - 1 do
   begin
     Move(p^, Bitmap.ScanLine[i]^, 4 * Desc.Width);
     Inc(p, 4 * Desc.Width);
-  end;
+  end; }
+
 
   FContext.Unmap(FTexture, 0); //Это нужно?
   FTexture := nil;

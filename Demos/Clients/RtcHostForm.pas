@@ -7332,7 +7332,7 @@ begin
           and ((asInteger['LockedState'] = LCK_STATE_LOCKED)
             or (asInteger['LockedState'] = LCK_STATE_SAS)) then
         begin
-          SetStatusStringDelayed('Устройство партнера заблокировано. Подключение невозможно');
+          SetStatusStringDelayed('Устройство партнера заблокировано. Подключение запрещено');
           DeletePendingRequest(asWideString['UserToConnect'], asString['action']);
         end
         else
