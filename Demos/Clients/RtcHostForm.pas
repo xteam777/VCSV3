@@ -5462,8 +5462,9 @@ procedure TMainForm.tCheckLockedStateTimer(Sender: TObject);
 begin
 //  XLog('tCheckLockedStateTimer');
 
-  if (not IsServiceStarted(RTC_HOSTSERVICE_NAME))
-    and (LowerCase(GetInputDesktopName) <> 'default') then
+//  if (not IsServiceStarted(RTC_HOSTSERVICE_NAME))
+//    and
+  if (LowerCase(GetInputDesktopName) <> 'default') then
     ScreenLockedState := LCK_STATE_LOCKED
   else
   if {tPHostThread.FDesktopHost.HaveScreen
