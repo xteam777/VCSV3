@@ -5508,8 +5508,8 @@ begin
 end;
 
 procedure TMainForm.SetScreenLockedState(AValue: Integer);
-var
-  desk: String;
+//var
+//  desk: String;
 begin
   //XLog('SetScreenLockedState');
 
