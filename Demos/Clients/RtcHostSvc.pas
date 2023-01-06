@@ -763,8 +763,8 @@ procedure TStartThread.StartClientInSession(SessionID: Cardinal; doStartHelper, 
 var
   ProcessId: Cardinal;
 begin
-HelperConsoleTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_x64.exe';
-HelperTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_w32.exe';
+//HelperConsoleTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_x64.exe';
+//HelperTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_w32.exe';
 
   if doStartHelper then
   begin
