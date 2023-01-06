@@ -38,6 +38,7 @@ const
   QT_SENDONMON = 15;
   QT_SENDLCKSYS = 16;
   QT_SENDLOGOFF = 17;
+  QT_GETDATA = 18;
 
 var
   MainFormHandle: THandle;

@@ -161,4 +161,14 @@ object RemoxService: TRemoxService
     Left = 239
     Top = 101
   end
+  object tCheckLockedState: TTimer
+    Interval = 100
+    OnTimer = tCheckLockedStateTimer
+    Left = 125
+    Top = 130
+  end
+  object rHostLockedStateUpdate: TRtcResult
+    Left = 197
+    Top = 103
+  end
 end

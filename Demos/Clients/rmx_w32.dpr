@@ -18,7 +18,10 @@ uses
   Cromis.Comm.Custom,
   Cromis.Comm.IPC,
   Cromis.Threading,
-  Execute.DesktopDuplicationAPI;
+  Execute.DesktopDuplicationAPI,
+  rtcWinLogon,
+  WtsApi,
+  uVircessTypes;
 
 //  rtcWinlogon,
   //FastDIB in 'Lib\FastDIB.pas';
@@ -2563,6 +2566,18 @@ begin
   begin
     // Lock System
     LogoffSystem;
+  end
+  else
+  if Request.Data.ReadInteger('QueryType') = QT_GETDATA then
+  begin
+    if (LowerCase(GetInputDesktopName) <> 'default') then
+      Response.Data.WriteInteger('LockedState', LCK_STATE_LOCKED)
+    else
+    if {tPHostThread.FDesktopHost.HaveScreen
+      and} (GetCurrentSesstionState = WTSActive) then
+      Response.Data.WriteInteger('LockedState', LCK_STATE_UNLOCKED)
+    else
+      Response.Data.WriteInteger('LockedState', LCK_STATE_LOCKED);
   end;
 end;
 
