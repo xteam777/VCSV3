@@ -7333,7 +7333,7 @@ begin
             or (asInteger['LockedState'] = LCK_STATE_SAS)) then
         begin
           SetStatusStringDelayed('Устройство партнера заблокировано. Подключение невозможно');
-          DeletePendingRequest(asWideString['user'], asString['action']);
+          DeletePendingRequest(asWideString['UserToConnect'], asString['action']);
         end
         else
         begin
