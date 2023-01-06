@@ -176,7 +176,6 @@ const
   RTC_HOSTSERVICE_NAME = 'RemoxService'; //Должны отличаться, иначе служба не запустится
   RTC_HOSTSERVICE_DISPLAY_NAME = 'Remox';
 
-
 implementation
 
 
