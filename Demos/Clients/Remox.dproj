@@ -99,7 +99,6 @@
         <BT_BuildType>Debug</BT_BuildType>
         <UWP_DelphiLogo44>C:\_vircess\VCSV3\Demos\Clients\48x48-3.png</UWP_DelphiLogo44>
         <UWP_DelphiLogo150>C:\_vircess\VCSV3\Demos\Clients\240x240-3.png</UWP_DelphiLogo150>
-        <Debugger_RunParams>/INSTALL</Debugger_RunParams>
     </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">
@@ -167,6 +166,9 @@
             <Form>fmBlankoutForm</Form>
         </DCCReference>
         <DCCReference Include="uSetup.pas"/>
+        <DCCReference Include="uAcceptEula.pas">
+            <Form>fAcceptEULA</Form>
+        </DCCReference>
         <RcItem Include="rmx_w32.exe">
             <ContainerId>ResourceItem</ContainerId>
             <ResourceType>RCDATA</ResourceType>

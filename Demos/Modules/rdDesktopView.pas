@@ -318,14 +318,14 @@ end;
 //  end;
 //end;
 
-function checkControl:string;
-begin
-  {$IFNDEF RtcViewer}
-  Result:='Control';
-  {$ELSE}
-  Result:='View';
-  {$ENDIF}
-end;
+//function checkControl:string;
+//begin
+//  {$IFNDEF RtcViewer}
+//  Result:='Control';
+//  {$ELSE}
+//  Result:='View';
+//  {$ENDIF}
+//end;
 
 {$IFNDEF RtcViewer}
 procedure TrdDesktopViewer.aBlockKeyboardMouseExecute(Sender: TObject);
@@ -867,7 +867,7 @@ begin
 //  BringWindowToTop(Handle);
 
   aHideWallpaper.Checked := True;
-  UI.Send_HideDesktop(Sender);
+//  UI.Send_HideDesktop(Sender);
 //  aOptimalScale.Checked := UI.SmoothScale;
 
   {$IFNDEF RtcViewer}
@@ -976,8 +976,8 @@ end;
 
 procedure TrdDesktopViewer.ScrollMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
   begin
-  if MyUI.ControlMode = rtcpNoControl then
-    Exit;
+//  if MyUI.ControlMode = rtcpNoControl then
+//    Exit;
 
   //if not (panSettings.Visible or panOptions.Visible) then
   //  begin
@@ -1013,11 +1013,11 @@ procedure TrdDesktopViewer.ScrollMouseMove(Sender: TObject; Shift: TShiftState; 
 
 procedure TrdDesktopViewer.pImageMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
 begin
-  if MyUI.ControlMode = rtcpNoControl then
-    begin
-    if LMouseD then
-      SetBounds(Left+X-LMouseX,Top+Y-LMouseY,Width,Height);
-    end;
+//  if MyUI.ControlMode = rtcpNoControl then
+//    begin
+//    if LMouseD then
+//      SetBounds(Left+X-LMouseX,Top+Y-LMouseY,Width,Height);
+//    end;
 //  else if not (LMouseDown or RMouseDown) then
 //    begin
 ////    if panOptions.Visible then
@@ -1044,16 +1044,16 @@ end;
 
 procedure TrdDesktopViewer.pImageMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
   begin
-  if myUI.ControlMode=rtcpNoControl then
-    begin
-    if Button=mbLeft then
-      begin
-      LMouseD:=True;
-      LMouseX:=X;LMouseY:=Y;
-      end;
-    end
-  else
-    begin
+//  if myUI.ControlMode=rtcpNoControl then
+//    begin
+//    if Button=mbLeft then
+//      begin
+//      LMouseD:=True;
+//      LMouseX:=X;LMouseY:=Y;
+//      end;
+//    end
+//  else
+//    begin
     if Button=mbLeft then LMouseDown:=True;
     if Button=mbRight then RMouseDown:=True;
 //    if (panOptions.Visible or panSettings.Visible) then
@@ -1062,7 +1062,7 @@ procedure TrdDesktopViewer.pImageMouseDown(Sender: TObject; Button: TMouseButton
 //      panOptions.Visible:=False;
 //      panSettings.Visible:=False;
 //      end;
-    end;
+//    end;
   end;
 
 procedure TrdDesktopViewer.btnSettingsClick(Sender: TObject);
@@ -1656,18 +1656,18 @@ end;
 
 procedure TrdDesktopViewer.pImageMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
-  if MyUI.ControlMode = rtcpNoControl then
-  begin
-    if Button = mbLeft then
-      LMouseD := False;
-  end
-  else
-  begin
+//  if MyUI.ControlMode = rtcpNoControl then
+//  begin
+//    if Button = mbLeft then
+//      LMouseD := False;
+//  end
+//  else
+//  begin
     if Button = mbLeft then
       LMouseDown := False;
     if Button = mbRight then
       RMouseDown := False;
-  end;
+//  end;
 end;
 
 procedure TrdDesktopViewer.grpColorLowChange(Sender: TObject);
@@ -1793,23 +1793,23 @@ procedure TrdDesktopViewer.pImageDblClick(Sender: TObject);
 var
   cw, ch:integer;
 begin
-if myUI.ControlMode = rtcpNoControl then
-  if BorderStyle = bsSizeable then
-  begin
-    cw := ClientWidth;
-    ch := ClientHeight;
-    BorderStyle := bsNone;
-    ClientWidth := cw;
-    ClientHeight := ch;
-  end
-  else
-  begin
-    cw := ClientWidth;
-    ch := ClientHeight;
-    BorderStyle := bsSizeable;
-    ClientWidth := cw;
-    ClientHeight := ch;
-  end;
+//if myUI.ControlMode = rtcpNoControl then
+//  if BorderStyle = bsSizeable then
+//  begin
+//    cw := ClientWidth;
+//    ch := ClientHeight;
+//    BorderStyle := bsNone;
+//    ClientWidth := cw;
+//    ClientHeight := ch;
+//  end
+//  else
+//  begin
+//    cw := ClientWidth;
+//    ch := ClientHeight;
+//    BorderStyle := bsSizeable;
+//    ClientWidth := cw;
+//    ClientHeight := ch;
+//  end;
 end;
 
 //procedure PostKeyExHWND(hWindow: HWnd; key: Word; const shift: TShiftState;

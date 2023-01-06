@@ -922,18 +922,18 @@ begin
   CurPath := IncludeTrailingBackslash(FDirectory);
   FileName := CurPath + FName;
   // ".." (go up)
-  with Items.Add do
-  begin
-    Caption := '..'; // Name 0
-    ImageIndex := GetDirIconIndex(true);
-    SubItems.Add('[Назад]'); // Type 1
-    SubItems.Add(''); // Size 2
-    SubItems.Add(''); // Modified 3
-    SubItems.Add(''); // Attributes 4
-    SubItems.Add('..'); // Full path 5
-    SubItems.Add('dir'); // 6
-    SubItems.Add('0'); // 7
-  end;
+//  with Items.Add do
+//  begin
+//    Caption := '..'; // Name 0
+//    ImageIndex := GetDirIconIndex(true);
+//    SubItems.Add('[Назад]'); // Type 1
+//    SubItems.Add(''); // Size 2
+//    SubItems.Add(''); // Modified 3
+//    SubItems.Add(''); // Attributes 4
+//    SubItems.Add('..'); // Full path 5
+//    SubItems.Add('dir'); // 6
+//    SubItems.Add('0'); // 7
+//  end;
   for i := 1 to FData.RowCount do
   begin
     FName := FData.asText['file'];

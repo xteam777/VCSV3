@@ -1460,6 +1460,7 @@ begin
 //      begin
       FDesktopControl.ChgDesktop_ColorLowLimit(rd_ColorHigh);
 //      FDesktopControl.ChgDesktop_ColorReducePercent(cbReduceColors.Value);
+    FDesktopControl.Send_HideDesktop(FUserName);
     FDesktopControl.ChgDesktop_End(FUserName);
 
     FDesktopControl.Open(FUserName);
@@ -7303,9 +7304,9 @@ begin
       SetStatusStringDelayed('Партнер не в сети. Подключение невозможно');
 //      SetStatusStringDelayed('Готов к подключению', 2000);
 
-    PRItem := GetPendingItemByUserName(asWideString['user'], asString['action']);
-    if PRItem = nil then
-      Exit;
+      PRItem := GetPendingItemByUserName(asWideString['user'], asString['action']);
+      if PRItem = nil then
+        Exit;
 
 //      DoGetDeviceState(eAccountUserName.Text,
 //        PClient.LoginUserName,
@@ -7326,158 +7327,22 @@ begin
 
       if not PartnerIsPending(asWideString['user'], asString['action'], asString['Address']) then
       begin
+        if (asWideString['action'] <> 'desk')
+          and ((asInteger['LockedState'] = LCK_STATE_LOCKED)
+            or (asInteger['LockedState'] = LCK_STATE_SAS)) then
+        begin
+          SetStatusStringDelayed('Устройство партнера заблокировано. Подключение невозможно');
+          DeletePendingRequest(asWideString['user'], asString['action']);
+        end
+        else
+        begin
 //        AddPendingRequest(asWideString['user'], asString['action'], asString['Address'] + ':' +  asString['Port'], 0);
-        TSendDestroyClientToGatewayThread.Create(False, asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['user'] + '_' + asWideString['action'] + '_', False);
-        PortalThread := TPortalThread.Create(False, asWideString['UserToConnect'], asWideString['action'], asString['Address'], True); //Для каждого соединения новый клиент
-        PRItem^.Gateway := asString['Address'];
-        PRItem^.ThreadID := PortalThread.ThreadID;
-//        New(PRItem);
-//        PRItem.UserName := asWideString['user'];
-//        PRItem.Gateway := asString['Address'] + ':' + asString['Port'];
-//        PRItem.Action := asString['action'];
-//        PRItem.GatewayRec := GatewayRec;
-//        PendingRequests.Add(PRItem);
-//        CurrentPendingItem := PRItem;
-//        SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True);
-      end
-      else
-//        SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True);
-//        btnViewDesktop.Caption := 'ПРЕРВАТЬ';
-//        btnViewDesktop.Color := RGB(232, 17, 35);
-
-//      sUID := GetUniqueString;
-//      if GatewayRec = nil then
-//      begin
-//        New(GatewayClient);
-//        GatewayClient^ := TRtcHttpPortalClient.Create(Self);
-//        GatewayClient^.Name := 'PClient_' + sUID;
-//        GatewayClient^.LoginUserName := PClient.LoginUserName + '_' + sUID; //IntToStr(GatewayClientsList.Count + 1);
-//        GatewayClient^.LoginUserInfo.asText['RealName'] := PClient.LoginUserInfo.asText['RealName'];
-//        GatewayClient^.LoginPassword := PClient.LoginPassword;
-//        GatewayClient^.AutoSyncEvents := PClient.AutoSyncEvents;
-//        GatewayClient^.DataCompress := PClient.DataCompress;
-//        GatewayClient^.DataEncrypt := PClient.DataEncrypt;
-//        GatewayClient^.DataForceEncrypt := PClient.DataForceEncrypt;
-//        GatewayClient^.DataSecureKey := PClient.DataSecureKey;
-//        GatewayClient^.GateAddr := asString['Address'];
-//        GatewayClient^.GatePort := asString['Port'];
-//        GatewayClient^.Gate_CryptPlugin := PClient.Gate_CryptPlugin;
-//        GatewayClient^.Gate_ISAPI := PClient.Gate_ISAPI;
-//        GatewayClient^.Gate_Proxy := PClient.Gate_Proxy;
-//        GatewayClient^.Gate_ProxyAddr := PClient.Gate_ProxyAddr;
-//        GatewayClient^.Gate_ProxyBypass := PClient.Gate_ProxyBypass;
-//        GatewayClient^.Gate_ProxyPassword := PClient.Gate_ProxyPassword;
-//        GatewayClient^.Gate_ProxyUserName := PClient.Gate_ProxyUserName;
-//        GatewayClient^.Gate_SSL := PClient.Gate_SSL;
-//        GatewayClient^.Gate_Timeout := PClient.Gate_Timeout;
-//        GatewayClient^.Gate_WinHttp := PClient.Gate_WinHttp;
-////        GatewayClient^.GParamsLoaded := PClient.GParamsLoaded;
-//        GatewayClient^.GRestrictAccess := PClient.GRestrictAccess;
-//        GatewayClient^.GSuperUsers := PClient.GSuperUsers;
-//        GatewayClient^.GUsers := PClient.GUsers;
-//        GatewayClient^.GwStoreParams := PClient.GwStoreParams;
-//        GatewayClient^.MultiThreaded := PClient.MultiThreaded;
-//        GatewayClient^.RetryFirstLogin := PClient.RetryFirstLogin;
-//        GatewayClient^.RetryOtherCalls := PClient.RetryOtherCalls;
-//        GatewayClient^.UserNotify := PClient.UserNotify;
-//        GatewayClient^.UserVisible := PClient.UserVisible;
-//        GatewayClient^.OnError := PClientError;
-//        GatewayClient^.OnFatalError := PClientFatalError;
-//        GatewayClient^.OnLogIn := PClientLogIn;
-//        GatewayClient^.OnLogOut := PClientLogOut;
-//        GatewayClient^.OnParams := PClientParams;
-//        GatewayClient^.OnStart := PClientStart;
-//        GatewayClient^.OnStatusGet := PClientStatusGet;
-//        GatewayClient^.OnStatusPut := PClientStatusPut;
-//        GatewayClient^.OnUserLoggedIn := PClientUserLoggedIn;
-//        GatewayClient^.OnUserLoggedOut := PClientUserLoggedOut;
-//
-//        DesktopControl := nil;
-//        FileTransfer := nil;
-//        if asString['action'] = 'desk' then
-//        begin
-//          New(DesktopControl);
-//          DesktopControl^ := TRtcPDesktopControl.Create(Self);
-//          DesktopControl^.Name := 'PDesktopControl_' + sUID;
-//          DesktopControl^.Client := GatewayClient^;
-//          DesktopControl^.SendShortcuts := PDesktopControl.SendShortcuts;
-//          DesktopControl^.OnNewUI := PDesktopControlNewUI;
-//        end
-//        else
-//        if asString['action'] = 'file' then
-//        begin
-//          New(FileTransfer);
-//          FileTransfer^ := TRtcPFileTransfer.Create(Self);
-//          FileTransfer^.Name := 'PFileTransfer_' + sUID;
-//          FileTransfer^.Client := GatewayClient^;
-//          FileTransfer^.AccessControl := PFileTrans.AccessControl;
-//          FileTransfer^.BeTheHost := False;
-//          FileTransfer^.FileInboxPath := PFileTrans.FileInboxPath;
-//          FileTransfer^.GAllowBrowse := PFileTrans.GAllowBrowse;
-//          FileTransfer^.GAllowBrowse_Super := PFileTrans.GAllowBrowse_Super;
-//          FileTransfer^.GAllowDownload := PFileTrans.GAllowDownload;
-//          FileTransfer^.GAllowDownload_Super := PFileTrans.GAllowDownload_Super;
-//          FileTransfer^.GAllowFileDelete := PFileTrans.GAllowFileDelete;
-//          FileTransfer^.GAllowFileDelete_Super := PFileTrans.GAllowFileDelete_Super;
-//          FileTransfer^.GAllowFileMove := PFileTrans.GAllowFileMove;
-//          FileTransfer^.GAllowFileMove_Super := PFileTrans.GAllowFileMove_Super;
-//          FileTransfer^.GAllowFileRename := PFileTrans.GAllowFileRename;
-//          FileTransfer^.GAllowFolderCreate := PFileTrans.GAllowFolderCreate;
-//          FileTransfer^.GAllowFolderCreate_Super := PFileTrans.GAllowFolderCreate_Super;
-//          FileTransfer^.GAllowFolderDelete := PFileTrans.GAllowFolderDelete;
-//          FileTransfer^.GAllowFolderDelete_Super := PFileTrans.GAllowFolderDelete_Super;
-//          FileTransfer^.GAllowFolderMove := PFileTrans.GAllowFolderMove;
-//          FileTransfer^.GAllowFolderMove_Super := PFileTrans.GAllowFolderMove_Super;
-//          FileTransfer^.GAllowFolderRename := PFileTrans.GAllowFolderRename;
-//          FileTransfer^.GAllowShellExecute := PFileTrans.GAllowShellExecute;
-//          FileTransfer^.GAllowShellExecute_Super := PFileTrans.GAllowShellExecute_Super;
-//          FileTransfer^.GAllowUpload := PFileTrans.GAllowUpload;
-//          FileTransfer^.GAllowUpload_Super := PFileTrans.GAllowUpload_Super;
-//          FileTransfer^.GUploadAnywhere := PFileTrans.GUploadAnywhere;
-//          FileTransfer^.GUploadAnywhere_Super := PFileTrans.GUploadAnywhere_Super;
-//          FileTransfer^.GwStoreParams := PFileTrans.GwStoreParams;
-//          FileTransfer^.MaxSendChunkSize := PFileTrans.MaxSendChunkSize;
-//          FileTransfer^.MinSendChunkSize := PFileTrans.MinSendChunkSize;
-//          FileTransfer^.OnNewUI := PFileTransExplorerNewUI; //Для контроля указываем эксплорер
-//          FileTransfer^.OnUserJoined := PModuleUserJoined;
-//          FileTransfer^.OnUserLeft := PModuleUserLeft;
-//        end
-//        else
-//        if asString['action'] = 'chat' then
-//        begin
-//          New(Chat);
-//          Chat^ := TRtcPChat.Create(Self);
-//          Chat^.Name := 'PChat_' + sUID;
-//          Chat^.Client := GatewayClient^;
-//          Chat^.AccessControl := PChat.AccessControl;
-//          Chat^.BeTheHost := False;
-//          Chat^.GAllowJoin := PChat.GAllowJoin;
-//          Chat^.GAllowJoin_Super := PChat.GAllowJoin_Super;
-//          Chat^.GwStoreParams := PChat.GwStoreParams;
-//          Chat^.OnNewUI := PChatNewUI;
-//          Chat^.OnUserJoined := PModuleUserJoined;
-//          Chat^.OnUserLeft := PModuleUserLeft;
-//        end;
-//        GatewayRec := AddGatewayClient(GatewayClient, DesktopControl, FileTransfer, Chat);
-//
-////        if GatewayClient^.LoginUserName <> '' then
-////        begin
-////          GatewayClient^.Disconnect;
-////          GatewayClient^.Active := False;
-////          GatewayClient^.GParamsLoaded:=True;
-//          //GatewayClient^.Active := True;
-////        end;
-//      end
-//      else
-////        if not GatewayRec^.GatewayClient^.Active then
-////        begin
-////          GatewayRec^.GatewayClient^.Disconnect;
-////          GatewayRec^.GatewayClient^.Active := False;
-////          GatewayRec^.GatewayClient^.GParamsLoaded:=True;
-//          //GatewayRec^.GatewayClient^.Active := True;
-////        end;
-//
-//      GatewayClient^.Active := True;
+          TSendDestroyClientToGatewayThread.Create(False, asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['user'] + '_' + asWideString['action'] + '_', False);
+          PortalThread := TPortalThread.Create(False, asWideString['UserToConnect'], asWideString['action'], asString['Address'], True); //Для каждого соединения новый клиент
+          PRItem^.Gateway := asString['Address'];
+          PRItem^.ThreadID := PortalThread.ThreadID;
+        end;
+      end;
 
       //Добавим в историю при успешном логине
       if StoreHistory then
@@ -7548,7 +7413,7 @@ begin
         ConnectToPartnerStart(asWideString['user'], username, PassForm.ePassword.Text, asString['action'])
       else
       begin
-        DeletePendingRequest(asWideString['user'], 'desk');
+        DeletePendingRequest(asWideString['user'], asString['action']);
 
 //        if GetPendingRequestsCount > 0 then
 //          SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
@@ -8567,13 +8432,13 @@ procedure TMainForm.SendLockedStateToGateway;
 begin
 //  XLog('SendLockedStateToGateway');
 
-  //Хост должен быть включен в клиенте только если не запущена служба на десктопной версии или если сервер
-  if IsWinServer
-    or ((not IsServiceStarted(RTC_HOSTSERVICE_NAME))
-      and (not IsServiceStarting(RTC_HOSTSERVICE_NAME))) then
-  begin
-    if eUserName.Text = '-' then
-      Exit;
+  //Хост должен быть включен в клиенте только если не запущена служба на десктопной версии или на сервере
+//  if IsWinServer
+//    or ((not IsServiceStarted(RTC_HOSTSERVICE_NAME))
+//      and (not IsServiceStarting(RTC_HOSTSERVICE_NAME))) then
+//  begin
+//    if eUserName.Text = '-' then
+//      Exit;
 
     with cmAccounts do
     try
@@ -8587,7 +8452,7 @@ begin
       on E: Exception do
         Data.Clear;
     end;
-  end;
+//  end;
 end;
 
 procedure TMainForm.rbChatClick(Sender: TObject);
@@ -9139,7 +9004,7 @@ begin
   // Hack to fix the "by design" behaviour of popups from notification area icons.
   // See: http://support.microsoft.com/kb/135788
 //  BringToFront();
-  SetForegroundWindow(Self.Handle);
+//  SetForegroundWindow(Self.Handle);
 end;
 
 procedure TMainForm.PChatNewUI(Sender: TRtcPChat; const user:string);

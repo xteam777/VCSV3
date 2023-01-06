@@ -15,7 +15,7 @@ uses
 {$ENDIF}
 
   rtcSystem, rtcpFileExplore, rtcpFileTransUI, ShellAPI, Menus, AppEvnts, ImgList, Vcl.Samples.Gauges, System.ImageList,
-  rtcPortalMod, rtcpFileTrans, uVircessTypes, CommonUtils;
+  rtcPortalMod, rtcpFileTrans, uVircessTypes, CommonUtils, rtcScrUtils;
 
 type
   TrdFileTransfer = class(TForm)
@@ -50,11 +50,11 @@ type
     b_rv2: TSpeedButton;
     Panel11: TPanel;
     Image1: TImage;
-    Label1: TLabel;
+    lRemoteName: TLabel;
     Label2: TLabel;
     Panel12: TPanel;
     Image2: TImage;
-    Label3: TLabel;
+    lLocalName: TLabel;
     Label4: TLabel;
     b_hm: TSpeedButton;
     b_up: TSpeedButton;
@@ -278,10 +278,17 @@ implementation
 
 procedure TrdFileTransfer.SetCaption;
 begin
+  lLocalName.Caption := Get_ComputerName;
   if myUI.UserDesc <> '' then
-    Caption := myUI.UserDesc + ' - Files transferring'
+  begin
+    Caption := myUI.UserDesc + ' - Передача файлов';
+    lRemoteName.Caption := myUI.UserDesc;
+  end
   else
-    Caption := RemoveUserPrefix(myUI.UserName) + ' - Files transferring';
+  begin
+    Caption := RemoveUserPrefix(myUI.UserName) + ' - Передача файлов';
+    lRemoteName.Caption := RemoveUserPrefix(myUI.UserName);
+  end;
 end;
 
 procedure TrdFileTransfer.Form_Open(const mode: string);
@@ -307,7 +314,7 @@ procedure TrdFileTransfer.Form_Close(const mode: string);
 
 procedure TrdFileTransfer.CreateParams(Var params: TCreateParams);
   begin
-  inherited CreateParams( params );
+  inherited CreateParams(params);
   params.ExStyle := params.ExStyle or WS_EX_APPWINDOW;
   params.WndParent := GetDeskTopWindow;
   end;
@@ -347,13 +354,12 @@ procedure TrdFileTransfer.AcceptFiles( var msg : TMessage );
   end;
 
 procedure TrdFileTransfer.FormCreate(Sender: TObject);
-  begin
-  application.HintHidePause:= 10000;
-  cur_files:= TStringList.create;
+begin
+  application.HintHidePause := 10000;
+  cur_files := TStringList.Create;
 
-  DragAcceptFiles( Handle, True );
-
-  end;
+  DragAcceptFiles(Handle, True);
+end;
 
 {function TrdFileTransfer.GetUI: TRtcPFileTransferUI;
   begin
@@ -362,8 +368,8 @@ procedure TrdFileTransfer.FormCreate(Sender: TObject);
 
 procedure TrdFileTransfer.Image1Click(Sender: TObject);
 begin
- with mouse.CursorPos do
-      pop.popup(x,y)
+  with mouse.CursorPos do
+    pop.Popup(x, y);
 end;
 
 {procedure TrdFileTransfer.SetUI(const Value: TRtcPFileTransferUI);
@@ -420,9 +426,11 @@ end;
 
 procedure TrdFileTransfer.myUIFileList(Sender: TRtcPFileTransferUI);
 var
-  l: TListItem; s: string; i: integer; r:TRTChugestring;
-  begin
-
+  l: TListItem;
+  s: string;
+  i: integer;
+  r: TRTChugestring;
+begin
    b_dl.Enabled:= False;
    b_rv.Enabled:= False;
 
@@ -436,15 +444,20 @@ var
    l:= eFilesList.FindCaption(0,foc_,False,False,False);
    if l<>nil then
    begin
-        eFilesList.Selected:= l;
+    if eFilesList.Items.Count > 0 then
+      eFilesList.Selected := l;
    end
-   except end else
+   except
+   end
+   else
    begin
-        eFilesList.Selected:= eFilesList.Items[0];
+    if eFilesList.Items.Count > 0 then
+      eFilesList.Selected := eFilesList.Items[0];
    end;
 
-   eFilesList.ItemFocused:= eFilesList.Selected;
-   eFilesList.ItemFocused.MakeVisible(False);
+   eFilesList.ItemFocused := eFilesList.Selected;
+   if eFilesList.ItemFocused <> nil then
+    eFilesList.ItemFocused.MakeVisible(False);
 
    KEY_BACK:= False; foc_:='';
    eFilesListClick(nil);
@@ -463,7 +476,7 @@ end;
 procedure TrdFileTransfer.myUIOpen(Sender: TRtcPFileTransferUI);
   var
     fIsPending: Boolean;
-  begin
+begin
   if Assigned(FOnUIOpen) then
     FOnUIOpen(myUI.UserName, 'file', fIsPending);
 
@@ -476,7 +489,7 @@ procedure TrdFileTransfer.myUIOpen(Sender: TRtcPFileTransferUI);
   if UIVisible then
   begin
     Show;
-//    BringToFront;
+    BringToFront;
     //BringWindowToTop(Handle);
     SetForegroundWindow(Handle);
   end;
@@ -2028,14 +2041,22 @@ procedure TrdFileTransfer.eFilesListKeyUp(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
   VK_UPDOWN:= False;
-  if key in [VK_UP,VK_DOWN,VK_END,VK_HOME,VK_PRIOR,VK_NEXT] then eFilesListClick(Sender);
+  if key in [VK_UP,VK_DOWN,VK_END,VK_HOME,VK_PRIOR,VK_NEXT] then
+    eFilesListClick(Sender)
+  else
+  if key = VK_BACK then
+    eFilesList.OneLevelUp;
 end;
 
 procedure TrdFileTransfer.eFilesList_KeyUp(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
   VK_UPDOWN:= False;
-  if key in [VK_UP,VK_DOWN,VK_END,VK_HOME,VK_PRIOR,VK_NEXT] then eFilesList_Click(Sender);
+  if key in [VK_UP,VK_DOWN,VK_END,VK_HOME,VK_PRIOR,VK_NEXT] then
+    eFilesList_Click(Sender)
+  else
+  if key = VK_BACK then
+    eFilesList_.OneLevelUp;
 end;
 
 procedure TrdFileTransfer.Label4Click(Sender: TObject);

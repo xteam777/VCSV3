@@ -20,7 +20,6 @@ object rdFileTransfer: TrdFileTransfer
   PrintScale = poNone
   Scaled = False
   ShowHint = True
-  WindowState = wsMinimized
   StyleElements = []
   OnActivate = FormActivate
   OnClose = FormClose
@@ -61,7 +60,6 @@ object rdFileTransfer: TrdFileTransfer
     ParentFont = False
     TabOrder = 0
     StyleElements = []
-    ExplicitLeft = 0
     object Panel3: TPanel
       Left = 0
       Top = 52
@@ -339,7 +337,6 @@ object rdFileTransfer: TrdFileTransfer
         TabOrder = 0
         TabStop = False
         Text = 'C:\'
-        StyleElements = []
         OnKeyPress = eDirectoryKeyPress
         OnSelect = eDirectorySelect
         Images = ImageList2
@@ -995,7 +992,7 @@ object rdFileTransfer: TrdFileTransfer
         OnClick = Image1Click
         ExplicitHeight = 48
       end
-      object Label1: TLabel
+      object lRemoteName: TLabel
         Left = 63
         Top = 8
         Width = 50
@@ -2048,7 +2045,7 @@ object rdFileTransfer: TrdFileTransfer
         OnClick = Image1Click
         ExplicitHeight = 48
       end
-      object Label3: TLabel
+      object lLocalName: TLabel
         Left = 63
         Top = 8
         Width = 36
@@ -2680,7 +2677,6 @@ object rdFileTransfer: TrdFileTransfer
         TabOrder = 0
         TabStop = False
         Text = 'C:\'
-        StyleElements = []
         OnKeyPress = eDirectory_KeyPress
         OnSelect = eDirectory_Select
         Images = ImageList2
@@ -2998,7 +2994,7 @@ object rdFileTransfer: TrdFileTransfer
     Left = 897
     Top = 288
     Bitmap = {
-      494C010101000800380010001000FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C0101010008003C0010001000FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000001000000001002000000000000010
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -3149,7 +3145,7 @@ object rdFileTransfer: TrdFileTransfer
     Left = 961
     Top = 287
     Bitmap = {
-      494C0101050008004C0010001000FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C010105000800500010001000FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000002000000001002000000000000020
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
