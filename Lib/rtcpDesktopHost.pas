@@ -2703,6 +2703,7 @@ var
   SDC: HDC;
   err: HRESULT;
   fNeedRecreate, fHaveScreen, fRes: Boolean;
+  time: DWORD;
 
   function CaptureNow: boolean;
   var
@@ -2733,11 +2734,11 @@ var
 //      if True then
       begin
 //        CS.Acquire;
-//i := GetTickCount;
+time := GetTickCount;
         Result := GetScreenFromHelperByMMF;
         ScrCap.HaveScreen := Result;
-//i := GetTickCount - i;
-//i := i;
+time := GetTickCount - time;
+time := i;
 //        FNewImage.SaveToFile('C:\Screenshots\' + StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
 {        try
           FNewImage.Assign(FScrCapture.FHelper.FHelperBitmap);
@@ -2776,12 +2777,13 @@ var
 //          fHaveScreen := GetDDAScreenshot;
 //          ScrCap.HaveScreen := True; //fHaveScreen;
 
+time := GetTickCount;
             fHaveScreen := False;
             fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
             i := 0;
             while fNeedRecreate do
             begin
-              Sleep(1);
+//              Sleep(1);
               //Application.ProcessMessages;
               FDesktopDuplicator.Free;
               FDesktopDuplicator := TDesktopDuplicationWrapper.Create(FDDACreated);
@@ -2790,8 +2792,8 @@ var
 
 //              Application.ProcessMessages;
 
-              i := i + 1;
-              if i = 4 then
+//              i := i + 1;
+//              if i = 4 then
                 Break;
             end;
             if fRes
@@ -2804,6 +2806,8 @@ var
 //            begin
               //Memo1.Lines.Add('no frame ' + IntToHex(FDuplication.Error));
             end;
+time := GetTickCount - time;
+time := i;
 
                 //FNewImage.SaveToFile('C:\Rufus\scr2.bmp');
 {            try

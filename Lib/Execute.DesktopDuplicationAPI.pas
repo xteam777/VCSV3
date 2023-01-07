@@ -83,7 +83,7 @@ var
 begin
   fCreated := False;
 
-  OptimDrawAlg := 2;
+  OptimDrawAlg := 0;
 
   FirstDraw := true;
 
@@ -305,7 +305,8 @@ begin
   BitmapP1 := Resource.pData;
   BitmapP2 := Bitmap.ScanLine[0];
 
-  if FirstDraw then
+  if FirstDraw
+    or ((MoveCount + DirtyCount = 0)) then
   begin
     FirstDraw := false;
 

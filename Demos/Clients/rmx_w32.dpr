@@ -175,7 +175,7 @@ var
   fRes, fCreated, fNeedRecreate: Boolean;
   FDesktopDuplicator: TDesktopDuplicationWrapper;
 
-  time: LongInt;
+  time: DWORD;
 
   function RpcRevertToSelf: RPC_STATUS; stdcall; external 'rpcrt4.dll';
   function RpcImpersonateClient(BindingHandle: RPC_BINDING_HANDLE): RPC_STATUS; stdcall; external 'rpcrt4.dll';
@@ -2677,6 +2677,8 @@ begin
   CopyMemory(@ipBase, PByte(pMap) + CurOffset, sizeof(ipBase));
   CurOffset := CurOffset + sizeof(ipBase);
 
+//  time := GetTickCount;
+
   hProc := OpenProcess(PROCESS_VM_WRITE or PROCESS_VM_OPERATION, False, PID); // подключаемся к процессу зная его ID
   if hProc <> 0 then // условие проверки подключения к процессу
   try
@@ -2684,6 +2686,8 @@ begin
   finally
     CloseHandle(hProc); // отсоединяемся от процесса
   end;
+
+//  time := GetTickCount - time;
 end;
 
 function GetGDIScreenshot: Boolean;
@@ -2704,7 +2708,7 @@ begin
   if not IsWindows8orLater then
     Exit;
 
-  time := GetTickCount;
+//  time := GetTickCount;
 
   try
 //    FDesktopDuplicator := TDesktopDuplicationWrapper.Create(fCreated);
@@ -2734,8 +2738,8 @@ begin
     FLastChangedX2 := FDesktopDuplicator.LastChangedX2;
     FLastChangedY2 := FDesktopDuplicator.LastChangedY2;
 
-    time := GetTickCount - time;
-    time := GetTickCount;
+//    time := GetTickCount - time;
+//    time := GetTickCount;
 
     hOld := SelectObject(hMemDC, hBmp);
     Result := BitBlt(hMemDC, 0, 0, sWidth, sHeight, FDesktopDuplicator.Bitmap.Canvas.Handle, 0, 0, SRCCOPY);
@@ -2749,7 +2753,7 @@ begin
 //    FDesktopDuplicator.Free;
   end;
 
-  time := GetTickCount - time;
+//  time := GetTickCount - time;
 end;
 
 function ScreenShotThreadProc(pParam: Pointer): DWORD; stdcall;
@@ -2762,6 +2766,7 @@ begin
     while True do
     begin
       try
+//        time := GetTickCount;
         try
           WaitForSingleObject(EventWriteBegin, INFINITE);
           ResetEvent(EventWriteBegin);
@@ -2775,11 +2780,11 @@ begin
 
           fHaveScreen := False;
 
-          time := GetTickCount;
+//          time := GetTickCount;
           if not GetDDAScreenshot then
             if not GetGDIScreenshot then
               Continue;
-          time := GetTickCount - time;
+//          time := GetTickCount - time;
 
           fHaveScreen := True;
 
@@ -2819,6 +2824,9 @@ begin
         SelectObject(hMemDC, hOld);
         DestroyBitmapData;
       end;
+
+//      time := GetTickCount - time;
+      time := time;
     end;
   finally
     FDesktopDuplicator.Free;

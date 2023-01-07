@@ -175,7 +175,7 @@ var
   fRes, fCreated, fNeedRecreate: Boolean;
   FDesktopDuplicator: TDesktopDuplicationWrapper;
 
-  time: LongInt;
+  time: DWORD;
 
   function RpcRevertToSelf: RPC_STATUS; stdcall; external 'rpcrt4.dll';
   function RpcImpersonateClient(BindingHandle: RPC_BINDING_HANDLE): RPC_STATUS; stdcall; external 'rpcrt4.dll';
@@ -2766,7 +2766,7 @@ begin
     while True do
     begin
       try
-        time := GetTickCount;
+//        time := GetTickCount;
         try
           WaitForSingleObject(EventWriteBegin, INFINITE);
           ResetEvent(EventWriteBegin);
@@ -2825,7 +2825,7 @@ begin
         DestroyBitmapData;
       end;
 
-      time := GetTickCount - time;
+//      time := GetTickCount - time;
       time := time;
     end;
   finally
