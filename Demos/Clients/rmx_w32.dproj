@@ -76,7 +76,7 @@
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
         <DCC_RemoteDebug>false</DCC_RemoteDebug>
         <BT_BuildType>Debug</BT_BuildType>
-        <BRCC_IncludePath>C:\Base_1C\_vircess.com\_V10\Lib\DesktopDuplicatorLibrary;C:\Base_1C\_vircess.com\_V10\Lib\VirtualTreeView.v.6.3.0.XE3-XE10.1.Src.Exirbox\Source;C:\Base_1C\_vircess.com\_V10\LibSDK;C:\Base_1C\_vircess.com\_V10\Demos\Modules;C:\Base_1C\_vircess.com\_V10\Demos\Modules\DataProviders;$(BRCC_IncludePath)</BRCC_IncludePath>
+        <BRCC_IncludePath>C:\Base_1C\_vircess.com\_V10\Lib\DesktopDuplicatorLibrary;C:\Base_1C\_vircess.com\_V10\Lib\VirtualTreeView.v.6.3.0.XE3-XE10.1.Src.Exirbox\Source;C:\Base_1C\_vircess.com\_V10\LibSDK;C:\Base_1C\_vircess.com\_V10\Demos\Modules;C:\Base_1C\_vircess.com\_V10\Demos\Modules\DataProviders;C:\_vircess\VCSV3\Demos\Clients;C:\_vircess\VCSV3\Demos\Modules;C:\_vircess\VCSV3\Demos\Modules\DataProviders;C:\_vircess\VCSV3\Lib;$(BRCC_IncludePath)</BRCC_IncludePath>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <AppExecutionLevel>requireAdministrator</AppExecutionLevel>

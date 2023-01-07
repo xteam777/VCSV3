@@ -1,17 +1,21 @@
 program Vircess_Setup;
 
+
+
 {$R *.dres}
 
 uses
   Vcl.Forms,
   Windows,
+  rtcWinLogon,
   uMain in 'uMain.pas' {fMain};
 
 {$R *.res}
 
 function VircessIsRunned: Boolean;
 begin
-  Result := False;
+  (*result:= rtcGetProcessID('Vircess.exe')<>0;*)
+  result:= False;
 end;
 
 begin
@@ -24,8 +28,8 @@ begin
           Exit;
         ID_RETRY:
           if not VircessIsRunned then
-            Exit;         
-      end;      
+            Exit;
+      end;
     end;
   end;
 

@@ -90,6 +90,7 @@ type
 
   TPendingRequestItem = record
     UserName: String;
+    UserDesc: String;
     Gateway: String;
     Action: String;
     Handle: THandle;
@@ -163,6 +164,11 @@ type
   TInputsArray = array[0..0] of TInput;
   PInputsArray = ^TInputsArray;
 
+  TRmxHintWindow = class(THintWindow)
+  public
+    procedure CreateParams(var Params: TCreateParams); override;
+  end;
+
 const
   MSG_STATUS_UNKNOWN = -1;
   MSG_STATUS_ONLINE = 0;
@@ -176,9 +182,13 @@ const
   RTC_HOSTSERVICE_NAME = 'RemoxService'; //Должны отличаться, иначе служба не запустится
   RTC_HOSTSERVICE_DISPLAY_NAME = 'Remox';
 
-
 implementation
 
+procedure TRmxHintWindow.CreateParams(var Params: TCreateParams);
+begin
+  inherited CreateParams(Params);
+  Params.wndParent := GetActiveWindow;
+end;
 
 procedure TWorkThread.Execute;
 begin

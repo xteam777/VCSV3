@@ -2270,6 +2270,7 @@ var
   SaveBitMap: TBitmap;
   i, j: LongInt;
   fScreenGrabbed: Boolean;
+  FLastChangedX1, FLastChangedY1, FLastChangedX2, FLastChangedY2: Integer;
 begin
   if not IsWindows8orLater then
     Exit;
@@ -2377,6 +2378,14 @@ begin
         CurOffset := CurOffset + SizeOf(FHelper_mouseX);
         CopyMemory(@FHelper_mouseY, PByte(pMap) + CurOffset, sizeof(FHelper_mouseY));
         CurOffset := CurOffset + SizeOf(FHelper_mouseY);
+        CopyMemory(@FLastChangedX1, PByte(pMap) + CurOffset, sizeof(FLastChangedX1));
+        CurOffset := CurOffset + SizeOf(FLastChangedX1);
+        CopyMemory(@FLastChangedY1, PByte(pMap) + CurOffset, sizeof(FLastChangedY1));
+        CurOffset := CurOffset + SizeOf(FLastChangedY1);
+        CopyMemory(@FLastChangedX2, PByte(pMap) + CurOffset, sizeof(FLastChangedX2));
+        CurOffset := CurOffset + SizeOf(FLastChangedX2);
+        CopyMemory(@FLastChangedY2, PByte(pMap) + CurOffset, sizeof(FLastChangedY2));
+        CurOffset := CurOffset + SizeOf(FLastChangedY2);
 
         if OnlyGetScreenParams then
           Exit;
@@ -2463,7 +2472,23 @@ begin
 //      end;
 
       if fScreenGrabbed then
-        Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FHelper_Width, FHelper_Height, hMemDC, 0, 0, SRCCOPY);
+      begin
+//        Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FHelper_Width, FHelper_Height, hMemDC, 0, 0, SRCCOPY);
+        if (FLastChangedX1 = 0)
+          and (FLastChangedY1 = 0)
+          and (FLastChangedX2 = FHelper_Width)
+          and (FLastChangedY2 = FHelper_Height)  then
+          Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FHelper_Width, FHelper_Height, hMemDC, 0, 0, SRCCOPY)
+        else
+        if ((FLastChangedX2 - FLastChangedX1) > 0)
+          or ((FLastChangedY2 - FLastChangedY1) > 0) then
+          BitBlt(FNewImage.Canvas.Handle, FLastChangedX1, FDesktopDuplicator.LastChangedY1,
+            FLastChangedX2 - FLastChangedX1,
+            FLastChangedY2 - FLastChangedY1,
+            hMemDC,
+            FLastChangedX1, FLastChangedY1,
+            SRCCOPY);
+      end;
 //      FNewImage.Invalidate;
 //      SelectObject(hMemDC, hOld);
 //      DeleteDC(hMemDC);
@@ -2678,6 +2703,7 @@ var
   SDC: HDC;
   err: HRESULT;
   fNeedRecreate, fHaveScreen, fRes: Boolean;
+  time: DWORD;
 
   function CaptureNow: boolean;
   var
@@ -2708,11 +2734,11 @@ var
 //      if True then
       begin
 //        CS.Acquire;
-//i := GetTickCount;
+time := GetTickCount;
         Result := GetScreenFromHelperByMMF;
         ScrCap.HaveScreen := Result;
-//i := GetTickCount - i;
-//i := i;
+time := GetTickCount - time;
+time := i;
 //        FNewImage.SaveToFile('C:\Screenshots\' + StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
 {        try
           FNewImage.Assign(FScrCapture.FHelper.FHelperBitmap);
@@ -2751,12 +2777,13 @@ var
 //          fHaveScreen := GetDDAScreenshot;
 //          ScrCap.HaveScreen := True; //fHaveScreen;
 
+time := GetTickCount;
             fHaveScreen := False;
             fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
             i := 0;
             while fNeedRecreate do
             begin
-              Sleep(1);
+//              Sleep(1);
               //Application.ProcessMessages;
               FDesktopDuplicator.Free;
               FDesktopDuplicator := TDesktopDuplicationWrapper.Create(FDDACreated);
@@ -2765,8 +2792,8 @@ var
 
 //              Application.ProcessMessages;
 
-              i := i + 1;
-              if i = 4 then
+//              i := i + 1;
+//              if i = 4 then
                 Break;
             end;
             if fRes
@@ -2779,6 +2806,8 @@ var
 //            begin
               //Memo1.Lines.Add('no frame ' + IntToHex(FDuplication.Error));
             end;
+time := GetTickCount - time;
+time := i;
 
                 //FNewImage.SaveToFile('C:\Rufus\scr2.bmp');
 {            try
@@ -2828,7 +2857,22 @@ var
             end;}
 
           if fHaveScreen then
-            FNewImage.Assign(FDesktopDuplicator.Bitmap);
+          begin
+            if (FDesktopDuplicator.LastChangedX1 = 0)
+              and (FDesktopDuplicator.LastChangedY1 = 0)
+              and (FDesktopDuplicator.LastChangedX2 = FDesktopDuplicator.Bitmap.Width)
+              and (FDesktopDuplicator.LastChangedY2 = FDesktopDuplicator.Bitmap.Height)  then
+              FNewImage.Assign(FDesktopDuplicator.Bitmap)
+            else
+            if ((FDesktopDuplicator.LastChangedX2 - FDesktopDuplicator.LastChangedX1) > 0)
+              or ((FDesktopDuplicator.LastChangedY2 - FDesktopDuplicator.LastChangedY1) > 0) then
+              BitBlt(FNewImage.Canvas.Handle, FDesktopDuplicator.LastChangedX1, FDesktopDuplicator.LastChangedY1,
+                FDesktopDuplicator.LastChangedX2 - FDesktopDuplicator.LastChangedX1,
+                FDesktopDuplicator.LastChangedY2 - FDesktopDuplicator.LastChangedY1,
+                FDesktopDuplicator.Bitmap.Canvas.Handle,
+                FDesktopDuplicator.LastChangedX1, FDesktopDuplicator.LastChangedY1,
+                SRCCOPY);
+          end;
           fHaveScreen := True;
           ScrCap.HaveScreen := fHaveScreen;
           Result := fHaveScreen;

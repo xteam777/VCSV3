@@ -9,7 +9,7 @@ uses
 
 type
   TrdFileTransferLog = class(TForm)
-    Memo1: TMemo;
+    mLog: TMemo;
     pBottom: TPanel;
     myUI: TRtcPFileTransferUI;
     bOK: TButton;
@@ -26,6 +26,7 @@ type
     procedure myUISendCancel(Sender: TRtcPFileTransferUI);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+    procedure myUISendStart(Sender: TRtcPFileTransferUI);
   private
     { Private declarations }
     FOnUIOpen: TUIOpenEvent;
@@ -43,6 +44,7 @@ type
     procedure MyOnFileList(Sender:TRtcPFileTransferUI);
   public
     { Public declarations }
+    UIVisible: Boolean;
     property UI:TRtcPFileTransferUI read myUI;
 
     property OnUIOpen: TUIOpenEvent read FOnUIOpen write FOnUIOpen;
@@ -66,21 +68,22 @@ procedure TrdFileTransferLog.CreateParams(Var params: TCreateParams);
 procedure TrdFileTransferLog.SetCaption;
 begin
   if myUI.UserDesc <> '' then
-    Caption := myUI.UserDesc + ' - Files transferring log'
+    Caption := myUI.UserDesc + ' - Лог передачи файлов'
   else
-    Caption := RemoveUserPrefix(myUI.UserName) + ' - Files transferring log';
+    Caption := RemoveUserPrefix(myUI.UserName) + ' - Лог передачи файлов';
 end;
 
 procedure TrdFileTransferLog.Form_Open(const mode: string);
-  begin
-//  Caption:={mode +} myUI.UserName+' - Files transferring log';
+begin
   SetCaption;
+
+//  Caption := {mode +} myUI.UserDesc + ' - Files transferring log';
 
 //  cUserName.Caption:=myUI.UserName;
 //  cTitleBar.Caption:=mode+'Files';
 
-  FReady:=True;
-  end;
+  FReady := True;
+end;
 
 procedure TrdFileTransferLog.Form_Close(const mode: string);
   begin
@@ -112,6 +115,8 @@ end;
 
 procedure TrdFileTransferLog.myUIClose(Sender: TRtcPFileTransferUI);
 begin
+  mLog.Lines.Add('Передача файлов завершена');
+
   Form_Close('Closed');
   Close;
 end;
@@ -127,6 +132,8 @@ end;
 procedure TrdFileTransferLog.myUIInit(Sender: TRtcPFileTransferUI);
 begin
   if not FReady then Form_Open('(Init) ');
+
+  mLog.Lines.Add('Инициализация передачи файлов...');
 end;
 
 procedure TrdFileTransferLog.myUILogOut(Sender: TRtcPFileTransferUI);
@@ -147,15 +154,17 @@ procedure TrdFileTransferLog.myUIOpen(Sender: TRtcPFileTransferUI);
 //    Exit;
 //  end
 //  else
-  if myUI.Module.UIVisible then
+  if UIVisible then
   begin
     Show;
-//    BringToFront;
+    BringToFront;
     //BringWindowToTop(Handle);
     SetForegroundWindow(Handle);
   end;
 
   Form_Open('');
+
+//  mLog.Lines.Add('Начата передача файлов');
 
 //  Caption:=myUI.UserName+' - Files transferring';
   SetCaption;
@@ -221,11 +230,23 @@ end;
 
 procedure TrdFileTransferLog.myUIRecvCancel(Sender: TRtcPFileTransferUI);
 begin
+  if myUI.Recv_FileCount>1 then
+    mLog.Lines.Add('Получение отменено: ' + myUI.Recv_ToFolder + '\' + '[' + IntToStr(myUI.Recv_FileCount) + '] ' + myUI.Recv_FileName)
+  else
+    mLog.Lines.Add('Получение отменено: ' + myUI.Recv_ToFolder + '\' + myUI.Recv_FileName);
 //  lRecvFileName.Caption:='Cancelled';
 end;
 
 procedure TrdFileTransferLog.myUIRecvStart(Sender: TRtcPFileTransferUI);
 begin
+ if myUI.Recv_FirstTime then
+  begin
+    if myUI.Recv_FileCount > 1 then
+      mLog.Lines.Add('Получение: ' + myUI.Recv_ToFolder + '\' + '[' + IntToStr(myUI.Recv_FileCount) + '] ' + myUI.Recv_FileName)
+    else
+      mLog.Lines.Add('Получение: ' + myUI.Recv_ToFolder + '\' + myUI.Recv_FileName);
+  end;
+
 //  if myUI.Recv_FirstTime then
 //    begin
 //    if pMain.ActivePage<>pReceiving then
@@ -282,6 +303,8 @@ end;
 
 procedure TrdFileTransferLog.myUISend(Sender: TRtcPFileTransferUI);
 begin
+//  lSendFromFolder.Caption := myUI.Send_FromFolder;
+
 //  if myUI.Send_FirstTime then
 //    begin
 //    if pMain.ActivePage<>pSending then
@@ -342,7 +365,23 @@ end;
 
 procedure TrdFileTransferLog.myUISendCancel(Sender: TRtcPFileTransferUI);
 begin
+  if myUI.Send_FileCount > 1 then
+    mLog.Lines.Add('Отправка отменена: ' + myUI.Send_FromFolder + '\' + ' [' + IntToStr(myUI.Send_FileCount) + '] '+ myUI.Send_FileName)
+  else
+    mLog.Lines.Add('Отправка отменена: ' + myUI.Send_FromFolder + '\' + myUI.Send_FileName);
+
 //  lSendFileName.Caption:='Cancelled';
+end;
+
+procedure TrdFileTransferLog.myUISendStart(Sender: TRtcPFileTransferUI);
+begin
+    if myUI.Send_FirstTime then
+    begin
+      if myUI.Send_FileCount > 1 then
+        mLog.Lines.Add('Отправка: ' + myUI.Send_FromFolder + '\' + ' [' + IntToStr(myUI.Send_FileCount) + '] '+ myUI.Send_FileName)
+      else
+        mLog.Lines.Add('Отправка: ' + myUI.Send_FromFolder + '\' + myUI.Send_FileName);
+    end;
 end;
 
 procedure TrdFileTransferLog.MyOnFileList(Sender: TRtcPFileTransferUI);

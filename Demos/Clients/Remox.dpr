@@ -15,6 +15,7 @@
 uses
   FastMM4,
   rtcLog,
+  Classes,
   SysUtils,
   rtcInfo,
   rtcService,
@@ -30,6 +31,7 @@ uses
   IdContext,
   IdComponent,
   IdTCPClient,
+  ShlObj,
   RtcHostForm in 'RtcHostForm.pas' {MainForm},
   RtcHostSvc in 'RtcHostSvc.pas' {RemoxService: TService},
   dmSetRegion in '..\Modules\dmSetRegion.pas' {dmSelectRegion},
@@ -59,7 +61,9 @@ uses
   uMessageBox in '..\Modules\uMessageBox.pas' {fMessageBox},
   uPowerWatcher in '..\Modules\uPowerWatcher.pas',
   rdFileTransLog in '..\Modules\rdFileTransLog.pas' {rdFileTransferLog},
-  rtcBlankOutForm in '..\Modules\rtcBlankOutForm.pas' {fmBlankoutForm};
+  rtcBlankOutForm in '..\Modules\rtcBlankOutForm.pas' {fmBlankoutForm},
+  uSetup in 'uSetup.pas',
+  uAcceptEula in 'uAcceptEula.pas' {fAcceptEULA};
 
 {$R rtcportaluac.res rtcportaluac.rc}
 {$R *.res}
@@ -70,8 +74,8 @@ var
 //  s: RtcString;
   hPrev: THandle;
   err: LongInt;
-  strParams: String;
-  EleavateSupport: TEleavateSupport;
+  strParams, pfFolder, fn: String;
+//  EleavateSupport: TEleavateSupport;
 //  TorControlSocket: TIdTCPClient;
 
 function UniqueApp(const Title: AnsiString): Boolean;
@@ -104,6 +108,7 @@ begin
   Application.Title := 'Remox';
   Forms.Application.ShowMainForm := (Pos('/SILENT', UpperCase(CmdLine)) = 0);
   Forms.Application.CreateForm(TMainForm, MainForm);
+  Application.CreateForm(TfAcceptEULA, fAcceptEULA);
   Forms.Application.Run;
 //    else
 //    begin
@@ -234,7 +239,7 @@ begin
   try
     if Pos('/ADDRULES', UpperCase(CmdLine)) <> 0 then
     begin
-      AddFireWallRules;
+      AddFireWallRules(ParamStr(0));
       Exit;
     end;
 
@@ -292,9 +297,31 @@ begin
 
     if Pos('/INSTALL', UpperCase(CmdLine)) > 0 then
     begin
+      pfFolder := GetSpecialFolderLocation(CSIDL_PROGRAM_FILESX86);
+
+      CreateRegistryKey;
+      CreateShortcuts;
+
+      CreateProgramFolder;
+
       if not IsServiceExisted(RTC_HOSTSERVICE_NAME) then
-        CreateServices(RTC_HOSTSERVICE_NAME, RTC_HOSTSERVICE_DISPLAY_NAME, ParamStr(0));
+        CreateServices(RTC_HOSTSERVICE_NAME, RTC_HOSTSERVICE_DISPLAY_NAME, pfFolder + '\Remox\Remox.exe');
       StartServices(RTC_HOSTSERVICE_NAME);
+
+      AddFireWallRules(pfFolder + '\Remox\Remox.exe');
+
+      with TStringList.Create do
+      try
+        Add('PING 127.0.0.1 -n 2 > NUL');
+        Add('"' + pfFolder + '\Remox\Remox.exe"');
+        fn := GetTempFile + '.bat';
+        Add('DEL "' + fn + '"');
+        SaveToFile(fn, TEncoding.GetEncoding(866));
+      finally
+        Free;
+      end;
+
+      ShellExecute(Application.Handle, 'open', PChar(fn), '', '', SW_HIDE);
     end
     else
     if Pos('/START', UpperCase(CmdLine)) > 0 then
@@ -309,8 +336,14 @@ begin
     else
     if Pos('/UNINSTALL', UpperCase(CmdLine)) > 0 then
     begin
-//      DeleteServices(RTC_HOSTSERVICE_NAME);
+      if MessageBox(Application.Handle, 'Remox будет удален из системы. Продолжить?', 'Remox', MB_OKCANCEL) = ID_CANCEL then
+        Exit;
+
       UninstallService(RTC_HOSTSERVICE_NAME, 0);
+
+      DeleteShortcuts;
+      DeleteRegistryKey;
+      DeleteProgramFolder;
     end
     else
     begin

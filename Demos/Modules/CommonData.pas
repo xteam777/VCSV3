@@ -6,6 +6,8 @@ uses
   Windows, Classes, Messages, SyncObjs, uVircessTypes, RunElevatedSupport;
 
 const
+  RMX_VERSION = '3.0';
+
   WM_SETCURRENTFRAME = WM_USER + 1001;
   WM_TASKBAREVENT = WM_USER + 1002;
   WM_CHANGE_LOCKED_STATUS = WM_USER + 1003;
@@ -36,6 +38,7 @@ const
   QT_SENDONMON = 15;
   QT_SENDLCKSYS = 16;
   QT_SENDLOGOFF = 17;
+  QT_GETDATA = 18;
 
 var
   MainFormHandle: THandle;

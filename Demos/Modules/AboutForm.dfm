@@ -16,6 +16,7 @@ object fAboutForm: TfAboutForm
   Position = poScreenCenter
   OnClose = FormClose
   OnKeyDown = FormKeyDown
+  OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
   object ProgramIcon: TImage
@@ -1080,13 +1081,13 @@ object fAboutForm: TfAboutForm
     WordWrap = True
     IsControl = True
   end
-  object Version: TLabel
-    Left = 323
+  object lVersion: TLabel
+    Left = 312
     Top = 38
-    Width = 34
+    Width = 45
     Height = 13
     Alignment = taRightJustify
-    Caption = 'v. 3.0'
+    Caption = 'ver. 3.0'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = 3947580
     Font.Height = -11

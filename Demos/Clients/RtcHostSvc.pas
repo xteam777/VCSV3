@@ -16,7 +16,7 @@ uses
 
   rtcWinLogon, wininet, rtcScrUtils, uVircessTypes, rtcpDesktopHost, rtcpChat,
   rtcPortalMod, rtcpFileTrans, rtcPortalCli, rtcPortalHttpCli, rtcConn,
-  rtcDataCli, rtcHttpCli, rtcCliModule, rtcFunction;
+  rtcDataCli, rtcHttpCli, rtcCliModule, rtcFunction, Cromis.Comm.IPC;
 
 type
   TStartThread = class(TThread)
@@ -51,6 +51,8 @@ type
     resHostTimer: TRtcResult;
     tActivate: TTimer;
     resPing: TRtcResult;
+    tCheckLockedState: TTimer;
+    rHostLockedStateUpdate: TRtcResult;
 
     procedure ServiceShutdown(Sender: TService);
     procedure ServiceStart(Sender: TService; var Started: Boolean);
@@ -82,6 +84,7 @@ type
     procedure PClientStart(Sender: TAbsPortalClient; const Data: TRtcValue);
     procedure rActivateRequestAborted(Sender: TRtcConnection; Data,
       Result: TRtcValue);
+    procedure tCheckLockedStateTimer(Sender: TObject);
 
   private
     { Private declarations }
@@ -96,6 +99,7 @@ type
     UserName: String;
     myCheckTime: TDateTime;
     FRegularPassword: String;
+    FScreenLockedState: Integer;
 
     procedure UpdateMyPriority;
     function GetServiceController: TServiceController; override;
@@ -122,7 +126,11 @@ type
 //    procedure StopMyService;
     procedure SetRegularPassword(AValue: String);
 
+    procedure SendLockedStateToGateway;
+    procedure GetDataFromHelperByIPC(QueryType: Cardinal);
+    procedure SetScreenLockedState(AValue: Integer);
     property RegularPassword: String read FRegularPassword write SetRegularPassword;
+    property ScreenLockedState: Integer read FScreenLockedState write SetScreenLockedState;
   end;
 
 const
@@ -149,6 +157,153 @@ var
 implementation
 
 {$R *.DFM}
+
+procedure TRemoxService.SendLockedStateToGateway;
+begin
+//  XLog('SendLockedStateToGateway');
+
+  //Хост должен быть включен в клиенте только если не запущена служба на десктопной версии или на сервере
+//  if IsWinServer
+//    or ((not IsServiceStarted(RTC_HOSTSERVICE_NAME))
+//      and (not IsServiceStarting(RTC_HOSTSERVICE_NAME))) then
+//  begin
+    if (UserName = '-')
+      or (UserName = '') then
+      Exit;
+
+    with HostTimerModule do
+    try
+      with Data.NewFunction('Host.LockedStateUpdate') do
+      begin
+        Value['User'] := LowerCase(UserName);
+        AsInteger['LockedState'] := ScreenLockedState;
+        asBoolean['ServiceStarted'] := (Status = csRunning);
+        Call(rHostLockedStateUpdate);
+      end;
+    except
+      on E: Exception do
+        Data.Clear;
+    end;
+//  end;
+end;
+
+procedure TRemoxService.tCheckLockedStateTimer(Sender: TObject);
+//var
+//  hDesktop : THandle;
+//  bResult, bLocked : BOOL;
+begin
+//  XLog('tCheckLockedStateTimer');
+
+  GetDataFromHelperByIPC(QT_GETDATA);
+
+//  if (not IsServiceStarted(RTC_HOSTSERVICE_NAME))
+//    and
+//  if (LowerCase(GetInputDesktopName) = 'default') then
+//    ScreenLockedState := LCK_STATE_UNLOCKED
+//  else
+//  if {tPHostThread.FDesktopHost.HaveScreen
+//    and} (GetCurrentSesstionState = WTSActive) then
+//    ScreenLockedState := LCK_STATE_UNLOCKED
+//  else
+//    ScreenLockedState := LCK_STATE_LOCKED;
+
+{  if IsScreenSaverRunning then
+  begin
+    ScreenLockedState := LCK_STATE_SCREENSAVER;
+    Exit;
+  end;
+
+  hDesktop := 0;
+  try
+    hDesktop := OpenInputDesktop(0, False, GENERIC_ALL);
+  finally
+    if (hDesktop <> 0) then
+      CloseDesktop(hDesktop);
+  end;
+  if hDesktop = 0 then //CAD window is active
+    ScreenLockedState := LCK_STATE_SAS
+  else
+  if (GetSystemMetrics(SM_REMOTESESSION) <> 0)
+    and (not PDesktopHost.HaveScreen) then
+    ScreenLockedState := LCK_STATE_LOCKED
+  else
+  begin
+    bResult := False;
+    try
+      bResult := SASLibEx_IsDesktopLocked(DWORD(-1), bLocked);
+    finally
+    end;
+    if bResult
+      and bLocked then //Screen is lccked
+      ScreenLockedState := LCK_STATE_LOCKED
+    else
+      ScreenLockedState := LCK_STATE_UNLOCKED;
+  end;}
+end;
+
+procedure TRemoxService.SetScreenLockedState(AValue: Integer);
+//var
+//  desk: String;
+begin
+  //XLog('SetScreenLockedState');
+
+  if FScreenLockedState <> AValue then
+  begin
+//    if not (IsServiceStarted(RTC_HOSTSERVICE_NAME)
+//      and IsConsoleClient) then
+//    begin
+      FScreenLockedState := AValue;
+      SendLockedStateToGateway;
+//    end
+//    else
+//    if FScreenLockedState <> LCK_STATE_UNLOCKED then
+//    begin
+//      desk := GetInputDesktopName;
+//      Memo2.Lines.Add(desk + IntToStr(OpenDesktop(PChar(desk), DF_ALLOWOTHERACCOUNTHOOK, False, DESKTOP_ALL)));
+//    end;
+
+//  Memo1.Lines.Add(DateTime2Str(Now) + ' - ' + IntToStr(ScreenLockedState));
+  end;
+end;
+
+procedure TRemoxService.GetDataFromHelperByIPC(QueryType: Cardinal);
+var
+  SessionID: DWORD;
+  Request, Response: IIPCData;
+  IPCClient: TIPCClient;
+  I, Len: Integer;
+begin
+//  if IsConsoleClient then
+//  if IsService then
+    SessionID := ActiveConsoleSessionID;
+//  else
+//    SessionID := CurrentSessionID;
+
+  IPCClient := TIPCClient.Create;
+  try
+    IPCClient.ComputerName := 'localhost';
+    IPCClient.ServerName := 'Remox_IPC_Session_' + IntToStr(SessionID);
+    IPCClient.ConnectClient(1000); //cDefaultTimeout
+    try
+      if IPCClient.IsConnected then
+      begin
+        Request := AcquireIPCData;
+        Request.Data.WriteInteger('QueryType', QueryType);
+        Response := IPCClient.ExecuteConnectedRequest(Request);
+
+        if IPCClient.AnswerValid then
+          ScreenLockedState := Response.Data.ReadInteger('LockedState');
+
+//          if IPCClient.LastError <> 0 then
+//            ListBox1.Items.Add(Format('Error: Code %d', [IPCClient.LastError]));
+      end;
+    finally
+      IPCClient.DisconnectClient;
+    end;
+  finally
+    IPCClient.Free;
+  end;
+end;
 
 function TRemoxService.GetStatus: Integer;
 begin
@@ -193,6 +348,8 @@ begin
 
   LOG_THREAD_EXCEPTIONS := True;
   LOG_EXCEPTIONS := True;
+
+  FScreenLockedState := LCK_STATE_UNLOCKED;
 
   StartLog;
 
@@ -608,8 +765,8 @@ procedure TStartThread.StartClientInSession(SessionID: Cardinal; doStartHelper, 
 var
   ProcessId: Cardinal;
 begin
-//HelperConsoleTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_x64.exe';
-//HelperTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_w32.exe';
+HelperConsoleTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_x64.exe';
+HelperTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_w32.exe';
 
   if doStartHelper then
   begin
@@ -805,7 +962,8 @@ begin
           asString['User'] := LowerCase(UserName);
           asRecord['Passwords'] := PassRec;
           asString['Gateway'] := PClient.GateAddr + ':' + PClient.GatePort; //asString['Gateway'] + ':' + asString['Port'];
-          asInteger['LockedState'] := LCK_STATE_UNLOCKED;
+          asInteger['LockedState'] := ScreenLockedState;
+          asBoolean['ServiceStarted'] := (Status = csRunning);
           asBoolean['IsService'] := True;
           Call(resHostLogin);
         end;
@@ -814,7 +972,8 @@ begin
 //          asString['User'] := LowerCase(UserName);
 //          asRecord['Passwords'] := PassRec;
 //          asString['Gateway'] := PClient.GateAddr + ':' + PClient.GatePort; //asString['Gateway'] + ':' + asString['Port'];
-//          asInteger['LockedState'] := LCK_STATE_UNLOCKED;
+//          asInteger['LockedState'] := ScreenLockedState;
+//          asBoolean['ServiceStarted'] := (Status = csRunning);
 //          asBoolean['IsService'] := True;
 //          Call(resHostTimerLogin);
 //        end;
@@ -1149,7 +1308,8 @@ begin
       Value['Gateway'] := PClient.GateAddr + ':' + PClient.GatePort;
       Value['Check'] := myCheckTime;
       asRecord['Passwords'] := PassRec;
-      asInteger['LockedState'] := LCK_STATE_UNLOCKED;
+      asInteger['LockedState'] := ScreenLockedState;
+      asBoolean['ServiceStarted'] := (Status = csRunning);
       Call(resHostTimer);
     end;
   finally
@@ -1430,7 +1590,8 @@ begin
       asString['User'] := UserName;
       asString['Gateway'] := PClient.GateAddr + ':' + PClient.GatePort;
       asRecord['Passwords'] := PassRec;
-      asInteger['LockedState'] := LCK_STATE_UNLOCKED;
+      asInteger['LockedState'] := ScreenLockedState;
+      asBoolean['ServiceStarted'] := (Status = csRunning);
       asBoolean['IsService'] := IsService;
       Call(resHostPing);
     end;

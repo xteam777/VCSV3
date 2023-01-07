@@ -211,9 +211,9 @@ var
 procedure TrdChatForm.SetCaption;
 begin
   if myUI.UserDesc <> '' then
-    pTitle.Caption := myUI.UserDesc + ' - Chat'
+    pTitle.Caption := myUI.UserDesc + ' - зрђ'
   else
-    pTitle.Caption := RemoveUserPrefix(myUI.UserName) + ' - Chat';
+    pTitle.Caption := RemoveUserPrefix(myUI.UserName) + ' - зрђ';
 end;
 
 constructor TRdUserChatField.Create(AOwner: TComponent);

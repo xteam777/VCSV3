@@ -16,7 +16,7 @@ object rdFileTransferLog: TrdFileTransferLog
   OnCloseQuery = FormCloseQuery
   PixelsPerInch = 96
   TextHeight = 13
-  object Memo1: TMemo
+  object mLog: TMemo
     Left = 0
     Top = 0
     Width = 419
@@ -55,16 +55,16 @@ object rdFileTransferLog: TrdFileTransferLog
     OnClose = myUIClose
     OnError = myUIError
     OnLogOut = myUILogOut
-    OnSendStart = myUISend
+    OnSendStart = myUISendStart
     OnSend = myUISend
     OnSendUpdate = myUISend
     OnSendStop = myUISend
     OnSendCancel = myUISendCancel
-    OnRecvStart = myUIRecv
+    OnRecvStart = myUIRecvStart
     OnRecv = myUIRecv
     OnRecvStop = myUIRecv
     OnRecvCancel = myUIRecvCancel
-    Left = 12
+    Left = 14
     Top = 22
   end
 end

@@ -36,7 +36,6 @@ type
     Label2: TLabel;
     cbOnlyAdminChanges: TCheckBox;
     ApplicationEvents1: TApplicationEvents;
-    cbAutoRun: TCheckBox;
     cbStoreHistory: TCheckBox;
     cbStorePasswords: TCheckBox;
     GroupBox1: TGroupBox;
@@ -46,6 +45,7 @@ type
     ePasswordConfirm: TEdit;
     bOK: TButton;
     bClose: TButton;
+    Label8: TLabel;
 
     procedure xSSLClick(Sender: TObject);
     procedure btnCancelClick(Sender: TObject);
@@ -75,7 +75,7 @@ type
     PrevProxyAddr, CurProxyAddr: String;
     PrevProxyUserName, CurProxyUserName: String;
     PrevProxyPassword, CurProxyPassword: String;
-    PrevAutoRun, CurAutoRun: Boolean;
+//    PrevAutoRun, CurAutoRun: Boolean;
     FOnCustomFormClose: TOnCustomFormEvent;
 
     procedure Setup;
@@ -104,11 +104,11 @@ procedure TrdClientSettings.Setup;
 var
   i: Integer;
 begin
-  if (Win32MajorVersion >= 6 {vista\server 2k8}) then
-    PrevAutoRun := IsServiceStarted(RTC_HOSTSERVICE_NAME)
-  else
-    PrevAutoRun := IsRegistryAutoRun;
-  cbAutoRun.Checked := PrevAutoRun;
+//  if (Win32MajorVersion >= 6 {vista\server 2k8}) then
+//    PrevAutoRun := IsServiceStarted(RTC_HOSTSERVICE_NAME)
+//  else
+//    PrevAutoRun := IsRegistryAutoRun;
+//  cbAutoRun.Checked := PrevAutoRun;
 
   CurProxyOption := PrevProxyOption;
   if CurProxyOption = 'NoProxy' then
@@ -185,7 +185,7 @@ end;
 function TrdClientSettings.ConnectionParamsChanged: Boolean;
 begin
   Result := (CurProxyOption <> PrevProxyOption)
-    or (CurAutoRun <> PrevAutoRun)
+//    or (CurAutoRun <> PrevAutoRun)
     or (CurProxyAddr <> PrevProxyAddr)
     or (CurProxyUserName <> PrevProxyUserName)
     or (CurProxyPassword <> PrevProxyPassword);
@@ -251,85 +251,85 @@ begin
     end;
   end;
 
-  if PrevAutoRun <> cbAutoRun.Checked then
-    if (Win32MajorVersion >= 6) then //vista\server 2k8
-    begin
-      if cbAutoRun.Checked then
-        begin
-          //Создаем файл-флаг. При стопе сервиса проверяется его наличие
-          with TStringList.Create do
-          begin
-            SaveToFile(ChangeFileExt(ParamStr(0), '.ncl'));
-            Free;
-          end;
-
+//  if PrevAutoRun <> cbAutoRun.Checked then
+//    if (Win32MajorVersion >= 6) then //vista\server 2k8
+//    begin
+//      if cbAutoRun.Checked then
+//        begin
+//          //Создаем файл-флаг. При стопе сервиса проверяется его наличие
 //          with TStringList.Create do
-//          try
-//            if (not ServiceInstalled(nil, RTC_HOSTSERVICE_NAME)) then
-//              Add(ParamStr(0) + ' /INSTALL');
-//            Add(ParamStr(0) + ' /START');
-//            Add('PING 127.0.0.1 -n 1 > NUL');
-//            fn := GetTempFile;
-//            Rename_File(fn, fn + '.bat');
-//            fn := fn + '.bat';
-//            Add('DEL "' + fn + '"');
-//            SaveToFile(fn, TEncoding.GetEncoding(866));
-//          finally
+//          begin
+//            SaveToFile(ChangeFileExt(ParamStr(0), '.ncl'));
 //            Free;
 //          end;
-//          ShellExecute(Handle, 'open', PWideChar(WideString(fn)), nil, nil, SW_HIDE);
-          EleavateSupport := TEleavateSupport.Create(nil);
-          try
-            SetLastError(EleavateSupport.RunElevated(ParamStr(0), ' /INSTALL', Handle, False, Application.ProcessMessages));
-            err := GetLastError;
-            if (err <> ERROR_SUCCESS)
-              and (err <> ERROR_INVALID_FUNCTION) then
-            begin
-              xLog('ServiceInstall error = ' + IntToStr(err) + ' ' + SysErrorMessage(err));
-              Exit;
-            end;
-          finally
-            EleavateSupport.Free;
-          end;
-//          if CreateServices(RTC_HOSTSERVICE_NAME, RTC_HOSTSERVICE_DISPLAY_NAME, ParamStr(0)) then
-//            StartServices(RTC_HOSTSERVICE_NAME);
-        end
-        else
-        begin
-//          with TStringList.Create do
+//
+////          with TStringList.Create do
+////          try
+////            if (not ServiceInstalled(nil, RTC_HOSTSERVICE_NAME)) then
+////              Add(ParamStr(0) + ' /INSTALL');
+////            Add(ParamStr(0) + ' /START');
+////            Add('PING 127.0.0.1 -n 1 > NUL');
+////            fn := GetTempFile;
+////            Rename_File(fn, fn + '.bat');
+////            fn := fn + '.bat';
+////            Add('DEL "' + fn + '"');
+////            SaveToFile(fn, TEncoding.GetEncoding(866));
+////          finally
+////            Free;
+////          end;
+////          ShellExecute(Handle, 'open', PWideChar(WideString(fn)), nil, nil, SW_HIDE);
+//          EleavateSupport := TEleavateSupport.Create(nil);
 //          try
-//            if IsServiceStarted(RTC_HOSTSERVICE_NAME) then
-//              Add(ParamStr(0) + ' /STOP /NOCLOSE');
-//            Add(ParamStr(0) + ' /UNINSTALL /NOCLOSE');
-//            Add('PING 127.0.0.1 -n 1 > NUL');
-////              Add('START ' + ParamStr(0));
-//            fn := GetTempFile;
-//            Rename_File(fn, fn + '.bat');
-//            fn := fn + '.bat';
-//            Add('DEL "' + fn + '"');
-//            SaveToFile(fn, TEncoding.GetEncoding(866));
+//            SetLastError(EleavateSupport.RunElevated(ParamStr(0), ' /INSTALL', Handle, False, Application.ProcessMessages));
+//            err := GetLastError;
+//            if (err <> ERROR_SUCCESS)
+//              and (err <> ERROR_INVALID_FUNCTION) then
+//            begin
+//              xLog('ServiceInstall error = ' + IntToStr(err) + ' ' + SysErrorMessage(err));
+//              Exit;
+//            end;
 //          finally
-//            Free;
+//            EleavateSupport.Free;
 //          end;
-//          ShellExecute(Handle, 'open', PWideChar(WideString(fn)), nil, nil, SW_HIDE);
-          EleavateSupport := TEleavateSupport.Create(nil);
-          try
-            SetLastError(EleavateSupport.RunElevated(ParamStr(0), ' /UNINSTALL', Handle, False, Application.ProcessMessages));
-            err := GetLastError;
-            if (err <> ERROR_SUCCESS)
-              and (err <> ERROR_INVALID_FUNCTION) then
-            begin
-              xLog('ServiceUninstall error = ' + IntToStr(err) + ' ' + SysErrorMessage(err));
-              Exit;
-            end;
-          finally
-            EleavateSupport.Free;
-          end;
-//          UninstallService(RTC_HOSTSERVICE_NAME, 0)
-        end;
-    end
-    else
-      SetRegistryAutoRun(cbAutoRun.Checked);
+////          if CreateServices(RTC_HOSTSERVICE_NAME, RTC_HOSTSERVICE_DISPLAY_NAME, ParamStr(0)) then
+////            StartServices(RTC_HOSTSERVICE_NAME);
+//        end
+//        else
+//        begin
+////          with TStringList.Create do
+////          try
+////            if IsServiceStarted(RTC_HOSTSERVICE_NAME) then
+////              Add(ParamStr(0) + ' /STOP /NOCLOSE');
+////            Add(ParamStr(0) + ' /UNINSTALL /NOCLOSE');
+////            Add('PING 127.0.0.1 -n 1 > NUL');
+//////              Add('START ' + ParamStr(0));
+////            fn := GetTempFile;
+////            Rename_File(fn, fn + '.bat');
+////            fn := fn + '.bat';
+////            Add('DEL "' + fn + '"');
+////            SaveToFile(fn, TEncoding.GetEncoding(866));
+////          finally
+////            Free;
+////          end;
+////          ShellExecute(Handle, 'open', PWideChar(WideString(fn)), nil, nil, SW_HIDE);
+//          EleavateSupport := TEleavateSupport.Create(nil);
+//          try
+//            SetLastError(EleavateSupport.RunElevated(ParamStr(0), ' /UNINSTALL', Handle, False, Application.ProcessMessages));
+//            err := GetLastError;
+//            if (err <> ERROR_SUCCESS)
+//              and (err <> ERROR_INVALID_FUNCTION) then
+//            begin
+//              xLog('ServiceUninstall error = ' + IntToStr(err) + ' ' + SysErrorMessage(err));
+//              Exit;
+//            end;
+//          finally
+//            EleavateSupport.Free;
+//          end;
+////          UninstallService(RTC_HOSTSERVICE_NAME, 0)
+//        end;
+//    end
+//    else
+//      SetRegistryAutoRun(cbAutoRun.Checked);
 
   ModalResult := mrOk;
 
@@ -338,7 +338,7 @@ end;
 
 procedure TrdClientSettings.cbAutoRunClick(Sender: TObject);
 begin
-  CurAutoRun := cbAutoRun.Checked;
+//  CurAutoRun := cbAutoRun.Checked;
 end;
 
 procedure TrdClientSettings.cbAutoRunKeyDown(Sender: TObject; var Key: Word;
@@ -412,19 +412,19 @@ begin
 end;
 
 procedure TrdClientSettings.FormCreate(Sender: TObject);
-var
-  ElevateSupport: TEleavateSupport;
+//var
+//  ElevateSupport: TEleavateSupport;
 begin
-  ElevateSupport := TEleavateSupport.Create(nil);
-  try
-    try
-      cbAutoRun.Enabled := ElevateSupport.IsAdministrator;
-    except
-      cbAutoRun.Enabled := False;
-    end;
-  finally
-    ElevateSupport.Free;
-  end;
+//  ElevateSupport := TEleavateSupport.Create(nil);
+//  try
+//    try
+//      cbAutoRun.Enabled := ElevateSupport.IsAdministrator;
+//    except
+//      cbAutoRun.Enabled := False;
+//    end;
+//  finally
+//    ElevateSupport.Free;
+//  end;
 end;
 
 procedure TrdClientSettings.FormShow(Sender: TObject);

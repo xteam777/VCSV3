@@ -35,7 +35,7 @@ type
   private
     FDirectory: String;
     FDirectorySize: int64;
-    FMyFiles: TRtcDataSet;
+    FMyFiles,FMyFiles_: TRtcDataSet;
 
     iconMap: TStrings;
 
@@ -77,22 +77,23 @@ type
     procedure AddFiles(const FData: TRtcDataSet);
 
     procedure Click; override;
-    procedure DblClick; override;
 
     // procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
 
     function GetMediaTypeStr(MT: TRtcPMediaType): String;
 
   public
+    function SelectedFiles_(d_cap,f_cap: string): TStringList;
+    procedure onPath(NewDir: String; mask: String='');
+    procedure DblClick; override;
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
     procedure RefreshColumns;
 
-    procedure OneLevelUp;
-    procedure TopLevel;
-    procedure RefreshFilesList;
+    procedure OneLevelUp(clear_sel:boolean=False);
     procedure UpdateFileList(const Folder: String; const FData: TRtcDataSet);
+    procedure UpdateFileList_(const Folder: String; const FData: TRtcDataSet);
 
     function GetFileName(const Item: TListItem): String;
     procedure SetFileName(const Item: TListItem; const FileName: String);
@@ -447,8 +448,9 @@ begin
   Largeimages.Width := 32;
   Largeimages.Height := 32;
 
-  // ConvertTo32BitImageList(LargeImages);
-  // ConvertTo32BitImageList(SmallImages);
+  ConvertTo32BitImageList(LargeImages);
+  ConvertTo32BitImageList(SmallImages);
+
   iconMap := TStringList.Create;
 
   FileName := SysIconLib;
@@ -836,6 +838,22 @@ begin
   RefreshColumns;
 end;
 
+procedure TRtcPFileExplorer.UpdateFileList_(const Folder: String;
+  const FData: TRtcDataSet);
+begin
+  if Assigned(FData) then
+  begin
+    if Assigned(FMyFiles_) then
+      FMyFiles_.Free;
+    FMyFiles := TRtcDataSet(FData.copyOf);
+  end
+  else
+  begin
+    FMyFiles_.Free;
+    FMyFiles_ := nil;
+  end;
+end;
+
 procedure TRtcPFileExplorer.AddDrives(const FData: TRtcDataSet);
 var
   i: integer;
@@ -904,25 +922,25 @@ begin
   CurPath := IncludeTrailingBackslash(FDirectory);
   FileName := CurPath + FName;
   // ".." (go up)
-  with Items.Add do
-  begin
-    Caption := '..'; // Name 0
-    ImageIndex := GetDirIconIndex(true);
-    SubItems.Add('<Up>'); // Type 1
-    SubItems.Add(''); // Size 2
-    SubItems.Add(''); // Modified 3
-    SubItems.Add(''); // Attributes 4
-    SubItems.Add('..'); // Full path 5
-    SubItems.Add('dir'); // 6
-    SubItems.Add('0'); // 7
-  end;
+//  with Items.Add do
+//  begin
+//    Caption := '..'; // Name 0
+//    ImageIndex := GetDirIconIndex(true);
+//    SubItems.Add('[Назад]'); // Type 1
+//    SubItems.Add(''); // Size 2
+//    SubItems.Add(''); // Modified 3
+//    SubItems.Add(''); // Attributes 4
+//    SubItems.Add('..'); // Full path 5
+//    SubItems.Add('dir'); // 6
+//    SubItems.Add('0'); // 7
+//  end;
   for i := 1 to FData.RowCount do
   begin
     FName := FData.asText['file'];
     FileName := CurPath + FName;
     FSize := FData.asLargeInt['size'];
     if FData.isType['age'] = rtc_DateTime then
-      FDate := DateTimeToStr(FData.asDateTime['age'])
+       DateTimeToString(FDate, 'dd.mm.yyyy hh:nn:ss', FData.asDateTime['age'])
     else
       FDate := '';
     Attributes := AttrStr(FData.asInteger['attr']);
@@ -932,7 +950,8 @@ begin
       if (FData.asInteger['attr'] and faDirectory) = faDirectory then
       begin
         ImageIndex := GetDirIconIndex;
-        SubItems.Add('<Directory>'); // Type 1
+        (*SubItems.Add('<Directory>'); // Type 1*)
+        SubItems.Add('Каталог'); // Type 1
         SubItems.Add(''); // Size 2
         SubItems.Add(FDate); // Modified 3
         SubItems.Add(Attributes); // Attributes 4
@@ -944,7 +963,8 @@ begin
       begin
         FName := UpperCase(ExtractFileExt(FName));
         ImageIndex := GetFileIconIndex(FName);
-        SubItems.Add(FName + ' File'); // Type 1
+        (*SubItems.Add(FName + ' File'); // Type 1*)
+        SubItems.Add(FName + ' Файл'); // Type 1
         SubItems.Add(FormatFileSize(FSize)); // Size 2
         SubItems.Add(FDate); // Modified 3
         SubItems.Add(Attributes); // Attributes 4
@@ -958,7 +978,7 @@ begin
   end;
 end;
 
-procedure TRtcPFileExplorer.OneLevelUp;
+procedure TRtcPFileExplorer.OneLevelUp(clear_sel:boolean=False);
 var
   NewDir: String;
   fld: TRtcDataSet;
@@ -982,48 +1002,19 @@ begin
     try
       GetFilesList(NewDir, '*.*', fld);
       UpdateFileList(NewDir, fld);
+
+      if not clear_sel then
+      begin
+           selected:=    items[0];
+           ItemFocused:= selected;
+      end;
+
     finally
       fld.Free;
     end;
   end;
   if Assigned(FOnDirectoryChange) then
     FOnDirectoryChange(Self, NewDir);
-end;
-
-procedure TRtcPFileExplorer.TopLevel;
-var
-  NewDir: String;
-  fld: TRtcDataSet;
-begin
-  NewDir := '';
-  if FLocal then
-  begin
-    fld := TRtcDataSet.Create;
-    try
-      GetFilesList(NewDir, '*.*', fld);
-      UpdateFileList(NewDir, fld);
-    finally
-      fld.Free;
-    end;
-  end;
-  if Assigned(FOnDirectoryChange) then
-    FOnDirectoryChange(Self, NewDir);
-end;
-
-procedure TRtcPFileExplorer.RefreshFilesList;
-var
-  fld: TRtcDataSet;
-begin
-  if FLocal then
-  begin
-    fld := TRtcDataSet.Create;
-    try
-      GetFilesList(Directory, '*.*', fld);
-      UpdateFileList(Directory, fld);
-    finally
-      fld.Free;
-    end;
-  end;
 end;
 
 procedure TRtcPFileExplorer.Click;
@@ -1056,6 +1047,8 @@ begin
         try
           GetFilesList(NewDir, '*.*', fld);
           UpdateFileList(NewDir, fld);
+          Selected:=     items[0];
+          ItemFocused:=  items[0];
         finally
           fld.Free;
         end;
@@ -1071,6 +1064,28 @@ begin
       FOnFileOpen(Self, NewDir);
   end;
 end;
+
+procedure TRtcPFileExplorer.onPath(NewDir: String; mask: String='');
+var
+  fld: TRtcDataSet;
+begin
+  inherited;
+      if mask='' then mask:= '*.*';
+      NewDir := IncludeTrailingBackslash(NewDir);
+      if FLocal then
+      begin
+        fld := TRtcDataSet.Create;
+        try
+          GetFilesList(NewDir, mask, fld);
+          UpdateFileList(NewDir, fld);
+        finally
+          fld.Free;
+        end;
+      end;
+      if Assigned(FOnDirectoryChange) then
+        FOnDirectoryChange(Self, NewDir);
+end;
+
 
 { procedure TRtcPFileExplorer.WMRButtonDown(var Message: TWMRButtonDown);
   begin
@@ -1122,6 +1137,23 @@ begin
             FSelectedFiles.Add(Items[i].SubItems[4]);
 end;
 
+function TRtcPFileExplorer.SelectedFiles_(d_cap,f_cap: string): TStringList;
+var
+  i: integer;
+begin
+  Result := FSelectedFiles;
+  FSelectedFiles.Clear;
+  if SelCount > 0 then
+    for i := 0 to Items.Count - 1 do
+      if Items[i].selected then
+        if (Items[i].SubItems[5] = 'dir') or (Items[i].SubItems[5] = 'file')
+        then
+          if (Items[i].SubItems[4] <> '..') then
+          if (Items[i].SubItems[5] = 'dir') then
+            FSelectedFiles.Add(d_cap+ExtractFileName(Items[i].SubItems[4])) else
+            FSelectedFiles.Add(f_cap+ExtractFileName(Items[i].SubItems[4]))
+end;
+
 function TRtcPFileExplorer.GetMediaTypeStr(MT: TRtcPMediaType): String;
 begin
   case MT of
@@ -1132,7 +1164,7 @@ begin
     dtRemovable:
       Result := 'Removable';
     dtFixed:
-      Result := 'Drive';
+      Result := 'Fixed';
     dtRemote:
       Result := 'Remote';
     dtCDROM:
@@ -1195,29 +1227,29 @@ begin
     Columns.Clear;
     with Columns.Add do // 0
     begin
-      Caption := 'Name';
+      Caption := 'Имя';//'Name';
       Width := 200;
     end;
     with Columns.Add do // 1
     begin
-      Caption := 'Type';
+      Caption := 'Тип';//'Type';
       Width := 90;
     end;
     with Columns.Add do // 2
     begin
-      Caption := 'Size';
+      Caption := 'Размер';//'Size';
       Width := 80;
       Alignment := taRightJustify;
     end;
     with Columns.Add do // 3
     begin
-      Caption := 'Modified';
-      Width := 115;
+      Caption := 'Изменено';//'Modified';
+      Width := 150;
       Alignment := taRightJustify;
     end;
     with Columns.Add do // 4
     begin
-      Caption := 'Attr';
+      Caption := 'Атриб.';//'Attr';
       Width := 45;
     end;
   end;
@@ -1230,16 +1262,16 @@ begin
     try
       if FDirectory = '' then
       begin
-        Column[1].Caption := 'Type';
-        Column[2].Caption := 'Capacity';
-        Column[3].Caption := 'Free Space';
+        Column[1].Caption := 'Тип';//'Type';
+        Column[2].Caption := 'Емкость';//'Capacity';
+        Column[3].Caption := 'Свободно';//'Free Space';
         AddDrives(FMyFiles);
       end
       else
       begin
-        Column[1].Caption := 'Type';
-        Column[2].Caption := 'Size';
-        Column[3].Caption := 'Modified';
+        Column[1].Caption := 'Тип'; //'Type';
+        Column[2].Caption := 'Размер';//'Size';
+        Column[3].Caption := 'Изменено';//'Modified';
         AddFiles(FMyFiles);
       end;
     finally

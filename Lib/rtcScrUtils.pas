@@ -96,25 +96,28 @@ begin
     CState := ShowCursor(True);
 end;
 
-
 function Get_ComputerName: RtcString;
 var
-  buf: array [0 .. 256] of AnsiChar;
-  len: DWord;
+  buffer: array[0..255] of Char;
+  size: DWORD;
 begin
-  len := sizeof(buf);
-  GetComputerName(@buf, len);
-  Result := RtcString(PAnsiChar(@buf));
+  size := SizeOf(buffer);
+  if GetComputerName(buffer, size) then
+    Result := RtcString(buffer)
+  else
+    Result := RtcString('');
 end;
 
 function Get_UserName: RtcString;
 var
-  buf: array [0 .. 256] of AnsiChar;
-  len: DWord;
+  buffer: array [0..255] of Char;
+  size: DWORD;
 begin
-  len := sizeof(buf);
-  GetUserName(@buf, len);
-  Result := RtcString(PAnsiChar(@buf));
+  size := SizeOf(buffer);
+  if GetUserName(buffer, size) then
+    Result := RtcString(buffer)
+  else
+    Result := RtcString('');
 end;
 
 function Get_Clipboard: RtcString;

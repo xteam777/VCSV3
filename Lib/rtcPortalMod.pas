@@ -1,5 +1,4 @@
-{ Copyright (c) Danijel Tkalcec,
-  RealThinClient components - http://www.realthinclient.com }
+{ Copyright 2004-2017 (c) RealThinClient.com (http://www.realthinclient.com) }
 
 unit rtcPortalMod;
 
@@ -14,7 +13,7 @@ uses
 
 const
   // Version of the RTC PORTAL components
-  RTCPORTAL_VERSION: String = 'v5.10 (2017.Q4)';
+  RTCPORTAL_VERSION: String = 'v5.06';
 
 type
   (* Copy the lines below to a new unit when you want to implement a new Module for the RTC Portal Client.
@@ -354,8 +353,6 @@ type
     FOnError: TRtcPortalMsgEvent;
     FOnFatalError: TRtcPortalMsgEvent;
 
-//    FOnActivate: TRtcPortalEvent;
-//    FOnAuthentificated: TRtcPortalDataEvent;
     FOnLogIn: TRtcPortalEvent;
     FOnLogOut: TRtcPortalEvent;
     FOnUserLoggedOut: TRtcPortalUserEvent;
@@ -401,8 +398,6 @@ type
     procedure xOnFatalError(Sender, Obj: TObject; Data: TRtcValue);
 
     procedure xOnLogIn(Sender, Obj: TObject);
-//    procedure xOnActivate(Sender, Obj: TObject);
-//    procedure xOnAuthentificated(Sender, Obj: TObject; Data:TRTCValue);
     procedure xOnLogOut(Sender, Obj: TObject);
 
     procedure xOnUserLoggedOut(Sender, Obj: TObject; Data: TRtcValue);
@@ -423,8 +418,6 @@ type
       and forward data data to RTC Portal Modules linked to this PortalClient. *)
 
     procedure Event_LogIn(Sender: TObject);
-//    procedure Event_Activate(Sender: TObject);
-//    procedure Event_Authentificated(Sender: TObject; Data: TRtcValue);
     procedure Event_LogOut(Sender: TObject);
     procedure Event_Error(Sender: TObject; Data: TRtcValue);
     procedure Event_FatalError(Sender: TObject; Data: TRtcValue);
@@ -684,12 +677,6 @@ type
       by using the same parameters and trying to log in again are almost zero. }
     property OnFatalError: TRtcPortalMsgEvent read FOnFatalError
       write FOnFatalError;
-
-//    property OnActivate: TRtcPortalEvent read FOnActivate
-//      write FOnActivate;
-//
-//    property OnAuthentificated: TRtcPortalDataEvent read FOnAuthentificated
-//      write FOnAuthentificated;
 
     { This event will be triggered when a user visible to us logs in to the Gateway.
       This event makes it possible to maintain a list of currently active users in real-time. }
@@ -1043,18 +1030,6 @@ begin
   if assigned(FOnLogIn) then
     CallEvent(Sender, xOnLogIn);
 end;
-
-//procedure TAbsPortalClient.Event_Activate(Sender: TObject);
-//begin
-//  if assigned(FOnActivate) then
-//    CallEvent(Sender, xOnActivate);
-//end;
-
-//procedure TAbsPortalClient.Event_Authentificated(Sender: TObject; Data: TRtcValue);
-//begin
-//  if assigned(FOnAuthentificated) then
-//    CallEvent(Sender, xOnAuthentificated, Data);
-//end;
 
 procedure TAbsPortalClient.Event_LogOut(Sender: TObject);
 var
@@ -1449,16 +1424,6 @@ procedure TAbsPortalClient.xOnLogIn(Sender, Obj: TObject);
 begin
   FOnLogIn(self);
 end;
-
-//procedure TAbsPortalClient.xOnActivate(Sender, Obj: TObject);
-//begin
-//  FOnActivate(self);
-//end;
-//
-//procedure TAbsPortalClient.xOnAuthentificated(Sender, Obj: TObject; Data:TRTCValue);
-//begin
-//  FOnAuthentificated(self, Data);
-//end;
 
 procedure TAbsPortalClient.xOnLogOut(Sender, Obj: TObject);
 begin

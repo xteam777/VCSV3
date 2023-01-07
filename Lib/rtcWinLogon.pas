@@ -43,6 +43,20 @@ type
   WTS_INFO_CLASS = _WTS_INFO_CLASS;
   TWtsInfoClass = WTS_INFO_CLASS;
 
+  TUnicodeString = record
+    Length: ShortInt;
+    MaxLength: ShortInt;
+    Buffer: PWideChar;
+  end;
+  TProcessBasicInformation = record
+    ExitStatus: DWord;
+    PEBBaseAddress: Pointer;
+    AffinityMask: DWord;
+    BasePriority: DWord;
+    UniqueProcessID: Word;
+    ParentProcessID: DWord;
+  end;
+
 
 const
   TOKEN_ADJUST_SESSIONID = $0100;
@@ -234,6 +248,55 @@ begin
   {xLog(Format('GetProcAddress: %s.%s - %s', [ModuleName, ProcName, BoolToStr(Result, true)]), LogAddon); {$ENDIF}
 {end;}
 
+function GetPEBAddress(inhandle: THandle): pointer;
+type
+  NTQIP = procedure(ProcessHandle: THandle;
+                    ProcessInformationClass: DWord;
+                    ProcessInformation: Pointer;
+                    ProcessInformationLength: DWord;
+                    ReturnLength: Pointer); stdcall;
+var
+  pbi: TProcessBasicInformation;
+  MyHandle: THandle;
+  myFunc: NTQIP;
+begin
+  MyHandle := LoadLibrary('NTDLL.DLL');
+  if MyHandle <> 0 then
+    begin
+      myfunc := GetProcAddress(myHandle, 'NtQueryInformationProcess');
+      if @myfunc <> nil then
+        MyFunc(inhandle, 0, @pbi, sizeof(pbi), nil);
+    end;
+  FreeLibrary(Myhandle);
+  Result := pbi.PEBBaseAddress;
+end;
+
+function GetCommandLine(inproc: THandle): string;
+var
+  myproc: THandle;
+  rtlUserProcAddress: Pointer;
+  PMBAddress: Pointer;
+  command_line: TUnicodeString;
+  command_line_contents: WideString;
+  outr: SIZE_T;
+begin
+  myproc := OpenProcess(PROCESS_QUERY_INFORMATION or PROCESS_VM_READ,
+                    false, inproc);
+  PMBAddress := GetPEBAddress(myproc);
+  ReadProcessMemory(myproc, Pointer(Longint(PMBAddress) + $10),
+        @rtlUserProcAddress, sizeof(Pointer), outr);
+  ReadProcessMemory(myproc, Pointer(Longint(rtlUserProcAddress) + $40),
+        @command_line, sizeof(command_line), outr);
+
+  SetLength(Command_Line_Contents, command_line.length);
+  ReadProcessMemory(myproc, command_Line.Buffer, @command_Line_contents[1],
+           command_line.length, outr);
+  CloseHandle(myproc);
+
+  Result := WideCharLenToString(PWideChar(command_Line_Contents),
+                       command_line.length div 2);
+end;
+
 function rtcKillProcess(strProcess: String; ProcessId: Cardinal = 0): Integer;
 const
   PROCESS_TERMINATE = $0001;
@@ -255,12 +318,14 @@ begin
     ContinueLoop := Process32First(FSnapshotHandle, procEntry);
     while Integer(ContinueLoop) <> 0 do
     begin
-      if (procEntry.th32ProcessID <> myPID) and
-        ((UpperCase(WideCharToString(procEntry.szExeFile)) = UpperCase(strProcess)) or
-        (UpperCase(ExtractFileName(WideCharToString(procEntry.szExeFile))) = UpperCase(strProcess)))
-        and ((ProcessId = procEntry.th32ProcessID) or (ProcessId = 0)) then
+      if (procEntry.th32ProcessID <> myPID)
+        and ((UpperCase(WideCharToString(procEntry.szExeFile)) = UpperCase(strProcess)) or
+          (UpperCase(ExtractFileName(WideCharToString(procEntry.szExeFile))) = UpperCase(strProcess)))
+        and ((ProcessId = procEntry.th32ProcessID) or (ProcessId = 0))
+        and (Pos('/UNINSTALL', UpperCase(GetCommandLine(procEntry.th32ProcessID))) = 0) then
         Result := Integer(TerminateProcess(OpenProcess(PROCESS_TERMINATE,
           BOOL(0), procEntry.th32ProcessID), 0));
+
       ContinueLoop := Process32Next(FSnapshotHandle, procEntry);
     end;
   finally
