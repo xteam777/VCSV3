@@ -48,7 +48,7 @@ type
     constructor Create(var fCreated: Boolean);
     destructor Destroy; override;
     function GetFrame(var fNeedRecreate: Boolean): Boolean;
-    function DrawFrame(var Bitmap: TBitmap): Boolean;
+    function DrawFrame(var Bitmap: TBitmap; aPixelFormat: TPixelFormat): Boolean;
 //    function DrawFrameToDib(pBits: PByte): Boolean;
 //    procedure FreeDIB(BitmapInfo: PBitmapInfo;
 //      InfoSize: DWORD;
@@ -256,7 +256,7 @@ begin
 end;
 
 
-function TDesktopDuplicationWrapper.DrawFrame(var Bitmap: TBitmap): Boolean;
+function TDesktopDuplicationWrapper.DrawFrame(var Bitmap: TBitmap; aPixelFormat: TPixelFormat): Boolean;
 var
   Desc: TD3D11_TEXTURE2D_DESC;
   Temp: ID3D11Texture2D;

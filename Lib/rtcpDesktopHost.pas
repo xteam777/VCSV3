@@ -2799,7 +2799,7 @@ time := GetTickCount;
             if fRes
               and (not fNeedRecreate) then
             begin
-              fHaveScreen := FDesktopDuplicator.DrawFrame(FDesktopDuplicator.Bitmap);
+              fHaveScreen := FDesktopDuplicator.DrawFrame(FDesktopDuplicator.Bitmap, FNewImage.PixelFormat);
               fHaveScreen := fHaveScreen;
 //            end
 //            else

@@ -1458,7 +1458,7 @@ begin
     FDesktopControl.ChgDesktop_SendScreenSizeLimit(rdBlockAnySize);
 //    if grpColorLow.ItemIndex>=0 then
 //      begin
-      FDesktopControl.ChgDesktop_ColorLowLimit(rd_ColorHigh);
+//      FDesktopControl.ChgDesktop_ColorLowLimit(rd_ColorHigh);
 //      FDesktopControl.ChgDesktop_ColorReducePercent(cbReduceColors.Value);
     FDesktopControl.Send_HideDesktop(FUserName);
     FDesktopControl.ChgDesktop_End(FUserName);
@@ -7321,7 +7321,7 @@ begin
     else
     if asString['Result'] = 'OK' then
     begin
-      PRItem := GetPendingItemByUserName(asWideString['user'], asString['action']);
+      PRItem := GetPendingItemByUserName(asWideString['User'], asString['action']);
       if PRItem = nil then
         Exit;
 
