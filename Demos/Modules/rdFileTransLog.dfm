@@ -16,7 +16,7 @@ object rdFileTransferLog: TrdFileTransferLog
   OnCloseQuery = FormCloseQuery
   PixelsPerInch = 96
   TextHeight = 13
-  object Memo1: TMemo
+  object mLog: TMemo
     Left = 0
     Top = 0
     Width = 419

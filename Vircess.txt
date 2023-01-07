@@ -1,5 +1,4 @@
 ﻿REMOX
-история в транслог
 обновлятор. тот же установщик с параметрами. обновлять автоматом если нет соединений. проверка раз в день
 два языка. по умолчанию из локали
 you need EV code signing certificate to SmartScreen ByPass https://www.gironsec.com/blog/2020/12/bypassing-windows-smartscreen/
