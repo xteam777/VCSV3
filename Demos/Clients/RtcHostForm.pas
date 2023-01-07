@@ -700,7 +700,7 @@ type
     procedure ShowRegularPasswordState();
     procedure FriendList_Status(uname: String; status: Integer);
     function GetUserNameByID(uname: String): String;
-    procedure Locked_Status(uname: String; status: Integer);
+    procedure Locked_Status(uname: String; aLockedStatus: Integer; aServiceStarted: Boolean);
     procedure SendPasswordsToGateway();
     procedure SendLockedStateToGateway;
     function IsValidDeviceID(const uname: String): Boolean;
@@ -4018,20 +4018,21 @@ begin
     Result := uname;
 end;
 
-procedure TMainForm.Locked_Status(uname: String; status: Integer);
+procedure TMainForm.Locked_Status(uname: String; aLockedStatus: Integer; aServiceStarted: Boolean);
 var
   i: Integer;
+  pPC: PPortalConnection;
 begin
 //  XLog('Locked_Status');
 
   CS_GW.Acquire;
   try
     for i := 0 to PortalConnectionsList.Count - 1 do
-      if PPortalConnection(PortalConnectionsList[i])^.ID = uname then
-      begin
-//        PGatewayRec(GatewayClientsList[i])^.LockedState := status;
-        PostMessage(PPortalConnection(PortalConnectionsList[i])^.UIHandle, WM_CHANGE_LOCKED_STATUS, status, 0);
-      end;
+    begin
+      pPC := PPortalConnection(PortalConnectionsList[i]);
+      if pPC^.ID = uname then
+        PostMessage(pPC^.UIHandle, WM_CHANGE_LOCKED_STATUS, aLockedStatus, Byte(aServiceStarted));
+    end;
   finally
     CS_GW.Release;
   end;
@@ -7453,7 +7454,7 @@ begin
   end
   else
     with Result.asRecord do
-      Locked_Status(asWideString['User'], asInteger['State']);
+      Locked_Status(asWideString['User'], asInteger['LockedState'], asBoolean['ServiceStarted']);
 end;
 
 procedure TMainForm.rGetPartnerInfoRequestAborted(Sender: TRtcConnection; Data,
@@ -7787,7 +7788,8 @@ begin
             else if not isNull['locked'] then // Friend locked status update
               begin
                 fname := asRecord['locked'].asText['user'];
-                Locked_Status(fname, asRecord['locked'].asInteger['state']);
+                with asRecord['locked'] do
+                  Locked_Status(fname, asInteger['LockedState'], asBoolean['ServiceStarted']);
               end
 //            else if not isNull['addfriend'] then // Added as Friend
 //              begin
