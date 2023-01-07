@@ -6925,6 +6925,7 @@ begin
           else
             asString['ConsoleId'] := '';
           asInteger['LockedState'] := ScreenLockedState;
+          asBoolean['ServiceStarted'] := IsServiceStarted(RTC_HOSTSERVICE_NAME);
           asBoolean['IsService'] := IsService;
           Call(resHostPing);
         end;
@@ -8354,6 +8355,7 @@ begin
                 else
                   asString['ConsoleId'] := '';
                 asInteger['LockedState'] := ScreenLockedState;
+                asBoolean['ServiceStarted'] := IsServiceStarted(RTC_HOSTSERVICE_NAME);
                 asBoolean['IsService'] := False;
                 Call(resHostLogin);
               end;
@@ -8373,6 +8375,7 @@ begin
                 else
                   asString['ConsoleId'] := '';
                 asInteger['LockedState'] := ScreenLockedState;
+                asBoolean['ServiceStarted'] := IsServiceStarted(RTC_HOSTSERVICE_NAME);
                 asBoolean['IsService'] := False;
                 Call(resHostTimerLogin);
               end;
@@ -8450,6 +8453,7 @@ begin
       begin
         Value['User'] := LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]));
         AsInteger['LockedState'] := ScreenLockedState;
+        asBoolean['ServiceStarted'] := IsServiceStarted(RTC_HOSTSERVICE_NAME);
         Call(rHostLockedStateUpdate);
       end;
     except
@@ -8719,6 +8723,7 @@ begin
           Value['Check'] := myCheckTime;
           asRecord['Passwords'] := PassRec;
           asInteger['LockedState'] := ScreenLockedState;
+          asBoolean['ServiceStarted'] := IsServiceStarted(RTC_HOSTSERVICE_NAME);
           Call(resHostTimer);
         end;
       except

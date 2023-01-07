@@ -177,6 +177,7 @@ begin
       begin
         Value['User'] := LowerCase(UserName);
         AsInteger['LockedState'] := ScreenLockedState;
+        asBoolean['ServiceStarted'] := (Status = csRunning);
         Call(rHostLockedStateUpdate);
       end;
     except
@@ -962,6 +963,7 @@ begin
           asRecord['Passwords'] := PassRec;
           asString['Gateway'] := PClient.GateAddr + ':' + PClient.GatePort; //asString['Gateway'] + ':' + asString['Port'];
           asInteger['LockedState'] := ScreenLockedState;
+          asBoolean['ServiceStarted'] := (Status = csRunning);
           asBoolean['IsService'] := True;
           Call(resHostLogin);
         end;
@@ -971,6 +973,7 @@ begin
 //          asRecord['Passwords'] := PassRec;
 //          asString['Gateway'] := PClient.GateAddr + ':' + PClient.GatePort; //asString['Gateway'] + ':' + asString['Port'];
 //          asInteger['LockedState'] := ScreenLockedState;
+//          asBoolean['ServiceStarted'] := (Status = csRunning);
 //          asBoolean['IsService'] := True;
 //          Call(resHostTimerLogin);
 //        end;
@@ -1306,6 +1309,7 @@ begin
       Value['Check'] := myCheckTime;
       asRecord['Passwords'] := PassRec;
       asInteger['LockedState'] := ScreenLockedState;
+      asBoolean['ServiceStarted'] := (Status = csRunning);
       Call(resHostTimer);
     end;
   finally
@@ -1587,6 +1591,7 @@ begin
       asString['Gateway'] := PClient.GateAddr + ':' + PClient.GatePort;
       asRecord['Passwords'] := PassRec;
       asInteger['LockedState'] := ScreenLockedState;
+      asBoolean['ServiceStarted'] := (Status = csRunning);
       asBoolean['IsService'] := IsService;
       Call(resHostPing);
     end;

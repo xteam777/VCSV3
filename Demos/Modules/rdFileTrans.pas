@@ -693,19 +693,19 @@ begin
 end;
 
 procedure TrdFileTransfer.FormClose(Sender: TObject; var Action: TCloseAction);
-var
-  h: hwnd;
+//var
+//  h: hwnd;
 begin
   if Assigned(FOnUIClose) then
     FOnUIClose(myUI.Tag); //ThreadID
 
   load_first:= True;
   Action:=caFree;
-  h:= findwindow('TrdFileTransfer',nil);
-  if IsWindowVisible(h) then
-  begin
-    postmessage(h, WM_CLOSE, 0, 0);
-  end;
+//  h:= findwindow('TrdFileTransfer',nil);
+//  if IsWindowVisible(h) then
+//  begin
+//    postmessage(h, WM_CLOSE, 0, 0);
+//  end;
 end;
 
 procedure TrdFileTransfer.FormKeyDown(Sender: TObject; var Key: Word;
