@@ -639,10 +639,16 @@ begin
   Hide;
 
   if aHideWallpaper.Checked then
+  try
     UI.Send_ShowDesktop;
+  finally
+  end;
 
   if aLockSystemOnClose.Checked then
+  try
     UI.Send_LockSystem;
+  finally
+  end;
 
   DesktopTimer.Enabled := False;
   CanClose := myUI.CloseAndClear;
