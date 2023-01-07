@@ -286,11 +286,8 @@ end;
 
 procedure TrdFileTransfer.SetFormState;
 begin
-  if (PartnerLockedState = LCK_STATE_LOCKED)
-    or (PartnerLockedState = LCK_STATE_SAS) then
-  begin
+  if (PartnerLockedState = LCK_STATE_LOCKED) then
     Close;
-  end;
 end;
 
 procedure TrdFileTransfer.SetCaption;

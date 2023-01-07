@@ -5465,16 +5465,24 @@ procedure TMainForm.tCheckLockedStateTimer(Sender: TObject);
 begin
 //  XLog('tCheckLockedStateTimer');
 
+  if (GetCurrentSesstionState <> WTSActive) then
+    ScreenLockedState := LCK_STATE_LOCKED
+  else
+  if (LowerCase(GetInputDesktopName) <> 'default') then
+    ScreenLockedState := LCK_STATE_SAS
+  else
+    ScreenLockedState := LCK_STATE_UNLOCKED;
+
 //  if (not IsServiceStarted(RTC_HOSTSERVICE_NAME))
 //    and
-  if (LowerCase(GetInputDesktopName) <> 'default') then
+{  if (LowerCase(GetInputDesktopName) <> 'default') then
     ScreenLockedState := LCK_STATE_LOCKED
   else
   if {tPHostThread.FDesktopHost.HaveScreen
     and} (GetCurrentSesstionState = WTSActive) then
     ScreenLockedState := LCK_STATE_UNLOCKED
   else
-    ScreenLockedState := LCK_STATE_LOCKED;
+    ScreenLockedState := LCK_STATE_SAS;}
 
 {  if IsScreenSaverRunning then
   begin
@@ -7333,8 +7341,15 @@ begin
       if not PartnerIsPending(asWideString['user'], asString['action'], asString['Address']) then
       begin
         if (asWideString['action'] <> 'desk')
-          and ((asInteger['LockedState'] = LCK_STATE_LOCKED)
-            or (asInteger['LockedState'] = LCK_STATE_SAS)) then
+          and (asInteger['LockedState'] = LCK_STATE_LOCKED) then
+        begin
+          SetStatusStringDelayed('Устройство партнера заблокировано. Подключение запрещено');
+          DeletePendingRequest(asWideString['UserToConnect'], asString['action']);
+        end
+        else
+        if (asWideString['action'] = 'desk')
+          and (asInteger['LockedState'] = LCK_STATE_LOCKED)
+          and (not asBoolean['ServiceStarted']) then
         begin
           SetStatusStringDelayed('Устройство партнера заблокировано. Подключение запрещено');
           DeletePendingRequest(asWideString['UserToConnect'], asString['action']);
