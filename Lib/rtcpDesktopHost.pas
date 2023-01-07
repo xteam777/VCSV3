@@ -2809,7 +2809,8 @@ var
 //time := GetTickCount - time;
 //time := i;
 
-                //FNewImage.SaveToFile('C:\Rufus\scr2.bmp');
+          if FDesktopDuplicator.Bitmap.PixelFormat = pf8bit then
+            FDesktopDuplicator.Bitmap.SaveToFile('C:\Rufus\' + StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
 {            try
                 DW := GetCaptureWindow;
               //Get GDI screenshot

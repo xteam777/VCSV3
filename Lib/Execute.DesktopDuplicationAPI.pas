@@ -291,8 +291,8 @@ begin
   if Bitmap = nil then
     Bitmap := TBitmap.Create;
 
-  Bitmap.PixelFormat := pf32bit;
-//  Bitmap.PixelFormat := aPixelFormat;
+//  Bitmap.PixelFormat := pf32bit;
+  Bitmap.PixelFormat := aPixelFormat;
   Bitmap.SetSize(Desc.Width, Desc.Height);
 
   Desc.BindFlags := 0;
