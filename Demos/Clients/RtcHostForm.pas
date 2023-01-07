@@ -561,7 +561,7 @@ type
     function FormatID(AID: String): String;
     function ConnectedToAllGateways: Boolean;
     function GetUniqueString: String;
-    function GetUserDescription(aUserName: String): String;
+    function GetUserDescription(aUserName, aAction: String): String;
     function GetUserPassword(aUserName: String): String;
     function UIIsPending(username: String): Boolean;
     function AddPendingRequest(uname, desc, action: String): PPendingRequestItem;
@@ -8760,13 +8760,21 @@ begin
     end;
 end;
 
-function TMainForm.GetUserDescription(aUserName: String): String;
+function TMainForm.GetUserDescription(aUserName, aAction: String): String;
 var
   Node: PVirtualNode;
+  pRItem: PPendingRequestItem;
 begin
+  pRItem := GetPendingItemByUserName(aUserName, aAction);
+  if pRItem <> nil then
+  begin
+    Result := pRItem^.UserDesc;
+    Exit;
+  end;
+
   if not LoggedIn then
   begin
-    Result := '';
+    Result := aUserName;
     Exit;
   end;
 
@@ -8774,7 +8782,7 @@ begin
   if Node <> nil then
     Result := TDeviceData(twDevices.GetNodeData(Node)^).Name
   else
-    Result := '';
+    Result := aUserName;
 end;
 
 function TMainForm.GetUserPassword(aUserName: String): String;
@@ -8810,7 +8818,7 @@ begin
   if Assigned(FWin) then
   begin
     FWin.UI.UserName := user;
-    FWin.UI.UserDesc := GetPendingItemByUserName(user, 'file')^.UserDesc;
+    FWin.UI.UserDesc := GetUserDescription(user, 'file');
     // Always set UI.Module *after* setting UI.UserName !!!
     FWin.UI.Module := Sender;
     FWin.UI.Tag := Sender.Tag; //ThreadID
@@ -8870,7 +8878,7 @@ begin
   if Assigned(FWin) then
   begin
     FWin.UI.UserName := user;
-    FWin.UI.UserDesc := GetPendingItemByUserName(user, 'file')^.UserDesc;
+    FWin.UI.UserDesc := GetUserDescription(user, 'file');
     // Always set UI.Module *after* setting UI.UserName !!!
     FWin.UI.Module := Sender;
     FWin.UI.Tag := Sender.Tag; //ThreadID
@@ -8931,7 +8939,7 @@ begin
   if Assigned(FWin) then
   begin
     FWin.UI.UserName := user;
-    FWin.UI.UserDesc := GetUserDescription(user);
+    FWin.UI.UserDesc := GetUserDescription(user, 'file');
     // Always set UI.Module *after* setting UI.UserName !!!
     FWin.UI.Module := Sender;
     FWin.UI.Tag := Sender.Tag; //ThreadID
@@ -10372,7 +10380,7 @@ begin
     //{$ENDIF}
 
     CDesk.UI.UserName := user;
-    CDesk.UI.UserDesc := GetPendingItemByUserName(user, 'desk')^.UserDesc;
+    CDesk.UI.UserDesc := GetUserDescription(user, 'desk');
     // Always set UI.Module *after* setting UI.UserName !!!
     CDesk.UI.Module := Sender;
 

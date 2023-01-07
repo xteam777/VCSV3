@@ -3,7 +3,7 @@ object rdFileTransfer: TrdFileTransfer
   Top = 105
   BorderWidth = 1
   Caption = 'File Explorer'
-  ClientHeight = 608
+  ClientHeight = 605
   ClientWidth = 1212
   Color = clWhite
   Constraints.MinHeight = 500
@@ -35,7 +35,7 @@ object rdFileTransfer: TrdFileTransfer
     Left = 0
     Top = 0
     Width = 2
-    Height = 423
+    Height = 420
     Beveled = True
     Color = clBlack
     ParentColor = False
@@ -48,7 +48,7 @@ object rdFileTransfer: TrdFileTransfer
     Left = 2
     Top = 0
     Width = 520
-    Height = 423
+    Height = 420
     Align = alLeft
     BevelOuter = bvNone
     Caption = 'Loading Remote Drive information. Please wait ...'
@@ -60,6 +60,7 @@ object rdFileTransfer: TrdFileTransfer
     ParentFont = False
     TabOrder = 0
     StyleElements = []
+    ExplicitHeight = 423
     object Panel3: TPanel
       Left = 0
       Top = 52
@@ -295,7 +296,7 @@ object rdFileTransfer: TrdFileTransfer
       Left = 0
       Top = 116
       Width = 520
-      Height = 238
+      Height = 235
       SortColumn = 0
       SortDirection = sdAscending
       Align = alClient
@@ -326,10 +327,11 @@ object rdFileTransfer: TrdFileTransfer
       OnKeyUp = eFilesListKeyUp
       OnSelectItem = eFilesListSelectItem
       OnDirectoryChange = eFilesListDirectoryChange
+      ExplicitHeight = 238
     end
     object Panel5: TPanel
       Left = 0
-      Top = 354
+      Top = 351
       Width = 520
       Height = 69
       Align = alBottom
@@ -349,6 +351,7 @@ object rdFileTransfer: TrdFileTransfer
       StyleElements = [seFont]
       OnDragDrop = DownLabelDragDrop
       OnDragOver = DownLabelDragOver
+      ExplicitTop = 354
       object pn: TPanel
         Left = 0
         Top = 0
@@ -1361,7 +1364,7 @@ object rdFileTransfer: TrdFileTransfer
     Left = 522
     Top = 0
     Width = 690
-    Height = 423
+    Height = 420
     Align = alClient
     BevelOuter = bvNone
     Caption = 'Loading Remote Drive information. Please wait ...'
@@ -1373,11 +1376,12 @@ object rdFileTransfer: TrdFileTransfer
     ParentFont = False
     TabOrder = 1
     StyleElements = []
+    ExplicitHeight = 423
     object eFilesList_: TRtcPFileExplorer
       Left = 0
       Top = 116
       Width = 690
-      Height = 238
+      Height = 235
       SortColumn = 0
       SortDirection = sdAscending
       Local = True
@@ -1408,10 +1412,11 @@ object rdFileTransfer: TrdFileTransfer
       OnKeyUp = eFilesList_KeyUp
       OnSelectItem = eFilesList_SelectItem
       OnDirectoryChange = eFilesList_DirectoryChange
+      ExplicitHeight = 238
     end
     object Panel7: TPanel
       Left = 0
-      Top = 354
+      Top = 351
       Width = 690
       Height = 69
       Align = alBottom
@@ -1431,6 +1436,7 @@ object rdFileTransfer: TrdFileTransfer
       StyleElements = [seFont]
       OnDragDrop = DownLabelDragDrop
       OnDragOver = DownLabelDragOver
+      ExplicitTop = 354
       object pn_: TPanel
         Left = 0
         Top = 0
@@ -2577,16 +2583,17 @@ object rdFileTransfer: TrdFileTransfer
   end
   object sb: TStatusBar
     Left = 0
-    Top = 585
+    Top = 582
     Width = 1212
     Height = 23
     Panels = <>
     SimplePanel = True
     StyleElements = []
+    ExplicitTop = 585
   end
   object pg: TPageControl
     Left = 0
-    Top = 423
+    Top = 420
     Width = 1212
     Height = 137
     ActivePage = TabSheet1
@@ -2601,6 +2608,7 @@ object rdFileTransfer: TrdFileTransfer
     TabOrder = 3
     TabStop = False
     StyleElements = [seFont]
+    ExplicitTop = 423
     object TabSheet1: TTabSheet
       Caption = ' '#1054#1095#1077#1088#1077#1076#1100' '#1079#1072#1076#1072#1085#1080#1081' '
       Font.Charset = DEFAULT_CHARSET
@@ -2781,7 +2789,7 @@ object rdFileTransfer: TrdFileTransfer
   end
   object Panel1: TPanel
     Left = 0
-    Top = 560
+    Top = 557
     Width = 1212
     Height = 25
     Align = alBottom
@@ -2792,6 +2800,7 @@ object rdFileTransfer: TrdFileTransfer
     Font.Style = []
     ParentFont = False
     TabOrder = 4
+    ExplicitTop = 560
     object Label7: TLabel
       AlignWithMargins = True
       Left = 1019
