@@ -15,7 +15,7 @@ uses
 {$ENDIF}
 
   rtcSystem, rtcpFileExplore, rtcpFileTransUI, ShellAPI, Menus, AppEvnts, ImgList, Vcl.Samples.Gauges, System.ImageList,
-  rtcPortalMod, rtcpFileTrans, uVircessTypes, CommonUtils, rtcScrUtils;
+  rtcPortalMod, rtcpFileTrans, uVircessTypes, CommonUtils, rtcScrUtils, CommonData;
 
 type
   TrdFileTransfer = class(TForm)
@@ -202,6 +202,9 @@ type
     FOnUIOpen: TUIOpenEvent;
     FOnUIClose: TUICloseEvent;
 
+    PartnerLockedState: Integer;
+    PartnerServiceStarted: Boolean;
+
     FBeforeClose: TNotifyEvent;
 //    function GetUI: TRtcPFileTransferUI;
 //    procedure SetUI(const Value: TRtcPFileTransferUI);
@@ -232,11 +235,13 @@ type
     procedure Form_Open(const mode:string);
     procedure Form_Close(const mode:string);
     procedure SetCaption;
+    procedure SetFormState;
 
   protected
 
     procedure AcceptFiles(var msg : TMessage); message WM_DROPFILES;
     procedure CreateParams(var params: TCreateParams); override;
+    procedure ChangeLockedState(var Message: TMessage); message WM_CHANGE_LOCKED_STATUS;
 
   public
     UIVisible: Boolean;
@@ -271,6 +276,22 @@ var
 implementation
 
 {$R *.dfm}
+
+procedure TrdFileTransfer.ChangeLockedState(var Message: TMessage);
+begin
+  PartnerLockedState := Message.WParam;
+  PartnerServiceStarted := Boolean(Message.LParam);
+  SetFormState;
+end;
+
+procedure TrdFileTransfer.SetFormState;
+begin
+  if (PartnerLockedState = LCK_STATE_LOCKED)
+    or (PartnerLockedState = LCK_STATE_SAS) then
+  begin
+    Close;
+  end;
+end;
 
 procedure TrdFileTransfer.SetCaption;
 begin

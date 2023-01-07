@@ -183,7 +183,8 @@ type
     CurrentFrame: Integer;
 //    Avi: TAviFromBitmaps;
 
-    LockedState: Integer;
+    PartnerLockedState: Integer;
+    PartnerServiceStarted: Boolean;
 
     FOnUIOpen: TUIOpenEvent;
     FOnUIClose: TUICloseEvent;
@@ -1380,14 +1381,29 @@ end;
 
 procedure TrdDesktopViewer.ChangeLockedState(var Message: TMessage);
 begin
-  LockedState := Message.WParam;
+  PartnerLockedState := Message.WParam;
+  PartnerServiceStarted := Boolean(Message.LParam);
   SetFormState;
 end;
 
 procedure TrdDesktopViewer.SetFormState;
 begin
-  if MyUI.HaveScreen
-    and (LockedState = LCK_STATE_UNLOCKED) then
+  if (PartnerLockedState = LCK_STATE_LOCKED)
+    or (PartnerLockedState = LCK_STATE_SAS)
+    and (not PartnerServiceStarted) then
+  begin
+    pMain.Color := $00A39323;
+    Scroll.Visible := True;
+    iPrepare.Visible := False;
+    panOptions.Visible := True;
+    panOptionsMini.Visible := True;
+    iScreenLocked.Visible := True;
+    lState.Caption := 'Удаленный компьютер заблокирован';
+    lState.Visible := True;
+    lState.Invalidate;
+    Scroll.Visible := False;
+  end
+  else
   begin
     pMain.Color := $00151515;
     Scroll.Visible := True;
@@ -1399,34 +1415,6 @@ begin
     lState.Visible := False;
     lState.Invalidate;
     Scroll.Visible := True;
-  end
-  else
-  if LockedState = LCK_STATE_LOCKED then
-  begin
-    pMain.Color := $00A39323;
-    Scroll.Visible := True;
-    iPrepare.Visible := False;
-    panOptions.Visible := True;
-    panOptionsMini.Visible := True;
-    iScreenLocked.Visible := True;
-    lState.Caption := 'Удаленный компьютер заблокирован';
-    lState.Visible := True;
-    lState.Invalidate;
-    Scroll.Visible := False;
-  end
-  else
-  if LockedState = LCK_STATE_SAS then
-  begin
-    pMain.Color := $00A39323;
-    Scroll.Visible := True;
-    iPrepare.Visible := False;
-    panOptions.Visible := True;
-    panOptionsMini.Visible := True;
-    iScreenLocked.Visible := True;
-    lState.Caption := 'Удаленный компьютер заблокирован';
-    lState.Visible := True;
-    lState.Invalidate;
-    Scroll.Visible := False;
   end;
 end;
 
