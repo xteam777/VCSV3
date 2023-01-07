@@ -235,8 +235,8 @@ type
 
   protected
 
-    procedure AcceptFiles( var msg : TMessage ); message WM_DROPFILES;
-    procedure CreateParams(Var params: TCreateParams); override;
+    procedure AcceptFiles(var msg : TMessage); message WM_DROPFILES;
+    procedure CreateParams(var params: TCreateParams); override;
 
   public
     UIVisible: Boolean;
@@ -257,8 +257,7 @@ type
     lb:TLabel;
   end;
 
-  var
-
+var
   curr_g: TGauge = nil;  cur_files:TStringList; rr: array of TRec;
   stopped: boolean = True; KEY_BACK: boolean = False;
   Timer1_cn: integer = 0;
@@ -289,7 +288,7 @@ begin
 end;
 
 procedure TrdFileTransfer.Form_Open(const mode: string);
-  begin
+begin
 //  Caption:={mode +} myUI.UserName+' - Files transferring log';
   SetCaption;
 
@@ -297,22 +296,25 @@ procedure TrdFileTransfer.Form_Open(const mode: string);
 //  cTitleBar.Caption:=mode+'Files';
 
   FReady:=True;
-  end;
+end;
 
 procedure TrdFileTransfer.Form_Close(const mode: string);
-  begin
+begin
 //  cUserName.Caption:=myUI.UserName;
 //  cTitleBar.Caption:='('+mode+')';
 
   FReady:=False;
-  end;
+end;
 
 procedure TrdFileTransfer.CreateParams(Var params: TCreateParams);
-  begin
+begin
   inherited CreateParams(params);
-  params.ExStyle := params.ExStyle or WS_EX_APPWINDOW;
-  params.WndParent := GetDeskTopWindow;
-  end;
+//  params.Style := params.Style or WS_CLIPCHILDREN;
+//  params.Style := WS_CHILDWINDOW or WS_VISIBLE or WS_CLIPSIBLINGS or WS_CLIPCHILDREN;
+//  params.ExStyle := WS_EX_LEFT or WS_EX_LTRREADING or WS_EX_RIGHTSCROLLBAR or WS_EX_CONTROLPARENT or WS_EX_APPWINDOW;
+  params.ExStyle := params.ExStyle {or WS_EX_CONTROLPARENT} or WS_EX_APPWINDOW;
+  params.WndParent := 0; //GetDeskTopWindow;
+end;
 
 procedure TrdFileTransfer.AcceptFiles( var msg : TMessage );
   const
@@ -350,7 +352,7 @@ procedure TrdFileTransfer.AcceptFiles( var msg : TMessage );
 
 procedure TrdFileTransfer.FormCreate(Sender: TObject);
 begin
-  application.HintHidePause := 10000;
+  Application.HintHidePause := 10000;
   cur_files := TStringList.Create;
 
   b_ppClick(nil);
