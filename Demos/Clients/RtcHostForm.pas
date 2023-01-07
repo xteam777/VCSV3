@@ -8929,7 +8929,7 @@ begin
   if Assigned(FWin) then
   begin
     FWin.UI.UserName := user;
-    FWin.UI.UserDesc := user;
+    FWin.UI.UserDesc := GetUserDescription(user);
     // Always set UI.Module *after* setting UI.UserName !!!
     FWin.UI.Module := Sender;
     FWin.UI.Tag := Sender.Tag; //ThreadID
@@ -8942,8 +8942,6 @@ begin
     if not LoadWindowPosition(FWin,'FileTransForm-'+user) then
       LoadWindowPosition(FWin,'FileTransForm');
     *)
-
-    FWin.UI.UserDesc := GetUserDescription(user);
 
 //    FWin.AutoExplore := True;
 

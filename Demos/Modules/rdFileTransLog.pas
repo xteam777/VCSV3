@@ -76,8 +76,6 @@ procedure TrdFileTransferLog.Form_Open(const mode: string);
 begin
   SetCaption;
 
-  mLog.Lines.Add('Инициализация передачи файлов');
-
 //  Caption := {mode +} myUI.UserDesc + ' - Files transferring log';
 
 //  cUserName.Caption:=myUI.UserName;
@@ -90,8 +88,6 @@ procedure TrdFileTransferLog.Form_Close(const mode: string);
   begin
 //  cUserName.Caption:=myUI.UserName;
 //  cTitleBar.Caption:='('+mode+')';
-
-    mLog.Lines.Add('Передача файлов завершена');
 
   FReady:=False;
   end;
@@ -118,6 +114,8 @@ end;
 
 procedure TrdFileTransferLog.myUIClose(Sender: TRtcPFileTransferUI);
 begin
+  mLog.Lines.Add('Передача файлов завершена');
+
   Form_Close('Closed');
   Close;
 end;
@@ -133,6 +131,8 @@ end;
 procedure TrdFileTransferLog.myUIInit(Sender: TRtcPFileTransferUI);
 begin
   if not FReady then Form_Open('(Init) ');
+
+  mLog.Lines.Add('Инициализация передачи файлов...');
 end;
 
 procedure TrdFileTransferLog.myUILogOut(Sender: TRtcPFileTransferUI);
@@ -369,7 +369,7 @@ begin
   if myUI.Send_FileCount > 1 then
     mLog.Lines.Add('Отправка отменена: ' + myUI.Send_FromFolder + '\' + ' [' + IntToStr(myUI.Send_FileCount) + '] '+ myUI.Send_FileName)
   else
-    mLog.Lines.Add('Отправка отменена:: ' + myUI.Send_FromFolder + '\' + myUI.Send_FileName);
+    mLog.Lines.Add('Отправка отменена: ' + myUI.Send_FromFolder + '\' + myUI.Send_FileName);
 
 //  lSendFileName.Caption:='Cancelled';
 end;
