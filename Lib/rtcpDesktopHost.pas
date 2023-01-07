@@ -2324,11 +2324,11 @@ begin
         SetEvent(EventWriteBegin); //Если чтение не идет, то начинаем запись скрина
 
 //        ResetEvent(EventReadBegin);
-//i := GetTickCount;
+//time := GetTickCount;
         WaitForSingleObject(EventWriteEnd, WaitTimeout); //Добавить таймаут, ждем окончания записи скрина
         ResetEvent(EventWriteEnd);
-//i := GetTickCount - i;
-//i := i;
+//time := GetTickCount - time;
+//time := time;
   //    if EventRead > 0 then
   //    begin
   //      SetEvent(EventRead);
@@ -2777,7 +2777,7 @@ var
 //          fHaveScreen := GetDDAScreenshot;
 //          ScrCap.HaveScreen := True; //fHaveScreen;
 
-time := GetTickCount;
+//time := GetTickCount;
             fHaveScreen := False;
             fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
             i := 0;
@@ -2806,8 +2806,8 @@ time := GetTickCount;
 //            begin
               //Memo1.Lines.Add('no frame ' + IntToHex(FDuplication.Error));
             end;
-time := GetTickCount - time;
-time := i;
+//time := GetTickCount - time;
+//time := i;
 
                 //FNewImage.SaveToFile('C:\Rufus\scr2.bmp');
 {            try
