@@ -1156,6 +1156,11 @@ begin
         HostsInfo.Child[uname].NewInteger('LockedState');
 
       HostsInfo.Child[uname].asInteger['LockedState'] := Param.asInteger['LockedState'];
+
+     if HostsInfo.Child[uname].isType['ServiceStarted'] = rtc_Null then
+        HostsInfo.Child[uname].NewBoolean('ServiceStarted');
+
+      HostsInfo.Child[uname].asBoolean['ServiceStarted'] := Param.asBoolean'ServiceStarted'];
     end;
 
     // Get callback info, if exists
@@ -1170,7 +1175,7 @@ begin
   if assigned(cb) then
     cb.WakeUp;
 
-  NotifyAccountsOnHostLockedUpdate(uname, Friends, Param['LockedState']);
+  NotifyAccountsOnHostLockedUpdate(uname, Friends, Param['LockedState'], Param['ServiceStarted']);
 end;
 
 procedure TVircessUsers.doHostLogIn(uname, gateway, ConsoleId: string; isService: Boolean; Friends: TRtcRecord; sessid: RtcString);

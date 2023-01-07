@@ -363,6 +363,7 @@ begin
     begin
       asString['User'] := Param['User'];
       asInteger['State'] := Users.GetHostLockedState(Param['User']);
+      asBoolean['ServiceStarted'] := Users.GetHostServiceStarted(Param['User']);
     end;
 end;
 
@@ -444,52 +445,53 @@ var
   UserGateway: String;
   ActiveConsoleClientId: String;
 begin
-  CurPass := Param.asString['Pass'];
+  CurPass := Param.asWideString['Pass'];
   DeCrypt(CurPass, '@VCS@');
 
-  if not Users.isHostLoggedIn(Param.asString['User']) then
+  if not Users.isHostLoggedIn(Param.asWideString['User']) then
     with Result.NewRecord do
     begin
       asString['Result'] := 'IS_OFFLINE';
-      asString['User'] := Param.asString['User'];
+      asWideString['User'] := Param.asWideString['User'];
       asString['Action'] := Param.asString['Action'];
-      asString['Pass'] := CurPass;
+      asWideString['Pass'] := CurPass;
 
       Exit;
     end;
 
-  UserGateway := Users.GetUserGateway(Param.asString['User']);
+  UserGateway := Users.GetUserGateway(Param.asWideString['User']);
   with Result.NewRecord do
   begin
-    if Users.CheckPassword(Param.asString['User'], CurPass) then
+    if Users.CheckPassword(Param.asWideString['User'], CurPass) then
       asString['Result'] := 'OK'
     else
       asString['Result'] := 'PASS_NOT_VALID';
-    asString['User'] := Param.asString['User'];
+
     if (Param.asString['Action'] <> 'desk')
-      and Users.HostIsService(Param.asString['User']) then //Если подключение к службе передачи файлов или чата и у службы указан активный консольный клиент передаем его
+      and Users.HostIsService(Param.asWideString['User']) then //Если подключение к службе передачи файлов или чата и у службы указан активный консольный клиент передаем его
     begin
-      ActiveConsoleClientId := Users.GetUserActiveConsoleClient(Param.asString['User']);
+      ActiveConsoleClientId := Users.GetUserActiveConsoleClient(Param.asWideString['User']);
       if (ActiveConsoleClientId <> '') then
       begin
         if Users.isHostLoggedIn(ActiveConsoleClientId) then
-          asString['UserToConnect'] := ActiveConsoleClientId
+          asWideString['UserToConnect'] := ActiveConsoleClientId
         else
         begin
-          asString['UserToConnect'] := '';
+          asWideString['UserToConnect'] := '';
           asString['Result'] := 'IS_OFFLINE';
         end;
       end
       else
-        asString['UserToConnect'] := Param.asString['User'];
+        asWideString['UserToConnect'] := Param.asWideString['User'];
     end
     else
-      asString['UserToConnect'] := Param.asString['User'];
+      asWideString['UserToConnect'] := Param.asWideString['User'];
     asString['Action'] := Param.asString['Action'];
     if UserGateway <> '' then
       asString['Address'] := UserGateway;
-    asString['Pass'] := CurPass;
-    asInteger['LockedState'] := Users.GetHostLockedState(Param.asString['User']);
+    asWideString['Pass'] := CurPass;
+    asInteger['LockedState'] := Users.GetHostLockedState(Param.asWideString['User']);
+    asBoolean['ServiceStarted'] := Users.GetHostServiceStarted(Param.asWideString['User']);
   end;
 end;
 
