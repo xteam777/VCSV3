@@ -8929,7 +8929,7 @@ begin
   if Assigned(FWin) then
   begin
     FWin.UI.UserName := user;
-    FWin.UI.UserDesc := GetPendingItemByUserName(user, 'file')^.UserDesc;
+    FWin.UI.UserDesc := user;
     // Always set UI.Module *after* setting UI.UserName !!!
     FWin.UI.Module := Sender;
     FWin.UI.Tag := Sender.Tag; //ThreadID

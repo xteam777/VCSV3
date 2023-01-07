@@ -156,7 +156,7 @@ procedure TrdFileTransferLog.myUIOpen(Sender: TRtcPFileTransferUI);
   if UIVisible then
   begin
     Show;
-//    BringToFront;
+    BringToFront;
     //BringWindowToTop(Handle);
     SetForegroundWindow(Handle);
   end;
