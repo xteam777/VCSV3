@@ -26,6 +26,7 @@ type
     procedure myUISendCancel(Sender: TRtcPFileTransferUI);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+    procedure myUISendStart(Sender: TRtcPFileTransferUI);
   private
     { Private declarations }
     FOnUIOpen: TUIOpenEvent;
@@ -173,11 +174,6 @@ procedure TrdFileTransferLog.myUIOpen(Sender: TRtcPFileTransferUI);
 
 procedure TrdFileTransferLog.myUIRecv(Sender: TRtcPFileTransferUI);
 begin
-  if myUI.Recv_FileCount>1 then
-    mLog.Lines.Add('Получение: ' + myUI.Recv_ToFolder + '\' + '[' + IntToStr(myUI.Recv_FileCount) + '] ' + myUI.Recv_FileName)
-  else
-    mLog.Lines.Add('Получение: ' + myUI.Recv_ToFolder + '\' + myUI.Recv_FileName);
-
 //  if myUI.Recv_FirstTime then
 //    begin
 //    if pMain.ActivePage<>pReceiving then
@@ -243,6 +239,14 @@ end;
 
 procedure TrdFileTransferLog.myUIRecvStart(Sender: TRtcPFileTransferUI);
 begin
+ if myUI.Recv_FirstTime then
+  begin
+    if myUI.Recv_FileCount > 1 then
+      mLog.Lines.Add('Получение: ' + myUI.Recv_ToFolder + '\' + '[' + IntToStr(myUI.Recv_FileCount) + '] ' + myUI.Recv_FileName)
+    else
+      mLog.Lines.Add('Получение: ' + myUI.Recv_ToFolder + '\' + myUI.Recv_FileName);
+  end;
+
 //  if myUI.Recv_FirstTime then
 //    begin
 //    if pMain.ActivePage<>pReceiving then
@@ -299,11 +303,6 @@ end;
 
 procedure TrdFileTransferLog.myUISend(Sender: TRtcPFileTransferUI);
 begin
-  if myUI.Send_FileCount > 1 then
-    mLog.Lines.Add('Отправка: ' + myUI.Send_FromFolder + '\' + ' [' + IntToStr(myUI.Send_FileCount) + '] '+ myUI.Send_FileName)
-  else
-    mLog.Lines.Add('Отправка: ' + myUI.Send_FromFolder + '\' + myUI.Send_FileName);
-
 //  lSendFromFolder.Caption := myUI.Send_FromFolder;
 
 //  if myUI.Send_FirstTime then
@@ -372,6 +371,17 @@ begin
     mLog.Lines.Add('Отправка отменена: ' + myUI.Send_FromFolder + '\' + myUI.Send_FileName);
 
 //  lSendFileName.Caption:='Cancelled';
+end;
+
+procedure TrdFileTransferLog.myUISendStart(Sender: TRtcPFileTransferUI);
+begin
+    if myUI.Send_FirstTime then
+    begin
+      if myUI.Send_FileCount > 1 then
+        mLog.Lines.Add('Отправка: ' + myUI.Send_FromFolder + '\' + ' [' + IntToStr(myUI.Send_FileCount) + '] '+ myUI.Send_FileName)
+      else
+        mLog.Lines.Add('Отправка: ' + myUI.Send_FromFolder + '\' + myUI.Send_FileName);
+    end;
 end;
 
 procedure TrdFileTransferLog.MyOnFileList(Sender: TRtcPFileTransferUI);

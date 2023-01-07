@@ -55,16 +55,16 @@ object rdFileTransferLog: TrdFileTransferLog
     OnClose = myUIClose
     OnError = myUIError
     OnLogOut = myUILogOut
-    OnSendStart = myUISend
+    OnSendStart = myUISendStart
     OnSend = myUISend
     OnSendUpdate = myUISend
     OnSendStop = myUISend
     OnSendCancel = myUISendCancel
-    OnRecvStart = myUIRecv
+    OnRecvStart = myUIRecvStart
     OnRecv = myUIRecv
     OnRecvStop = myUIRecv
     OnRecvCancel = myUIRecvCancel
-    Left = 12
+    Left = 14
     Top = 22
   end
 end

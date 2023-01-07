@@ -2975,7 +2975,7 @@ var
 begin
   //XLog('FormCreate');
 
-  HintWindowClass := TMyHintWindow;
+  HintWindowClass := TRmxHintWindow;
 
   DeviceId := '';
   ConsoleId := '';
