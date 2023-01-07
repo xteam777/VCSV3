@@ -164,6 +164,11 @@ type
   TInputsArray = array[0..0] of TInput;
   PInputsArray = ^TInputsArray;
 
+  TRmxHintWindow = class(THintWindow)
+  public
+    procedure CreateParams(var Params: TCreateParams); override;
+  end;
+
 const
   MSG_STATUS_UNKNOWN = -1;
   MSG_STATUS_ONLINE = 0;
@@ -179,6 +184,11 @@ const
 
 implementation
 
+procedure TRmxHintWindow.CreateParams(var Params: TCreateParams);
+begin
+  inherited CreateParams(Params);
+  Params.wndParent := GetActiveWindow;
+end;
 
 procedure TWorkThread.Execute;
 begin

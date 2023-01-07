@@ -940,7 +940,7 @@ begin
     FileName := CurPath + FName;
     FSize := FData.asLargeInt['size'];
     if FData.isType['age'] = rtc_DateTime then
-      FDate := DateTimeToStr(FData.asDateTime['age'])
+       DateTimeToString(FDate, 'dd.mm.yyyy hh:nn:ss', FData.asDateTime['age'])
     else
       FDate := '';
     Attributes := AttrStr(FData.asInteger['attr']);

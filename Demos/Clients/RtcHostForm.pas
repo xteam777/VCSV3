@@ -2975,6 +2975,8 @@ var
 begin
   //XLog('FormCreate');
 
+  HintWindowClass := TMyHintWindow;
+
   DeviceId := '';
   ConsoleId := '';
 
@@ -10433,6 +10435,7 @@ var
   i: Integer;
 begin
   //xLog('FormShow');
+  DeviceId := DeviceId;
 
 //  if not SilentMode then
 //  begin
