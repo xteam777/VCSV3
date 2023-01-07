@@ -62,7 +62,7 @@ type
 
     procedure NotifyAccountsOnHostLogIn(uname: String; Friends: TRtcRecord);
     procedure NotifyAccountsOnHostLogOut(uname: String; Friends: TRtcRecord; log_out: Boolean);
-    procedure NotifyAccountsOnHostLockedUpdate(uname: String; Friends: TRtcRecord; LockedState: Integer);
+    procedure NotifyAccountsOnHostLockedUpdate(uname: String; Friends: TRtcRecord; LockedState: Integer; ServiceStarted: Boolean);
 
   public
     GetFriendList_Func: TGetFriendList_Func;
@@ -126,6 +126,7 @@ type
 
     procedure SetHostLockedState(uname: String; Friends: TRtcRecord; sessid: RtcString; Param: TRtcFunctionInfo);
     function GetHostLockedState(uname: String): Integer;
+    function GetHostServiceStarted(uname: String): Boolean;
 
     procedure SetPasswords(uname: String; sessid: RtcString; Param: TRtcFunctionInfo);
     function CheckPassword(uname, pass: String): Boolean;
@@ -522,7 +523,7 @@ end;
 //  end;
 //end;
 
-procedure TVircessUsers.NotifyAccountsOnHostLockedUpdate(uname: String; Friends: TRtcRecord; LockedState: Integer);
+procedure TVircessUsers.NotifyAccountsOnHostLockedUpdate(uname: String; Friends: TRtcRecord; LockedState: Integer; ServiceStarted: Boolean);
 var
   rec: TRtcRecord;
   log_in: Boolean;
@@ -568,7 +569,8 @@ begin
                 with rec.asRecord['locked'] do
                 begin
                   asText['user'] := uname;
-                  asInteger['state'] := LockedState;
+                  asInteger['LockedState'] := LockedState;
+                  asBoolean['ServiceStarted'] := ServiceStarted;
   //              rec.asText['locked'] := uname;
                   SendData(fname, rec);
                 end;
@@ -1160,7 +1162,7 @@ begin
      if HostsInfo.Child[uname].isType['ServiceStarted'] = rtc_Null then
         HostsInfo.Child[uname].NewBoolean('ServiceStarted');
 
-      HostsInfo.Child[uname].asBoolean['ServiceStarted'] := Param.asBoolean'ServiceStarted'];
+      HostsInfo.Child[uname].asBoolean['ServiceStarted'] := Param.asBoolean['ServiceStarted'];
     end;
 
     // Get callback info, if exists
@@ -1516,6 +1518,19 @@ begin
       Result := LCK_STATE_UNLOCKED
     else
       Result := HostsInfo.Child[uname].asInteger['LockedState'];
+  finally
+    userCS.Release;
+  end;
+end;
+
+function TVircessUsers.GetHostServiceStarted(uname: String): Boolean;
+begin
+  userCS.Acquire;
+  try
+    if HostsInfo.Child[uname] = nil then
+      Result := False
+    else
+      Result := HostsInfo.Child[uname].asBoolean['ServiceStarted'];
   finally
     userCS.Release;
   end;
