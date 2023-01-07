@@ -2734,11 +2734,11 @@ var
 //      if True then
       begin
 //        CS.Acquire;
-time := GetTickCount;
+//time := GetTickCount;
         Result := GetScreenFromHelperByMMF;
         ScrCap.HaveScreen := Result;
-time := GetTickCount - time;
-time := i;
+//time := GetTickCount - time;
+//time := i;
 //        FNewImage.SaveToFile('C:\Screenshots\' + StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
 {        try
           FNewImage.Assign(FScrCapture.FHelper.FHelperBitmap);

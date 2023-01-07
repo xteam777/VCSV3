@@ -40,7 +40,7 @@ type
     BitmapP1, BitmapP2 : PByte;
     FirstDraw : boolean;
     FLastChangedX1, FLastChangedY1, FLastChangedX2, FLastChangedY2: Integer;
-    procedure DrawArea(X1, Y1, X2, Y2 : Integer); //inline;
+    procedure DrawArea(X1, Y1, X2, Y2 : Integer; aPixelFormat: TPixelFormat); //inline;
 
   public
     Bitmap: TBitmap;
@@ -74,6 +74,20 @@ implementation
 
 { TDesktopDuplicationWrapper }
 
+function GetBitsPerPixel(aBitsPerPixel: TPixelFormat): Word;
+begin
+  case aBitsPerPixel of
+    pf1bit: Result := 1;
+    pf4bit: Result := 4;
+    pf8bit: Result := 8;
+    pf15bit: Result := 15;
+    pf16bit: Result := 16;
+    pf24bit: Result := 24;
+    pf32bit: Result := 32;
+    else Result := 32;
+  end;
+end;
+
 constructor TDesktopDuplicationWrapper.Create(var fCreated: Boolean);
 var
   GI: IDXGIDevice;
@@ -83,9 +97,9 @@ var
 begin
   fCreated := False;
 
-  OptimDrawAlg := 0;
+  OptimDrawAlg := 3;
 
-  FirstDraw := true;
+  FirstDraw := True;
 
 //  Sleep(10000);
   FError := D3D11CreateDevice(
@@ -238,14 +252,16 @@ begin
     FDuplicate.ReleaseFrame;
 end;
 
-procedure TDesktopDuplicationWrapper.DrawArea(X1, Y1, X2, Y2 : Integer); //inline;
+procedure TDesktopDuplicationWrapper.DrawArea(X1, Y1, X2, Y2 : Integer; aPixelFormat: TPixelFormat); //inline;
 var
   i, BytesToCopy : integer;
   P1Cur, P2Cur : PByte;
 begin
   P1Cur := BitmapP1 + (X1 shl 2) + Y1 * BytesInRow;
   P2Cur := BitmapP2 + (X1 shl 2) - Y1 * BytesInRow;
-  BytesToCopy := (X2 - X1) shl 2;
+  BytesToCopy := (X2 - X1) * GetBitsPerPixel(aPixelFormat) shr 3;
+  if (((X2 - X1) * GetBitsPerPixel(aPixelFormat) mod 8) <> 0) then
+    Inc(BytesToCopy);
 
   for i := Y1 to Y2 - 1 do
   begin
@@ -254,7 +270,6 @@ begin
     Dec(P2Cur, BytesInRow);
   end;
 end;
-
 
 function TDesktopDuplicationWrapper.DrawFrame(var Bitmap: TBitmap; aPixelFormat: TPixelFormat): Boolean;
 var
@@ -276,7 +291,8 @@ begin
   if Bitmap = nil then
     Bitmap := TBitmap.Create;
 
-  Bitmap.PixelFormat := pf32Bit;
+  Bitmap.PixelFormat := pf32bit;
+//  Bitmap.PixelFormat := aPixelFormat;
   Bitmap.SetSize(Desc.Width, Desc.Height);
 
   Desc.BindFlags := 0;
@@ -301,7 +317,11 @@ begin
   // get texture bits
   FContext.Map(Temp, 0, D3D11_MAP_READ_WRITE, 0, Resource);
 
-  BytesInRow := Desc.Width shl 2;
+  //BytesInRow := Desc.Width shl 2;
+  //BytesInRow := Desc.Width * GetBitsPerPixel(aPixelFormat) div 8;
+  BytesInRow := Desc.Width * GetBitsPerPixel(aPixelFormat) shr 3;
+  if ((Desc.Width * GetBitsPerPixel(aPixelFormat) mod 8) <> 0) then
+    Inc(BytesInRow);
   BitmapP1 := Resource.pData;
   BitmapP2 := Bitmap.ScanLine[0];
 
@@ -315,16 +335,16 @@ begin
     FLastChangedX2 := Desc.Width;
     FLastChangedY2 := Desc.Height;
 
-    DrawArea(0, 0, Desc.Width, Desc.Height);
+    DrawArea(0, 0, Desc.Width, Desc.Height, aPixelFormat);
   end else
     case OptimDrawAlg of
     0 : begin // default algorithm
-        FLastChangedX1 := 0;
-        FLastChangedY1 := 0;
-        FLastChangedX2 := Desc.Width;
-        FLastChangedY2 := Desc.Height;
+          FLastChangedX1 := 0;
+          FLastChangedY1 := 0;
+          FLastChangedX2 := Desc.Width;
+          FLastChangedY2 := Desc.Height;
 
-         DrawArea(0, 0, Desc.Width, Desc.Height);
+          DrawArea(0, 0, Desc.Width, Desc.Height, aPixelFormat);
         end;
     1 : begin // objects almost do not cross with each other
 
@@ -333,11 +353,7 @@ begin
             DrawArea(Min(MoveRects[RId].SourcePoint.X, MoveRects[RId].DestinationRect.Left),
               Min(MoveRects[RId].SourcePoint.Y, MoveRects[RId].DestinationRect.Top),
               Max(MoveRects[RId].SourcePoint.X + MoveRects[RId].DestinationRect.Right - MoveRects[RId].DestinationRect.Left, MoveRects[RId].DestinationRect.Right),
-              Max(MoveRects[RId].SourcePoint.Y + MoveRects[RId].DestinationRect.Bottom - MoveRects[RId].DestinationRect.Top, MoveRects[RId].DestinationRect.Bottom));{Min(MoveRects[RId].SourcePoint.X, Min(MoveRects[RId].DestinationRect.Left, MoveRects[RId].DestinationRect.Right)),
-                     Min(MoveRects[RId].SourcePoint.Y, Min(MoveRects[RId].DestinationRect.Top, MoveRects[RId].DestinationRect.Bottom)),
-                     Max(MoveRects[RId].SourcePoint.X, Max(MoveRects[RId].DestinationRect.Left, MoveRects[RId].DestinationRect.Right)),
-                     Max(MoveRects[RId].SourcePoint.Y, Max(MoveRects[RId].DestinationRect.Top, MoveRects[RId].DestinationRect.Bottom)));
-                      }
+              Max(MoveRects[RId].SourcePoint.Y + MoveRects[RId].DestinationRect.Bottom - MoveRects[RId].DestinationRect.Top, MoveRects[RId].DestinationRect.Bottom), aPixelFormat);
 
         FLastChangedX1 := 0;
         FLastChangedY1 := 0;
@@ -347,7 +363,7 @@ begin
           // Painting DirtyRects
           for RId := 0 to DirtyCount - 1 do
             DrawArea(DirtyRects[RId].Left, DirtyRects[RId].Top,
-                     DirtyRects[RId].Right, DirtyRects[RId].Bottom);
+                     DirtyRects[RId].Right, DirtyRects[RId].Bottom, aPixelFormat);
 
         end;
     2 : begin // objects crosses with each other much
@@ -364,7 +380,6 @@ begin
             FLastChangedY1 := Min(FLastChangedY1, Min(MoveRects[RId].SourcePoint.Y, MoveRects[RId].DestinationRect.Top));
             FLastChangedX2 := Max(FLastChangedX2, Max(MoveRects[RId].SourcePoint.X + MoveRects[RId].DestinationRect.Right - MoveRects[RId].DestinationRect.Left, MoveRects[RId].DestinationRect.Right));
             FLastChangedY2 := Max(FLastChangedY2, Max(MoveRects[RId].SourcePoint.Y + MoveRects[RId].DestinationRect.Bottom - MoveRects[RId].DestinationRect.Top, MoveRects[RId].DestinationRect.Bottom));
-            {Min(MoveRects[RId].SourcePoint.X, Min(MoveRects[RId].DestinationRect.Left, MoveRects[RId].DestinationRect.Right)),    }
           end;
 
           for RId := 0 to DirtyCount - 1 do
@@ -375,17 +390,23 @@ begin
             FLastChangedY2 := Max(FLastChangedY2, DirtyRects[RId].Bottom);
           end;
 
-          DrawArea(FLastChangedX1, FLastChangedY1, FLastChangedX2, FLastChangedY2);
+          DrawArea(FLastChangedX1, FLastChangedY1, FLastChangedX2, FLastChangedY2, aPixelFormat);
         end;
+    3:  begin
+          // copy pixels - we assume a 32bits bitmap !
+
+          for i := 0 to Desc.Height - 1 do
+          begin
+            Move(BitmapP1^, Bitmap.ScanLine[i]^, BytesInRow);
+            Inc(BitmapP1, BytesInRow);
+          end;
+
+          FLastChangedX1 := 0;
+          FLastChangedY1 := 0;
+          FLastChangedX2 := Desc.Width;
+          FLastChangedY2 := Desc.Height;
+      end;
     end;
-  // copy pixels - we assume a 32bits bitmap !
-  {
-  p := Resource.pData;
-  for i := 0 to Desc.Height - 1 do
-  begin
-    Move(p^, Bitmap.ScanLine[i]^, 4 * Desc.Width);
-    Inc(p, 4 * Desc.Width);
-  end; }
 
   FContext.Unmap(FTexture, 0); //Это нужно?
   FTexture := nil;
