@@ -2799,7 +2799,7 @@ var
             if fRes
               and (not fNeedRecreate) then
             begin
-              fHaveScreen := FDesktopDuplicator.DrawFrame(FDesktopDuplicator.Bitmap, FNewImage.PixelFormat);
+              fHaveScreen := FDesktopDuplicator.DrawFrame(FDesktopDuplicator.Bitmap);//, FNewImage.PixelFormat);
               fHaveScreen := fHaveScreen;
 //            end
 //            else
@@ -2807,10 +2807,11 @@ var
               //Memo1.Lines.Add('no frame ' + IntToHex(FDuplication.Error));
             end;
 //time := GetTickCount - time;
-//time := i;
+time := i;
 
-          if FDesktopDuplicator.Bitmap.PixelFormat = pf8bit then
-            FDesktopDuplicator.Bitmap.SaveToFile('C:\Rufus\' + StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
+//          if (FDesktopDuplicator.Bitmap <> nil) then
+//            and (FDesktopDuplicator.Bitmap.PixelFormat = pf4bit) then
+//            FDesktopDuplicator.Bitmap.SaveToFile('C:\Rufus\' + StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
 {            try
                 DW := GetCaptureWindow;
               //Get GDI screenshot
@@ -2863,7 +2864,12 @@ var
               and (FDesktopDuplicator.LastChangedY1 = 0)
               and (FDesktopDuplicator.LastChangedX2 = FDesktopDuplicator.Bitmap.Width)
               and (FDesktopDuplicator.LastChangedY2 = FDesktopDuplicator.Bitmap.Height)  then
-              FNewImage.Assign(FDesktopDuplicator.Bitmap)
+//              FNewImage.Assign(FDesktopDuplicator.Bitmap)
+              BitBlt(FNewImage.Canvas.Handle, 0, 0,
+                FDesktopDuplicator.Bitmap.Width, FDesktopDuplicator.Bitmap.Height,
+                FDesktopDuplicator.Bitmap.Canvas.Handle,
+                0, 0,
+                SRCCOPY)
             else
             if ((FDesktopDuplicator.LastChangedX2 - FDesktopDuplicator.LastChangedX1) > 0)
               or ((FDesktopDuplicator.LastChangedY2 - FDesktopDuplicator.LastChangedY1) > 0) then
