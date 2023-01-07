@@ -83,6 +83,8 @@ var
 begin
   fCreated := False;
 
+  OptimDrawAlg := 2;
+
   FirstDraw := true;
 
 //  Sleep(10000);
@@ -264,6 +266,11 @@ var
 begin
   Result := False;
 
+  FLastChangedX1 := 0;
+  FLastChangedY1 := 0;
+  FLastChangedX2 := 0;
+  FLastChangedY2 := 0;
+
   FTexture.GetDesc(Desc);
 
   if Bitmap = nil then
@@ -301,6 +308,12 @@ begin
   if FirstDraw then
   begin
     FirstDraw := false;
+
+    FLastChangedX1 := 0;
+    FLastChangedY1 := 0;
+    FLastChangedX2 := Desc.Width;
+    FLastChangedY2 := Desc.Height;
+
     DrawArea(0, 0, Desc.Width, Desc.Height);
   end else
     case OptimDrawAlg of

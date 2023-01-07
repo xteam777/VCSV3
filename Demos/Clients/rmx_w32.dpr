@@ -165,11 +165,17 @@ var
   HeaderSize: Integer;
   err: LongInt;
   fHaveScreen: Boolean;
+  FLastChangedX1, FLastChangedY1, FLastChangedX2, FLastChangedY2: Integer;
 
   dwFlags, wVk, wScan: DWORD;
   IOtype, dx, dy, mouseData: Integer;
 
   FShiftDown, FCtrlDown, FAltDown: Boolean;
+
+  fRes, fCreated, fNeedRecreate: Boolean;
+  FDesktopDuplicator: TDesktopDuplicationWrapper;
+
+  time: LongInt;
 
   function RpcRevertToSelf: RPC_STATUS; stdcall; external 'rpcrt4.dll';
   function RpcImpersonateClient(BindingHandle: RPC_BINDING_HANDLE): RPC_STATUS; stdcall; external 'rpcrt4.dll';
@@ -2642,6 +2648,14 @@ begin
   CurOffset := CurOffset + sizeof(ci.ptScreenPos.X);
   CopyMemory(PByte(pMap) + CurOffset, @ci.ptScreenPos.Y, sizeof(ci.ptScreenPos.Y));
   CurOffset := CurOffset + sizeof(ci.ptScreenPos.Y);
+  CopyMemory(PByte(pMap) + CurOffset, @FLastChangedX1, sizeof(FLastChangedX1));
+  CurOffset := CurOffset + sizeof(FLastChangedX1);
+  CopyMemory(PByte(pMap) + CurOffset, @FLastChangedY1, sizeof(FLastChangedY1));
+  CurOffset := CurOffset + sizeof(FLastChangedY1);
+  CopyMemory(PByte(pMap) + CurOffset, @FLastChangedX2, sizeof(FLastChangedX2));
+  CurOffset := CurOffset + sizeof(FLastChangedX2);
+  CopyMemory(PByte(pMap) + CurOffset, @FLastChangedY2, sizeof(FLastChangedY2));
+  CurOffset := CurOffset + sizeof(FLastChangedY2);
 
   SetEvent(EventWriteEnd);
   if WaitForSingleObject(EventReadBegin, WaitTimeout) = WAIT_TIMEOUT then
@@ -2684,19 +2698,18 @@ begin
 end;
 
 function GetDDAScreenshot: Boolean;
-var
-  fRes, fCreated, fNeedRecreate: Boolean;
-  FDesktopDuplicator: TDesktopDuplicationWrapper;
 begin
   Result := False;
 
   if not IsWindows8orLater then
     Exit;
 
+  time := GetTickCount;
+
   try
-    FDesktopDuplicator := TDesktopDuplicationWrapper.Create(fCreated);
-    if not fCreated then
-      Exit;
+//    FDesktopDuplicator := TDesktopDuplicationWrapper.Create(fCreated);
+//    if not fCreated then
+//      Exit;
     fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
     if (not fRes)
       or fNeedRecreate then
@@ -2716,6 +2729,14 @@ begin
     if FDesktopDuplicator.Bitmap = nil then
       Exit;
 
+    FLastChangedX1 := FDesktopDuplicator.LastChangedX1;
+    FLastChangedY1 := FDesktopDuplicator.LastChangedY1;
+    FLastChangedX2 := FDesktopDuplicator.LastChangedX2;
+    FLastChangedY2 := FDesktopDuplicator.LastChangedY2;
+
+    time := GetTickCount - time;
+    time := GetTickCount;
+
     hOld := SelectObject(hMemDC, hBmp);
     Result := BitBlt(hMemDC, 0, 0, sWidth, sHeight, FDesktopDuplicator.Bitmap.Canvas.Handle, 0, 0, SRCCOPY);
     if not Result then
@@ -2725,8 +2746,10 @@ begin
       Exit;
     end;
   finally
-    FDesktopDuplicator.Free;
+//    FDesktopDuplicator.Free;
   end;
+
+  time := GetTickCount - time;
 end;
 
 function ScreenShotThreadProc(pParam: Pointer): DWORD; stdcall;
@@ -2734,6 +2757,8 @@ function ScreenShotThreadProc(pParam: Pointer): DWORD; stdcall;
 //  SaveBitMap: TBitmap;
 begin
   try
+    FDesktopDuplicator := TDesktopDuplicationWrapper.Create(fCreated);
+
     while True do
     begin
       try
@@ -2750,9 +2775,11 @@ begin
 
           fHaveScreen := False;
 
+          time := GetTickCount;
           if not GetDDAScreenshot then
             if not GetGDIScreenshot then
               Continue;
+          time := GetTickCount - time;
 
           fHaveScreen := True;
 
@@ -2794,6 +2821,8 @@ begin
       end;
     end;
   finally
+    FDesktopDuplicator.Free;
+
     ExitThread(0);
   end;
 end;
