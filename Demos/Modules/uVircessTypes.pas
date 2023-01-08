@@ -95,8 +95,6 @@ type
     Action: String;
     Handle: THandle;
     ThreadID: Cardinal;
-    StartLockedState: Integer;
-    StartServiceStarted: Boolean;
   end;
   PPendingRequestItem = ^TPendingRequestItem;
 

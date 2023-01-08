@@ -1041,7 +1041,7 @@ begin
   FDesktopHost.GFrameRate := rdFramesMax;
   FDesktopHost.GFullScreen := True;
   FDesktopHost.GSendScreenInBlocks := rdBlocks1;
-  FDesktopHost.GSendScreenRefineBlocks := rdBlocks1;
+  FDesktopHost.GSendScreenRefineBlocks := rdBlocks12;
   FDesktopHost.GSendScreenRefineDelay := 0;
   FDesktopHost.GSendScreenSizeLimit := rdBlockAnySize;
   FDesktopHost.GUseMirrorDriver := False;
@@ -1457,8 +1457,8 @@ begin
     FDesktopControl.ChgDesktop_CaptureLayeredWindows(False);
     FDesktopControl.ChgDesktop_ColorLimit(rdColor32bit);
     FDesktopControl.ChgDesktop_FrameRate(rdFramesMax);
-//    FDesktopControl.ChgDesktop_SendScreenInBlocks(TrdScreenBlocks(grpScreenBlocks.ItemIndex));
-    FDesktopControl.ChgDesktop_SendScreenRefineBlocks(rdBlocks1);
+    FDesktopControl.ChgDesktop_SendScreenInBlocks(rdBlocks1);
+    FDesktopControl.ChgDesktop_SendScreenRefineBlocks(rdBlocks12);
 //    FDesktopControl.ChgDesktop_SendScreenRefineDelay(grpScreen2Refine.ItemIndex);
     FDesktopControl.ChgDesktop_SendScreenSizeLimit(rdBlockAnySize);
 //    if grpColorLow.ItemIndex>=0 then

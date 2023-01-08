@@ -1203,8 +1203,8 @@ begin
     try
       UI.ChgDesktop_ColorLimit(rdColor32bit);
 //      UI.ChgDesktop_FrameRate(rdFramesMax);
-      UI.ChgDesktop_SendScreenInBlocks(rdBlocks1);
-      UI.ChgDesktop_SendScreenRefineBlocks(rdBlocks1);
+//      UI.ChgDesktop_SendScreenInBlocks(rdBlocks1);
+//      UI.ChgDesktop_SendScreenRefineBlocks(rdBlocks12);
   //    UI.ChgDesktop_SendScreenRefineDelay(grpScreen2Refine.ItemIndex);
 //      UI.ChgDesktop_SendScreenSizeLimit(rdBlockAnySize);
   //    if grpColorLow.ItemIndex>=0 then
@@ -1222,8 +1222,8 @@ begin
     try
       UI.ChgDesktop_ColorLimit(rdColor4bit);
 //      UI.ChgDesktop_FrameRate(rdFramesMax);
-      UI.ChgDesktop_SendScreenInBlocks(rdBlocks1);
-      UI.ChgDesktop_SendScreenRefineBlocks(rdBlocks12);
+//      UI.ChgDesktop_SendScreenInBlocks(rdBlocks1);
+//      UI.ChgDesktop_SendScreenRefineBlocks(rdBlocks12);
 //  //    UI.ChgDesktop_SendScreenRefineDelay(grpScreen2Refine.ItemIndex);
 //      UI.ChgDesktop_SendScreenSizeLimit(rdBlockAnySize);
 //  //    if grpColorLow.ItemIndex>=0 then

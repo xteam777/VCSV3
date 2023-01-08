@@ -4,7 +4,6 @@
 	опция обновлений в настройки и в установку
 два языка. по умолчанию из локали
 you need EV code signing certificate to SmartScreen ByPass https://www.gironsec.com/blog/2020/12/bypassing-windows-smartscreen/
-сервер в тае
 фм
 	подключение к службе
 		при локе закрывать юи
@@ -33,6 +32,7 @@ you need EV code signing certificate to SmartScreen ByPass https://www.gironsec.
 ?OpenedModalForm := nil; AV переделать
 vcs и vircess заменить в текстах
 	
+!сервер в тае. да и везде тоже
 ?	интерфейс фм
 ?		если не залогинен то запрещать передачу файлов
 ?		делать рефреш после операции с файлами
