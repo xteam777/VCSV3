@@ -16,7 +16,7 @@ uses
 
   rtcWinLogon, wininet, rtcScrUtils, uVircessTypes, rtcpDesktopHost, rtcpChat,
   rtcPortalMod, rtcpFileTrans, rtcPortalCli, rtcPortalHttpCli, rtcConn,
-  rtcDataCli, rtcHttpCli, rtcCliModule, rtcFunction, Cromis.Comm.IPC;
+  rtcDataCli, rtcHttpCli, rtcCliModule, rtcFunction, Cromis.Comm.IPC, SASLibEx;
 
 type
   TStartThread = class(TThread)
@@ -100,6 +100,7 @@ type
     myCheckTime: TDateTime;
     FRegularPassword: String;
     FScreenLockedState: Integer;
+    FCurrentSessionLocked: Boolean;
 
     procedure UpdateMyPriority;
     function GetServiceController: TServiceController; override;
@@ -195,6 +196,8 @@ begin
 //  XLog('tCheckLockedStateTimer');
 
   GetDataFromHelperByIPC(QT_GETDATA);
+
+  SASLibEx_IsDesktopLocked(CurrentSessionID, FCurrentSessionLocked);
 
 //  if (not IsServiceStarted(RTC_HOSTSERVICE_NAME))
 //    and
@@ -765,8 +768,8 @@ procedure TStartThread.StartClientInSession(SessionID: Cardinal; doStartHelper, 
 var
   ProcessId: Cardinal;
 begin
-HelperConsoleTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_x64.exe';
-HelperTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_w32.exe';
+//HelperConsoleTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_x64.exe';
+//HelperTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_w32.exe';
 
   if doStartHelper then
   begin

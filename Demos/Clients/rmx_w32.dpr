@@ -2425,6 +2425,7 @@ procedure THelper.OnExecuteRequest(const Context: ICommContext; const Request, R
 var
   tid: Cardinal;
   capslock: Boolean;
+  bSessionLocked: BOOL;
 begin
   capslock := GetKeyState(VK_CAPITAL) > 0;
   FShiftDown := GetKeyState(VK_SHIFT) > 0;
@@ -2581,6 +2582,16 @@ begin
   else
   if Request.Data.ReadInteger('QueryType') = QT_GETDATA then
   begin
+//    if (GetCurrentSesstionState <> WTSActive) then
+    SASLibEx_IsDesktopLocked(DWORD(CurrentSessionID), bSessionLocked);
+    if Boolean(bSessionLocked) then
+      Response.Data.WriteInteger('LockedState', LCK_STATE_LOCKED)
+    else
+    if (LowerCase(GetInputDesktopName) <> 'default') then
+      Response.Data.WriteInteger('LockedState', LCK_STATE_SAS)
+    else
+      Response.Data.WriteInteger('LockedState', LCK_STATE_UNLOCKED);
+
 //    if (LowerCase(GetInputDesktopName) <> 'default') then
 //      Response.Data.WriteInteger('LockedState', LCK_STATE_LOCKED)
 //    else
@@ -2591,10 +2602,11 @@ begin
 //      Response.Data.WriteInteger('LockedState', LCK_STATE_LOCKED);
 
 //    Response.ID := Format('Response nr. %d', [MilliSecondsBetween(Now, 0)]);
-    if (LowerCase(GetInputDesktopName) <> 'default') then
+
+{    if (LowerCase(GetInputDesktopName) <> 'default') then
       Response.Data.WriteInteger('LockedState', LCK_STATE_LOCKED)
     else
-      Response.Data.WriteInteger('LockedState', LCK_STATE_UNLOCKED);
+      Response.Data.WriteInteger('LockedState', LCK_STATE_UNLOCKED); }
   end;
 end;
 
