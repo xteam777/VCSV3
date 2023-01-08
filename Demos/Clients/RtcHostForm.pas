@@ -14,7 +14,7 @@ uses
   Windows, Messages, SysUtils, CommonData, System.Types, uProcess, ServiceMgr,
   Classes, Graphics, Controls, Forms, DateUtils, CommonUtils, WtsApi, uSysAccount,
   Dialogs, StdCtrls, ExtCtrls, ShellApi, BlackLayered, rdFileTransLog,
-  ComCtrls, Registry, Math, RtcIdentification, SyncObjs, SASLibEx,
+  ComCtrls, Registry, Math, RtcIdentification, SyncObjs,
   rtcSystem, rtcInfo, uMessageBox, rtcScrUtils, IOUtils, uAcceptEula,
 
 {$IFDEF IDE_XE3up}
@@ -5466,15 +5466,13 @@ begin
 end;}
 
 procedure TMainForm.tCheckLockedStateTimer(Sender: TObject);
-var
+//var
 //  hDesktop : THandle;
-  bLocked : BOOL;
+//  bResult, bLocked : BOOL;
 begin
 //  XLog('tCheckLockedStateTimer');
 
-  //if (GetCurrentSesstionState <> WTSActive) then
-  SASLibEx_IsDesktopLocked(CurrentSessionID, bLocked);
-  if Boolean(bLocked) then
+  if (GetCurrentSesstionState <> WTSActive) then
     ScreenLockedState := LCK_STATE_LOCKED
   else
   if (LowerCase(GetInputDesktopName) <> 'default') then
@@ -5487,19 +5485,11 @@ begin
 {  if (LowerCase(GetInputDesktopName) <> 'default') then
     ScreenLockedState := LCK_STATE_LOCKED
   else
-<<<<<<< HEAD
-  if (GetCurrentSesstionState = WTSActive) then
-    ScreenLockedState := LCK_STATE_UNLOCKED
-  else
-    ScreenLockedState := LCK_STATE_SAS;}
-{tPHostThread.FDesktopHost.HaveScreen
-=======
   if  (GetCurrentSesstionState = WTSActive) then
     ScreenLockedState := LCK_STATE_UNLOCKED
   else
     ScreenLockedState := LCK_STATE_SAS;}
  {tPHostThread.FDesktopHost.HaveScreen
->>>>>>> 8a506bb92693797d85f77751764ab8855b69de60
     and}
 {  if IsScreenSaverRunning then
   begin
