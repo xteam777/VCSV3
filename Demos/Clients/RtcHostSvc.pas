@@ -53,6 +53,7 @@ type
     resPing: TRtcResult;
     tCheckLockedState: TTimer;
     rHostLockedStateUpdate: TRtcResult;
+    tCheckForNewVersion: TTimer;
 
     procedure ServiceShutdown(Sender: TService);
     procedure ServiceStart(Sender: TService; var Started: Boolean);

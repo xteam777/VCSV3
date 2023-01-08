@@ -20,6 +20,7 @@ type
     Label7: TLabel;
     ePasswordConfirm: TEdit;
     ePassword: TEdit;
+    cbAutoUpdate: TCheckBox;
     procedure lEULAClick(Sender: TObject);
     procedure bOKClick(Sender: TObject);
     procedure bCloseClick(Sender: TObject);

@@ -14,7 +14,7 @@ uses
   Windows, Messages, SysUtils, CommonData, System.Types, uProcess, ServiceMgr,
   Classes, Graphics, Controls, Forms, DateUtils, CommonUtils, WtsApi, uSysAccount,
   Dialogs, StdCtrls, ExtCtrls, ShellApi, BlackLayered, rdFileTransLog,
-  ComCtrls, Registry, Math, RtcIdentification, SyncObjs,
+  ComCtrls, Registry, Math, RtcIdentification, SyncObjs, System.Net.HTTPClient, System.Net.URLClient,
   rtcSystem, rtcInfo, uMessageBox, rtcScrUtils, IOUtils, uAcceptEula,
 
 {$IFDEF IDE_XE3up}
@@ -322,6 +322,8 @@ type
     Button3: TButton;
     bSetup: TColorSpeedButton;
     pBtnSetup: TPanel;
+    bGetUpdate: TSpeedButton;
+    tCheckUpdates: TTimer;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -537,6 +539,8 @@ type
     procedure bSetupMouseEnter(Sender: TObject);
     procedure bSetupMouseLeave(Sender: TObject);
     procedure bSetupClick(Sender: TObject);
+    procedure tCheckUpdatesTimer(Sender: TObject);
+    procedure bGetUpdateClick(Sender: TObject);
 
   protected
 
@@ -618,6 +622,8 @@ type
     procedure AddHistoryRecord(username, userdesc: String);
     procedure AddPasswordsRecord(username, userpass: String);
 
+    function RunHTTPCall(verb, url, path, data: String): String;
+    function FileVersion(const FileName: TFileName): String;
   public
     { Public declarations }
 //    SilentMode: Boolean;
@@ -1731,6 +1737,95 @@ begin
     end
     else
       Delete_File(ChangeFileExt(ParamStr(0), '.svc'));
+end;
+
+function TMainForm.FileVersion(const FileName: TFileName): String;
+var
+  VerInfoSize: Cardinal;
+  VerValueSize: Cardinal;
+  Dummy: Cardinal;
+  PVerInfo: Pointer;
+  PVerValue: PVSFixedFileInfo;
+begin
+  Result := '';
+  VerInfoSize := GetFileVersionInfoSize(PChar(FileName), Dummy);
+  GetMem(PVerInfo, VerInfoSize);
+  try
+    if GetFileVersionInfo(PChar(FileName), 0, VerInfoSize, PVerInfo) then
+      if VerQueryValue(PVerInfo, '\', Pointer(PVerValue), VerValueSize) then
+        with PVerValue^ do
+          Result := Format('%d.%d.%d.%d', [
+            HiWord(dwFileVersionMS), //Major
+            LoWord(dwFileVersionMS), //Minor
+            HiWord(dwFileVersionLS), //Release
+            LoWord(dwFileVersionLS)]); //Build
+  finally
+    FreeMem(PVerInfo, VerInfoSize);
+  end;
+end;
+
+procedure TMainForm.tCheckUpdatesTimer(Sender: TObject);
+var
+  sResponse: String;
+begin
+  sResponse := RunHTTPCall('POST', 'http://remox.com', '/version', '');
+  if (sResponse <> '')
+    and (Length(sResponse) < 20)
+    and (FileVersion(ParamStr(0)) <> sResponse) then
+  begin
+    bGetUpdate.Caption := 'Есть новая версия';
+    bGetUpdate.Font.Color := clRed;
+  end
+  else
+  begin
+    bGetUpdate.Caption := 'Версия актуальна';
+    bGetUpdate.Font.Color := clBlack;
+  end;
+end;
+
+function TMainForm.RunHTTPCall(verb, url, path, data: String): String;
+var
+  FHTTPClient: THTTPClient;
+  LRequest: IHTTPRequest;
+  LResponse: IHTTPResponse;
+  LHeaders, LHeadersAuth: TNetHeaders;
+
+  sContent: TStringStream;
+begin
+  Result := '';
+
+  FHTTPClient := THTTPClient.Create;
+  try
+    try
+      if (verb <> 'GET') then
+      begin
+        LRequest := FHTTPClient.GetRequest(verb, url + path);
+
+        sContent := TStringStream.Create;
+        sContent.WriteString(data);
+        sContent.Position := 0;
+        LRequest.SourceStream := sContent;
+      end
+      else
+        LRequest := FHTTPClient.GetRequest(verb, url + path);
+
+      LHeaders := [
+        TNetHeader.Create('Content-Type', 'application/x-www-form-urlencoded'),
+        TNetHeader.Create('Cache-Control', 'max-age=0'),
+        TNetHeader.Create('Connection', 'Keep-Alive'),
+        TNetHeader.Create('Keep-Alive', '90')];
+
+      LResponse := FHTTPClient.Execute(LRequest, nil, LHeaders);
+
+      Result := LResponse.ContentAsString;
+    except
+      on E: Exception do
+        xLog('RunHTTPCall Error: ' + E.Message);
+    end;
+  finally
+    FreeAndNil(sContent);
+    FreeAndNil(FHTTPClient);
+  end;
 end;
 
 procedure TMainForm.SetIDContolsVisible;
@@ -6876,6 +6971,11 @@ end;
 procedure TMainForm.bDevicesMouseLeave(Sender: TObject);
 begin
   bDevices.Color := RGB(230, 230, 230);
+end;
+
+procedure TMainForm.bGetUpdateClick(Sender: TObject);
+begin
+  ShellExecute(Handle, 'open', 'http://remox.com/download/', '', '', SW_SHOWNORMAL);
 end;
 
 procedure TMainForm.cPriorityChange(Sender: TObject);

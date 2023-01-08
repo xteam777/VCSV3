@@ -171,4 +171,9 @@ object RemoxService: TRemoxService
     Left = 197
     Top = 103
   end
+  object tCheckForNewVersion: TTimer
+    Interval = 3600000
+    Left = 216
+    Top = 162
+  end
 end

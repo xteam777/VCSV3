@@ -3,7 +3,7 @@ object MainForm: TMainForm
   Top = 309
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'Remox'
-  ClientHeight = 474
+  ClientHeight = 490
   ClientWidth = 839
   Color = clBtnFace
   DoubleBuffered = True
@@ -48,7 +48,7 @@ object MainForm: TMainForm
     Left = 0
     Top = 0
     Width = 839
-    Height = 474
+    Height = 490
     Margins.Left = 0
     Margins.Top = 0
     Margins.Right = 0
@@ -61,14 +61,15 @@ object MainForm: TMainForm
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
+    ExplicitHeight = 454
     DesignSize = (
       839
-      474)
+      490)
     object lblStatus: TLabel
       AlignWithMargins = True
       Left = 46
       Top = 467
-      Width = 792
+      Width = 675
       Height = 17
       Margins.Left = 75
       Anchors = [akLeft, akTop, akRight]
@@ -84,7 +85,6 @@ object MainForm: TMainForm
       ParentFont = False
       Transparent = True
       Layout = tlCenter
-      ExplicitWidth = 793
     end
     object iStatus1: TImage
       Left = 2
@@ -3552,6 +3552,21 @@ object MainForm: TMainForm
         7A0000000049454E44AE426082}
       Stretch = True
     end
+    object bGetUpdate: TSpeedButton
+      Left = 722
+      Top = 465
+      Width = 112
+      Height = 21
+      Caption = #1042#1077#1088#1089#1080#1103' '#1072#1082#1090#1091#1072#1083#1100#1085#1072
+      Flat = True
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentFont = False
+      OnClick = bGetUpdateClick
+    end
     object pLeft: TPanel
       Left = 0
       Top = 142
@@ -5745,8 +5760,8 @@ object MainForm: TMainForm
       end
     end
     object Button4: TButton
-      Left = 463
-      Top = 463
+      Left = 283
+      Top = 464
       Width = 75
       Height = 25
       Caption = 'Button4'
@@ -5755,8 +5770,8 @@ object MainForm: TMainForm
       OnClick = Button4Click
     end
     object Button1: TButton
-      Left = 544
-      Top = 463
+      Left = 364
+      Top = 464
       Width = 75
       Height = 25
       Caption = 'Button1'
@@ -5765,8 +5780,8 @@ object MainForm: TMainForm
       OnClick = Button1Click
     end
     object Button2: TButton
-      Left = 630
-      Top = 463
+      Left = 450
+      Top = 464
       Width = 75
       Height = 25
       Caption = 'Button1'
@@ -5775,8 +5790,8 @@ object MainForm: TMainForm
       OnClick = Button2Click
     end
     object Button3: TButton
-      Left = 711
-      Top = 463
+      Left = 531
+      Top = 464
       Width = 75
       Height = 25
       Caption = 'Button3'
@@ -5963,7 +5978,7 @@ object MainForm: TMainForm
     Left = 11
     Top = 44
     Bitmap = {
-      494C010102001400180608000800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C0101020014001C0608000800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000200000000800000001002000000000000004
       000000000000000000000000000000000000846BEF006B63E700635AE7006B5A
       EF006B5AEF006B63EF006B63E7007B6BEF00C6B52900BDAD1800BDAD1800BDAD
@@ -6404,5 +6419,10 @@ object MainForm: TMainForm
   object rDestroyClient: TRtcResult
     Left = 234
     Top = 78
+  end
+  object tCheckUpdates: TTimer
+    OnTimer = tCheckUpdatesTimer
+    Left = 424
+    Top = 88
   end
 end

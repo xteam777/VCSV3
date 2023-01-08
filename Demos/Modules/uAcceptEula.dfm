@@ -4,7 +4,7 @@ object fAcceptEULA: TfAcceptEULA
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = #1059#1089#1090#1072#1085#1086#1074#1082#1072
-  ClientHeight = 249
+  ClientHeight = 280
   ClientWidth = 440
   Color = clWhite
   Font.Charset = DEFAULT_CHARSET
@@ -21,7 +21,7 @@ object fAcceptEULA: TfAcceptEULA
     Left = 0
     Top = 0
     Width = 440
-    Height = 249
+    Height = 280
     Align = alClient
     BevelOuter = bvNone
     Color = 16645629
@@ -35,8 +35,7 @@ object fAcceptEULA: TfAcceptEULA
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
-    ExplicitWidth = 437
-    ExplicitHeight = 277
+    ExplicitHeight = 249
     object Label6: TLabel
       Left = 6
       Top = 8
@@ -55,8 +54,8 @@ object fAcceptEULA: TfAcceptEULA
     end
     object lEULA: TLabel
       Left = 8
-      Top = 154
-      Width = 399
+      Top = 184
+      Width = 425
       Height = 16
       Alignment = taCenter
       AutoSize = False
@@ -77,7 +76,7 @@ object fAcceptEULA: TfAcceptEULA
     end
     object Label5: TLabel
       Left = 8
-      Top = 176
+      Top = 206
       Width = 425
       Height = 33
       Alignment = taCenter
@@ -96,7 +95,7 @@ object fAcceptEULA: TfAcceptEULA
     end
     object bOK: TButton
       Left = 213
-      Top = 215
+      Top = 245
       Width = 107
       Height = 29
       Caption = #1054#1050
@@ -106,12 +105,12 @@ object fAcceptEULA: TfAcceptEULA
       Font.Name = 'Arial'
       Font.Style = []
       ParentFont = False
-      TabOrder = 0
+      TabOrder = 2
       OnClick = bOKClick
     end
     object bClose: TButton
       Left = 326
-      Top = 215
+      Top = 245
       Width = 107
       Height = 29
       Caption = #1054#1058#1052#1045#1053#1040
@@ -122,7 +121,7 @@ object fAcceptEULA: TfAcceptEULA
       Font.Style = []
       ModalResult = 2
       ParentFont = False
-      TabOrder = 1
+      TabOrder = 3
       OnClick = bCloseClick
     end
     object GroupBox1: TGroupBox
@@ -131,7 +130,7 @@ object fAcceptEULA: TfAcceptEULA
       Width = 425
       Height = 111
       Caption = #1042#1074#1077#1076#1080#1090#1077' '#1087#1072#1088#1086#1083#1100' '#1076#1083#1103' '#1091#1076#1072#1083#1077#1085#1085#1086#1075#1086' '#1087#1086#1076#1082#1083#1102#1095#1077#1085#1080#1103' '#1082' '#1101#1090#1086#1084#1091' '#1091#1089#1090#1088#1086#1081#1089#1090#1074#1091
-      TabOrder = 2
+      TabOrder = 0
       object Label8: TLabel
         Left = 0
         Top = 22
@@ -207,6 +206,14 @@ object fAcceptEULA: TfAcceptEULA
         PasswordChar = '*'
         TabOrder = 0
       end
+    end
+    object cbAutoUpdate: TCheckBox
+      Left = 8
+      Top = 156
+      Width = 425
+      Height = 17
+      Caption = #1040#1074#1090#1086#1084#1072#1090#1080#1095#1077#1089#1082#1086#1077' '#1086#1073#1085#1086#1074#1083#1077#1085#1080#1077' '#1087#1088#1080' '#1085#1072#1083#1080#1095#1080#1080' '#1085#1086#1074#1086#1081' '#1074#1077#1088#1089#1080#1080
+      TabOrder = 1
     end
   end
 end
