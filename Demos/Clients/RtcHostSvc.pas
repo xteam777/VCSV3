@@ -436,13 +436,13 @@ end;
 procedure TRemoxService.LogoutClientHosts;
 var
   HWID : THardwareId;
-  Users: TStrings;
+  Users: TStringList;
   i: Integer;
 begin
   HWID := THardwareId.Create(False);
   HWID.AddUserProfileName := True;
 
-  Users := TStrings.Create;
+  Users := TStringList.Create;
 
   try
     GetLoggedInUsersSIDs(Self, '', '', '', Users);
@@ -476,18 +476,19 @@ begin
     tStartHelpers.Suspend;
     tStartClients.Suspend;
 
-    HostLogOut(UserName);
-    LogoutClientHosts;
-
     xLog('Do kill helper processes');
     rtcKillProcess(HELPER_EXE_NAME);
     rtcKillProcess(HELPER_CONSOLE_EXE_NAME);
+
     if not File_Exists(ChangeFileExt(ParamStr(0), '.ncl')) then //Если это остановка службы при снятии галки автозапуска, то клиентов не закрываем
     begin
       xLog('Do kill client processes');
       rtcKillProcess(ExtractFileName(AppFileName));
     end;
     Delete_File(ChangeFileExt(ParamStr(0), '.ncl'));
+
+    HostLogOut(UserName);
+    LogoutClientHosts;
 
     //Создаем файл-флаг. В клиенте проверяется его наличие
     with TStringList.Create do
