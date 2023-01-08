@@ -48,7 +48,7 @@ type
     constructor Create(var fCreated: Boolean);
     destructor Destroy; override;
     function GetFrame(var fNeedRecreate: Boolean): Boolean;
-    function DrawFrame(var Bitmap: TBitmap; aPixelFormat: TPixelFormat): Boolean;
+    function DrawFrame(var Bitmap: TBitmap; aPixelFormat: TPixelFormat = pf32bit): Boolean;
 //    function DrawFrameToDib(pBits: PByte): Boolean;
 //    procedure FreeDIB(BitmapInfo: PBitmapInfo;
 //      InfoSize: DWORD;
@@ -271,7 +271,7 @@ begin
   end;
 end;
 
-function TDesktopDuplicationWrapper.DrawFrame(var Bitmap: TBitmap; aPixelFormat: TPixelFormat): Boolean;
+function TDesktopDuplicationWrapper.DrawFrame(var Bitmap: TBitmap; aPixelFormat: TPixelFormat = pf32bit): Boolean;
 var
   Desc: TD3D11_TEXTURE2D_DESC;
   Temp: ID3D11Texture2D;
@@ -291,8 +291,8 @@ begin
   if Bitmap = nil then
     Bitmap := TBitmap.Create;
 
-//  Bitmap.PixelFormat := pf32bit;
-  Bitmap.PixelFormat := aPixelFormat;
+  Bitmap.PixelFormat := pf32bit;
+//  Bitmap.PixelFormat := aPixelFormat;
   Bitmap.SetSize(Desc.Width, Desc.Height);
 
   Desc.BindFlags := 0;
@@ -325,7 +325,7 @@ begin
   BitmapP1 := Resource.pData;
   BitmapP2 := Bitmap.ScanLine[0];
 
-  if FirstDraw
+{  if FirstDraw
     or ((MoveCount + DirtyCount = 0)) then
   begin
     FirstDraw := false;
@@ -392,21 +392,25 @@ begin
 
           DrawArea(FLastChangedX1, FLastChangedY1, FLastChangedX2, FLastChangedY2, aPixelFormat);
         end;
-    3:  begin
+    3:  begin}
           // copy pixels - we assume a 32bits bitmap !
-
-          for i := 0 to Desc.Height - 1 do
+         for i := 0 to Desc.Height - 1 do
           begin
-            Move(BitmapP1^, Bitmap.ScanLine[i]^, BytesInRow);
-            Inc(BitmapP1, BytesInRow);
+            Move(BitmapP1^, Bitmap.ScanLine[i]^, 4 * Desc.Width);
+            Inc(BitmapP1, 4 * Desc.Width);
           end;
+//          for i := 0 to Desc.Height - 1 do
+//          begin
+//            Move(BitmapP1^, Bitmap.ScanLine[i]^, BytesInRow);
+//            Inc(BitmapP1, BytesInRow);
+//          end;
 
           FLastChangedX1 := 0;
           FLastChangedY1 := 0;
           FLastChangedX2 := Desc.Width;
           FLastChangedY2 := Desc.Height;
-      end;
-    end;
+      {end;
+    end; }
 
   FContext.Unmap(FTexture, 0); //Это нужно?
   FTexture := nil;
