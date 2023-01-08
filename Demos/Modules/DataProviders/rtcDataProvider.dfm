@@ -153,8 +153,8 @@ object Data_Provider: TData_Provider
     Group = GatewayFunctions
     FunctionName = 'Host.Activate'
     OnExecute = HostActivateExecute
-    Left = 412
-    Top = 264
+    Left = 392
+    Top = 266
   end
   object HostLogin2: TRtcFunction
     Group = GatewayFunctions
@@ -346,5 +346,12 @@ object Data_Provider: TData_Provider
   object rGateRelogin: TRtcResult
     Left = 326
     Top = 388
+  end
+  object HostLogoutByHash: TRtcFunction
+    Group = GatewayFunctions
+    FunctionName = 'Host.LogoutByHash'
+    OnExecute = HostLogoutByHashExecute
+    Left = 556
+    Top = 263
   end
 end
