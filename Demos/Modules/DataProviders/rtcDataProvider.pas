@@ -86,6 +86,7 @@ type
     PortalGateServerModule: TRtcServerModule;
     PortalGateServerGroup: TRtcFunctionGroup;
     rGateRelogin: TRtcResult;
+    HostLogoutByHash: TRtcFunction;
     procedure DataModuleCreate(Sender: TObject);
     procedure DataModuleDestroy(Sender: TObject);
     procedure Module1SessionClose(Sender: TRtcConnection);
@@ -140,6 +141,8 @@ type
     procedure GateLogoutExecute(Sender: TRtcConnection; Param: TRtcFunctionInfo;
       Result: TRtcValue);
     procedure ClientsDestroyExecute(Sender: TRtcConnection;
+      Param: TRtcFunctionInfo; Result: TRtcValue);
+    procedure HostLogoutByHashExecute(Sender: TRtcConnection;
       Param: TRtcFunctionInfo; Result: TRtcValue);
   private
     FOnUserLogin: TUserEvent;
@@ -406,6 +409,7 @@ begin
 //        AddParam(SP, '@ID_Console', ftString, pdOutput, 0);
         SP.Parameters.ParamByName('@Hash').Value := Param.asString['Hash'];
         SP.Parameters.ParamByName('@Hash_Console').Value := Param.asString['Hash_Console'];
+        SP.Parameters.ParamByName('@DoCreate').Value := 1;
         SP.Parameters.ParamByName('@ID').Value := 0;
         SP.Parameters.ParamByName('@ID_Console').Value := 0;
         SP.ExecProc;
@@ -486,6 +490,7 @@ begin
     end
     else
       asWideString['UserToConnect'] := Param.asWideString['User'];
+    asWideString['User'] := Param.asWideString['User'];
     asString['Action'] := Param.asString['Action'];
     if UserGateway <> '' then
       asString['Address'] := UserGateway;
@@ -543,6 +548,73 @@ begin
 
   if DoHostLogin(Sender, Param.asWideString['User'], Param.asString['Gateway'], Param.asString['ConsoleId'], Param.asBoolean['IsService'], Param) then
     Result.asString := 'OK';
+end;
+
+procedure TData_Provider.HostLogoutByHashExecute(Sender: TRtcConnection;
+  Param: TRtcFunctionInfo; Result: TRtcValue);
+var
+  SP: TADOStoredProc;
+  sID: Integer;
+begin
+  sID := 0;
+
+  CS_DB.Acquire;
+  try
+//    if not SQLConnection.Connected then
+//    begin
+//      SQLConnection.Connected := False;
+//      SQLConnection.Connected := True;
+//    end;
+    SQLConnection.Open;
+    try
+      SP := TADOStoredProc.Create(nil);
+      try
+        SP.Connection := SQLConnection;
+        SP.ProcedureName := 'GetDeviceID';
+        SP.Prepared := True;
+        SP.Parameters.Refresh;
+//        AddParam(SP, '@Hash', ftString, pdInput, Param.asString['Hash']);
+//        AddParam(SP, '@Hash_Console', ftString, pdInput, Param.asString['Hash_Console']);
+//        AddParam(SP, '@ID', ftString, pdOutput, 0);
+//        AddParam(SP, '@ID_Console', ftString, pdOutput, 0);
+        SP.Parameters.ParamByName('@Hash').Value := Param.asString['Hash'];
+        SP.Parameters.ParamByName('@DoCreate').Value := 0;
+        SP.Parameters.ParamByName('@ID').Value := 0;
+        SP.ExecProc;
+
+        sID := SP.Parameters.ParamByName('@ID').Value;
+      except
+        on E: Exception do
+        begin
+          raise Exception(E.Message);
+          xLog(E.Message);
+        end;
+      end;
+    finally
+      SP.Free;
+    end;
+  finally
+    CS_DB.Release;
+  end;
+
+  if sID <> 0 then
+  begin
+    with TRtcDataServer(Sender) do
+      if Session <> nil then
+  //      if Session['$MSG:HostLogin'] = 'OK' then
+  //        if Session['$MSG:User'] = Param['user'] then
+            if Users.isHostLoggedIn(IntToStr(sID), Session.ID) then
+            begin
+  //xLog('HostLogOutExecute ' + Param.asText['user']);
+              Users.HostLogOut(Param.asText['user'], Session['$MSG:Gateway'], '', GetFriendList(IntToStr(sID)), Session.ID);
+              Session['$MSG:HostLogin']:= '';
+              Session['$MSG:User']:= '';
+              Session['$MSG:Gateway']:= '';
+            end;
+
+    if Assigned(FStartForceUserLogoutThread) then
+      FStartForceUserLogoutThread(IntToStr(sID), True);
+  end;
 end;
 
 function TData_Provider.DoHostLogin(Sender: TRtcConnection; uname, gateway, ConsoleId: String; isService: Boolean; Param: TRtcFunctionInfo): Boolean;
