@@ -679,6 +679,9 @@ begin
 
   if Assigned(FStartForceUserLogoutThread) then
     FStartForceUserLogoutThread(Param['User'], True);
+
+  if Param.asBoolean['IsService'] then
+    Users.DisconnectServiceClients(Param['User']);
 end;
 
 //procedure TData_Provider.DoLogoffUser(uname: String);
