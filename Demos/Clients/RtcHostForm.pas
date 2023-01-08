@@ -557,6 +557,7 @@ type
     DelayedStatus: String;
     FStatusUpdateThread: TStatusUpdateThread;
     tPHostThread: TPortalHostThread;
+    FUpdateAvailable: Boolean;
 
 //    GatewayClientsList: TList;
 
@@ -1773,12 +1774,15 @@ begin
     and (Length(sResponse) < 20)
     and (FileVersion(ParamStr(0)) <> sResponse) then
   begin
-    bGetUpdate.Caption := 'Есть новая версия';
+    FUpdateAvailable := True;
+
+    bGetUpdate.Caption := 'Установить обновление';
     bGetUpdate.Font.Color := clRed;
   end
   else
   begin
-    bGetUpdate.Caption := 'Версия актуальна';
+    FUpdateAvailable := False;
+    bGetUpdate.Caption := '        Последняя версия';
     bGetUpdate.Font.Color := clBlack;
   end;
 end;
@@ -3087,6 +3091,8 @@ begin
   //XLog('FormCreate');
 
   HintWindowClass := TRmxHintWindow;
+
+  FUpdateAvailable := False;
 
   DeviceId := '';
   ConsoleId := '';
@@ -6975,7 +6981,8 @@ end;
 
 procedure TMainForm.bGetUpdateClick(Sender: TObject);
 begin
-  ShellExecute(Handle, 'open', 'http://remox.com/download/', '', '', SW_SHOWNORMAL);
+  if FUpdateAvailable then
+    ShellExecute(Handle, 'open', 'http://remox.com/download/', '', '', SW_SHOWNORMAL);
 end;
 
 procedure TMainForm.cPriorityChange(Sender: TObject);

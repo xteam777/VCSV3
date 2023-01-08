@@ -69,7 +69,7 @@ object MainForm: TMainForm
       AlignWithMargins = True
       Left = 46
       Top = 467
-      Width = 675
+      Width = 647
       Height = 17
       Margins.Left = 75
       Anchors = [akLeft, akTop, akRight]
@@ -3553,11 +3553,11 @@ object MainForm: TMainForm
       Stretch = True
     end
     object bGetUpdate: TSpeedButton
-      Left = 722
+      Left = 699
       Top = 465
-      Width = 112
+      Width = 135
       Height = 21
-      Caption = #1042#1077#1088#1089#1080#1103' '#1072#1082#1090#1091#1072#1083#1100#1085#1072
+      Caption = '        '#1055#1086#1089#1083#1077#1076#1085#1103#1103' '#1074#1077#1088#1089#1080#1103
       Flat = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -3565,6 +3565,7 @@ object MainForm: TMainForm
       Font.Name = 'Arial'
       Font.Style = [fsBold]
       ParentFont = False
+      StyleElements = [seClient, seBorder]
       OnClick = bGetUpdateClick
     end
     object pLeft: TPanel
