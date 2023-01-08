@@ -488,7 +488,7 @@ begin
     Delete_File(ChangeFileExt(ParamStr(0), '.ncl'));
 
     HostLogOut(UserName);
-    LogoutClientHosts;
+//    LogoutClientHosts;
 
     //Создаем файл-флаг. В клиенте проверяется его наличие
     with TStringList.Create do
@@ -830,7 +830,8 @@ procedure TRemoxService.HostLogOut(AUserName: String);
 begin
   with HostTimerModule, Data.NewFunction('Host.Logout') do
   begin
-    Value['User'] := LowerCase(AUserName);
+    asWideString['User'] := LowerCase(AUserName);
+    asBoolean['IsService'] := True;
     Call(resHostLogout);
   end;
   xLog('HOST LOGOUT');
