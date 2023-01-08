@@ -163,9 +163,6 @@ type
     FOnUIOpen: TUIOpenEvent;
     FOnUIClose: TUICloseEvent;
 
-    PartnerLockedState: Integer;
-    PartnerServiceStarted: Boolean;
-
     function TopLoc(const user:string):integer;
     procedure UpdateAllSizes;
     function NextFreeColor:TColor;
@@ -180,7 +177,6 @@ type
     procedure CreateParams(Var params: TCreateParams); override;
 
     procedure SetCaption;
-    procedure SetFormState;
 
     {$IFNDEF RtcViewer}
     // declare our DROPFILES message handler
@@ -192,8 +188,11 @@ type
     PFileTrans:TRtcPFileTransfer;
     PDesktopControl:TRtcPDesktopControl;
     MainFormHandle: THandle;
+    PartnerLockedState: Integer;
+    PartnerServiceStarted: Boolean;
 
     procedure NotOnTop;
+    procedure SetFormState;
 
     property UI:TRtcPChatUI read myUI;
     property OnUIOpen: TUIOpenEvent read FOnUIOpen write FOnUIOpen;
@@ -222,11 +221,8 @@ end;
 
 procedure TrdChatForm.SetFormState;
 begin
-  if (PartnerLockedState = LCK_STATE_LOCKED)
-    or (PartnerLockedState = LCK_STATE_SAS) then
-  begin
+  if (PartnerLockedState = LCK_STATE_LOCKED) then
     Close;
-  end;
 end;
 
 procedure TrdChatForm.SetCaption;

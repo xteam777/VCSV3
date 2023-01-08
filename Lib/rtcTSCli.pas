@@ -14,10 +14,24 @@ USES
   function WinStationConnect(hServer: THANDLE; SessionID: ULONG; TargetSessionID: ULONG; pPassword: PWideChar; bWait: Boolean): Boolean; stdcall; external 'winsta.dll' name 'WinStationConnectW';
   function WTSGetActiveConsoleSessionId: DWORD; stdcall; external  'Kernel32.dll';
 
+  function IsWorkstationLocked: Boolean;
 //  function inConsoleSession: Boolean;
 //  procedure SetConsoleSession(pSessionId: DWORD = $FFFFFFFF);
 
 implementation
+
+function IsWorkstationLocked: Boolean;
+var
+  hDesktop: HDESK;
+begin
+  Result := False;
+  hDesktop := OpenDesktop('default', 0, False, DESKTOP_SWITCHDESKTOP);
+  if hDesktop <> 0 then
+  begin
+    Result := not SwitchDesktop(hDesktop);
+    CloseDesktop(hDesktop);
+  end;
+end;
 
 {FUNCTION GetProcedureAddress(VAR P: Pointer; CONST ModuleName, ProcName: String;
   VAR pModule: HMODULE): Boolean;

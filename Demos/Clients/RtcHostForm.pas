@@ -86,7 +86,7 @@ type
     FChat: TRtcPChat;
     { Private declarations }
   public
-    constructor Create(CreateSuspended: Boolean; AUserName, AAction, AGateway: String; UIVisible: Boolean); overload;
+    constructor Create(CreateSuspended: Boolean; AUserName, AAction, AGateway: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; UIVisible: Boolean); overload;
     destructor Destroy; override;
   private
     procedure Execute; override;
@@ -101,6 +101,8 @@ type
     ID: String;
     Action: String;
     UIHandle: THandle;
+    StartLockedState: Integer;
+    StartServiceStarted: Boolean;
   end;
 
   TSendDestroyClientToGatewayThread = class(TThread)
@@ -353,6 +355,8 @@ type
     procedure PFileTransExplorerNewUI_HideMode(Sender: TRtcPFileTransfer; const user:string);
     procedure PFileTransferLogUI(Sender: TRtcPFileTransfer; const user: String);
     procedure PChatNewUI(Sender: TRtcPChat; const user:string);
+    procedure PDesktopControlNewUI(Sender: TRtcPDesktopControl;
+      const user: String);
 
     procedure PModuleUserJoined(Sender: TRtcPModule; const user:string);
     procedure PModuleUserLeft(Sender: TRtcPModule; const user:string);
@@ -363,8 +367,6 @@ type
     procedure btnGatewayClick(Sender: TObject);
     procedure eUserNameChange(Sender: TObject);
     procedure ePasswordChange(Sender: TObject);
-    procedure PDesktopControlNewUI(Sender: TRtcPDesktopControl;
-      const user: String);
     procedure FormShow(Sender: TObject);
     procedure eRealNameChange(Sender: TObject);
     procedure btnRestartServiceClick(Sender: TObject);
@@ -587,8 +589,8 @@ type
 //    function GetGatewayRecByChat(Chat: TRtcPChat): PGatewayRec;
 //    procedure FreeGatewayRec(AGatewayRec: PGatewayRec);
 //
-    procedure AddPortalConnection(AThreadID: Cardinal; AAction: String; AID: String; AThread: PPortalThread);
-    procedure SetPortalConnectionUIHandle(AThreadID: Cardinal; AUIHandle: THandle);
+    procedure AddPortalConnection(AThreadID: Cardinal; AAction: String; AID: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; AThread: PPortalThread);
+    function GetPortalConnectionByThreadId(AThreadID: Cardinal): PPortalConnection;
     function GetPortalConnection(AAction: String; AID: String): PPortalConnection;
 //    procedure SetActiveUIRecStoppedByPClient(AClient: TAbsPortalClient);
     //procedure RemovePortalConnectionByUIHandle(AUIHandle: THandle);
@@ -611,6 +613,9 @@ type
 
     function GetHostGatewayClientActive: Boolean;
     procedure SetHostGatewayClientActive(AValue: Boolean);
+
+    procedure AddHistoryRecord(username, userdesc: String);
+    procedure AddPasswordsRecord(username, userpass: String);
 
   public
     { Public declarations }
@@ -1315,7 +1320,7 @@ begin
     tPHostThread.Port := TRtcHttpPortalClient(AClient).GatePort;
 end;
 
-constructor TPortalThread.Create(CreateSuspended: Boolean; AUserName, AAction, AGateway: String; UIVisible: Boolean);
+constructor TPortalThread.Create(CreateSuspended: Boolean; AUserName, AAction, AGateway: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; UIVisible: Boolean);
 begin
   inherited Create(CreateSuspended);
 
@@ -1472,7 +1477,7 @@ begin
   if FAction = 'chat' then
     FChat.Open(FUserName);
 
-  MainForm.AddPortalConnection(ThreadID, FAction, FUserName, @Self);
+  MainForm.AddPortalConnection(ThreadID, FAction, FUserName, AStartLockedStatus, AStartServiceStarted, @Self);
 end;
 
 destructor TPortalThread.Destroy;
@@ -2258,16 +2263,18 @@ begin
   end;
 end;}
 
-procedure TMainForm.SetPortalConnectionUIHandle(AThreadID: Cardinal; AUIHandle: THandle);
+function TMainForm.GetPortalConnectionByThreadId(AThreadID: Cardinal): PPortalConnection;
 var
   i: Integer;
 begin
+  Result := nil;
+
   CS_GW.Acquire;
   try
     for i := 0 to PortalConnectionsList.Count - 1 do
       if (PPortalConnection(PortalConnectionsList[i])^.ThreadID = AThreadID) then
       begin
-        PPortalConnection(PortalConnectionsList[i]).UIHandle := AUIHandle;
+        Result := PortalConnectionsList[i];
         Break;
       end;
   finally
@@ -2275,7 +2282,7 @@ begin
   end;
 end;
 
-procedure TMainForm.AddPortalConnection(AThreadID: Cardinal; AAction: String; AID: String; AThread: PPortalThread);
+procedure TMainForm.AddPortalConnection(AThreadID: Cardinal; AAction: String; AID: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; AThread: PPortalThread);
 var
   pPC: PPortalConnection;
 begin
@@ -5480,11 +5487,19 @@ begin
 {  if (LowerCase(GetInputDesktopName) <> 'default') then
     ScreenLockedState := LCK_STATE_LOCKED
   else
+<<<<<<< HEAD
   if (GetCurrentSesstionState = WTSActive) then
     ScreenLockedState := LCK_STATE_UNLOCKED
   else
     ScreenLockedState := LCK_STATE_SAS;}
 {tPHostThread.FDesktopHost.HaveScreen
+=======
+  if  (GetCurrentSesstionState = WTSActive) then
+    ScreenLockedState := LCK_STATE_UNLOCKED
+  else
+    ScreenLockedState := LCK_STATE_SAS;}
+ {tPHostThread.FDesktopHost.HaveScreen
+>>>>>>> 8a506bb92693797d85f77751764ab8855b69de60
     and}
 {  if IsScreenSaverRunning then
   begin
@@ -7164,6 +7179,59 @@ begin
 //  TSendDestroyClientToGatewayThread.Create(False, '95.216.96.8:443', '111222333', False);
 end;
 
+procedure TMainForm.AddHistoryRecord(username, userdesc: String);
+var
+  hr: THistoryRec;
+  fFound: Boolean;
+  i: Integer;
+begin
+  if StoreHistory then
+  begin
+    fFound := False;
+    for i := 0 to ePartnerID.Items.Count - 1 do
+      if THistoryRec(ePartnerID.Items.Objects[i]).user = username then
+      begin
+        fFound := True;
+        Break;
+      end;
+    if not fFound then
+    begin
+      hr := THistoryRec.Create;
+      hr.user := username;
+      hr.username := userdesc;
+      hr.password := '';
+      ePartnerID.Items.InsertObject(0, userdesc, hr);
+    end;
+  end;
+end;
+
+procedure TMainForm.AddPasswordsRecord(username, userpass: String);
+var
+  hr: THistoryRec;
+  i: Integer;
+begin
+  if StorePasswords then
+  begin
+    for i := 0 to ePartnerID.Items.Count - 1 do
+      if THistoryRec(ePartnerID.Items.Objects[i]).user = username then
+      begin
+        THistoryRec(ePartnerID.Items.Objects[i]).password := userpass;
+        Break;
+      end;
+  end;
+end;
+
+function TMainForm.GetUniqueString: String;
+var
+  UID: TGUID;
+begin
+  CreateGuid(UID);
+  Result := GUIDToString(UID);
+  Result := StringReplace(Result, '{', '', [rfReplaceAll]);
+  Result := StringReplace(Result, '-', '', [rfReplaceAll]);
+  Result := StringReplace(Result, '}', '', [rfReplaceAll]);
+end;
+
 procedure TMainForm.ConnectToPartnerStart(user, username, pass, action: String);
 var
 //  p: TPoint;
@@ -7269,17 +7337,6 @@ begin
   end;
 end;
 
-function TMainForm.GetUniqueString: String;
-var
-  UID: TGUID;
-begin
-  CreateGuid(UID);
-  Result := GUIDToString(UID);
-  Result := StringReplace(Result, '{', '', [rfReplaceAll]);
-  Result := StringReplace(Result, '-', '', [rfReplaceAll]);
-  Result := StringReplace(Result, '}', '', [rfReplaceAll]);
-end;
-
 procedure TMainForm.rGetPartnerInfoReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 var
@@ -7288,10 +7345,7 @@ var
   FileTransfer: PRtcPFileTransfer;
   Chat: PRtcPChat;
 //  GatewayRec: PGatewayRec;
-  i: Integer;
 //  PRItem: PPendingRequestItem;
-  fFound: Boolean;
-  hr: THistoryRec;
   username, sUID: String;
   PortalThread: TPortalThread;
   mResult: TModalResult;
@@ -7360,41 +7414,16 @@ begin
         begin
 //        AddPendingRequest(asWideString['user'], asString['action'], asString['Address'] + ':' +  asString['Port'], 0);
           TSendDestroyClientToGatewayThread.Create(False, asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['user'] + '_' + asWideString['action'] + '_', False);
-          PortalThread := TPortalThread.Create(False, asWideString['UserToConnect'], asWideString['action'], asString['Address'], True); //Для каждого соединения новый клиент
+          PortalThread := TPortalThread.Create(False, asWideString['UserToConnect'], asWideString['action'], asString['Address'], asInteger['LockedState'], asBoolean['ServiceStarted'], True); //Для каждого соединения новый клиент
           PRItem^.Gateway := asString['Address'];
           PRItem^.ThreadID := PortalThread.ThreadID;
         end;
       end;
 
       //Добавим в историю при успешном логине
-      if StoreHistory then
-      begin
-        fFound := False;
-        for i := 0 to ePartnerID.Items.Count - 1 do
-          if THistoryRec(ePartnerID.Items.Objects[i]).user = asWideString['user'] then
-          begin
-            fFound := True;
-            Break;
-          end;
-        if not fFound then
-        begin
-          hr := THistoryRec.Create;
-          hr.user := asWideString['user'];
-          hr.username := username;
-          hr.password := '';
-          ePartnerID.Items.InsertObject(0, username, hr);
-        end;
-      end;
+      AddHistoryRecord(asWideString['user'], username);
       //Сохраним пароль в истории при успешном логине
-      if StorePasswords then
-      begin
-        for i := 0 to ePartnerID.Items.Count - 1 do
-          if THistoryRec(ePartnerID.Items.Objects[i]).user = asWideString['user'] then
-          begin
-            THistoryRec(ePartnerID.Items.Objects[i]).password := asWideString['Pass'];
-            Break;
-          end;
-      end;
+      AddPasswordsRecord(asWideString['user'], asWideString['Pass']);
 
 //      ConnectToPartner(GatewayRec, asWideString['user'], username, asString['action']);
     end
@@ -8830,6 +8859,7 @@ procedure TMainForm.PFileTransExplorerNewUI(Sender: TRtcPFileTransfer; const use
 var
   FWin: TrdFileTransfer;
 //  GatewayRec: PGatewayRec;
+  pPCItem: PPortalConnection;
 begin
 //  xLog('PFileTransExplorerNewUI');
 
@@ -8847,8 +8877,14 @@ begin
     FWin.UI.Module := Sender;
     FWin.UI.Tag := Sender.Tag; //ThreadID
 
-//    AddPortalConnection(Sender.Tag, FWin.Handle, 'file', user); //ThreadID
-    SetPortalConnectionUIHandle(Sender.Tag, FWin.Handle);
+    pPCItem := GetPortalConnection('file', user);
+    if pPCItem <> nil then
+    begin
+      pPCItem^.UIHandle := FWin.Handle;
+      FWin.PartnerLockedState := pPCItem^.StartLockedState;
+      FWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
+      FWin.SetFormState;
+    end;
 
     (*
     // Restore Window Position
@@ -8890,6 +8926,7 @@ procedure TMainForm.PFileTransExplorerNewUI_HideMode(Sender: TRtcPFileTransfer; 
 var
   FWin: TrdFileTransfer;
 //  GatewayRec: PGatewayRec;
+  pPCItem: PPortalConnection;
 begin
 //  xLog('PFileTransExplorerNewUI');
 
@@ -8907,8 +8944,14 @@ begin
     FWin.UI.Module := Sender;
     FWin.UI.Tag := Sender.Tag; //ThreadID
 
-//    AddPortalConnection(Sender.Tag, FWin.Handle, 'file', user); //ThreadID
-    SetPortalConnectionUIHandle(Sender.Tag, FWin.Handle);
+    pPCItem := GetPortalConnectionByThreadId(Sender.Tag);
+    if pPCItem <> nil then
+    begin
+      pPCItem^.UIHandle := FWin.Handle;
+      FWin.PartnerLockedState := pPCItem^.StartLockedState;
+      FWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
+      FWin.SetFormState;
+    end;
 
     (*
     // Restore Window Position
@@ -8951,6 +8994,7 @@ procedure TMainForm.PFileTransferLogUI(Sender: TRtcPFileTransfer; const user: St
 var
   FWin: TrdFileTransferLog;
 //  GatewayRec: PGatewayRec;
+  pPCItem: PPortalConnection;
 begin
 //  xLog('PFileTransferLogUI');
 
@@ -8968,8 +9012,14 @@ begin
     FWin.UI.Module := Sender;
     FWin.UI.Tag := Sender.Tag; //ThreadID
 
-//    AddPortalConnection(Sender.Tag, FWin.Handle, 'file', user); //ThreadID
-    SetPortalConnectionUIHandle(Sender.Tag, FWin.Handle);
+    pPCItem := GetPortalConnectionByThreadId(Sender.Tag);
+    if pPCItem <> nil then
+    begin
+      pPCItem^.UIHandle := FWin.Handle;
+//      FWin.PartnerLockedState := pPCItem^.StartLockedState;
+//      FWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
+//      FWin.SetFormState;
+    end;
 
     (*
     // Restore Window Position
@@ -8996,6 +9046,195 @@ begin
 
 //    with TRtcHttpPortalClient(Sender.Client) do
 //      AddActiveUI(FWin.Handle, 'file', user, FindGatewayClient(GateAddr, GatePort));
+
+//    Application.Minimize;
+  end
+  else
+    raise Exception.Create('Ошибка при создании окна');
+
+//  if GetPendingRequestsCount > 0 then
+//    SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
+//  else
+//    SetStatusString('Готов к подключению');
+end;
+
+procedure TMainForm.PChatNewUI(Sender: TRtcPChat; const user:string);
+var
+  CWin: TrdChatForm;
+//  GatewayRec: PGatewayRec;
+  pPCItem: PPortalConnection;
+begin
+//  xLog('PChatNewUI');
+
+  CWin := TrdChatForm.Create(nil);
+  CWin.OnUIOpen := OnUIOpen;
+  CWin.OnUIClose := OnUIClose;
+//  CWin.Parent := Self;
+//  CWin.ParentWindow := GetDesktopWindow;
+  if Assigned(CWin) then
+  begin
+//    {$IFNDEF RtcViewer}
+//    GatewayRec := GetGatewayRecByChat(Sender);
+//    CWin.PDesktopControl := GatewayRec.DesktopControl^;
+//    CWin.PFileTrans := GatewayRec.FileTransfer^;
+//    {$ENDIF}
+
+    CWin.UI.UserName := user;
+    CWin.UI.UserDesc := GetPendingItemByUserName(user, 'chat')^.UserDesc;
+    // Always set UI.Module *after* setting UI.UserName !!!
+    CWin.UI.Module := Sender;
+    CWin.UI.Tag := Sender.Tag; //ThreadID
+
+    pPCItem := GetPortalConnectionByThreadId(Sender.Tag);
+    if pPCItem <> nil then
+    begin
+      pPCItem^.UIHandle := CWin.Handle;
+      CWin.PartnerLockedState := pPCItem^.StartLockedState;
+      CWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
+      CWin.SetFormState;
+    end;
+
+    (*
+    LoadWindowPosition(CWin,'ChatForm');
+    *)
+
+//    GatewayRec := GetGatewayRecByChat(Sender);
+//    GatewayRec^.ID := user;
+//    GatewayRec^.Action := 'chat';
+//    GatewayRec^.UIHandle := CWin.Handle;
+
+//    with TRtcHttpPortalClient(Sender.Client) do
+//      AddActiveUI(CWin.Handle, 'chat', user, FindGatewayClient(GateAddr, GatePort));
+
+//    CWin.Show;
+//    if CWin.WindowState = wsNormal then
+//    begin
+//      CWin.BringToFront;
+//      BringWindowToTop(CWin.Handle);
+//    end;
+
+//    Application.Minimize;
+  end
+  else
+    raise Exception.Create('Ошибка при создании окна');
+
+//  if GetPendingRequestsCount > 0 then
+//    SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
+//  else
+//    SetStatusString('Готов к подключению');
+end;
+
+procedure TMainForm.PDesktopControlNewUI(Sender: TRtcPDesktopControl; const user: String);
+//  var
+//    CDesk:TrdDesktopViewer;
+//  begin
+//  CDesk:=TrdDesktopViewer.Create(nil);
+//  if assigned(CDesk) then
+//    begin
+//    CDesk.PFileTrans:=PFileTrans;
+//
+//    // MapKeys and ControlMode should stay as they are now,
+//    // because this is the Host side and Hosts do not have Control.
+//    CDesk.UI.ControlMode:=rtcpNoControl;
+//    CDesk.UI.MapKeys:=False;
+//
+//    // You can set SmoothScale and ExactCursor to your prefered values,
+//    // or add options to the Form so the user can choose these values,
+//    // but the default values (False, False) will give you the best performance.
+//    CDesk.UI.SmoothScale:=False;
+//    CDesk.UI.ExactCursor:=False;
+//
+//    CDesk.UI.UserName:=user;
+//    // Always set UI.Module *after* setting UI.UserName !!!
+//    CDesk.UI.Module:=Sender;
+//
+//    CDesk.Show;
+//    end
+//  else
+//    raise Exception.Create('Error creating Window');
+//
+//  if CDesk.WindowState=wsNormal then
+//    begin
+//    CDesk.BringToFront;
+//    BringWindowToTop(CDesk.Handle);
+//    end;
+ var
+  CDesk: TrdDesktopViewer;
+//  GatewayRec: PGatewayRec;
+  pPCItem: PPortalConnection;
+begin
+  //xLog('PDesktopControlNewUI');
+
+  CDesk := TrdDesktopViewer.Create(nil);
+  CDesk.OnUIOpen := OnUIOpen;
+  CDesk.OnUIClose := OnUIClose;
+  CDesk.DoStartFileTransferring := StartFileTransferring;
+//  CDesk.Parent := Self;
+  //CDesk.ParentWindow := GetDesktopWindow;
+  if Assigned(CDesk) then
+  begin
+//    GatewayRec := GetGatewayRecByDesktopControl(Sender);
+//    CDesk.PFileTrans := GatewayRec^.FileTransfer^;
+//    CDesk.PChat := GatewayRec.Chat^;
+
+    CDesk.UI.MapKeys := True;
+    CDesk.UI.SmoothScale := True;
+    CDesk.UI.ExactCursor := True;
+    CDesk.UI.Tag := Sender.Tag; //ThreadID
+
+    //{$IFNDEF RtcViewer}
+//    case cbControlMode.ItemIndex of
+//      0: CDesk.UI.ControlMode:=rtcpNoControl;
+//      1: CDesk.UI.ControlMode:=rtcpAutoControl;
+//      2: CDesk.UI.ControlMode:=rtcpManualControl;
+//      3: CDesk.UI.ControlMode:=rtcpFullControl;
+//      end;
+    CDesk.UI.ControlMode := rtcpFullControl;
+    //{$ENDIF}
+
+    CDesk.UI.UserName := user;
+    CDesk.UI.UserDesc := GetUserDescription(user, 'desk');
+    // Always set UI.Module *after* setting UI.UserName !!!
+    CDesk.UI.Module := Sender;
+
+    pPCItem := GetPortalConnectionByThreadId(Sender.Tag);
+    if pPCItem <> nil then
+    begin
+      pPCItem^.UIHandle := CDesk.Handle;
+      CDesk.PartnerLockedState := pPCItem^.StartLockedState;
+      CDesk.PartnerServiceStarted := pPCItem^.StartServiceStarted;
+      CDesk.SetFormState;
+    end;
+
+//    GatewayRec := GetGatewayRecByDesktopControl(Sender);
+//    GatewayRec^.ID := user;
+//    GatewayRec^.Action := 'desk';
+//    GatewayRec^.UIHandle := CDesk.Handle;
+
+//    with TRtcHttpPortalClient(Sender.Client) do
+//      AddActiveUI(CDesk.Handle, 'desk', user, FindGatewayClient(GateAddr, GatePort));
+
+//    CDesk.Show;
+
+//    CDesk.UI.Send_HideDesktop;
+
+//    if CDesk.WindowState = wsNormal then
+//    begin
+//      CDesk.BringToFront;
+//      BringWindowToTop(CDesk.Handle);
+//    end;
+
+    with cmAccounts do
+    try
+      with Data.NewFunction('Host.GetLockedState') do
+      begin
+        Value['User'] := user;
+        Call(rGetHostLockedState);
+      end;
+    except
+      on E: Exception do
+        Data.Clear;
+    end;
 
 //    Application.Minimize;
   end
@@ -9037,65 +9276,6 @@ begin
   // See: http://support.microsoft.com/kb/135788
 //  BringToFront();
 //  SetForegroundWindow(Self.Handle);
-end;
-
-procedure TMainForm.PChatNewUI(Sender: TRtcPChat; const user:string);
-var
-  CWin: TrdChatForm;
-//  GatewayRec: PGatewayRec;
-begin
-//  xLog('PChatNewUI');
-
-  CWin := TrdChatForm.Create(nil);
-  CWin.OnUIOpen := OnUIOpen;
-  CWin.OnUIClose := OnUIClose;
-//  CWin.Parent := Self;
-//  CWin.ParentWindow := GetDesktopWindow;
-  if Assigned(CWin) then
-  begin
-//    {$IFNDEF RtcViewer}
-//    GatewayRec := GetGatewayRecByChat(Sender);
-//    CWin.PDesktopControl := GatewayRec.DesktopControl^;
-//    CWin.PFileTrans := GatewayRec.FileTransfer^;
-//    {$ENDIF}
-
-    CWin.UI.UserName := user;
-    CWin.UI.UserDesc := GetPendingItemByUserName(user, 'chat')^.UserDesc;
-    // Always set UI.Module *after* setting UI.UserName !!!
-    CWin.UI.Module := Sender;
-    CWin.UI.Tag := Sender.Tag; //ThreadID
-
-//    AddPortalConnection(Sender.Tag, CWin.Handle, 'chat', user); //ThreadID
-    SetPortalConnectionUIHandle(Sender.Tag, CWin.Handle);
-
-    (*
-    LoadWindowPosition(CWin,'ChatForm');
-    *)
-
-//    GatewayRec := GetGatewayRecByChat(Sender);
-//    GatewayRec^.ID := user;
-//    GatewayRec^.Action := 'chat';
-//    GatewayRec^.UIHandle := CWin.Handle;
-
-//    with TRtcHttpPortalClient(Sender.Client) do
-//      AddActiveUI(CWin.Handle, 'chat', user, FindGatewayClient(GateAddr, GatePort));
-
-//    CWin.Show;
-//    if CWin.WindowState = wsNormal then
-//    begin
-//      CWin.BringToFront;
-//      BringWindowToTop(CWin.Handle);
-//    end;
-
-//    Application.Minimize;
-  end
-  else
-    raise Exception.Create('Ошибка при создании окна');
-
-//  if GetPendingRequestsCount > 0 then
-//    SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
-//  else
-//    SetStatusString('Готов к подключению');
 end;
 
 // Called after a successful login (not after LoadGatewayParams)
@@ -10332,122 +10512,6 @@ end;
 //    CS_Status.Release;
 //  end;
 //end;
-
-procedure TMainForm.PDesktopControlNewUI(Sender: TRtcPDesktopControl; const user: String);
-//  var
-//    CDesk:TrdDesktopViewer;
-//  begin
-//  CDesk:=TrdDesktopViewer.Create(nil);
-//  if assigned(CDesk) then
-//    begin
-//    CDesk.PFileTrans:=PFileTrans;
-//
-//    // MapKeys and ControlMode should stay as they are now,
-//    // because this is the Host side and Hosts do not have Control.
-//    CDesk.UI.ControlMode:=rtcpNoControl;
-//    CDesk.UI.MapKeys:=False;
-//
-//    // You can set SmoothScale and ExactCursor to your prefered values,
-//    // or add options to the Form so the user can choose these values,
-//    // but the default values (False, False) will give you the best performance.
-//    CDesk.UI.SmoothScale:=False;
-//    CDesk.UI.ExactCursor:=False;
-//
-//    CDesk.UI.UserName:=user;
-//    // Always set UI.Module *after* setting UI.UserName !!!
-//    CDesk.UI.Module:=Sender;
-//
-//    CDesk.Show;
-//    end
-//  else
-//    raise Exception.Create('Error creating Window');
-//
-//  if CDesk.WindowState=wsNormal then
-//    begin
-//    CDesk.BringToFront;
-//    BringWindowToTop(CDesk.Handle);
-//    end;
- var
-  CDesk: TrdDesktopViewer;
-//  GatewayRec: PGatewayRec;
-begin
-  //xLog('PDesktopControlNewUI');
-
-  CDesk := TrdDesktopViewer.Create(nil);
-  CDesk.OnUIOpen := OnUIOpen;
-  CDesk.OnUIClose := OnUIClose;
-  CDesk.DoStartFileTransferring := StartFileTransferring;
-//  CDesk.Parent := Self;
-  //CDesk.ParentWindow := GetDesktopWindow;
-  if Assigned(CDesk) then
-  begin
-//    GatewayRec := GetGatewayRecByDesktopControl(Sender);
-//    CDesk.PFileTrans := GatewayRec^.FileTransfer^;
-//    CDesk.PChat := GatewayRec.Chat^;
-
-    CDesk.UI.MapKeys := True;
-    CDesk.UI.SmoothScale := True;
-    CDesk.UI.ExactCursor := True;
-    CDesk.UI.Tag := Sender.Tag; //ThreadID
-
-//    AddPortalConnection(Sender.Tag, CDesk.Handle, 'desc', user); //ThreadID
-    SetPortalConnectionUIHandle(Sender.Tag, CDesk.Handle);
-
-    //{$IFNDEF RtcViewer}
-//    case cbControlMode.ItemIndex of
-//      0: CDesk.UI.ControlMode:=rtcpNoControl;
-//      1: CDesk.UI.ControlMode:=rtcpAutoControl;
-//      2: CDesk.UI.ControlMode:=rtcpManualControl;
-//      3: CDesk.UI.ControlMode:=rtcpFullControl;
-//      end;
-    CDesk.UI.ControlMode := rtcpFullControl;
-    //{$ENDIF}
-
-    CDesk.UI.UserName := user;
-    CDesk.UI.UserDesc := GetUserDescription(user, 'desk');
-    // Always set UI.Module *after* setting UI.UserName !!!
-    CDesk.UI.Module := Sender;
-
-//    GatewayRec := GetGatewayRecByDesktopControl(Sender);
-//    GatewayRec^.ID := user;
-//    GatewayRec^.Action := 'desk';
-//    GatewayRec^.UIHandle := CDesk.Handle;
-
-//    with TRtcHttpPortalClient(Sender.Client) do
-//      AddActiveUI(CDesk.Handle, 'desk', user, FindGatewayClient(GateAddr, GatePort));
-
-//    CDesk.Show;
-
-//    CDesk.UI.Send_HideDesktop;
-
-//    if CDesk.WindowState = wsNormal then
-//    begin
-//      CDesk.BringToFront;
-//      BringWindowToTop(CDesk.Handle);
-//    end;
-
-    with cmAccounts do
-    try
-      with Data.NewFunction('Host.GetLockedState') do
-      begin
-        Value['User'] := user;
-        Call(rGetHostLockedState);
-      end;
-    except
-      on E: Exception do
-        Data.Clear;
-    end;
-
-//    Application.Minimize;
-  end
-  else
-    raise Exception.Create('Ошибка при создании окна');
-
-//  if GetPendingRequestsCount > 0 then
-//    SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
-//  else
-//    SetStatusString('Готов к подключению');
-end;
 
 procedure TMainForm.PDesktopHostHaveScreeenChanged(Sender: TObject);
 begin
