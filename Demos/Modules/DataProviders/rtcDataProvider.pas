@@ -409,7 +409,6 @@ begin
 //        AddParam(SP, '@ID_Console', ftString, pdOutput, 0);
         SP.Parameters.ParamByName('@Hash').Value := Param.asString['Hash'];
         SP.Parameters.ParamByName('@Hash_Console').Value := Param.asString['Hash_Console'];
-        SP.Parameters.ParamByName('@DoCreate').Value := 1;
         SP.Parameters.ParamByName('@ID').Value := 0;
         SP.Parameters.ParamByName('@ID_Console').Value := 0;
         SP.ExecProc;
@@ -570,7 +569,7 @@ begin
       SP := TADOStoredProc.Create(nil);
       try
         SP.Connection := SQLConnection;
-        SP.ProcedureName := 'GetDeviceID';
+        SP.ProcedureName := 'GetDeviceIDNoCreate';
         SP.Prepared := True;
         SP.Parameters.Refresh;
 //        AddParam(SP, '@Hash', ftString, pdInput, Param.asString['Hash']);
@@ -578,7 +577,6 @@ begin
 //        AddParam(SP, '@ID', ftString, pdOutput, 0);
 //        AddParam(SP, '@ID_Console', ftString, pdOutput, 0);
         SP.Parameters.ParamByName('@Hash').Value := Param.asString['Hash'];
-        SP.Parameters.ParamByName('@DoCreate').Value := 0;
         SP.Parameters.ParamByName('@ID').Value := 0;
         SP.ExecProc;
 
@@ -606,7 +604,7 @@ begin
             if Users.isHostLoggedIn(IntToStr(sID), Session.ID) then
             begin
   //xLog('HostLogOutExecute ' + Param.asText['user']);
-              Users.HostLogOut(Param.asText['user'], Session['$MSG:Gateway'], '', GetFriendList(IntToStr(sID)), Session.ID);
+              Users.HostLogOut(IntToStr(sID), Session['$MSG:Gateway'], '', GetFriendList(IntToStr(sID)), Session.ID);
               Session['$MSG:HostLogin']:= '';
               Session['$MSG:User']:= '';
               Session['$MSG:Gateway']:= '';

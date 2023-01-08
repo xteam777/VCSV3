@@ -1188,7 +1188,7 @@ begin
   try
     // Remove existing info.
     if HostsInfo.Child[uname] <> nil then
-      DelUserFromGateway(uname, HostsInfo.Child[uname]['Gateway'])
+      DelUserFromGateway(uname, gateway)
     else
       FHostsCount := FHostsCount + 1;
 
@@ -1238,18 +1238,16 @@ begin
     if (HostsInfo.Child[uname]['session'] = sessid)
       or DisconnectAll then
     begin
-      if not DisconnectAll then
+      if DisconnectAll then
+        DelUserFromGateway(uname, HostsInfo.Child[uname]['gateway']) //Param gateway = ''
+      else
         DelUserFromGateway(uname, gateway);
-      DelUserFromGateway(uname, HostsInfo.Child[uname]['gateway']);
+
       DelUserFromAccountsID(uname);
       RemoveActiveConsoleClientFromService(uname);
-      HostDelUser(uname);
 
       FHostsCount := FHostsCount - 1;
 
-   // If logged in under this session ID, remove info
-    if HostsInfo.Child[uname] <> nil then
-    begin
       if (HostsInfo.Child[uname]['session'] = sessid)
         or DisconnectAll then
       begin
@@ -1258,14 +1256,13 @@ begin
         log_out := True;
       end;
 
-      HostsInfo.SetNil(uname);
+      HostDelUser(uname);
+
+      NotifyAccountsOnHostLogOut(uname, Friends, log_out);
+
+      if Assigned(FOnUserLogOut) then
+        FOnUserLogOut(uname);
     end;
-
-    NotifyAccountsOnHostLogOut(uname, Friends, log_out);
-
-    if Assigned(FOnUserLogOut) then
-      FOnUserLogOut(uname);
-  end;
   finally
     userCS.Release;
   end;
@@ -1278,10 +1275,11 @@ begin
   try
     Result := False;
     // If logged in under this session ID, return True
-    if HostsInfo.Child[uname] <> nil then
+{    if HostsInfo.Child[uname] <> nil then
 //      if (HostsInfo.Child[uname]['session'] = sessid) or
 //         (HostsInfo.Child[uname]['session2'] = sessid) then
-        Result := True;
+        Result := True;}
+    Result := HostsList.is_Type[uname] <> rtc_Null;
   finally
     userCS.Release;
   end;
@@ -1291,7 +1289,8 @@ function TVircessUsers.isHostLoggedIn(uname: String):boolean;
 begin
   userCS.Acquire;
   try
-    Result := HostsInfo.Child[uname] <> nil;
+//    Result := HostsInfo.Child[uname] <> nil;
+    Result := HostsList.is_Type[uname] <> rtc_Null;
   finally
     userCS.Release;
   end;
@@ -1310,7 +1309,7 @@ begin
         HostRegUser(uname, gateway, ConsoleId, isService, Friends, sessid)
       else
   //    begin
-        with HostsList.asRecord[uname] do
+//        with HostsList.asRecord[uname] do
   //        if asText['pass']<>upass then
   //          raise Exception.Create('Wrong password for user "'+uname+'".')
   //        else
@@ -1383,13 +1382,19 @@ begin
       raise Exception.Create('Username required to Register.')
     else
     begin
-      if HostsList.isType[uname] = rtc_Null then
+      if HostsInfo.Child[uname] = nil then
+      begin
+        if HostsList.isType[uname] = rtc_Null then
+          HostsList.NewRecord(uname);
+        if HostsInfo.Child[uname] = nil then
+          HostsInfo.NewChild(uname);
+      end;
 //      if not HostsList.isNull[uname] then
 //        doHostLogIn(uname, gateway, Friends, sessid)
 //        raise Exception.Create('Username "' + uname + '" already taken. Can not register a new user with the same name.')
 //      else // user doesn't exists
 //      begin
-        with HostsList.NewRecord(uname) do
+//        with HostsList.NewRecord(uname) do
         //begin
           doHostLogIn(uname, gateway, ConsoleId, isService, Friends, sessid);
         //end;
@@ -1405,6 +1410,7 @@ begin
   userCS.Acquire;
   try
     HostsList.isNull[uname] := True; // das entfernt den Record aus UserList
+    HostsInfo.SetNil(uname);
   //    SaveUserList; // Das speichert die neue UserList
   finally
     userCS.Release;
