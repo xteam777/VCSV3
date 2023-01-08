@@ -108,7 +108,7 @@ type
     procedure LoadSetup(RecordType: String);
     procedure StartHostLogin;
     procedure msgHostTimerTimer(Sender: TObject);
-    procedure LogoutClientHosts;
+//    procedure LogoutClientHosts;
 
     procedure ChangePort(AClient: TRtcHttpClient);
     procedure ChangePortP(AClient: TRtcHttpPortalClient);
@@ -433,7 +433,7 @@ begin
   tStartClients.Resume;
 end;
 
-procedure TRemoxService.LogoutClientHosts;
+{procedure TRemoxService.LogoutClientHosts; //Сделано на гейте
 var
   HWID : THardwareId;
   Users: TStringList;
@@ -461,7 +461,7 @@ begin
     FreeAndNil(HWID);
     FreeAndNil(Users);
   end;
-end;
+end;}
 
 procedure TRemoxService.ServiceStop(Sender: TService; var Stopped: Boolean);
 var

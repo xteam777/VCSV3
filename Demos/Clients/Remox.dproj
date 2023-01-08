@@ -166,7 +166,7 @@
             <Form>fmBlankoutForm</Form>
         </DCCReference>
         <DCCReference Include="uSetup.pas"/>
-        <DCCReference Include="uAcceptEula.pas">
+        <DCCReference Include="..\Modules\uAcceptEula.pas">
             <Form>fAcceptEULA</Form>
         </DCCReference>
         <RcItem Include="rmx_w32.exe">

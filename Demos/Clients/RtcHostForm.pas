@@ -322,7 +322,6 @@ type
     Button3: TButton;
     bSetup: TColorSpeedButton;
     pBtnSetup: TPanel;
-    Memo1: TMemo;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -4000,12 +3999,6 @@ begin
   begin
     if TDeviceData(twDevices.GetNodeData(Node)^).ID = StrToInt(RemoveUserPrefix(uname)) then
     begin
-      if uname = '100001148' then
-        if status = MSG_STATUS_OFFLINE then
-          Memo1.Lines.Add('OFFline')
-        else
-          Memo1.Lines.Add('ONline');
-
       TDeviceData(twDevices.GetNodeData(Node)^).StateIndex := status;
       twDevices.InvalidateNode(Node);
       Break;

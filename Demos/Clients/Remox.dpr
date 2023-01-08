@@ -63,7 +63,7 @@ uses
   rdFileTransLog in '..\Modules\rdFileTransLog.pas' {rdFileTransferLog},
   rtcBlankOutForm in '..\Modules\rtcBlankOutForm.pas' {fmBlankoutForm},
   uSetup in 'uSetup.pas',
-  uAcceptEula in 'uAcceptEula.pas' {fAcceptEULA};
+  uAcceptEula in '..\Modules\uAcceptEula.pas' {fAcceptEULA};
 
 {$R rtcportaluac.res rtcportaluac.rc}
 {$R *.res}
