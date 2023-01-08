@@ -104,7 +104,7 @@ type
     procedure UpdateMyPriority;
     function GetServiceController: TServiceController; override;
     procedure ActivateHost;
-    procedure HostLogOut;
+    procedure HostLogOut(AUserName: String);
     procedure LoadSetup(RecordType: String);
     procedure StartHostLogin;
     procedure msgHostTimerTimer(Sender: TObject);
@@ -432,6 +432,25 @@ begin
   tStartClients.Resume;
 end;
 
+procedure TRemoxService.LogoutClientHosts;
+ var
+  HWID : THardwareId;
+begin
+  try
+    HWID := THardwareId.Create(False);
+    try
+      HWID.AddUserProfileName := False;
+      HWID.GenerateHardwareId;
+//      HostTimerModule.Data.Clear;
+      with HostTimerModule, Data.NewFunction('Host.Activate') do
+      begin
+        asString['Hash'] := HWID.HardwareIdHex;
+        Call(rActivate);
+      end;
+    finally
+      FreeAndNil(HWID);
+    end;
+end;
 procedure TRemoxService.ServiceStop(Sender: TService; var Stopped: Boolean);
 var
   cnt: Integer;
@@ -445,7 +464,8 @@ begin
     tStartHelpers.Suspend;
     tStartClients.Suspend;
 
-    HostLogOut;
+    HostLogOut(UserName);
+    LogoutClientHosts;
 
     xLog('Do kill helper processes');
     rtcKillProcess(HELPER_EXE_NAME);
@@ -793,11 +813,11 @@ begin
   end;
 end;
 
-procedure TRemoxService.HostLogOut;
+procedure TRemoxService.HostLogOut(AUserName: String);
 begin
   with HostTimerModule, Data.NewFunction('Host.Logout') do
   begin
-    Value['User'] := LowerCase(UserName);
+    Value['User'] := LowerCase(AUserName);
     Call(resHostLogout);
   end;
   xLog('HOST LOGOUT');
@@ -1378,16 +1398,7 @@ var
 begin
   ActivationInProcess := True;
 
-  if not IsInternetConnected then
-    Exit;
-
   SetStatus(STATUS_ACTIVATING_ON_MAIN_GATE);
-
-  if not HostTimerClient.isConnected then
-    Exit;
-
-  if HostTimerModule.Data = nil then
-    Exit;
 
   try
     HWID := THardwareId.Create(False);
