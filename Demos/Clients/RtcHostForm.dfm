@@ -3,7 +3,7 @@ object MainForm: TMainForm
   Top = 309
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'Remox'
-  ClientHeight = 474
+  ClientHeight = 494
   ClientWidth = 839
   Color = clBtnFace
   DoubleBuffered = True
@@ -48,7 +48,7 @@ object MainForm: TMainForm
     Left = 0
     Top = 0
     Width = 839
-    Height = 474
+    Height = 494
     Margins.Left = 0
     Margins.Top = 0
     Margins.Right = 0
@@ -61,9 +61,10 @@ object MainForm: TMainForm
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
+    ExplicitHeight = 454
     DesignSize = (
       839
-      474)
+      494)
     object lblStatus: TLabel
       AlignWithMargins = True
       Left = 46
@@ -5819,6 +5820,13 @@ object MainForm: TMainForm
         OnMouseLeave = bSetupMouseLeave
       end
     end
+  end
+  object Memo1: TMemo
+    Left = 288
+    Top = 82
+    Width = 237
+    Height = 173
+    TabOrder = 1
   end
   object PDesktopControl: TRtcPDesktopControl
     OnNewUI = PDesktopControlNewUI
