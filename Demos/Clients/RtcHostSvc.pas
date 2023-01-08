@@ -104,7 +104,7 @@ type
     procedure UpdateMyPriority;
     function GetServiceController: TServiceController; override;
     procedure ActivateHost;
-    procedure HostLogOut(AUserName: String);
+    procedure HostLogOut;
     procedure LoadSetup(RecordType: String);
     procedure StartHostLogin;
     procedure msgHostTimerTimer(Sender: TObject);
@@ -487,7 +487,7 @@ begin
     end;
     Delete_File(ChangeFileExt(ParamStr(0), '.ncl'));
 
-    HostLogOut(UserName);
+    HostLogOut;
 //    LogoutClientHosts;
 
     //Создаем файл-флаг. В клиенте проверяется его наличие
@@ -826,15 +826,15 @@ begin
   end;
 end;
 
-procedure TRemoxService.HostLogOut(AUserName: String);
+procedure TRemoxService.HostLogOut;
 begin
   with HostTimerModule, Data.NewFunction('Host.Logout') do
   begin
-    asWideString['User'] := LowerCase(AUserName);
+    asWideString['User'] := UserName;
     asBoolean['IsService'] := True;
     Call(resHostLogout);
   end;
-  xLog('HOST LOGOUT');
+//  xLog('SERVICE HOST LOGOUT');
 end;
 
 procedure TRemoxService.StartHostLogin;
@@ -1023,6 +1023,8 @@ begin
     end;
 
   ActivationInProcess := False;
+
+//  xLog('SERVICE HOST LOGIN');
 end;
 
 procedure TRemoxService.resHostLoginReturn(Sender: TRtcConnection; Data,
