@@ -1220,7 +1220,7 @@ begin
   begin
     UI.ChgDesktop_Begin;
     try
-      UI.ChgDesktop_ColorLimit(rdColor4bit);
+      UI.ChgDesktop_ColorLimit(rdColor8bit);
 //      UI.ChgDesktop_FrameRate(rdFramesMax);
 //      UI.ChgDesktop_SendScreenInBlocks(rdBlocks1);
 //      UI.ChgDesktop_SendScreenRefineBlocks(rdBlocks12);
