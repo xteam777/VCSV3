@@ -108,6 +108,7 @@ type
     FCaptureMask: DWORD;
     FMultiMon: boolean;
 
+    fFirstScreen: Boolean;
     ScrCap: TRtcScreenCapture;
 
 //    FImageCatcher: TImageCatcher;
@@ -149,7 +150,7 @@ type
     function GetInitialScreenData: TRtcValue;
     function GetScreenData: TRtcValue;
 
-    function GetScreenFromHelperByMMF(OnlyGetScreenParams: Boolean = False): Boolean;
+    function GetScreenFromHelperByMMF(OnlyGetScreenParams: Boolean = False; fFirstScreen: Boolean = False): Boolean;
 
     property CaptureMask: DWORD read FCaptureMask write FCaptureMask;
     property UseCaptureMarks: boolean read FUseCaptureMarks
@@ -1249,6 +1250,8 @@ begin
   inherited;
   CS := TCriticalSection.Create;
 
+  fFirstScreen := True;
+
   FMyScreenInfoChanged := False;
   FCaptureMask := SRCCOPY;
 
@@ -2250,7 +2253,7 @@ begin
       Result := True;
 end;
 
-function TRtcScreenEncoder.GetScreenFromHelperByMMF(OnlyGetScreenParams: Boolean = False): Boolean;
+function TRtcScreenEncoder.GetScreenFromHelperByMMF(OnlyGetScreenParams: Boolean = False; fFirstScreen: Boolean = False): Boolean;
 var
   h, hMap: THandle;
   pMap: Pointer;
@@ -2324,11 +2327,11 @@ begin
         SetEvent(EventWriteBegin); //Если чтение не идет, то начинаем запись скрина
 
 //        ResetEvent(EventReadBegin);
-//i := GetTickCount;
+//time := GetTickCount;
         WaitForSingleObject(EventWriteEnd, WaitTimeout); //Добавить таймаут, ждем окончания записи скрина
         ResetEvent(EventWriteEnd);
-//i := GetTickCount - i;
-//i := i;
+//time := GetTickCount - time;
+//time := time;
   //    if EventRead > 0 then
   //    begin
   //      SetEvent(EventRead);
@@ -2474,10 +2477,11 @@ begin
       if fScreenGrabbed then
       begin
 //        Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FHelper_Width, FHelper_Height, hMemDC, 0, 0, SRCCOPY);
-        if (FLastChangedX1 = 0)
+        if ((FLastChangedX1 = 0)
           and (FLastChangedY1 = 0)
           and (FLastChangedX2 = FHelper_Width)
-          and (FLastChangedY2 = FHelper_Height)  then
+          and (FLastChangedY2 = FHelper_Height))
+          or fFirstScreen then
           Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FHelper_Width, FHelper_Height, hMemDC, 0, 0, SRCCOPY)
         else
         if ((FLastChangedX2 - FLastChangedX1) > 0)
@@ -2734,11 +2738,13 @@ var
 //      if True then
       begin
 //        CS.Acquire;
-time := GetTickCount;
-        Result := GetScreenFromHelperByMMF;
+//time := GetTickCount;
+        Result := GetScreenFromHelperByMMF(False, fFirstScreen);
         ScrCap.HaveScreen := Result;
-time := GetTickCount - time;
-time := i;
+        if Result then
+          fFirstScreen := False;
+//time := GetTickCount - time;
+//time := i;
 //        FNewImage.SaveToFile('C:\Screenshots\' + StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
 {        try
           FNewImage.Assign(FScrCapture.FHelper.FHelperBitmap);
@@ -2777,7 +2783,7 @@ time := i;
 //          fHaveScreen := GetDDAScreenshot;
 //          ScrCap.HaveScreen := True; //fHaveScreen;
 
-time := GetTickCount;
+//time := GetTickCount;
             fHaveScreen := False;
             fRes := FDesktopDuplicator.GetFrame(fNeedRecreate);
             i := 0;
@@ -2799,17 +2805,19 @@ time := GetTickCount;
             if fRes
               and (not fNeedRecreate) then
             begin
-              fHaveScreen := FDesktopDuplicator.DrawFrame(FDesktopDuplicator.Bitmap);
+              fHaveScreen := FDesktopDuplicator.DrawFrame(FDesktopDuplicator.Bitmap);//, FNewImage.PixelFormat);
               fHaveScreen := fHaveScreen;
 //            end
 //            else
 //            begin
               //Memo1.Lines.Add('no frame ' + IntToHex(FDuplication.Error));
             end;
-time := GetTickCount - time;
+//time := GetTickCount - time;
 time := i;
 
-                //FNewImage.SaveToFile('C:\Rufus\scr2.bmp');
+//          if (FDesktopDuplicator.Bitmap <> nil) then
+//            and (FDesktopDuplicator.Bitmap.PixelFormat = pf4bit) then
+//            FDesktopDuplicator.Bitmap.SaveToFile('C:\Rufus\' + StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
 {            try
                 DW := GetCaptureWindow;
               //Get GDI screenshot
@@ -2862,7 +2870,12 @@ time := i;
               and (FDesktopDuplicator.LastChangedY1 = 0)
               and (FDesktopDuplicator.LastChangedX2 = FDesktopDuplicator.Bitmap.Width)
               and (FDesktopDuplicator.LastChangedY2 = FDesktopDuplicator.Bitmap.Height)  then
-              FNewImage.Assign(FDesktopDuplicator.Bitmap)
+//              FNewImage.Assign(FDesktopDuplicator.Bitmap)
+              BitBlt(FNewImage.Canvas.Handle, 0, 0,
+                FDesktopDuplicator.Bitmap.Width, FDesktopDuplicator.Bitmap.Height,
+                FDesktopDuplicator.Bitmap.Canvas.Handle,
+                0, 0,
+                SRCCOPY)
             else
             if ((FDesktopDuplicator.LastChangedX2 - FDesktopDuplicator.LastChangedX1) > 0)
               or ((FDesktopDuplicator.LastChangedY2 - FDesktopDuplicator.LastChangedY1) > 0) then

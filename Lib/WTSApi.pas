@@ -9,7 +9,12 @@ Version: 1.0.0
 }
 
 uses
-Windows;
+  Windows, SysUtils;
+
+const
+  WINSTATIONNAME_LENGTH = 32;
+  USERNAME_LENGTH = 20;
+  DOMAIN_LENGTH = 17;
 
 type
   //WTS_CONNECTSTATE_CLASS - Session connect state
@@ -67,6 +72,32 @@ type
     WTSValidationInfo,
     WTSSessionAddressV4,
     WTSIsRemoteSession);
+
+  WTSINFOEX_LEVEL_W = record
+    SessionId: ULONG;
+    SessionState: WTS_CONNECTSTATE_CLASS;
+    SessionFlags: LONG;
+    WinStationName: array[0..WINSTATIONNAME_LENGTH + 1] of WCHAR;
+    UserName: array[0..USERNAME_LENGTH + 1] of WCHAR;
+    DomainName: array[0..DOMAIN_LENGTH + 1] of WCHAR;
+    LogonTime: LARGE_INTEGER;
+    ConnectTime: LARGE_INTEGER;
+    DisconnectTime: LARGE_INTEGER;
+    LastInputTime: LARGE_INTEGER;
+    CurrentTime: LARGE_INTEGER;
+    IncomingBytes: DWORD;
+    OutgoingBytes: DWORD;
+    IncomingFrames: DWORD;
+    OutgoingFrames: DWORD;
+    IncomingCompressedBytes: DWORD;
+    OutgoingCompressedBytes: DWORD;
+  end;
+
+  WTSINFOEXW = record
+    Level: DWORD;
+    Data: WTSINFOEX_LEVEL_W;
+  end;
+  PWTSINFOEXW = ^WTSINFOEXW;
 
   PWTS_CLIENT_ADDRESS = ^WTS_CLIENT_ADDRESS;
   WTS_CLIENT_ADDRESS = record
@@ -126,6 +157,9 @@ const
   function WTSEnumerateSessions(hServer: THandle; Reserved: DWORD; Version: DWORD; var ppSessionInfo: PWTS_SESSION_INFO; var pCount: DWORD): BOOL; stdcall; external 'wtsapi32.dll' name 'WTSEnumerateSessionsW';
   function WTSQuerySessionInformation(hServer: THandle; SessionId: DWORD; WTSInfoClass: WTS_INFO_CLASS; var ppBuffer: Pointer; var pBytesReturned: DWORD): BOOL; stdcall; external 'wtsapi32.dll' name 'WTSQuerySessionInformationW';
   procedure WTSFreeMemory(pMemory: pointer); stdcall; external 'wtsapi32.dll' name 'WTSFreeMemory';
+  function WTSOpenServer(ServerName: PChar): THandle; stdcall; external 'wtsapi32.dll' name 'WTSOpenServerW';
+  procedure WTSCloseServer(hServer: THandle); stdcall; external 'wtsapi32.dll' name 'WTSCloseServer';
+  function SessionIsLocked(SessionID: DWORD): Boolean;
 
   //function GetWTSString(SessionId: Cardinal; wtsInfo: _WTS_INFO_CLASS): String;
 
@@ -165,6 +199,56 @@ begin
       WTSCloseServer(hSvr);
   end;
 end;}
+
+
+function SessionIsLocked(SessionID: DWORD): Boolean;
+const
+  WTS_CURRENT_SERVER_HANDLE = 0;
+//  WTSSessionInfoEx = 25;
+  WTS_SESSIONSTATE_LOCK = $00000000;
+  WTS_SESSIONSTATE_UNLOCK = $00000001;
+  WTS_SESSIONSTATE_UNKNOWN = $FFFFFFFF;
+var
+  Ptr: Pointer;
+  BytesReturned: Cardinal;
+  hSvr: THANDLE;
+  pInfo: PWTSINFOEXW;
+  SessionFlags: LongInt;
+  dwFlags: LONG;
+begin
+	Result := False;
+  BytesReturned := 0;
+  Ptr := nil;
+  hSvr := WTSOpenServer(nil);
+  try
+    if WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE, SessionId, WTSSessionInfoEx, Ptr, BytesReturned) then
+      if (BytesReturned > 1) then
+      begin
+        pInfo := PWTSINFOEXW(Ptr);
+        if pInfo^.Level = 1 then
+          dwFlags := pInfo^.Data.SessionFlags;
+        if (Win32MajorVersion <> 6.1) then //Windows 7 & Windows Server 2008 R2
+          Result := (dwFlags = WTS_SESSIONSTATE_LOCK)
+        else
+          Result := (dwFlags = WTS_SESSIONSTATE_UNLOCK);
+      end;
+    WTSFreeMemory(Ptr);
+  finally
+    if hSvr <> 0 then
+      WTSCloseServer(hSvr);
+  end;
+
+//	 && DllCall("wtsapi32\WTSQuerySessionInformation", "Ptr", WTS_CURRENT_SERVER_HANDLE, "UInt", SessionID, "UInt", WTSSessionInfoEx, "Ptr*", sesInfo, "Ptr*", BytesReturned)) then
+//   begin
+//		SessionFlags := NumGet(sesInfo + 0, 16, 'Int')
+//		// "Windows Server 2008 R2 and Windows 7: Due to a code defect, the usage of the WTS_SESSIONSTATE_LOCK and WTS_SESSIONSTATE_UNLOCK flags is reversed."
+//    if A_OSVersion <> 'WIN_7' then
+//		  Result := SessionFlags := WTS_SESSIONSTATE_LOCK
+//    else
+//      SessionFlags := WTS_SESSIONSTATE_UNLOCK;
+//		DllCall("wtsapi32\WTSFreeMemory", "Ptr", sesInfo)
+//	end;
+end;
 
 function RegisterSessionNotification(Wnd: HWND; dwFlags: DWORD): Boolean;
 // The RegisterSessionNotification function registers the specified window
@@ -222,24 +306,24 @@ end;
 function GetCurrentSessionID: Integer;
 // Getting the session id from the current process
 type
-TProcessIdToSessionId = function(dwProcessId: DWORD; pSessionId: DWORD): BOOL; stdcall;
+  TProcessIdToSessionId = function(dwProcessId: DWORD; pSessionId: DWORD): BOOL; stdcall;
 var
-ProcessIdToSessionId: TProcessIdToSessionId;
-hWTSapi32dll: THandle;
-Lib : THandle;
-pSessionId : DWord;
+  ProcessIdToSessionId: TProcessIdToSessionId;
+  hWTSapi32dll: THandle;
+  Lib : THandle;
+  pSessionId : DWord;
 begin
-Result := -1;
-Lib := GetModuleHandle('kernel32');
-if Lib <> 0 then
-begin
-ProcessIdToSessionId := GetProcAddress(Lib, '1ProcessIdToSessionId');
-if Assigned(ProcessIdToSessionId) then
-begin
-ProcessIdToSessionId(GetCurrentProcessId(), DWORD(@pSessionId));
-Result:= pSessionId;
-end;
-end;
+  Result := -1;
+  Lib := GetModuleHandle('Kernel32');
+  if Lib <> 0 then
+  begin
+    ProcessIdToSessionId := GetProcAddress(Lib, '1ProcessIdToSessionId');
+    if Assigned(ProcessIdToSessionId) then
+    begin
+      ProcessIdToSessionId(GetCurrentProcessId(), DWORD(@pSessionId));
+      Result:= pSessionId;
+    end;
+  end;
 end;
 
 end.

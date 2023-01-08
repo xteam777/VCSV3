@@ -1972,8 +1972,8 @@ begin
 end;}
 
 procedure CreateBitmapData;
-var
-  cClrBits: Word;
+//var
+//  cClrBits: Word;
 begin
   sWidth := GetSystemMetrics(SM_CXSCREEN);
   sHeight := GetSystemMetrics(SM_CYSCREEN);
@@ -1986,7 +1986,7 @@ begin
     biWidth := sWidth;
     biHeight := -sHeight; //Use negative height to scan top-down.
     biPlanes := 1;
-    biBitCount := GetDeviceCaps(hScrDC, BITSPIXEL);
+    biBitCount := GetDeviceCaps(hScrDC, BITSPIXEL); //Будет обнлвлено после чтения данных от клиента
 
 //    cClrBits := biPlanes * biBitCount;
 //    if (cClrBits = 1) then
@@ -2581,6 +2581,15 @@ begin
   else
   if Request.Data.ReadInteger('QueryType') = QT_GETDATA then
   begin
+//    if (GetCurrentSesstionState <> WTSActive) then
+    if SessionIsLocked(CurrentSessionID) then
+      Response.Data.WriteInteger('LockedState', LCK_STATE_LOCKED)
+    else
+    if (LowerCase(GetInputDesktopName) <> 'default') then
+      Response.Data.WriteInteger('LockedState', LCK_STATE_SAS)
+    else
+      Response.Data.WriteInteger('LockedState', LCK_STATE_UNLOCKED);
+
 //    if (LowerCase(GetInputDesktopName) <> 'default') then
 //      Response.Data.WriteInteger('LockedState', LCK_STATE_LOCKED)
 //    else
@@ -2591,10 +2600,11 @@ begin
 //      Response.Data.WriteInteger('LockedState', LCK_STATE_LOCKED);
 
 //    Response.ID := Format('Response nr. %d', [MilliSecondsBetween(Now, 0)]);
-    if (LowerCase(GetInputDesktopName) <> 'default') then
+
+{    if (LowerCase(GetInputDesktopName) <> 'default') then
       Response.Data.WriteInteger('LockedState', LCK_STATE_LOCKED)
     else
-      Response.Data.WriteInteger('LockedState', LCK_STATE_UNLOCKED);
+      Response.Data.WriteInteger('LockedState', LCK_STATE_UNLOCKED); }
   end;
 end;
 
@@ -2701,6 +2711,20 @@ begin
   end;
 end;
 
+function GetPixelFormat(aBitsCount: Word): TPixelFormat;
+begin
+  case aBitsCount of
+    1: Result := pf1bit;
+    4: Result := pf4bit;
+    8: Result := pf8bit;
+    15: Result := pf15bit;
+    16: Result := pf16bit;
+    24: Result := pf24bit;
+    32: Result := pf32bit;
+    else Result := pf32bit;
+  end;
+end;
+
 function GetDDAScreenshot: Boolean;
 begin
   Result := False;
@@ -2728,7 +2752,7 @@ begin
       if not fRes then
         Exit;
     end;
-    if not FDesktopDuplicator.DrawFrame(FDesktopDuplicator.Bitmap) then
+    if not FDesktopDuplicator.DrawFrame(FDesktopDuplicator.Bitmap, GetPixelFormat(bitmap_info.bmiHeader.biBitCount)) then
       Exit;
     if FDesktopDuplicator.Bitmap = nil then
       Exit;
