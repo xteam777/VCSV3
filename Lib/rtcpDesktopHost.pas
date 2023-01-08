@@ -108,6 +108,7 @@ type
     FCaptureMask: DWORD;
     FMultiMon: boolean;
 
+    fFirstScreen: Boolean;
     ScrCap: TRtcScreenCapture;
 
 //    FImageCatcher: TImageCatcher;
@@ -149,7 +150,7 @@ type
     function GetInitialScreenData: TRtcValue;
     function GetScreenData: TRtcValue;
 
-    function GetScreenFromHelperByMMF(OnlyGetScreenParams: Boolean = False): Boolean;
+    function GetScreenFromHelperByMMF(OnlyGetScreenParams: Boolean = False; fFirstScreen: Boolean = False): Boolean;
 
     property CaptureMask: DWORD read FCaptureMask write FCaptureMask;
     property UseCaptureMarks: boolean read FUseCaptureMarks
@@ -1249,6 +1250,8 @@ begin
   inherited;
   CS := TCriticalSection.Create;
 
+  fFirstScreen := True;
+
   FMyScreenInfoChanged := False;
   FCaptureMask := SRCCOPY;
 
@@ -2250,7 +2253,7 @@ begin
       Result := True;
 end;
 
-function TRtcScreenEncoder.GetScreenFromHelperByMMF(OnlyGetScreenParams: Boolean = False): Boolean;
+function TRtcScreenEncoder.GetScreenFromHelperByMMF(OnlyGetScreenParams: Boolean = False; fFirstScreen: Boolean = False): Boolean;
 var
   h, hMap: THandle;
   pMap: Pointer;
@@ -2474,10 +2477,11 @@ begin
       if fScreenGrabbed then
       begin
 //        Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FHelper_Width, FHelper_Height, hMemDC, 0, 0, SRCCOPY);
-        if (FLastChangedX1 = 0)
+        if ((FLastChangedX1 = 0)
           and (FLastChangedY1 = 0)
           and (FLastChangedX2 = FHelper_Width)
-          and (FLastChangedY2 = FHelper_Height)  then
+          and (FLastChangedY2 = FHelper_Height))
+          or fFirstScreen then
           Result := BitBlt(FNewImage.Canvas.Handle, 0, 0, FHelper_Width, FHelper_Height, hMemDC, 0, 0, SRCCOPY)
         else
         if ((FLastChangedX2 - FLastChangedX1) > 0)
@@ -2735,8 +2739,10 @@ var
       begin
 //        CS.Acquire;
 //time := GetTickCount;
-        Result := GetScreenFromHelperByMMF;
+        Result := GetScreenFromHelperByMMF(False, fFirstScreen);
         ScrCap.HaveScreen := Result;
+        if Result then
+          fFirstScreen := False;
 //time := GetTickCount - time;
 //time := i;
 //        FNewImage.SaveToFile('C:\Screenshots\' + StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
