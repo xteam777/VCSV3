@@ -6648,7 +6648,8 @@ begin
     try
       with Data.NewFunction('Host.Logout') do
       begin
-        Value['User'] := LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]));
+        asWideString['User'] := LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]));
+        asBoolean['IsService'] := False;
         Call(resHostLogout);
         WaitForCompletion(True, 1, True);
       end;

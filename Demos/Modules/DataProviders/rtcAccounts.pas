@@ -143,6 +143,7 @@ type
     procedure GatewayLogOut(address: String);
     function isGatewayLoggedIn(address: String): Boolean;
     procedure CheckDisconnectedGateways;
+    procedure DisconnectServiceClients(ServiceUserName: String);
   end;
 
 implementation
@@ -1441,6 +1442,35 @@ begin
         if (IncSecond(HostsInfo.Child[HostsList.FieldName[i]].asDateTime['LastActive'], FPingTimeout) < Now) then
             begin
               xLog('HostLogOutExecute by CheckDisconnectedHosts ' + HostsList.FieldName[i]);
+              doHostLogOut(HostsList.FieldName[i], '', '', GetFriendList_Func(HostsList.FieldName[i]), '', True);
+            end;
+
+        i := i - 1;
+    end;
+  finally
+    userCS.Release;
+  end;
+end;
+
+procedure TVircessUsers.DisconnectServiceClients(ServiceUserName: String);
+var
+  i: Integer;
+begin
+  userCS.Acquire;
+  try
+    i := HostsList.Count - 1;
+    while (i >= 0) do
+    begin
+      if HostsList.FieldName[i] = '' then
+      begin
+        i := i - 1;
+        Continue;
+      end;
+
+      if HostsInfo.Child[HostsList.FieldName[i]] <> nil then
+        if HostsInfo.Child[HostsList.FieldName[i]].asString['ConsoleId'] = ServiceUserName then
+            begin
+              xLog('HostLogOutExecute by DisconnectServiceClients ' + HostsList.FieldName[i]);
               doHostLogOut(HostsList.FieldName[i], '', '', GetFriendList_Func(HostsList.FieldName[i]), '', True);
             end;
 
