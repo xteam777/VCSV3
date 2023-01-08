@@ -183,9 +183,6 @@ type
     CurrentFrame: Integer;
 //    Avi: TAviFromBitmaps;
 
-    PartnerLockedState: Integer;
-    PartnerServiceStarted: Boolean;
-
     FOnUIOpen: TUIOpenEvent;
     FOnUIClose: TUICloseEvent;
 
@@ -221,6 +218,8 @@ type
     PChat: TRtcPChat;
     fFirstScreen: Boolean;
     FormMinimized: Boolean;
+    PartnerLockedState: Integer;
+    PartnerServiceStarted: Boolean;
 //    MappedFiles: array of TMappedFileRec;
 
     function SetShortcuts_Hook(fBlockInput: Boolean): Boolean;

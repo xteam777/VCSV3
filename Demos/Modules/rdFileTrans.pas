@@ -202,9 +202,6 @@ type
     FOnUIOpen: TUIOpenEvent;
     FOnUIClose: TUICloseEvent;
 
-    PartnerLockedState: Integer;
-    PartnerServiceStarted: Boolean;
-
     FBeforeClose: TNotifyEvent;
 //    function GetUI: TRtcPFileTransferUI;
 //    procedure SetUI(const Value: TRtcPFileTransferUI);
@@ -235,7 +232,6 @@ type
     procedure Form_Open(const mode:string);
     procedure Form_Close(const mode:string);
     procedure SetCaption;
-    procedure SetFormState;
 
   protected
 
@@ -245,6 +241,11 @@ type
 
   public
     UIVisible: Boolean;
+    PartnerLockedState: Integer;
+    PartnerServiceStarted: Boolean;
+
+    procedure SetFormState;
+
     property OnUIOpen: TUIOpenEvent read FOnUIOpen write FOnUIOpen;
     property OnUIClose: TUICloseEvent read FOnUIClose write FOnUIClose;
 
