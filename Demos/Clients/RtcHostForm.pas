@@ -334,6 +334,7 @@ type
 //    procedure WMActivate(var Message: TMessage); message WM_ACTIVATE;
 //    procedure WMBlockInput_Message(var Message: TMessage); message WM_BLOCK_INPUT_MESSAGE;
     procedure WMDragFullWindows_Message(var Message: TMessage); message WM_DRAG_FULL_WINDOWS_MESSAGE;
+    procedure Broadcast_Logoff(var Message: TMessage); message WM_BROADCAST_LOGOFF;
     // declare our DROPFILES message handler
     procedure AcceptFiles( var msg : TMessage ); message WM_DROPFILES;
     procedure WMQueryEndSession(var Msg : TWMQueryEndSession); message WM_QueryEndSession;
@@ -2047,6 +2048,14 @@ end;
 
 //procedure TMainForm.WndProc(var Msg: TMessage);
 //begin
+//  if Msg.Msg = Broadcast_LogoffMessageID then
+//  begin
+//    HostLogOut;
+//    Msg.Result := 1;
+//  end
+//  else
+//    inherited;
+//end;
 //  case Msg.Msg of
 //    WM_SYSCOMMAND:
 //    begin
@@ -10813,6 +10822,17 @@ begin
     EnableDragFullWindows
   else
     RestoreDragFullWindows;
+
+  Message.Result := 0;
+
+//  inherited;
+end;
+
+procedure TMainForm.Broadcast_Logoff(var Message: TMessage);
+begin
+//  xLog('Broadcast_Logoff');
+
+  HostLogOut;
 
   Message.Result := 0;
 

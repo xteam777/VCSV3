@@ -108,6 +108,7 @@ type
     procedure LoadSetup(RecordType: String);
     procedure StartHostLogin;
     procedure msgHostTimerTimer(Sender: TObject);
+    procedure LogoutClientHosts;
 
     procedure ChangePort(AClient: TRtcHttpClient);
     procedure ChangePortP(AClient: TRtcHttpPortalClient);
@@ -433,24 +434,35 @@ begin
 end;
 
 procedure TRemoxService.LogoutClientHosts;
- var
+var
   HWID : THardwareId;
+  Users: TStrings;
+  i: Integer;
 begin
+  HWID := THardwareId.Create(False);
+  HWID.AddUserProfileName := True;
+
+  Users := TStrings.Create;
+
   try
-    HWID := THardwareId.Create(False);
-    try
-      HWID.AddUserProfileName := False;
+    GetLoggedInUsersSIDs(Self, '', '', '', Users);
+    for i := 0 to Users.Count - 1 do
+    begin
+      HWID.UserProfileName := Users[i];
       HWID.GenerateHardwareId;
-//      HostTimerModule.Data.Clear;
-      with HostTimerModule, Data.NewFunction('Host.Activate') do
+  //      HostTimerModule.Data.Clear;
+      with HostTimerModule, Data.NewFunction('Host.LogoutByHash') do
       begin
         asString['Hash'] := HWID.HardwareIdHex;
         Call(rActivate);
       end;
-    finally
-      FreeAndNil(HWID);
     end;
+  finally
+    FreeAndNil(HWID);
+    FreeAndNil(Users);
+  end;
 end;
+
 procedure TRemoxService.ServiceStop(Sender: TService; var Stopped: Boolean);
 var
   cnt: Integer;

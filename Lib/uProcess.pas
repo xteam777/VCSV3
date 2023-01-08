@@ -165,6 +165,7 @@ var
   function IsWindowsServerPlatform: Boolean;
   function GetSystemUserName: String;
   function CreateAttachedProcess(const FileName, Params: String; WindowState: Word; var ProcessId: DWORD): Boolean;
+  procedure GetLoggedInUsersSIDs(owner: TComponent; RemoteMachine, RemoteUser, RemotePassword: String; Users: TStrings);
 
 implementation
 

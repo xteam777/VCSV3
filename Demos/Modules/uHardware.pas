@@ -54,6 +54,7 @@ type
     function GetHardwareIdHex: AnsiString;
    public
     AddUserProfileName: Boolean;
+    UserProfileName: String;
      //Set the properties to  be used in the generation of the hardware id
     property  MotherBoardInfo : TMotherBoardInfoSet read FMotherBoardInfo write FMotherBoardInfo;
     property  ProcessorInfo : TProcessorInfoSet read FProcessorInfo write FProcessorInfo;
@@ -366,9 +367,10 @@ begin
   end;
 
   if AddUserProfileName then
-  begin
-    FBuffer := FBuffer + GetCurrentUserSid; //GetSystemUserName;
-  end;
+    if UserProfileName <> '' then
+      FBuffer := FBuffer + UserProfileName
+    else
+      FBuffer := FBuffer + GetCurrentUserSid; //GetSystemUserName;
 end;
 
 function THardwareId.SIDToString(ASID: PSID): String;
