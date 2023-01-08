@@ -3,7 +3,8 @@ unit uProcess;
 interface
 
 uses
-  System.SysUtils, Winapi.Windows, rtcLog, PSApi, Math, TLHelp32, WTSApi, CommonData;
+  System.SysUtils, Winapi.Windows, System.Classes, System.Variants, rtcLog, PSApi, Math, TLHelp32, WTSApi,
+  CommonData, ComCtrls, WbemScripting_TLB, ActiveX;
 
 type
   LPPROFILEINFOA = ^PROFILEINFOA;
@@ -166,6 +167,159 @@ var
   function CreateAttachedProcess(const FileName, Params: String; WindowState: Word; var ProcessId: DWORD): Boolean;
 
 implementation
+
+procedure GetLoggedInUsersSIDs(owner: TComponent; RemoteMachine, RemoteUser, RemotePassword: String; Users: TStrings);
+var
+  Locator: TSWbemLocator;
+  SinkClasses: TSWbemSink;
+
+  Services:   ISWbemServices;
+  ObjectSet:  ISWbemObjectSet;
+  SObject,
+  OutParam:    ISWbemObject;
+  propSet :   ISWbemPropertySet;
+  SProp,
+  SProp1:      ISWbemProperty;
+  propEnum,
+  Enum:       IEnumVariant;
+  tempObj:    OleVariant;
+  Count,
+  Value:      Cardinal;
+
+  sValue,
+  s:     String;
+  strQuery:   WideString;
+  Pos, i: Integer;
+  fFound: Boolean;
+begin
+  Users.Clear;
+  Locator:=TSWbemLocator.Create(owner);
+  SinkClasses:=TSWbemSink.Create(owner);
+
+  try
+    SinkClasses.Cancel;
+
+    if RemoteMachine='' then
+      RemoteMachine:='.';// local machine
+    Services := Locator.ConnectServer(RemoteMachine, 'root\CIMV2', RemoteUser, RemotePassword, '',
+      '', 0, nil);
+
+    ObjectSet := Services.InstancesOf('Win32_Process', wbemFlagReturnImmediately or wbemQueryFlagShallow, nil);
+
+    Enum :=  (ObjectSet._NewEnum) as IEnumVariant;
+    while (Enum.Next(1, tempObj, Value) = S_OK) do
+    begin
+      SObject := IUnknown(tempObj) as SWBemObject;
+      propSet := SObject.Properties_;
+      propEnum := (propSet._NewEnum) as IEnumVariant;
+      while (propEnum.Next(1, tempObj, Value) = S_OK) do
+      begin
+        SProp := IUnknown(tempObj) as SWBemProperty;
+        if SProp.Name<>'Name' then
+          continue;
+        // now get the value of the property
+        sValue := '';
+        if VarIsNull(SProp.Get_Value) then
+          sValue := '<empty>'
+        else
+        case SProp.CIMType of
+          wbemCimtypeSint8, wbemCimtypeUint8, wbemCimtypeSint16, wbemCimtypeUint16,
+          wbemCimtypeSint32, wbemCimtypeUint32, wbemCimtypeSint64:
+          if VarIsArray(SProp.Get_Value) then
+          begin
+            if VarArrayHighBound(SProp.Get_Value, 1) > 0 then
+              for Count := 1 to VarArrayHighBound(SProp.Get_Value, 1) do
+                sValue := sValue + ' ' + IntToStr(SProp.Get_Value[Count]);
+          end
+          else
+            sValue := IntToStr(SProp.Get_Value);
+          wbemCimtypeReal32, wbemCimtypeReal64:
+            sValue := FloatToStr(SProp.Get_Value);
+          wbemCimtypeBoolean:
+            if SProp.Get_Value then
+              sValue := 'True'
+            else
+              sValue := 'False';
+          wbemCimtypeString, wbemCimtypeUint64:
+          if VarIsArray(SProp.Get_Value) then
+          begin
+            if VarArrayHighBound(SProp.Get_Value, 1) > 0 then
+              for Count := 1 to VarArrayHighBound(SProp.Get_Value, 1) do
+                sValue := sValue + ' ' + SProp.Get_Value[Count];
+          end
+          else
+            sValue :=  SProp.Get_Value;
+          wbemCimtypeDatetime:
+            sValue :=  SProp.Get_Value;
+          wbemCimtypeReference:
+          begin
+            sValue := SProp.Get_Value;
+            //This should be better implemented, but will do for now...
+            Exception.Create('The result is an array of classes. This kind of data is not yet supported/implemented!');
+          end;
+          wbemCimtypeChar16:
+            sValue := '<16-bit character>';
+          wbemCimtypeObject:
+            sValue := '<CIM Object>';
+        else
+            Exception.Create('Unknown type');
+        end; {case}
+        // got the value. now test for being "explorer.exe"
+        if svalue<>'explorer.exe' then
+          continue;
+
+        // this is a connected user's session so add the user to the list
+        OutParam:= SObject.ExecMethod_('getOwnerSID', nil, 0, nil);
+        SProp1:= outParam.Properties_.Item('ReturnValue', 0);
+        s:='';
+        case SProp1.Get_Value of
+          0:begin
+//              SProp1:= outParam.Properties_.Item('User', 0);
+//              s:=SProp1.Get_Value;
+//              SProp1:= outParam.Properties_.Item('Domain', 0);
+//              s:=s+'@'+SProp1.Get_Value;
+              SProp1:= outParam.Properties_.Item('SID', 0);
+              s:=SProp1.Get_Value
+            end;
+//          2:s:='Access denied';
+//          3:s:='Insufficient privilege';
+//          8:s:='Unknown failure';
+//          9:s:='Path not found';
+//          21:s:='Invalid parameter';
+//          else s:='unknown error';
+        end;
+
+        if (Trim(s) <> '') then
+        begin
+          fFound := False;
+          for i := 0 to users.Count - 1 do
+            if users[i] = Trim(s) then
+              fFound := True;
+
+          if not fFound then
+            users.Add(Trim(s));
+        end;
+      end; {while propEnum}
+    end; {while Enum}
+
+    strQuery := 'SELECT * FROM __InstanceCreationEvent within 5 WHERE TargetInstance' +
+      ' ISA "Win32_Process"';
+    Services.ExecNotificationQueryAsync(SinkClasses.DefaultInterface, strQuery, 'WQL', 0, nil, nil);
+      strQuery := 'SELECT * FROM __InstanceDeletionEvent within 5 WHERE TargetInstance' +
+      ' ISA "Win32_Process"';
+    Services.ExecNotificationQueryAsync(SinkClasses.DefaultInterface, strQuery, 'WQL', 0, nil, nil);
+  finally
+  end; {try}
+  Locator.Free;
+  SinkClasses.Free;
+  Services:=nil;// make sure the references are decreased
+  ObjectSet:=nil;
+  SObject:=nil;
+  propSet:=nil;
+  propEnum:=nil;
+  SProp:=nil;
+  enum:=nil;
+end;
 
 function GetSystemUserName: String;
 var // Получить имя пользователя машины

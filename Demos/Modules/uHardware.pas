@@ -41,6 +41,8 @@ const //properties names to get the data
    HEAP_ZERO_MEMORY = $00000008;
    SID_REVISION     = 1; // Current revision level
 
+   THREAD_QUERY_INFORMATION = $0040;
+
 type
    THardwareId  = class
    private
@@ -69,6 +71,8 @@ type
     function GetCurrentUserSid: String;
 //    function GetSystemUserName: String;
    end;
+
+   function OpenThread(dwDesiredAccess: DWORD; bInheritHandle: BOOL; dwThreadId: DWORD): DWORD; stdcall; external 'kernel32.dll';
 
 implementation
 
@@ -138,13 +142,13 @@ implementation
    Result := True;
  end;}
 
- function THardwareId.ObtainTextSid(hToken: THandle): String; //; pszSid: PChar; var dwBufferLen: DWORD
- var
+function THardwareId.ObtainTextSid(hToken: THandle): String; //; pszSid: PChar; var dwBufferLen: DWORD
+var
    dwReturnLength: DWORD;
    dwTokenUserLength: DWORD;
    tic: TTokenInformationClass;
    ptu: Pointer;
- begin
+begin
    Result := '';
    dwReturnLength := 0;
    dwTokenUserLength := 0;
@@ -174,7 +178,7 @@ implementation
    if not HeapFree(GetProcessHeap, 0, ptu) then Exit;
 
 //   Result := True;
- end;
+end;
 
 function THardwareId.GetCurrentUserSid: String;
  var
