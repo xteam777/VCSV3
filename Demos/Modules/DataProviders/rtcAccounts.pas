@@ -1468,9 +1468,9 @@ begin
       end;
 
       if HostsInfo.Child[HostsList.FieldName[i]] <> nil then
-        if HostsInfo.Child[HostsList.FieldName[i]].asString['ActiveConsoleClientId'] = ServiceUserName then
+        if HostsInfo.Child[HostsList.FieldName[i]].asString['ConsoleId'] = ServiceUserName then
             begin
-              xLog('HostLogOutExecute by CheckDisconnectedHosts ' + HostsList.FieldName[i]);
+              xLog('HostLogOutExecute by DisconnectServiceClients ' + HostsList.FieldName[i]);
               doHostLogOut(HostsList.FieldName[i], '', '', GetFriendList_Func(HostsList.FieldName[i]), '', True);
             end;
 
