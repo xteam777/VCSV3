@@ -640,14 +640,16 @@ begin
 
   if aHideWallpaper.Checked then
   try
-    UI.Send_ShowDesktop;
-  finally
+    if UI.Active then
+      UI.Send_ShowDesktop;
+  except
   end;
 
   if aLockSystemOnClose.Checked then
   try
-    UI.Send_LockSystem;
-  finally
+    if UI.Active then
+      UI.Send_LockSystem;
+  except
   end;
 
   DesktopTimer.Enabled := False;
