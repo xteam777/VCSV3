@@ -100,7 +100,6 @@ type
     myCheckTime: TDateTime;
     FRegularPassword: String;
     FScreenLockedState: Integer;
-    FCurrentSessionLocked: Boolean;
 
     procedure UpdateMyPriority;
     function GetServiceController: TServiceController; override;
@@ -196,8 +195,6 @@ begin
 //  XLog('tCheckLockedStateTimer');
 
   GetDataFromHelperByIPC(QT_GETDATA);
-
-  SASLibEx_IsDesktopLocked(CurrentSessionID, FCurrentSessionLocked);
 
 //  if (not IsServiceStarted(RTC_HOSTSERVICE_NAME))
 //    and
