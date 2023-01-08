@@ -5472,7 +5472,7 @@ procedure TMainForm.tCheckLockedStateTimer(Sender: TObject);
 begin
 //  XLog('tCheckLockedStateTimer');
 
-  if (GetCurrentSesstionState <> WTSActive) then
+  if SessionIsLocked(CurrentSessionID) then
     ScreenLockedState := LCK_STATE_LOCKED
   else
   if (LowerCase(GetInputDesktopName) <> 'default') then

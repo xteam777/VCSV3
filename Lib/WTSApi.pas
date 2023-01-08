@@ -157,7 +157,7 @@ const
   function WTSEnumerateSessions(hServer: THandle; Reserved: DWORD; Version: DWORD; var ppSessionInfo: PWTS_SESSION_INFO; var pCount: DWORD): BOOL; stdcall; external 'wtsapi32.dll' name 'WTSEnumerateSessionsW';
   function WTSQuerySessionInformation(hServer: THandle; SessionId: DWORD; WTSInfoClass: WTS_INFO_CLASS; var ppBuffer: Pointer; var pBytesReturned: DWORD): BOOL; stdcall; external 'wtsapi32.dll' name 'WTSQuerySessionInformationW';
   procedure WTSFreeMemory(pMemory: pointer); stdcall; external 'wtsapi32.dll' name 'WTSFreeMemory';
-  function WTSOpenServer: THandle; stdcall; external 'wtsapi32.dll' name 'WTSOpenServerW';
+  function WTSOpenServer(ServerName: PChar): THandle; stdcall; external 'wtsapi32.dll' name 'WTSOpenServerW';
   procedure WTSCloseServer(hServer: THandle); stdcall; external 'wtsapi32.dll' name 'WTSCloseServer';
   function SessionIsLocked(SessionID: DWORD): Boolean;
 
@@ -204,7 +204,7 @@ end;}
 function SessionIsLocked(SessionID: DWORD): Boolean;
 const
   WTS_CURRENT_SERVER_HANDLE = 0;
-  WTSSessionInfoEx = 25;
+//  WTSSessionInfoEx = 25;
   WTS_SESSIONSTATE_LOCK = $00000000;
   WTS_SESSIONSTATE_UNLOCK = $00000001;
   WTS_SESSIONSTATE_UNKNOWN = $FFFFFFFF;
@@ -212,7 +212,6 @@ var
   Ptr: Pointer;
   BytesReturned: Cardinal;
   hSvr: THANDLE;
-  wtsInfo: WTS_INFO_CLASS;
   pInfo: PWTSINFOEXW;
   SessionFlags: LongInt;
   dwFlags: LONG;
@@ -222,15 +221,17 @@ begin
   Ptr := nil;
   hSvr := WTSOpenServer(nil);
   try
-    if WTSQuerySessionInformation(0, SessionId, DWORD(wtsInfo), Ptr, BytesReturned) and
-      (BytesReturned > 1) then
-      pInfo := PWTSINFOEXW(Ptr);
-      if pInfo.Level = 1 then
-        dwFlags := pInfo^.Data.SessionFlags;
-      if (Win32MajorVersion <> 6.1) then //Windows 7 & Windows Server 2008 R2
-          Result := dwFlags and WTS_SESSIONSTATE_LOCK
-      else
-        SessionFlags := dwFlags and WTS_SESSIONSTATE_UNLOCK;
+    if WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE, SessionId, WTSSessionInfoEx, Ptr, BytesReturned) then
+      if (BytesReturned > 1) then
+      begin
+        pInfo := PWTSINFOEXW(Ptr);
+        if pInfo^.Level = 1 then
+          dwFlags := pInfo^.Data.SessionFlags;
+        if (Win32MajorVersion <> 6.1) then //Windows 7 & Windows Server 2008 R2
+          Result := (dwFlags = WTS_SESSIONSTATE_LOCK)
+        else
+          Result := (dwFlags = WTS_SESSIONSTATE_UNLOCK);
+      end;
     WTSFreeMemory(Ptr);
   finally
     if hSvr <> 0 then
