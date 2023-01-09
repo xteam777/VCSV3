@@ -9527,9 +9527,10 @@ begin
   end;
 
   if (OpenedModalForm <> nil)
-    and OpenedModalForm.Showing
-    and (not (OpenedModalForm is TrdClientSettings))
-      and (not (OpenedModalForm is TfAboutForm)) then
+    and OpenedModalForm.Visible then
+//    and OpenedModalForm.Showing
+//    and (not (OpenedModalForm is TrdClientSettings))
+//      and (not (OpenedModalForm is TfAboutForm)) then
   begin
 //    xLog('OpenedModalForm Close Start');
     OpenedModalForm.Close;
