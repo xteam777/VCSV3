@@ -1780,30 +1780,16 @@ end;
 procedure TMainForm.CheckUpdates;
 var
   sResponse: String;
-  CurUpdateAvailable: Boolean;
 begin
   Exit;
 
-  sResponse := RunHTTPCall('POST', 'http://remox.com', '/version', '');
+  sResponse := RunHTTPCall('POST', 'https://remox.support', '/version', '');
   if (sResponse <> '')
     and (Length(sResponse) < 20)
     and (FileVersion(ParamStr(0)) <> sResponse) then
-    CurUpdateAvailable := True
+    FUpdateAvailable := True
   else
-    CurUpdateAvailable := False;
-
-  if FUpdateAvailable <> CurUpdateAvailable then
-  begin
-    bGetUpdate.Caption := 'Установить обновление';
-    bGetUpdate.Font.Color := clRed;
-  end
-  else
-  begin
-    bGetUpdate.Caption := '        Последняя версия';
-    bGetUpdate.Font.Color := clBlack;
-  end;
-
-  FUpdateAvailable := CurUpdateAvailable;
+    FUpdateAvailable := False;
 end;
 
 function TMainForm.RunHTTPCall(verb, url, path, data: String): String;
@@ -2731,12 +2717,12 @@ var
 begin
   //XLog('aFeedBackExecute');
 
-//  ShellExecute(Handle, 'Open', 'mailto:support@Remox.com', nil, nil, SW_RESTORE);
+//  ShellExecute(Handle, 'Open', 'mailto:admin@remox.support', nil, nil, SW_RESTORE);
 //  if LoggedIn then
 //    pAccUserName := eAccountUserName.Text
 //  else
 //    pAccUserName := '';                    //PChar('mailto:support@remox.com?body=<BR><BR><BR>Account:' + AccountName + '<BR>Device ID:' + PClient.LoginUserInfo.asText['RealName'])
-  ShellExecute(Application.Handle, 'open', 'http://remox.com/feedback', nil, nil, SW_SHOW);
+  ShellExecute(Application.Handle, 'open', 'https://remox.support/feedback', nil, nil, SW_SHOW);
 end;
 
 procedure TMainForm.aMinimizeExecute(Sender: TObject);
@@ -3710,6 +3696,17 @@ begin
     begin
       btnNewConnection.Caption := 'ПОДКЛЮЧИТЬСЯ';
       btnNewConnection.Color := $00A39323;
+    end;
+
+    if FUpdateAvailable then
+    begin
+      bGetUpdate.Caption := 'Установить обновление';
+      bGetUpdate.Font.Color := clRed;
+    end
+    else
+    begin
+      bGetUpdate.Caption := '        Последняя версия';
+      bGetUpdate.Font.Color := clBlack;
     end;
 
     btnNewConnection.Enabled := ConnectedToAllGateways;
@@ -4717,7 +4714,7 @@ procedure TMainForm.miWebSiteClick(Sender: TObject);
 begin
 //  XLog('miWebSiteClick');
 
-  ShellExecute(0, 'open', PChar('http://remox.com'), '', nil, SW_SHOW);
+  ShellExecute(0, 'open', PChar('https://remox.support'), '', nil, SW_SHOW);
 end;
 
 procedure TMainForm.miAccLogOutClick(Sender: TObject);
@@ -6788,7 +6785,7 @@ begin
     Exit;
   end;
 
-  ShellExecute(0, 'open', PChar('http://remox.com/register'), '', nil, SW_SHOW);
+  ShellExecute(0, 'open', PChar('https://remox.support/register'), '', nil, SW_SHOW);
 
 //  if Assigned(fReg) then
 //  begin
@@ -6850,7 +6847,7 @@ procedure TMainForm.lRestorePasswordClick(Sender: TObject);
 begin
 //  XLog('lRestorePasswordClick');
 
-  ShellExecute(0, 'open', PChar('http://remox.com/lostpassword'), '', nil, SW_SHOW);
+  ShellExecute(0, 'open', PChar('https://remox.support/lostpassword'), '', nil, SW_SHOW);
 end;
 
 procedure TMainForm.xForceCursorClick(Sender: TObject);
@@ -7001,7 +6998,7 @@ end;
 procedure TMainForm.bGetUpdateClick(Sender: TObject);
 begin
   if FUpdateAvailable then
-    ShellExecute(Handle, 'open', 'http://remox.com/download/', '', '', SW_SHOWNORMAL);
+    ShellExecute(Handle, 'open', 'https://remox.support/download/', '', '', SW_SHOWNORMAL);
 end;
 
 procedure TMainForm.cPriorityChange(Sender: TObject);
