@@ -4,7 +4,7 @@ interface
 
 uses WinApi.Windows, System.SysUtils, System.Classes, Vcl.Graphics,
   Vcl.Forms, Vcl.Controls, Vcl.StdCtrls, Vcl.Buttons, Vcl.ExtCtrls,
-  Vcl.Imaging.jpeg, uVircessTypes, CommonData;
+  Vcl.Imaging.jpeg, uVircessTypes, CommonData, Vcl.Imaging.pngimage;
 
 type
   TfAboutForm = class(TForm)
