@@ -6421,9 +6421,4 @@ object MainForm: TMainForm
     Left = 234
     Top = 78
   end
-  object tCheckUpdates: TTimer
-    OnTimer = tCheckUpdatesTimer
-    Left = 424
-    Top = 88
-  end
 end

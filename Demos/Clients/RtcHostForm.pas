@@ -124,14 +124,15 @@ type
     procedure rtcResRequestAborted(Sender: TRtcConnection; Data, Result: TRtcValue);
   end;
 
-  TStatusUpdateProc = procedure of Object;
+  TExecuteProc = procedure of Object;
 
   TStatusUpdateThread = class(TThread)
   private
-    FStatusUpdateProc: TStatusUpdateProc;
+    FStatusUpdateProc: TExecuteProc;
+    FCheckUpdatesProc: TExecuteProc;
   protected
     constructor Create(CreateSuspended: Boolean;
-      StatusUpdateProc: TStatusUpdateProc); overload;
+      StatusUpdateProc, CheckUpdatesProc: TExecuteProc); overload;
     procedure Execute; override;
   end;
 
@@ -323,7 +324,6 @@ type
     bSetup: TColorSpeedButton;
     pBtnSetup: TPanel;
     bGetUpdate: TSpeedButton;
-    tCheckUpdates: TTimer;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -539,7 +539,6 @@ type
     procedure bSetupMouseEnter(Sender: TObject);
     procedure bSetupMouseLeave(Sender: TObject);
     procedure bSetupClick(Sender: TObject);
-    procedure tCheckUpdatesTimer(Sender: TObject);
     procedure bGetUpdateClick(Sender: TObject);
 
   protected
@@ -625,6 +624,7 @@ type
 
     function RunHTTPCall(verb, url, path, data: String): String;
     function FileVersion(const FileName: TFileName): String;
+    procedure CheckUpdates;
   public
     { Public declarations }
 //    SilentMode: Boolean;
@@ -1276,22 +1276,34 @@ begin
 end;
 
 constructor TStatusUpdateThread.Create(CreateSuspended: Boolean;
-  StatusUpdateProc: TStatusUpdateProc);
+  StatusUpdateProc, CheckUpdatesProc: TExecuteProc);
 begin
   inherited Create(CreateSuspended);
 
   FreeOnTerminate := True;
   FStatusUpdateProc := StatusUpdateProc;
+  FCheckUpdatesProc := CheckUpdatesProc;
 end;
 
 procedure TStatusUpdateThread.Execute;
+var
+  i: Integer;
 begin
+  i := 0;
   while (not Terminated) do
   begin
     if Assigned(FStatusUpdateProc) then
       Synchronize(FStatusUpdateProc);
 
     Sleep(200);
+
+    if i = 4 then
+    begin
+      i := 0;
+      Synchronize(FCheckUpdatesProc);
+    end
+    else
+      i := i + 1;
   end;
 end;
 
@@ -1765,26 +1777,33 @@ begin
   end;
 end;
 
-procedure TMainForm.tCheckUpdatesTimer(Sender: TObject);
+procedure TMainForm.CheckUpdates;
 var
   sResponse: String;
+  CurUpdateAvailable: Boolean;
 begin
+  Exit;
+
   sResponse := RunHTTPCall('POST', 'http://remox.com', '/version', '');
   if (sResponse <> '')
     and (Length(sResponse) < 20)
     and (FileVersion(ParamStr(0)) <> sResponse) then
-  begin
-    FUpdateAvailable := True;
+    CurUpdateAvailable := True
+  else
+    CurUpdateAvailable := False;
 
+  if FUpdateAvailable <> CurUpdateAvailable then
+  begin
     bGetUpdate.Caption := 'Установить обновление';
     bGetUpdate.Font.Color := clRed;
   end
   else
   begin
-    FUpdateAvailable := False;
     bGetUpdate.Caption := '        Последняя версия';
     bGetUpdate.Font.Color := clBlack;
   end;
+
+  FUpdateAvailable := CurUpdateAvailable;
 end;
 
 function TMainForm.RunHTTPCall(verb, url, path, data: String): String;
@@ -3102,7 +3121,7 @@ begin
   ActivationInProcess := False;
   AccountLoginInProcess := False;
 
-  FStatusUpdateThread := TStatusUpdateThread.Create(False, UpdateStatus);
+  FStatusUpdateThread := TStatusUpdateThread.Create(False, UpdateStatus, CheckUpdates);
   tPHostThread := nil;
 
   OpenedModalForm := nil;
