@@ -9527,8 +9527,9 @@ begin
   end;
 
   if (OpenedModalForm <> nil)
-    and OpenedModalForm.Visible then
-//    and OpenedModalForm.Showing
+    and OpenedModalForm.Visible
+    and (OpenedModalForm.Name <> 'fAboutForm')
+      and (OpenedModalForm.Name <> 'rdClientSettings') then
 //    and (not (OpenedModalForm is TrdClientSettings))
 //      and (not (OpenedModalForm is TfAboutForm)) then
   begin
