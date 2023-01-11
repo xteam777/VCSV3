@@ -237,6 +237,27 @@ begin
   xLog('');
   xLog('--------------------------');
   try
+    if Pos('/UPDATE', UpperCase(CmdLine)) <> 0 then
+    begin
+      //Обновлятор уже запускается с правами администратора
+      //Stop service
+
+      with TStringList.Create do
+      try
+        Add('PING 127.0.0.1 -n 2 > NUL');
+        if FileExists(pfFolder + '\Remox\Remox.exe') then
+          Add('"' + pfFolder + '\Remox\Remox.exe"')
+        else
+          Add('"' + ParamStr(0) + '"');
+        fn := GetTempFile + '.bat';
+        Add('DEL "' + fn + '"');
+        SaveToFile(fn, TEncoding.GetEncoding(866));
+      finally
+        Free;
+      end;
+
+      ShellExecute(Application.Handle, 'open', PChar(fn), '', '', SW_HIDE);
+    end;
     if Pos('/ADDRULES', UpperCase(CmdLine)) <> 0 then
     begin
       AddFireWallRules(ParamStr(0));

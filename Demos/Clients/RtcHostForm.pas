@@ -1783,7 +1783,7 @@ var
 begin
   Exit;
 
-  sResponse := RunHTTPCall('POST', 'https://remox.support', '/version', '');
+  sResponse := RunHTTPCall('POST', 'http://remox.support', '/version', '');
   if (sResponse <> '')
     and (Length(sResponse) < 20)
     and (FileVersion(ParamStr(0)) <> sResponse) then
@@ -2722,7 +2722,7 @@ begin
 //    pAccUserName := eAccountUserName.Text
 //  else
 //    pAccUserName := '';                    //PChar('mailto:support@remox.com?body=<BR><BR><BR>Account:' + AccountName + '<BR>Device ID:' + PClient.LoginUserInfo.asText['RealName'])
-  ShellExecute(Application.Handle, 'open', 'https://remox.support/feedback', nil, nil, SW_SHOW);
+  ShellExecute(Application.Handle, 'open', 'http://remox.support/feedback', nil, nil, SW_SHOW);
 end;
 
 procedure TMainForm.aMinimizeExecute(Sender: TObject);
@@ -4714,7 +4714,7 @@ procedure TMainForm.miWebSiteClick(Sender: TObject);
 begin
 //  XLog('miWebSiteClick');
 
-  ShellExecute(0, 'open', PChar('https://remox.support'), '', nil, SW_SHOW);
+  ShellExecute(0, 'open', PChar('http://remox.support'), '', nil, SW_SHOW);
 end;
 
 procedure TMainForm.miAccLogOutClick(Sender: TObject);
@@ -6785,7 +6785,7 @@ begin
     Exit;
   end;
 
-  ShellExecute(0, 'open', PChar('https://remox.support/register'), '', nil, SW_SHOW);
+  ShellExecute(0, 'open', PChar('http://remox.support/register'), '', nil, SW_SHOW);
 
 //  if Assigned(fReg) then
 //  begin
@@ -6847,7 +6847,7 @@ procedure TMainForm.lRestorePasswordClick(Sender: TObject);
 begin
 //  XLog('lRestorePasswordClick');
 
-  ShellExecute(0, 'open', PChar('https://remox.support/lostpassword'), '', nil, SW_SHOW);
+  ShellExecute(0, 'open', PChar('http://remox.support/lostpassword'), '', nil, SW_SHOW);
 end;
 
 procedure TMainForm.xForceCursorClick(Sender: TObject);
@@ -6998,7 +6998,7 @@ end;
 procedure TMainForm.bGetUpdateClick(Sender: TObject);
 begin
   if FUpdateAvailable then
-    ShellExecute(Handle, 'open', 'https://remox.support/download/', '', '', SW_SHOWNORMAL);
+    ShellExecute(Handle, 'open', 'http://remox.support/download/', '', '', SW_SHOWNORMAL);
 end;
 
 procedure TMainForm.cPriorityChange(Sender: TObject);
