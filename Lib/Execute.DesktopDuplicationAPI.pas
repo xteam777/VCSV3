@@ -200,7 +200,7 @@ begin
   else
     FDuplicate.ReleaseFrame;
 
-  Sleep(1);
+//  Sleep(1);
 
   DesktopResource := nil;
 
@@ -248,8 +248,8 @@ begin
 
     Result := True;
   end
-  else
-    FDuplicate.ReleaseFrame;
+//  else
+//    FDuplicate.ReleaseFrame;
 end;
 
 procedure TDesktopDuplicationWrapper.DrawArea(X1, Y1, X2, Y2 : Integer; aPixelFormat: TPixelFormat); //inline;

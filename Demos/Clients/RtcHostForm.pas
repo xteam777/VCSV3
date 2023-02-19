@@ -11,9 +11,9 @@ interface
 {$DEFINE RtcViewer}
 
 uses
-  Windows, Messages, SysUtils, CommonData, System.Types, uProcess, ServiceMgr,
+  Windows, Messages, SysUtils, CommonData, System.Types, uProcess, ServiceMgr, //BlackLayered,
   Classes, Graphics, Controls, Forms, DateUtils, CommonUtils, WtsApi, uSysAccount,
-  Dialogs, StdCtrls, ExtCtrls, ShellApi, BlackLayered, rdFileTransLog,
+  Dialogs, StdCtrls, ExtCtrls, ShellApi, rdFileTransLog,
   ComCtrls, Registry, Math, RtcIdentification, SyncObjs, System.Net.HTTPClient, System.Net.URLClient,
   rtcSystem, rtcInfo, uMessageBox, rtcScrUtils, IOUtils, uAcceptEula,
 
