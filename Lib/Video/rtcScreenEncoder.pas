@@ -814,6 +814,8 @@ begin
   }
 
   CodecId := 5;
+  Codec2Param1 := 0;
+  Codec3Param1 := 1;
   Codec4Param1 := 0;
   Codec4Param2 := 0;
 

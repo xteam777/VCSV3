@@ -100,11 +100,13 @@
         <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
-        <Icon_MainIcon>Vircess_Icon1.ico</Icon_MainIcon>
+        <Icon_MainIcon>Remox_Icon1.ico</Icon_MainIcon>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
         <VerInfo_Keys>CompanyName=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductVersion=1.0.0.0;Comments=;ProgramID=com.embarcadero.$(MSBuildProjectName);FileDescription=$(MSBuildProjectName);ProductName=$(MSBuildProjectName)</VerInfo_Keys>
+        <AppDPIAwarenessMode>none</AppDPIAwarenessMode>
+        <UWP_DelphiLogo44>48x48-3.png</UWP_DelphiLogo44>
+        <UWP_DelphiLogo150>240x240-3.png</UWP_DelphiLogo150>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
         <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
@@ -229,8 +231,8 @@
                     <Source Name="MainSource">Remox.dpr</Source>
                 </Source>
                 <Excluded_Packages>
-                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k250.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
-                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp250.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k280.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp280.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
                 </Excluded_Packages>
             </Delphi.Personality>
             <Platforms>
@@ -241,7 +243,21 @@
                 <DeployFile LocalName="..\..\..\Design\20160117\240x240-3.png" Configuration="Debug" Class="UWP_DelphiLogo150"/>
                 <DeployFile LocalName="..\..\..\Design\20160117\48x48-3.png" Configuration="Debug" Class="UWP_DelphiLogo44"/>
                 <DeployFile LocalName="240x240-3.png" Configuration="Debug" Class="UWP_DelphiLogo150"/>
+                <DeployFile LocalName="240x240-3.png" Configuration="Release" Class="UWP_DelphiLogo150">
+                    <Platform Name="Win32">
+                        <RemoteDir>Assets\</RemoteDir>
+                        <RemoteName>Logo150x150.png</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="48x48-3.png" Configuration="Debug" Class="UWP_DelphiLogo44"/>
+                <DeployFile LocalName="48x48-3.png" Configuration="Release" Class="UWP_DelphiLogo44">
+                    <Platform Name="Win32">
+                        <RemoteDir>Assets\</RemoteDir>
+                        <RemoteName>Logo44x44.png</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="Remox.exe" Configuration="Debug" Class="ProjectOutput"/>
                 <DeployFile LocalName="Remox.rsm" Configuration="Debug" Class="DebugSymbols"/>
                 <DeployFile LocalName="rmx_w32.exe" Configuration="Debug" Class="ProjectFile"/>
