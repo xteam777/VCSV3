@@ -35,7 +35,7 @@ type
     DesktopResource: IDXGIResource;
     FTempTexture: ID3D11Texture2D;
 
-    FScreenWidth, FScreenHeight, FBitsPerPixel : Integer;
+    FScreenWidth, FScreenHeight, FBitsPerPixel, FMouseFlags, FMouseCursor: Integer;
 
     FFullScreen: Boolean;
     FClipRect : TRect;
@@ -62,13 +62,15 @@ type
     function DDRecieveRects : Boolean;
 
     property Error: HRESULT read FError;
-    property ScreenWidth : Integer read FScreenWidth;
-    property ScreenHeight : Integer read FScreenHeight;
-    property BitsPerPixel : Integer read FBitsPerPixel;
-    property ScreenInfoChanged : Boolean read GetScreenInfoChanged;
+    property ScreenWidth: Integer read FScreenWidth;
+    property ScreenHeight: Integer read FScreenHeight;
+    property BitsPerPixel: Integer read FBitsPerPixel;
+    property MouseFlags: Integer read FMouseFlags;
+    property MouseCursor: Integer read FMouseCursor;
+    property ScreenInfoChanged: Boolean read GetScreenInfoChanged;
     property FullScreen: Boolean read FFullScreen write FFullScreen;
-    property ClipRect : TRect read FClipRect write SetClipRect;
-    property ScreenBuff : PByte read FScreenBuff;
+    property ClipRect: TRect read FClipRect write SetClipRect;
+    property ScreenBuff: PByte read FScreenBuff;
     property DirtyRCnt: Integer read FDirtyRCnt write FDirtyRCnt;
     property MovedRCnt: Integer read FMovedRCnt write FMovedRCnt;
   end;
