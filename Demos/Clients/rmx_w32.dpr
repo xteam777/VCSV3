@@ -2834,6 +2834,8 @@ begin
               Continue;
 //          time := GetTickCount - time;
 
+          FDesktopDuplicator.ScreenInfoChanged;
+
           fHaveScreen := True;
 
 
