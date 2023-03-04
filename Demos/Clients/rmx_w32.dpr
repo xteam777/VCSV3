@@ -2629,6 +2629,7 @@ var
   i: Integer;
 begin
   WaitTimeout := 1000;
+  ipBase := nil;
   BitmapSize := FDesktopDuplicator.ScreenHeight * FDesktopDuplicator.ScreenWidth * 4;
 
   ZeroMemory(@ci, SizeOf(TCursorInfo));
@@ -2646,7 +2647,7 @@ begin
   CopyMemory(PByte(pMap) + CurOffset, @FDesktopDuplicator.ScreenHeight, sizeof(FDesktopDuplicator.ScreenHeight));
   CurOffset := CurOffset + sizeof(FDesktopDuplicator.ScreenHeight);
   CopyMemory(PByte(pMap) + CurOffset, @FDesktopDuplicator.BitsPerPixel, sizeof(FDesktopDuplicator.BitsPerPixel));
-  CurOffset := CurOffset + sizeof(Word);
+  CurOffset := CurOffset + sizeof(FDesktopDuplicator.BitsPerPixel);
 //          CopyMemory(@PID, PByte(pMap) + CurOffset, sizeof(PID));
   CurOffset := CurOffset + sizeof(CurrentPID);
 //          CopyMemory(PByte(pMap) + CurOffset, @pBits, sizeof(pBits));
@@ -2667,7 +2668,7 @@ begin
     CopyMemory(PByte(pMap) + CurOffset, @FDesktopDuplicator.DirtyR[i].Top, sizeof(FDesktopDuplicator.DirtyR[i].Top));
     CurOffset := CurOffset + sizeof(FDesktopDuplicator.DirtyR[i].Top);
     CopyMemory(PByte(pMap) + CurOffset, @FDesktopDuplicator.DirtyR[i].Left, sizeof(FDesktopDuplicator.DirtyR[i].Left));
-    CurOffset := CurOffset + sizeof(FDesktopDuplicator.DirtyR[i].Bottom);
+    CurOffset := CurOffset + sizeof(FDesktopDuplicator.DirtyR[i].Left);
     CopyMemory(PByte(pMap) + CurOffset, @FDesktopDuplicator.DirtyR[i].Bottom, sizeof(FDesktopDuplicator.DirtyR[i].Bottom));
     CurOffset := CurOffset + sizeof(FDesktopDuplicator.DirtyR[i].Bottom);
     CopyMemory(PByte(pMap) + CurOffset, @FDesktopDuplicator.DirtyR[i].Right, sizeof(FDesktopDuplicator.DirtyR[i].Right));
@@ -2706,12 +2707,12 @@ begin
   CurOffset := CurOffset + sizeof(FDesktopDuplicator.ScreenWidth);
 //          CopyMemory(PByte(pMap) + CurOffset, @sHeight, sizeof(sHeight));
   CurOffset := CurOffset + sizeof(FDesktopDuplicator.ScreenHeight);
-//          CopyMemory(PByte(pMap) + CurOffset, @bitmap_info.bmiHeader.biBitCount, sizeof(Word));
-  CurOffset := CurOffset + sizeof(Word);
+//          CopyMemory(PByte(pMap) + CurOffset, @FDesktopDuplicator.BitsPerPixel, sizeof(FDesktopDuplicator.BitsPerPixel));
+  CurOffset := CurOffset + sizeof(FDesktopDuplicator.BitsPerPixel);
   CopyMemory(@PID, PByte(pMap) + CurOffset, sizeof(PID));
   CurOffset := CurOffset + sizeof(CurrentPID);
   CopyMemory(@ipBase, PByte(pMap) + CurOffset, sizeof(ipBase));
-  CurOffset := CurOffset + sizeof(ipBase);
+  CurOffset := CurOffset + sizeof(ipBase); //Адрес переменной, с выделенной памятью в процессе клиента для записи скриншота
 
 //  time := GetTickCount;
 
@@ -2919,8 +2920,8 @@ begin
 
   xLog('Started in session ' + IntToStr(CurrentSessionID));
 
-  HeaderSize := sizeof(Cardinal) + sizeof(Boolean) + sizeof(FDesktopDuplicator.ScreenWidth) + sizeof(FDesktopDuplicator.ScreenHeight) + sizeof(Word) +
-    sizeof(CurrentPID) + sizeof(DWORD) + sizeof(HCURSOR) + sizeof(Integer) + sizeof(Integer);
+  HeaderSize := sizeof(Cardinal) + sizeof(Boolean) + sizeof(FDesktopDuplicator.ScreenWidth) + sizeof(FDesktopDuplicator.ScreenHeight) + sizeof(Integer) +
+    sizeof(CurrentPID) + sizeof(DWORD) + sizeof(HCURSOR) + sizeof(Integer) + sizeof(Integer) + 1000;
   hMap := CreateFileMapping(INVALID_HANDLE_VALUE, nil, PAGE_READWRITE, 0, HeaderSize,
     PWideChar(WideString('Session\' + IntToStr(CurrentSessionID) + '\RMX_SCREEN' + NameSuffix)));
 
