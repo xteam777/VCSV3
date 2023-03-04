@@ -59,7 +59,7 @@ type
     constructor Create;
     destructor Destroy; override;
     function DDCaptureScreen : Boolean;
-    function DDRecieveRects : Boolean;
+    function DDReceiveRects : Boolean;
 
     property Error: HRESULT read FError;
     property ScreenWidth : Integer read FScreenWidth;
@@ -235,8 +235,8 @@ begin
   BadAttempt := false;
   AttemptId := 1;
 
-//  if (not DDExists) or (not DDCaptureScreen) or (not DDRecieveRects) then
-//  if (not CreateDD) or (not DDCaptureScreen) or (not DDRecieveRects) then
+//  if (not DDExists) or (not DDCaptureScreen) or (not DDReceiveRects) then
+//  if (not CreateDD) or (not DDCaptureScreen) or (not DDReceiveRects) then
  // begin
   //  Result := false;
   //end;
@@ -338,7 +338,7 @@ begin
   //Move(Resource.pData^, ScreenBuff^, 1280 * 1024 * 4);
  // ScreenBuff^:= 0;
 
-  if not DDRecieveRects then ;//goto ErrorInCapture;
+  if not DDReceiveRects then ;//goto ErrorInCapture;
 
 AttemptFinish:
   if BadAttempt then
@@ -375,7 +375,7 @@ FailedCapture:
   Result := false;
 end;
 
-function TDesktopDuplicationWrapper.DDRecieveRects : Boolean;
+function TDesktopDuplicationWrapper.DDReceiveRects : Boolean;
 var
   i, j, S1, S2, SU, SI : Integer;
   BytesRecieved : UInt;

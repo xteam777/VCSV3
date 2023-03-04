@@ -126,7 +126,7 @@ begin
   if IsService then
     Result := FScreenInfoChanged
   else
-    FDesktopDuplicator.ScreenInfoChanged;
+    Result := FDesktopDuplicator.ScreenInfoChanged;
 end;
 
 function TRtcScreenEncoder.GetScreenWidth: Integer;
@@ -762,7 +762,7 @@ var
   IniF: TIniFile;
 //  time: DWORD;
 begin
-  DataCS.Enter;
+//  DataCS.Enter;
 
   //ShowMessage('GrabScreen');
   {$IFDEF DEBUG}
@@ -776,19 +776,21 @@ begin
     GetDataFromHelper;
 //    time := GetTickCount - time;
 
-    DataCS.Leave;
+//    DataCS.Leave;
   end
   else
   begin
     if not FDesktopDuplicator.DDCaptureScreen then
     begin
-      DataCS.Leave;
+//      DataCS.Leave;
 
       ScrDelta^ := '';
       if Assigned(ScrFull) then ScrFull^ := '';
 
       Exit;
     end;
+//    else
+//      DataCS.Leave;
 
     FScreenBuff := FDesktopDuplicator.ScreenBuff;
   end;
