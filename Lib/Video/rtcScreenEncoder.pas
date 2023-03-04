@@ -43,6 +43,11 @@ type
     FScreenBuff: PByte;
    // FScreenInfoChanged : Boolean;
 
+    function GetScreenWidth: Integer;
+    function GetScreenHeight: Integer;
+    function GetBitsPerPixel: Integer;
+    function GetMouseFlags: Integer;
+    function GetMouseCursor: Integer;
     function GetDirtyRCnt: Integer;
     function GetMovedRCnt: Integer;
     procedure SetDirtyRCnt(Value: Integer);
@@ -66,11 +71,11 @@ type
 
     procedure GrabScreen(ScrDelta : PString; ScrFull : PString = NIL);
 
-    property ScreenWidth : Integer read FScreenWidth;
-    property ScreenHeight : Integer read FScreenHeight;
-    property BitsPerPixel: Integer read FBitsPerPixel;
-    property MouseFlags: Integer read FMouseFlags;
-    property MouseCursor: Integer read FMouseCursor;
+    property ScreenWidth: Integer read GetScreenWidth;
+    property ScreenHeight: Integer read GetScreenHeight;
+    property BitsPerPixel: Integer read GetBitsPerPixel;
+    property MouseFlags: Integer read GetMouseFlags;
+    property MouseCursor: Integer read GetMouseCursor;
     property DirtyRCnt: Integer read GetDirtyRCnt write SetDirtyRCnt;
     property MovedRCnt: Integer read GetMovedRCnt write SetMovedRCnt;
     property DirtyR[Index: Integer]: TRect read GetDirtyR write SetDirtyR;
@@ -113,6 +118,46 @@ begin
   end;
 end;
  }
+
+function TRtcScreenEncoder.GetScreenWidth: Integer;
+begin
+  if IsService then
+    Result := FScreenWidth
+  else
+    Result := FDesktopDuplicator.ScreenWidth;
+end;
+
+function TRtcScreenEncoder.GetScreenHeight: Integer;
+begin
+  if IsService then
+    Result := FScreenHeight
+  else
+    Result := FDesktopDuplicator.ScreenHeight;
+end;
+
+function TRtcScreenEncoder.GetBitsPerPixel: Integer;
+begin
+  if IsService then
+    Result := FBitsPerPixel
+  else
+    Result := FDesktopDuplicator.BitsPerPixel;
+end;
+
+function TRtcScreenEncoder.GetMouseFlags: Integer;
+begin
+  if IsService then
+    Result := FMouseFlags
+  else
+    Result := FDesktopDuplicator.MouseFlags;
+end;
+
+function TRtcScreenEncoder.GetMouseCursor: Integer;
+begin
+  if IsService then
+    Result := FMouseCursor
+  else
+    Result := FDesktopDuplicator.MouseCursor;
+end;
 
 function TRtcScreenEncoder.GetClipRect: TRect;
 begin
@@ -505,16 +550,16 @@ begin
 
     if CodecId in [0, 1, 5, 6, 7] then
     begin // No compression, passing bitmap
-      SetLength(Image, (Rect.Width * Rect.Height * FBitsPerPixel) shr 3);
+      SetLength(Image, (Rect.Width * Rect.Height * BitsPerPixel) shr 3);
       ImagePos := FScreenBuff +
-                ((Rect.Top * FScreenWidth + Rect.Left) * FBitsPerPixel) shr 3;
+                ((Rect.Top * ScreenWidth + Rect.Left) * BitsPerPixel) shr 3;
                  DataPos := @Image[0];
               //  if (Rect.Height < 2) or (Cardinal(Bmp.ScanLine[0]) <
                //   Cardinal(Bmp.ScanLine[1])) then RowSize := 1 else
                // RowSize := -1;
 
-              RowSize := (Rect.Width * FBitsPerPixel) shr 3;
-              ScreenRowSize := (FScreenWidth * FBitsPerPixel) shr 3;
+              RowSize := (Rect.Width * BitsPerPixel) shr 3;
+              ScreenRowSize := (ScreenWidth * BitsPerPixel) shr 3;
               for RowId := 0 to Rect.Height - 1 do
               begin
                 Move(ImagePos^, DataPos^, Abs(RowSize));
@@ -545,15 +590,15 @@ begin
     if CodecId = 1 then
     begin
       PackedImage := NIL;
-      SetLength(PackedImage, ((Rect.Width * Rect.Height * FBitsPerPixel) shr 3) * 3);
+      SetLength(PackedImage, ((Rect.Width * Rect.Height * BitsPerPixel) shr 3) * 3);
    {  if (Rect.Height < 2) or (Cardinal(Bmp.ScanLine[0]) < Cardinal(Bmp.ScanLine[1]))
         then Len := DWordCompress_Normal(Bmp.ScanLine[0], Addr(PackedImage[0]),
-      (Rect.Height * Rect.Width * FBitsPerPixel) shr 3)
+      (Rect.Height * Rect.Width * BitsPerPixel) shr 3)
          else Len := DWordCompress_Normal(Bmp.ScanLine[Bmp.Height - 1], Addr(PackedImage[0]),
-      (Rect.Height * Rect.Width * FBitsPerPixel) shr 3);
+      (Rect.Height * Rect.Width * BitsPerPixel) shr 3);
     }
       Len := DWordCompress_Normal(Addr(Image[0]), Addr(PackedImage[0]),
-        (Rect.Height * Rect.Width * FBitsPerPixel) shr 3);
+        (Rect.Height * Rect.Width * BitsPerPixel) shr 3);
 
     //SetLength(PackedImage, Len);
       MS.SetSize(Len);
@@ -566,15 +611,15 @@ begin
       Bmp := TBitmap.Create;
       Bmp.PixelFormat := pf32bit;
       Bmp.SetSize(Rect.Width, Rect.Height);
-      ImagePos := FScreenBuff + ((Rect.Top * FScreenWidth +
-        Rect.Left) * FBitsPerPixel) shr 3;
+      ImagePos := FScreenBuff + ((Rect.Top * ScreenWidth +
+        Rect.Left) * BitsPerPixel) shr 3;
       DataPos := Bmp.ScanLine[0];
       if (Rect.Height < 2) or (Cardinal(Bmp.ScanLine[0]) <
                   Cardinal(Bmp.ScanLine[1])) then
                    RowSize := 1 else RowSize := -1;
 
-      RowSize := RowSize * ((Rect.Width * FBitsPerPixel) shr 3);
-      ScreenRowSize := (FScreenWidth * FBitsPerPixel) shr 3;
+      RowSize := RowSize * ((Rect.Width * BitsPerPixel) shr 3);
+      ScreenRowSize := (ScreenWidth * BitsPerPixel) shr 3;
       for RowId := 0 to Rect.Height - 1 do
       begin
         Move(ImagePos^, DataPos^, Abs(RowSize));
@@ -614,14 +659,14 @@ begin
       Bmp.Free;
     end;
 
-{    if (CodecId = 4) and (FScreenHeight >= 4) then
+{    if (CodecId = 4) and (ScreenHeight >= 4) then
     begin
 
     //  DataPos := @(TempBuff[0]);
 
-    //  Len := WebPEncodeLosslessRGBFunc(ScreenBuff + ((Rect.Top * FScreenWidth +
-    //    Rect.Left) * FBitsPerPixel) shr 3, Rect.Width, Rect.Height,
-     //  (FScreenWidth * FBitsPerPixel) shr 3, Codec4Param1, DataPos);
+    //  Len := WebPEncodeLosslessRGBFunc(ScreenBuff + ((Rect.Top * ScreenWidth +
+    //    Rect.Left) * BitsPerPixel) shr 3, Rect.Width, Rect.Height,
+     //  (ScreenWidth * BitsPerPixel) shr 3, Codec4Param1, DataPos);
        // @(TempBuff[0]));
 
      //if Rect.Height < 16 then Rect.Top := Min(Integer(Rect.Top) - 16, 0);
@@ -650,7 +695,7 @@ begin
       GetMem(DataPos, DataSize);
 
       TRtcWebPCodec.SetComprParams(Codec4Param1, Codec4Param2);
-      Len := TRtcWebPCodec.CompressImage(FScreenBuff, (FScreenWidth * FBitsPerPixel) shr 3,
+      Len := TRtcWebPCodec.CompressImage(ScreenBuff, (ScreenWidth * BitsPerPixel) shr 3,
         Rect, DataPos, DataSize);
 
       //  if Len = 0 then ShowMessage('Len=0');
@@ -671,12 +716,12 @@ begin
     if CodecId in [5, 6, 7] then
     begin
        PackedImage := NIL;
-      SetLength(PackedImage, ((Rect.Width * Rect.Height * FBitsPerPixel) shr 3) * 3);
+      SetLength(PackedImage, ((Rect.Width * Rect.Height * BitsPerPixel) shr 3) * 3);
       case CodecId of
         5:   Len :=  TLZ4.Encode(Addr(Image[0]), Addr(PackedImage[0]),
-          (Rect.Height * Rect.Width * FBitsPerPixel) shr 3, ((Rect.Width * Rect.Height * FBitsPerPixel) shr 3) * 3);
+          (Rect.Height * Rect.Width * BitsPerPixel) shr 3, ((Rect.Width * Rect.Height * BitsPerPixel) shr 3) * 3);
         6: Len := TLZ4.Stream_Encode( Addr(Image[0]), Addr(PackedImage[0]),
-          (Rect.Height * Rect.Width * FBitsPerPixel) shr 3, ((Rect.Width * Rect.Height * FBitsPerPixel) shr 3) * 3
+          (Rect.Height * Rect.Width * BitsPerPixel) shr 3, ((Rect.Width * Rect.Height * BitsPerPixel) shr 3) * 3
            ,sbs4MB, False );
         7: ;//SynLZcompress1asm(;
       end;
@@ -729,6 +774,8 @@ begin
     Exit;
   end;
 
+  FScreenBuff := FDesktopDuplicator.ScreenBuff;
+
   {$IFDEF DEBUG}
   CapLat := Debug.GetMCSTick - CurTick;
   {$ENDIF}
@@ -740,7 +787,7 @@ begin
 //  DDRecieveRects;
 
  {
-   FBitsPerPixel := 32;
+   BitsPerPixel := 32;
   ClipRect := TRect.Create(0, 0, 1280, 1024);
   InfoChanged := true;
   DirtyRCnt := 1;
@@ -811,8 +858,8 @@ begin
 
       with Rec.newRecord('scrfs') do
       begin
-        asInteger['CapLat'] :=  CapLat;
-        asInteger['EncLat'] :=  EncLat;
+        asInteger['CapLat'] := CapLat;
+        asInteger['EncLat'] := EncLat;
       end;
       {$ENDIF}
 
