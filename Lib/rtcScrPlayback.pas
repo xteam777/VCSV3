@@ -16,17 +16,25 @@ uses
   Forms,
 
   rtcSystem,
-
   rtcInfo,
   rtcZLib,
 
-  rtcCompress;
+  IniFiles, System.SyncObjs,
+  rtcCompress, Vcl.Imaging.JPEG, Vcl.Imaging.PNGImage, RtcWebPCodec,
+  {$IFDEF WithSynLZTest} SynLZ, {$ENDIF} lz4d, lz4d.lz4, lz4d.lz4s,
+  Math;
 
 type
   TRtcScreenDecoder = class
+  type
+    TWebPDecodeRGBIntoFunc = function (const data: PByte; data_size: Cardinal;
+      output_buffer: PByte; output_buffer_size, output_stride: Integer): PByte;
+      cdecl;
+
   private
-    FBytesPerPixel: byte;
+   // FBytesPerPixel: byte;
     TempBuff: RtcByteArray;
+    CS : TCriticalSection;
 
     FScreenWidth, FScreenHeight, FScreenBPP,
 
@@ -42,6 +50,9 @@ type
 
     procedure SetScreenInfo(const Info: TRtcRecord);
     procedure SetPalette(const s: RtcByteArray);
+
+    procedure DrawMovedRects(Rects : TRtcArray);
+    procedure DrawDirtyRects(Rects : TRtcArray);
 
     procedure DecompressBlock(const Offset: longint; const s: RtcByteArray);
     procedure DecompressBlock2(const Offset: longint; const s: RtcByteArray);
@@ -73,6 +84,10 @@ type
     FCursorUser: String;
     FLoginUserName: String;
 
+    {$IFDEF DEBUG}
+    FCapLat, FEncLat, FDecLat : Int64;
+    {$ENDIF}
+
     function GetScreen: TBitmap;
 
   public
@@ -97,9 +112,21 @@ type
     property CursorShape: integer read FCursorShape;
     property CursorStd: boolean read FCursorStd;
     property CursorUser: String read FCursorUser;
-  end;
+
+   {$IFDEF DEBUG}
+    property CapLat : Int64 read FCapLat; // Desktop Duplication Latency
+    property EncLat : Int64 read FEncLat; // WebP Encode Latency
+    property DecLat : Int64 read FDecLat; // WebP Decode Latency
+   {$ENDIF}
+ end;
 
 implementation
+
+{$IFDEF DEBUG}
+uses rtcDebug;
+{$ENDIF}
+
+
 
 { Helper Functions }
 
@@ -129,12 +156,16 @@ begin
   inherited;
   FImage := nil;
   SetLength(TempBuff, 0);
+
+  CS := TCriticalSection.Create;
 end;
 
 destructor TRtcScreenDecoder.Destroy;
 begin
   ReleaseStorage;
   inherited;
+
+  CS.Free;
 end;
 
 procedure TRtcScreenDecoder.SetScreenInfo(const Info: TRtcRecord);
@@ -142,12 +173,14 @@ begin
   FScreenWidth := Info.asInteger['Width'];
   FScreenHeight := Info.asInteger['Height'];
   FScreenBPP := Info.asInteger['Bits'];
-  FBytesPerPixel := Info.asInteger['Bytes'];
+  //FBytesPerPixel := Info.asInteger['Bytes'];
 
-  if FBytesPerPixel = 0 then
-    FBPPWidth := FScreenWidth div 2
-  else
-    FBPPWidth := FBytesPerPixel * FScreenWidth;
+ // if FBytesPerPixel = 0 then
+  FBPPWidth := (FScreenWidth * FScreenBPP) shr 3;
+  if (FScreenWidth * FScreenBPP) mod 8 <> 0 then Inc(FBPPWidth);
+
+ // else
+ //   FBPPWidth := FBytesPerPixel * FScreenWidth;
 
   FBlockSize := FBPPWidth * FScreenHeight;
 
@@ -177,16 +210,16 @@ begin
   Result := TBitmap.Create;
   With Result do
   Begin
-    case FBytesPerPixel of
-      0:
-        PixelFormat := pf4bit;
-      1:
-        PixelFormat := pf8bit;
-      2:
-        PixelFormat := pf16bit;
-      3:
-        PixelFormat := pf24bit;
+    case FScreenBPP of
       4:
+        PixelFormat := pf4bit;
+      8:
+        PixelFormat := pf8bit;
+      16:
+        PixelFormat := pf16bit;
+      24:
+        PixelFormat := pf24bit;
+      32:
         PixelFormat := pf32bit;
     End;
     Width := FScreenWidth;
@@ -284,26 +317,223 @@ begin
         for a := 0 to Scr.Count - 1 do
           DecompressBlock2(Atr.asInteger[a], RtcStringToBytes(Scr.asString[a]));
       end;
-    end
-    else if Data.isType['scr'] = rtc_Array then
+    end;
+
+    if Data.isType['scrmr'] = rtc_Array then  // Screen Move Rects
     begin
-      Scr := Data.asArray['scr'];
-      if Scr.Count > 0 then
-      begin
-        Result := True;
-        for a := 0 to Scr.Count - 1 do
-          if Scr.isType[a] = rtc_Record then
-            with Scr.asRecord[a] do
-              if isType['img'] = rtc_String then
-                DecompressBlock(asInteger['at'],
-                  RtcStringToBytes(asString['img']))
-              else if isType['zip'] = rtc_String then
-                DecompressBlock(asInteger['at'],
-                  ZDecompress_Ex(RtcStringToBytes(asString['zip'])));
-      end;
+      DrawMovedRects(Data.asArray['scrmr']);
+      Result := true;
+    end;
+
+    if Data.isType['scrdr'] = rtc_Array then  // Screen Dirty Rects
+    begin
+      DrawDirtyRects(Data.asArray['scrdr']);
+      Result := true;
     end;
   end;
 end;
+
+procedure TRtcScreenDecoder.DrawMovedRects(Rects : TRtcArray);
+var
+  i, Left, Top, Right, Bottom, PointX, PointY : integer;
+begin
+  FImage.Canvas.Lock;
+  try
+    for i := 0 to Integer(Rects.Count) - 1 do
+      with Rects.asRecord[i] do
+      begin
+        Left := asInteger['Left']; Top := asInteger['Top'];
+        Right := asInteger['Right']; Bottom := asInteger['Bottom'];
+        PointX := asInteger['PointX']; PointY := asInteger['PointY'];
+
+        FImage.Canvas.CopyRect(TRect.Create(Left, Top, Right, Bottom), FImage.Canvas,
+          TRect.Create(PointX, PointY, PointX + Right - Left, PointY + Bottom - Top));
+      end;
+  finally
+    FImage.Canvas.Unlock;
+  end;
+end;
+
+procedure TRtcScreenDecoder.DrawDirtyRects(Rects : TRtcArray);
+//const Left, Top, Width, Height, CodecId : Integer;
+ //     MS : RtcByteStream);
+
+var
+  DataPos, ImagePos : PByte;
+  RowSize, ScreenRowSize : Integer;
+
+  Left, Top, Width, Height, CodecId : Integer;
+  MS : RtcByteStream;
+  i, RectId, RowId : Integer;
+ // s : RTCByteArray;
+  JPG : TJPEGImage;
+  PNG : TPNGImage;
+  MS2 : TMemoryStream;
+  TmpBuff : array of byte;
+begin
+  FImage.Canvas.Lock;
+ try
+ //  CS.Enter;
+  for i := 0 to Integer(Rects.Count) - 1 do
+    with Rects.asRecord[i] do
+    begin
+       // IniF := TIniFile.Create(ExtractFilePath(Application.ExeName) + 'Settings.ini');
+      //  CompressionType := IniF.ReadInteger('ScreenCapture', 'CompressionType', 0);
+      //  IniF.Free;
+      Left := asInteger['Left']; Top := asInteger['Top'];
+      Width := asInteger['Width']; Height := asInteger['Height'];
+      CodecId := asInteger['Codec'];
+      MS := RTCByteStream(asByteStream['Data']);
+      //Debug.Log('Writing area (' + IntToStr(Left) + ', ' +
+       // IntToStr(Top) + ', ' + IntToStr(Left + Width) + ', ' +
+        //  IntToStr(Top + Height) + ')   BMW '
+        // + IntToStr(FImage.WIdth) + ' BMH ' + IntToStr(FImage.Height) + ', ');
+
+    //  MS.Position := 0;
+      MS2 := NIL;
+
+     if CodecId in [5, 6, 7] then
+     begin
+       //s := NIL;
+       //SetLength(s, (Width * Height * FSCreenBPP) shr 3);
+       MS2 := TMemoryStream.Create;
+       MS2.SetSize((Width * Height * FSCreenBPP) shr 3);
+     //  var
+      //   OrSize : integer := (PInteger(MS.Memory))^;
+       case CodecId of
+         5: TLZ4.Decode(MS.Memory, MS2.Memory, MS.Size, MS2.Size);
+         6: TLZ4.Stream_Decode(MS.Memory, MS2.Memory, MS.Size, MS2.Size);
+         7:;
+       end;
+
+       //DWordDecompress(MS.Memory, MS2.Memory, 0, MS.Size, MS2.Size);
+       MS := MS2;
+       //SetLength(s, 0);
+       //  s := s2;
+     end;
+
+      if CodecId = 4 then
+      begin
+        if (Height < 2) or (Cardinal(FImage.ScanLine[0]) <
+           Cardinal(FImage.ScanLine[1])) then ScreenRowSize := 1 else
+           ScreenRowSize := -1;
+        ImagePos := PByte(FImage.ScanLine[0]);
+        ScreenRowSize := ScreenRowSize * ((FImage.Width * FSCreenBPP) shr 3);
+        Inc(ImagePos, Top * ScreenRowSize + ((Left * FScreenBPP) shr 3));
+
+        //MS.Position := 0;
+        //MS.SaveToFile('D:\1.webp');
+        TRtcWebPCodec.DeCompressImage(MS.Memory, MS.Size, ImagePos,// PByte(FImage.ScanLine[0]),//ImagePos,
+          Height * ((FImage.Width * FSCreenBPP) shr 3), ScreenRowSize);
+
+       (*SetLength(TmpBuff, Width * Height * 5);
+
+       TWebPCodec.DeCompressImage(MS.Memory, MS.Size, @TmpBuff[0],//ImagePos,// PByte(FImage.ScanLine[0]),//ImagePos,
+          Height * ((FImage.Width * FSCreenBPP) shr 3),
+          {ScreenRowSize}(Width * FSCreenBPP) shr 3);
+
+        if (Height < 2) or (Cardinal(FImage.ScanLine[0]) <
+           Cardinal(FImage.ScanLine[1])) then ScreenRowSize := 1 else
+           ScreenRowSize := -1;
+         ImagePos := PByte(FImage.ScanLine[0]);
+         ScreenRowSize := ScreenRowSize * ((FImage.Width * FSCreenBPP) shr 3);
+         Inc(ImagePos, Top * ScreenRowSize + ((Left * FScreenBPP) shr 3));
+         DataPos := @TmpBuff[0];
+         RowSize := ((Width * FScreenBPP) shr 3);
+         for RowId := 0 to Height - 1 do
+         begin
+           Move(DataPos^, ImagePos^, RowSize);
+           Inc(ImagePos, ScreenRowSize);
+           Inc(DataPos, RowSize);
+         end;
+
+         SetLength(TmpBuff, 0); *)
+
+
+
+          //(FImage.Width * FSCreenBPP) shr 3);
+     //   WebPDecodeRGBIntoFunc(MS.Memory, MS.Size, ImagePos,
+       //   Height * ((FImage.Width * FSCreenBPP) shr 3),
+         // (FImage.Width * FSCreenBPP) shr 3);
+
+      // FImage.Canvas.Unlock;
+      end;
+
+      if CodecId = 3 then
+      begin
+        PNG := TPNGImage.Create;
+        PNG.LoadFromStream(MS);
+        PNG.Transparent := false;
+        //JPG.SaveToFile('d:\aaa.jpg');
+       // JPG.DIBNeeded;
+        //PNG.DrawUsingPixelInformation(FImage.Canvas, TPoint.Create(Left, Top));
+      //  FImage.Canvas.Lock;
+        PNG.Draw(FImage.Canvas, TRect.Create(Left, Top,
+          Left + Width, Top + Height));
+
+//      if MinuteOf(Now) >= 13 then
+//        PNG.SaveToFile('C:\Screenshots\Codec_3_' + FormatDateTime('yyyy_mm_dd_hh_nn_ss_zzz', Now) + '.png');
+//        FImage.SaveToFile('C:\Screenshots\Codec_3_' + FormatDateTime('yyyy_mm_dd_hh_nn_ss_zzz', Now) + '.bmp');
+
+       // FImage.Canvas.UnLock;
+        PNG.Free;
+      end;
+
+      if CodecId = 2 then
+      begin
+        JPG := TJPEGImage.Create;
+        JPG.Scale := jsFullSize;
+        JPG.LoadFromStream(MS);
+        //JPG.SaveToFile('d:\aaa.jpg');
+       // JPG.DIBNeeded;
+        FImage.Canvas.Draw(Left, Top, JPG);
+        JPG.Free;
+      end;
+
+     if CodecId = 1 then
+     begin
+      //s := NIL;
+      //SetLength(s, (Width * Height * FSCreenBPP) shr 3);
+      MS2 := TMemoryStream.Create;
+      MS2.SetSize((Width * Height * FSCreenBPP) shr 3);
+      DWordDecompress(MS.Memory, MS2.Memory, 0, MS.Size, MS2.Size);
+      MS := MS2;
+      //SetLength(s, 0);
+     //  s := s2;
+     end;
+
+     if CodecId in [0, 1, 5, 6, 7] then
+     begin
+      //Width, 100; Height := 100;
+         if (FImage.Height < 2) or (Cardinal(FImage.ScanLine[0]) <
+           Cardinal(FImage.ScanLine[1])) then ScreenRowSize := 1 else
+           ScreenRowSize := -1;
+         ImagePos := PByte(FImage.ScanLine[0]);
+         ScreenRowSize := ScreenRowSize * ((FImage.Width * FSCreenBPP) shr 3);
+         Inc(ImagePos, Top * ScreenRowSize + ((Left * FScreenBPP) shr 3));
+         DataPos := MS.Memory;
+         RowSize := ((Width * FScreenBPP) shr 3);
+         for RowId := 0 to Height - 1 do
+         begin
+          Move(DataPos^, ImagePos^, RowSize); //ֲûהאוע ְֲ
+          Inc(ImagePos, ScreenRowSize);
+          Inc(DataPos, RowSize);
+         end;
+     end;
+    if Assigned(MS2) then MS2.Free;
+  end;
+
+ // CS.Leave;
+  finally
+    FImage.Canvas.UnLock;
+  end;
+
+ // if CompressionType = 1 then setlength(S, 0);
+
+
+  //Image.SaveToFile('d:\aaa.bmp')
+end;
+
 
 procedure TRtcScreenDecoder.DecompressBlock(const Offset: longint;
   const s: RtcByteArray);
@@ -361,6 +591,7 @@ end;
 function TRtcScreenPlayback.PaintScreen(const s: RtcString): boolean;
 var
   rec: TRtcRecord;
+  Tick : UInt64;
 begin
   if s = '' then
   begin
@@ -368,11 +599,31 @@ begin
     Exit;
   end;
   rec := TRtcRecord.FromCode(s);
+
+  {$IFDEF DEBUG}
+  with rec do
+    if isType['scrfs'] = rtc_Record then  // Screen Frame Stat
+    begin
+      FCapLat := asRecord['scrfs'].asInteger['CapLat'];
+      FEncLat := asRecord['scrfs'].asInteger['EncLat'];
+    end else
+    begin
+      FCapLat := -1;
+      FEncLat := -1;
+    end;
+
+  Tick := Debug.GetMCSTick;
+  {$ENDIF}
+
   try
     Result := ScrOut.SetScreenData(rec);
   finally
     rec.Free;
   end;
+
+  {$IFDEF DEBUG}
+  FDecLat := Debug.GetMCSTick - Tick;
+  {$ENDIF}
 end;
 
 function TRtcScreenPlayback.GetScreen: TBitmap;

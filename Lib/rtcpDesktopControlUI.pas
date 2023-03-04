@@ -15,7 +15,9 @@ uses
 {$ENDIF}
   rtcLog, SyncObjs, rtcScrPlayback,
   rtcInfo, rtcpDesktopControl,
-
+{$IFDEF DEBUG}
+    System.Math,
+{$ENDIF}
   rtcpDesktopConst;
 
 const
@@ -100,6 +102,19 @@ type
     FCurPaint: boolean;
     FCurPaintX, FCurPaintY, FCurPaintW, FCurPaintH: Integer;
 
+    {$IFDEF DEBUG}
+  type
+    RFrameStatInfo = record
+      Total, DD, WPE, WPD, Misc, Vol : Int64;
+    end;
+  var
+    {FPSCalcDisplayTick, FPSCalcLastTick, }
+    FrameStatLastTick, FrameStatPeriod : UInt64;
+    FrameStatCnt, FrameStatStartInd : Integer;
+    FrameStat : array [0..10000] of RFrameStatInfo;
+    FrameStatS : array [0..10] of string;
+    {$ENDIF}
+
     FMouseDown: Integer;
 
     FScreenChanged, FCursorChanged,
@@ -114,7 +129,9 @@ type
 
     FSmoothScale: boolean;
     FExactCursor: boolean;
+    //+sstuman
     FRemoteCursor: Boolean;
+    //-sstuman
     FControlMode: TRtcPDesktopControlMode;
 
     FChg_DeskCnt: Integer;
@@ -183,7 +200,11 @@ type
     //FileTrans-
 
     procedure SetExactCursor(const Value: boolean);
+
+    //+sstuman
     procedure SetRemoteCursor(const Value: boolean);
+    //-sstuman
+
     procedure SetSmoothScale(const Value: boolean);
     procedure SetControlMode(const Value: TRtcPDesktopControlMode);
 
@@ -260,8 +281,6 @@ type
     //FileTrans-
 
   public
-    function GetScreen: TRtcScreenPlayback;
-
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
@@ -335,6 +354,7 @@ type
     procedure Send_HideDesktop(Sender: TObject = nil);
     procedure Send_ShowDesktop(Sender: TObject = nil);
 
+    //+sstuman
     procedure Send_BlockKeyboardAndMouse(Sender: TObject = nil);
     procedure Send_UnBlockKeyboardAndMouse(Sender: TObject = nil);
     procedure Send_PowerOffMonitor(Sender: TObject = nil);
@@ -343,6 +363,7 @@ type
     procedure Send_LockSystem(Sender: TObject = nil);
     procedure Send_LogoffSystem(Sender: TObject = nil);
     procedure Send_RestartSystem(Sender: TObject = nil);
+    //-sstuman
 
     procedure Send_AltTAB(Sender: TObject = nil);
     procedure Send_ShiftAltTAB(Sender: TObject = nil);
@@ -370,8 +391,12 @@ type
       default False;
     property ExactCursor: boolean read FExactCursor write SetExactCursor
       default False;
+
+    //+sstuman
     property RemoteCursor: boolean read FRemoteCursor write SetRemoteCursor
       default False;
+    //-sstuman
+
     property ControlMode: TRtcPDesktopControlMode read FControlMode
       write SetControlMode default rtcpNoControl;
 
@@ -521,6 +546,7 @@ type
   end;
 
 implementation
+{$IFDEF DEBUG} uses rtcDebug; {$ENDIF}
 
 { TRtcPDesktopControlUI }
 
@@ -532,6 +558,7 @@ var
 constructor TRtcPDesktopControlUI.Create(AOwner: TComponent);
 begin
   inherited;
+
   FUserCnt := 0;
   CS := TCriticalSection.Create;
   Scr := TRtcScreenPlayback.Create;
@@ -583,11 +610,6 @@ begin
   //FileTrans-
 
   inherited;
-end;
-
-function TRtcPDesktopControlUI.GetScreen: TRtcScreenPlayback;
-begin
-  Result := Scr;
 end;
 
 procedure TRtcPDesktopControlUI.Call_Open(Sender: TObject);
@@ -712,6 +734,15 @@ end;
 
 procedure TRtcPDesktopControlUI.Call_Data(Sender: TObject;
   const ScreenData, CursorData: RtcString);
+{$IFDEF DEBUG}
+var
+  Ind, i: Int64;
+  F: TextFile;
+  CurTick: UInt64;
+  PeriodMS: double;
+  VSum, VCnt: Int64;
+  S : String;
+{$ENDIF}
 begin
   CS.Acquire;
   try
@@ -730,13 +761,149 @@ begin
         FCursorChanged := True;
       StoreScreenState;
     end;
+
+    {$IFDEF DEBUG}
+   // if FPSCalcTicksCnt = 0 then
+   // /begin
+   //   FPSCalcTicks[FPSCalcTicksCnt] := CurTick;
+    //  FPSCalcTicksCnt := 1;
+   // end else
+   // begin
+     // if CurTick <> FPSCalcLastTick then
+     // begin
+      //  FPSCalcValue := (FPSCalcValue * FPSCalcFramesCnt +
+       //   (1000 / (CurTick - FPSCalcLastTick))) / (FPSCalcFramesCnt + 1);
+
+       // Inc(FPSCalcTicksCnt);
+      //  FPSCalcLastTick := CurTick;
+     // end;
+
+  with FrameStat[FrameStatCnt] do
+  begin
+    if FrameStatLastTick = 0 then
+    begin
+      FrameStatLastTick := Debug.GetMCSTick;
+      if Debug.FrameStatLog <> '' then
+      begin
+        AssignFile(F, ExtractFilePath(Application.ExeName) + Debug.FrameStatLog);
+        Append(F);
+        WriteLn(F, '---------------------------------------------------------------');
+        CloseFile(F);
+      end;
+    end else
+    begin
+      CurTick := Debug.GetMCSTick;
+      Total := CurTick - FrameStatLastTick;
+      FrameStatLastTick := CurTick;
+      Inc(FrameStatPeriod, Total);
+
+      Vol := Length(ScreenData) + Length(CursorData);
+      DD := Scr.CapLat;
+      WPE := Scr.EncLat;
+      WPD := Scr.DecLat;
+
+      Misc := Total;
+      if DD > 0 then Dec(Misc, DD);
+      if WPE > 0 then Dec(Misc, WPE);
+      if WPD > 0 then Dec(Misc, WPD);
+
+      if Debug.FrameStatLog <> '' then
+      begin
+        AssignFile(F, ExtractFilePath(Application.ExeName) + Debug.FrameStatLog);
+        Append(F);
+        WriteLn(F, DateTimeToStr(Now), ' ', (DD / 1000):7:2, ' ',
+          (WPE / 1000):7:2, ' ', (WPD / 1000):7:2, ' ', (Misc / 1000):7:2, ' ',
+          (Total / 1000):7:2, ' ', (Vol / 1024):7:2);
+        CloseFile(F);
+      end;
+
+
+      if FrameStatCnt >= 100 then
+      begin // Удаляем первый элемент массива сдвигом влево
+        for i := 1 to FrameStatCnt do
+          FrameStat[i - 1] := FrameStat[i];
+
+        Dec(FrameStatStartInd);
+       // Inc(FrameStatPeriod, Total);
+      end else
+        Inc(FrameStatCnt);
+    end;
+
+
+    PeriodMS := FrameStatPeriod / 1000;
+    if PeriodMS > 500 then
+    begin
+      VSum := 0; VCnt := 0;
+      for i := FrameStatStartInd to FrameStatCnt - 1 do
+      begin
+        if FrameStat[i].DD < 0 then continue;
+        Inc(VSum, FrameStat[i].DD);
+        Inc(VCnt);
+      end;
+      if VCnt <= 0 then FrameStatS[0] := '' else
+        FrameStatS[0] := 'DD ' + FloatToStrF(VSum / (1000 * VCnt), ffFixed, 10, 2) + ' ms';
+
+      VSum := 0; VCnt := 0;
+      for i := FrameStatStartInd to FrameStatCnt - 1 do
+      begin
+        if FrameStat[i].WPE < 0 then continue;
+        Inc(VSum, FrameStat[i].WPE);
+        Inc(VCnt);
+      end;
+      if VCnt <= 0 then FrameStatS[1] := '' else
+        FrameStatS[1] := 'WPE ' + FloatToStrF(VSum / (1000 * VCnt), ffFixed, 10, 2) + ' ms';
+
+      VSum := 0; VCnt := 0;
+      for i := FrameStatStartInd to FrameStatCnt - 1 do
+      begin
+        if FrameStat[i].WPD < 0 then continue;
+        Inc(VSum, FrameStat[i].WPD);
+        Inc(VCnt);
+      end;
+      if VCnt <= 0 then FrameStatS[2] := '' else
+       FrameStatS[2] := 'WPD ' + FloatToStrF(VSum / (1000 * VCnt), ffFixed, 10, 2) + ' ms';
+
+      VSum := 0; VCnt := 0;
+      for i := FrameStatStartInd to FrameStatCnt - 1 do
+      begin
+       // if FrameStat[i].Misc < 0 then continue;
+        Inc(VSum, FrameStat[i].Misc);
+        Inc(VCnt);
+      end;
+      if VCnt <= 0 then FrameStatS[3] := '' else
+        FrameStatS[3] := 'Misc ' + FloatToStrF(VSum / (1000 * VCnt), ffFixed, 10, 2) + ' ms';
+
+      FrameStatS[4] := '';
+
+      S := FloatToStr(PeriodMS / (FrameStatCnt - FrameStatStartInd));//FloatToStrF(FPSCalcValue, ffFixed, 10, 2);
+      FrameStatS[5] := 'Total ' + Copy(S, 1, Pos(',', S) + 2) + ' ms';
+
+      FrameStatS[6] := '';
+
+      VSum := 0;
+      for i := FrameStatStartInd to FrameStatCnt - 1 do
+        Inc(VSum, FrameStat[i].Vol);
+
+      S := 'Traff  ';
+      VSum := Round((VSum * 1000) / PeriodMS);
+        VSum := VSum div 1024;
+        if VSum div 1024 > 0 then S := S + IntToStr(VSum div 1024) + ' ';
+
+      FrameStatS[7] := S + IntToStr(VSum mod 1024) + ' kb/s';
+
+      FrameStatPeriod := 0;
+      FrameStatStartInd := FrameStatCnt;
+    end;
+  end;
+  {$ENDIF}
   finally
     CS.Release;
   end;
 
-  if (FScreenChanged or FCursorChanged) and
-    (assigned(Viewer) or assigned(FOnData)) then
-    Module.CallEvent(Sender, xOnData, self);
+  if ((FScreenChanged or FCursorChanged) and
+    (assigned(Viewer) or assigned(FOnData)))
+    {$IFDEF DEBUG} or ((FrameStatPeriod = 0) and (FrameStatCnt > 0)) {$ENDIF}
+     then Module.CallEvent(Sender, xOnData, self);
 end;
 
 procedure TRtcPDesktopControlUI.xOnClose(Sender, Obj: TObject);
@@ -776,6 +943,9 @@ var
   MaxHeight, RestHeight: Integer;
   SeeCur: boolean;
   CurX1, CurY1, CurX2, CurY2: Integer;
+  i, j : Integer;
+  GL, GT, GR, GB : Integer;
+  GVal : double;
 
   procedure CalcCursorPos;
   const
@@ -1229,6 +1399,66 @@ begin
         Scale := 1;
       end;
     end;
+    {$IFDEF DEBUG}
+     CS.Acquire;
+
+     if Assigned(Viewer) then
+        with Viewer, Viewer.Canvas do
+        begin
+         // Brush.Color := clWhite;
+    //  Image.Brush.Style := bsSolid;
+            Brush.Color := $000000;
+
+            //FPSStr := '1234567890';
+          TextFlags := 0;//ETO_CLIPPED;
+
+          Viewer.Canvas.Font.Size := Debug.FrameStatFontSize;//ClipRect.Height div 50;
+          Font.Color := $0080ff;
+          for i := 0 to 7 do
+          begin
+            if i in [4, 6] then continue;
+
+            TextOut(
+            //TextOutA(Handle,
+              Max(ClipRect.Left, ClipRect.Right - Viewer.Canvas.Font.Size * 12),
+              Max(ClipRect.Top, ClipRect.Bottom - Round(Viewer.Canvas.Font.Size * 1.5 *
+                (9 - i))), FrameStatS[i]);
+
+            GL := ClipRect.Right - Viewer.Canvas.Font.Size * 12 - 150;
+            GT := ClipRect.Bottom - Round(Viewer.Canvas.Font.Size * (1.5 * (9 - i))) + 2;
+            GR := ClipRect.Right - Viewer.Canvas.Font.Size * 12 - 50;
+            GB := ClipRect.Bottom - Round(Viewer.Canvas.Font.Size * (1.5 * (9 - i) - 1.5)) - 2;
+
+           // Brush.Color := $000000;
+           // FillRect(TRect.Create(GL, GT, GR, GB));
+
+            Brush.Color := $0080ff;
+            FrameRect(TRect.Create(GL, GT, GR, GB));
+
+            Pen.Color := $0080ff;
+
+            for j := 0 to FrameStatCnt - 1 do
+            begin
+              MoveTo(GL + j, GB - 1);
+
+              case i of
+                0 : GVal := FrameStat[j].DD / 100000;
+                1 : GVal := FrameStat[j].WPE / 100000;
+                2 : GVal := FrameStat[j].WPD / 100000;
+                3 : GVal := FrameStat[j].Misc / 100000;
+                5 : GVal := FrameStat[j].Total / 100000;
+                7 : GVal := FrameStat[j].Vol / (1024 * 1024);
+              end;
+              LineTo(GL + j, GB - Round((GB - GT) * Min(GVal, 1)) - 1);
+            end;
+
+            Brush.Color := $000000;
+          end;
+            //  PAnsiChar(FPSStr), Length(FPSStr));
+        end;
+
+      CS.Release;
+    {$ENDIF}
   finally
     CS.Release;
   end;

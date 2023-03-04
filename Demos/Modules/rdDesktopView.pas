@@ -376,10 +376,14 @@ var
   Bitmap: TBitmap;
 begin
   Bitmap := TBitmap.Create;
-  Bitmap.Width := myUI.GetScreen.Image.Width;
-  Bitmap.Height := myUI.GetScreen.Image.Height;
-  Bitmap.Canvas.CopyRect(Rect(0,0, Bitmap.Width, Bitmap.Height), myUI.GetScreen.Image.Canvas,
-   Rect(0, 0, Bitmap.Width, Bitmap.Height));
+  Bitmap.SetSize(myUI.ScreenWidth, myUI.ScreenHeight);
+  myUI.DrawScreen(Bitmap.Canvas, Bitmap.Width, Bitmap.Height);
+
+//  Bitmap.Width := myUI.GetScreen.Image.Width;
+//  Bitmap.Height := myUI.GetScreen.Image.Height;
+
+//  Bitmap.Canvas.CopyRect(Rect(0,0, Bitmap.Width, Bitmap.Height), myUI.GetScreen.Image.Canvas,
+//   Rect(0, 0, Bitmap.Width, Bitmap.Height));
 
   try
     ClipBoard.Assign(Bitmap);
@@ -415,10 +419,14 @@ begin
     end;
 
     Bitmap := TBitmap.Create;
-    Bitmap.Width := myUI.GetScreen.Image.Width;
-    Bitmap.Height := myUI.GetScreen.Image.Height;
-    Bitmap.Canvas.CopyRect(Rect(0,0, Bitmap.Width, Bitmap.Height), myUI.GetScreen.Image.Canvas,
-      Rect(0, 0, Bitmap.Width, Bitmap.Height));
+
+    Bitmap.SetSize(myUI.ScreenWidth, myUI.ScreenHeight);
+    myUI.DrawScreen(Bitmap.Canvas, Bitmap.Width, Bitmap.Height);
+
+//    Bitmap.Width := myUI.GetScreen.Image.Width;
+//    Bitmap.Height := myUI.GetScreen.Image.Height;
+//    Bitmap.Canvas.CopyRect(Rect(0,0, Bitmap.Width, Bitmap.Height), myUI.GetScreen.Image.Canvas,
+//      Rect(0, 0, Bitmap.Width, Bitmap.Height));
     try
       Bitmap.SaveToFile(saveDialog.FileName);
     except
@@ -1509,10 +1517,15 @@ var
   JPEG: TJPEGImage;
 begin
   Bitmap := TBitmap.Create;
-  Bitmap.Width := UI.GetScreen.Image.Width;
-  Bitmap.Height := UI.GetScreen.Image.Height;
-  Bitmap.Canvas.CopyRect(Rect(0, 0, UI.GetScreen.Image.Width, UI.GetScreen.Image.Height), UI.GetScreen.Image.Canvas, Rect(0, 0, UI.GetScreen.Image.Width, UI.GetScreen.Image.Height));
-  Bitmap.PixelFormat := pf24bit;
+
+    Bitmap.SetSize(myUI.ScreenWidth, myUI.ScreenHeight);
+    myUI.DrawScreen(Bitmap.Canvas, Bitmap.Width, Bitmap.Height);
+
+//  Bitmap.Width := UI.GetScreen.Image.Width;
+//  Bitmap.Height := UI.GetScreen.Image.Height;
+//  Bitmap.Canvas.CopyRect(Rect(0, 0, UI.GetScreen.Image.Width, UI.GetScreen.Image.Height), UI.GetScreen.Image.Canvas, Rect(0, 0, UI.GetScreen.Image.Width, UI.GetScreen.Image.Height));
+
+//  Bitmap.PixelFormat := pf24bit;
   JPEG := TJPEGImage.Create;
   JPEG.Assign(Bitmap);
   Bitmap.SaveToFile('_Screen.bmp');

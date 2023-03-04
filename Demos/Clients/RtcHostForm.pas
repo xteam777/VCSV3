@@ -13,7 +13,7 @@ interface
 uses
   Windows, Messages, SysUtils, CommonData, System.Types, uProcess, ServiceMgr, //BlackLayered,
   Classes, Graphics, Controls, Forms, DateUtils, CommonUtils, WtsApi, uSysAccount,
-  Dialogs, StdCtrls, ExtCtrls, ShellApi, rdFileTransLog,
+  Dialogs, StdCtrls, ExtCtrls, ShellApi, rdFileTransLog, VirtualTrees.Types,
   ComCtrls, Registry, Math, RtcIdentification, SyncObjs, System.Net.HTTPClient, System.Net.URLClient,
   rtcSystem, rtcInfo, uMessageBox, rtcScrUtils, IOUtils, uAcceptEula,
 
@@ -41,7 +41,8 @@ uses
   Vcl.ToolWin,
   ColorSpeedButton, AboutForm, Vcl.AppEvnts, AlignedEdit, Vcl.Imaging.jpeg, uPowerWatcher,
   Idglobal, IdContext, IdTCPConnection, IdTCPClient, IdBaseComponent, IdComponent,
-  IdCustomTCPServer, IdTCPServer;
+  IdCustomTCPServer, IdTCPServer, VirtualTrees.BaseAncestorVCL,
+  VirtualTrees.BaseTree, VirtualTrees.AncestorVCL;
 
 type
   TSetHostGatewayClientActiveProc = procedure(AValue: Boolean);
@@ -1042,7 +1043,7 @@ begin
   FDesktopHost.AccessControl := False;
   FDesktopHost.BeTheHost := True;
   FDesktopHost.GCaptureAllMonitors := False;
-  FDesktopHost.GCaptureLayeredWindows := False;
+//  FDesktopHost.GCaptureLayeredWindows := False;
   FDesktopHost.GColorLimit := rdColor8bit;
   FDesktopHost.GColorLowLimit := rd_ColorHigh;
   FDesktopHost.GColorReducePercent := 0;

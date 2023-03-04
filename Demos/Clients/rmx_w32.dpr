@@ -165,7 +165,6 @@ var
   HeaderSize: Integer;
   err: LongInt;
   fHaveScreen: Boolean;
-  FLastChangedX1, FLastChangedY1, FLastChangedX2, FLastChangedY2: Integer;
 
   dwFlags, wVk, wScan: DWORD;
   IOtype, dx, dy, mouseData: Integer;
@@ -181,6 +180,7 @@ var
   function RpcImpersonateClient(BindingHandle: RPC_BINDING_HANDLE): RPC_STATUS; stdcall; external 'rpcrt4.dll';
   function ProcessIdToSessionId(dwProcessId: DWORD; out pSessionId: DWORD): BOOL; stdcall; external 'kernel32.dll';
   function WTSGetActiveConsoleSessionId: THandle; external 'Kernel32.dll' name 'WTSGetActiveConsoleSessionId';
+
 
 function IsWindows8orLater: Boolean;
 begin

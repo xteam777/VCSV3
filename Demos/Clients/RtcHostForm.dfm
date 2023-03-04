@@ -3,8 +3,8 @@ object MainForm: TMainForm
   Top = 309
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'Remox'
-  ClientHeight = 490
-  ClientWidth = 839
+  ClientHeight = 487
+  ClientWidth = 837
   Color = clBtnFace
   DoubleBuffered = True
   Font.Charset = DEFAULT_CHARSET
@@ -13,7 +13,6 @@ object MainForm: TMainForm
   Font.Name = 'Arial'
   Font.Style = []
   Menu = mmMenu
-  OldCreateOrder = False
   Position = poScreenCenter
   PrintScale = poNone
   Scaled = False
@@ -26,7 +25,6 @@ object MainForm: TMainForm
   OnHide = FormHide
   OnResize = FormResize
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 14
   object sStatus1: TShape
     Left = 12
@@ -47,8 +45,8 @@ object MainForm: TMainForm
   object pInMain: TPanel
     Left = 0
     Top = 0
-    Width = 839
-    Height = 490
+    Width = 837
+    Height = 487
     Margins.Left = 0
     Margins.Top = 0
     Margins.Right = 0
@@ -61,15 +59,16 @@ object MainForm: TMainForm
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
-    ExplicitHeight = 430
+    ExplicitWidth = 835
+    ExplicitHeight = 489
     DesignSize = (
-      839
-      490)
+      837
+      487)
     object lblStatus: TLabel
       AlignWithMargins = True
       Left = 46
       Top = 467
-      Width = 647
+      Width = 645
       Height = 17
       Margins.Left = 75
       Anchors = [akLeft, akTop, akRight]
@@ -85,6 +84,7 @@ object MainForm: TMainForm
       ParentFont = False
       Transparent = True
       Layout = tlCenter
+      ExplicitWidth = 647
     end
     object iStatus1: TImage
       Left = 2
@@ -5533,6 +5533,23 @@ object MainForm: TMainForm
             BorderStyle = bsNone
             ButtonStyle = bsTriangle
             Color = 16645629
+            Colors.BorderColor = 15987699
+            Colors.DisabledColor = clGray
+            Colors.DropMarkColor = 15385233
+            Colors.DropTargetColor = 15385233
+            Colors.DropTargetBorderColor = 15385233
+            Colors.FocusedSelectionColor = 15385233
+            Colors.FocusedSelectionBorderColor = 15385233
+            Colors.GridLineColor = 15987699
+            Colors.HeaderHotColor = clBlack
+            Colors.HotColor = clBlack
+            Colors.SelectionRectangleBlendColor = 15385233
+            Colors.SelectionRectangleBorderColor = 15385233
+            Colors.SelectionTextColor = clBlack
+            Colors.TreeLineColor = 9471874
+            Colors.UnfocusedColor = clGray
+            Colors.UnfocusedSelectionColor = 13421772
+            Colors.UnfocusedSelectionBorderColor = 13421772
             DefaultNodeHeight = 24
             Font.Charset = DEFAULT_CHARSET
             Font.Color = 3947580
@@ -5540,11 +5557,6 @@ object MainForm: TMainForm
             Font.Name = 'Arial'
             Font.Style = [fsBold]
             Header.AutoSizeIndex = 0
-            Header.Font.Charset = DEFAULT_CHARSET
-            Header.Font.Color = clWindowText
-            Header.Font.Height = -11
-            Header.Font.Name = 'Tahoma'
-            Header.Font.Style = []
             Header.Options = [hoAutoResize, hoColumnResize, hoDrag, hoShowSortGlyphs]
             Indent = 16
             ParentFont = False
@@ -5563,6 +5575,8 @@ object MainForm: TMainForm
             OnMouseMove = twDevicesMouseMove
             OnMouseUp = twDevicesMouseUp
             OnMouseLeave = twDevicesMouseLeave
+            Touch.InteractiveGestures = [igPan, igPressAndTap]
+            Touch.InteractiveGestureOptions = [igoPanSingleFingerHorizontal, igoPanSingleFingerVertical, igoPanInertia, igoPanGutter, igoParentPassthrough]
             Columns = <
               item
                 Position = 0
@@ -5962,7 +5976,7 @@ object MainForm: TMainForm
     Left = 11
     Top = 44
     Bitmap = {
-      494C010102001400280608000800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C010102001400040008000800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000200000000800000001002000000000000004
       000000000000000000000000000000000000846BEF006B63E700635AE7006B5A
       EF006B5AEF006B63EF006B63E7007B6BEF00C6B52900BDAD1800BDAD1800BDAD

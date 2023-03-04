@@ -2,37 +2,39 @@ object rdFileTransferLog: TrdFileTransferLog
   Left = 0
   Top = 0
   Caption = 'File transferring log'
-  ClientHeight = 292
-  ClientWidth = 419
+  ClientHeight = 290
+  ClientWidth = 411
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
   Position = poScreenCenter
   OnClose = FormClose
   OnCloseQuery = FormCloseQuery
-  PixelsPerInch = 96
   TextHeight = 13
   object mLog: TMemo
     Left = 0
     Top = 0
-    Width = 419
-    Height = 251
+    Width = 411
+    Height = 249
     Align = alClient
     ReadOnly = True
     TabOrder = 0
+    ExplicitWidth = 419
+    ExplicitHeight = 251
   end
   object pBottom: TPanel
     Left = 0
-    Top = 251
-    Width = 419
+    Top = 249
+    Width = 411
     Height = 41
     Align = alBottom
     BevelOuter = bvNone
     TabOrder = 1
+    ExplicitTop = 251
+    ExplicitWidth = 419
     object bOK: TButton
       Left = 156
       Top = 6

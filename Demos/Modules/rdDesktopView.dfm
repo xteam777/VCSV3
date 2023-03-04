@@ -6,8 +6,8 @@ object rdDesktopViewer: TrdDesktopViewer
   VertScrollBar.Tracking = True
   VertScrollBar.Visible = False
   Caption = #1059#1087#1088#1072#1074#1083#1077#1085#1080#1077
-  ClientHeight = 665
-  ClientWidth = 1074
+  ClientHeight = 664
+  ClientWidth = 1070
   Color = 1381653
   DoubleBuffered = True
   Font.Charset = DEFAULT_CHARSET
@@ -16,7 +16,6 @@ object rdDesktopViewer: TrdDesktopViewer
   Font.Name = 'Arial'
   Font.Style = []
   KeyPreview = True
-  OldCreateOrder = False
   Position = poDesktopCenter
   PrintScale = poNone
   Scaled = False
@@ -32,13 +31,12 @@ object rdDesktopViewer: TrdDesktopViewer
   OnMouseWheel = FormMouseWheel
   OnResize = FormResize
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 14
   object pMain: TPanel
     Left = 0
     Top = 0
-    Width = 1074
-    Height = 665
+    Width = 1070
+    Height = 664
     Align = alClient
     BevelOuter = bvNone
     Color = 10720035
@@ -54,8 +52,8 @@ object rdDesktopViewer: TrdDesktopViewer
     object iScreenLocked: TImage
       Left = 0
       Top = 0
-      Width = 1074
-      Height = 665
+      Width = 1070
+      Height = 664
       Align = alClient
       Center = True
       Picture.Data = {
@@ -1993,8 +1991,8 @@ object rdDesktopViewer: TrdDesktopViewer
     object iPrepare: TImage
       Left = 0
       Top = 0
-      Width = 1074
-      Height = 665
+      Width = 1070
+      Height = 664
       Align = alClient
       Center = True
       Picture.Data = {
@@ -2972,8 +2970,8 @@ object rdDesktopViewer: TrdDesktopViewer
     object Scroll: TScrollBox
       Left = 0
       Top = 0
-      Width = 1074
-      Height = 665
+      Width = 1070
+      Height = 664
       HorzScrollBar.Tracking = True
       HorzScrollBar.Visible = False
       VertScrollBar.Tracking = True
@@ -2988,8 +2986,8 @@ object rdDesktopViewer: TrdDesktopViewer
       object pImage: TRtcPDesktopViewer
         Left = 0
         Top = 0
-        Width = 1074
-        Height = 665
+        Width = 1070
+        Height = 664
         Align = alClient
         Color = 1381653
         ParentColor = False
@@ -2998,6 +2996,8 @@ object rdDesktopViewer: TrdDesktopViewer
         OnMouseMove = pImageMouseMove
         OnMouseUp = pImageMouseUp
         ExplicitTop = 1
+        ExplicitWidth = 1074
+        ExplicitHeight = 665
       end
       object iMiniPanelHide: TImage
         Left = 10
@@ -3105,6 +3105,7 @@ object rdDesktopViewer: TrdDesktopViewer
           Top = 1
           Width = 343
           Height = 34
+          UseSystemFont = False
           ActionManager = ActionManagerTop
           Align = alNone
           Color = clMenuBar
@@ -3114,7 +3115,7 @@ object rdDesktopViewer: TrdDesktopViewer
           ColorMap.SelectedFontColor = clWhite
           ColorMap.UnusedColor = clWhite
           Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
+          Font.Color = clBlack
           Font.Height = -12
           Font.Name = 'Segoe UI'
           Font.Style = []
@@ -4397,7 +4398,7 @@ object rdDesktopViewer: TrdDesktopViewer
     Left = 8
     Top = 152
     Bitmap = {
-      494C010105001400340218001800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C010105001400040018001800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000600000003000000001002000000000000048
       000000000000000000000000000000000000C4AE1300C4AE1300C4AE1300C4AE
       1300C4AE1300C4AE1300C4AE1300C4AE1300C4AE1300C4AE1300C4AE1300C4AE
@@ -5011,7 +5012,7 @@ object rdDesktopViewer: TrdDesktopViewer
     Left = 48
     Top = 264
     Bitmap = {
-      494C010102000800E00010001000FFFFFFFFFE00FFFFFFFFFFFFFFFF424D3600
+      494C010102000800040010001000FFFFFFFFFE00FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000001000000001002000000000000010
       000000000000000000000000000000000000737373006C6C6C006C6C6C006C6C
       6C006C6C6C006C6C6C00B5B5B500FFFFFF00FFFFFF00B5B5B5006C6C6C006C6C

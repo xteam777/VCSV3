@@ -1,8 +1,4 @@
 unit Execute.DesktopDuplicationAPI;
-{
-  Desktop Duplication (c)2017 Execute SARL
-  http://www.execute.fr
-}
 {$INLINE AUTO}
 interface
 
@@ -13,8 +9,11 @@ uses
   DX12.DXGI,
   DX12.DXGI1_2,
   Vcl.Graphics,
-  Math;
-//  , rtcLog, SysUtils;
+  Math,
+  SysUtils,
+  rtcDebug;
+
+const TempBuffLen = 100000;
 
 type
 {$POINTERMATH ON} // Pointer[x]
@@ -25,82 +24,96 @@ type
     FDevice: ID3D11Device;
     FContext: ID3D11DeviceContext;
     FFeatureLevel: TD3D_FEATURE_LEVEL;
-  // DGI
+  // DXGI
     FOutput: TDXGI_OUTPUT_DESC;
     FDuplicate: IDXGIOutputDuplication;
     FTexture: ID3D11Texture2D;
-  // update information
-    FMetaData: array of Byte;
-    FMoveRects: PDXGI_OUTDUPL_MOVE_RECT; // array of
-    FMoveCount: Integer;
-    FDirtyRects: PRECT; // array of
-    FDirtyCount: Integer;
 
-    BytesInRow : integer;
-    BitmapP1, BitmapP2 : PByte;
-    FirstDraw : boolean;
-    FLastChangedX1, FLastChangedY1, FLastChangedX2, FLastChangedY2: Integer;
-    procedure DrawArea(X1, Y1, X2, Y2 : Integer; aPixelFormat: TPixelFormat); //inline;
+    FrameInfo: TDXGI_OUTDUPL_FRAME_INFO;
+    Desc: TD3D11_TEXTURE2D_DESC;
 
+    DesktopResource: IDXGIResource;
+    FTempTexture: ID3D11Texture2D;
+
+    FScreenWidth, FScreenHeight, FBitsPerPixel : Integer;
+
+    FFullScreen: Boolean;
+    FClipRect : TRect;
+
+    FScreenBuff : PByte;
+
+    FDirtyRCnt, FMovedRCnt : Integer;
+
+    TempBuff : array [0..TempBuffLen] of Byte;
+
+    DDExists : Boolean;
+
+    function CreateDD : Boolean;
+    procedure DestroyDD;
+    function GetScreenInfoChanged: Boolean;
+    procedure SetClipRect(const Rect : TRect);
   public
-    Bitmap: TBitmap;
-    OptimDrawAlg : integer; // 0 - default, 1 - draw algorithm #1, 2 - draw algorithm #2
-    constructor Create(var fCreated: Boolean);
+    DirtyR, MovedR : array [0..10000] of TRect;
+    MovedRP : array [0..10000] of TPoint;
+
+    constructor Create;
     destructor Destroy; override;
-    function GetFrame(var fNeedRecreate: Boolean): Boolean;
-    function DrawFrame(var Bitmap: TBitmap; aPixelFormat: TPixelFormat = pf32bit): Boolean;
-//    function DrawFrameToDib(pBits: PByte): Boolean;
-//    procedure FreeDIB(BitmapInfo: PBitmapInfo;
-//      InfoSize: DWORD;
-//      Bits: pointer;
-//      BitsSize: DWORD);
-//    procedure BitmapToDIB(Bitmap: TBitmap;
-//      var BitmapInfo: PBitmapInfo;
-//      var InfoHeaderSize: DWORD;
-//      var Bits: pointer;
-//      var ImageSize: DWORD);
+    function DDCaptureScreen : Boolean;
+    function DDRecieveRects : Boolean;
+
     property Error: HRESULT read FError;
-    property MoveCount: Integer read FMoveCount;
-    property MoveRects: PDXGI_OUTDUPL_MOVE_RECT read FMoveRects;
-    property DirtyCount: Integer read FDirtyCount;
-    property DirtyRects: PRect read FDirtyRects;
-    property LastChangedX1: Integer read FLastChangedX1;
-    property LastChangedY1: Integer read FLastChangedY1;
-    property LastChangedX2: Integer read FLastChangedX2;
-    property LastChangedY2: Integer read FLastChangedY2;
+    property ScreenWidth : Integer read FScreenWidth;
+    property ScreenHeight : Integer read FScreenHeight;
+    property BitsPerPixel : Integer read FBitsPerPixel;
+    property ScreenInfoChanged : Boolean read GetScreenInfoChanged;
+    property FullScreen: Boolean read FFullScreen write FFullScreen;
+    property ClipRect : TRect read FClipRect write SetClipRect;
+    property ScreenBuff : PByte read FScreenBuff;
+    property DirtyRCnt: Integer read FDirtyRCnt write FDirtyRCnt;
+    property MovedRCnt: Integer read FMovedRCnt write FMovedRCnt;
   end;
 
 implementation
 
 { TDesktopDuplicationWrapper }
 
-function GetBitsPerPixel(aBitsPerPixel: TPixelFormat): Word;
+constructor TDesktopDuplicationWrapper.Create;
 begin
-  case aBitsPerPixel of
-    pf1bit: Result := 1;
-    pf4bit: Result := 4;
-    pf8bit: Result := 8;
-    pf15bit: Result := 15;
-    pf16bit: Result := 16;
-    pf24bit: Result := 24;
-    pf32bit: Result := 32;
-    else Result := 32;
-  end;
+  inherited;
+
+  CreateDD;
 end;
 
-constructor TDesktopDuplicationWrapper.Create(var fCreated: Boolean);
+destructor TDesktopDuplicationWrapper.Destroy;
+begin
+  inherited;
+
+  DestroyDD;
+end;
+
+function TDesktopDuplicationWrapper.CreateDD : Boolean;
 var
   GI: IDXGIDevice;
   GA: IDXGIAdapter;
   GO: IDXGIOutput;
   O1: IDXGIOutput1;
 begin
-  fCreated := False;
+  Result := false;
+  DDExists := False;
 
-  OptimDrawAlg := 3;
+  //!!!!!!!!!!!!!!fTexture := NIL;
 
-  FirstDraw := True;
+  Debug.Log('Creating DesktopDuplication');
 
+  FTexture := NIL;
+  FDuplicate := NIL;
+
+  FContext := NIL;
+
+  FDevice := NIL;
+  // DGI
+
+  //DXGI_ERROR_SESSION_DISCONNECTED
 //  Sleep(10000);
   FError := D3D11CreateDevice(
     nil, // Default adapter
@@ -113,488 +126,499 @@ begin
     FFeatureLevel,
     FContext
   );
+
   if Failed(FError) then
   begin
-    fCreated := False;
-//    xLog('D3D11CreateDevice Error: ' + SysErrorMessage(FError));
+    Debug.Log('D3D11CreateDevice Error: ' + IntToStr(FError));//SysErrorMessage(FError));
     Exit;
   end;
 
+  Debug.Log('FDevice.QueryInterface(IID_IDXGIDevice, GI)');
   FError := FDevice.QueryInterface(IID_IDXGIDevice, GI);
   if Failed(FError) then
   begin
-    fCreated := False;
-//    xLog('QueryInterface IID_IDXGIDevice Error: ' + SysErrorMessage(FError));
+    Debug.Log('QueryInterface IID_IDXGIDevice Error: ' + IntToStr(FError));
     Exit;
   end;
 
+  Debug.Log('GI.GetParent(IID_IDXGIAdapter, Pointer(GA)');
   FError := GI.GetParent(IID_IDXGIAdapter, Pointer(GA));
   if Failed(FError) then
   begin
-    fCreated := False;
-//    xLog('GI.GetParent Error: ' + SysErrorMessage(FError));
+    Debug.Log('GI.GetParent Error: ' + IntToStr(FError));
     Exit;
   end;
 
+  Debug.Log('GA.EnumOutputs(0, GO)');
   FError := GA.EnumOutputs(0, GO);
   if Failed(FError) then
   begin
-    fCreated := False;
-//    xLog('EnumOutputs Error: ' + SysErrorMessage(FError));
+    Debug.Log('EnumOutputs Error: ' + IntToStr(FError));
     Exit;
   end;
 
+  Debug.Log('GO.GetDesc(FOutput)');
   FError := GO.GetDesc(FOutput);
   if Failed(FError) then
   begin
-    fCreated := False;
-//    xLog('GetDesc Error: ' + SysErrorMessage(FError));
+    Debug.Log('GetDesc Error: ' + IntToStr(FError));
     Exit;
   end;
 
+  Debug.Log('GO.QueryInterface(IID_IDXGIOutput1, O1)');
   FError := GO.QueryInterface(IID_IDXGIOutput1, O1);
   if Failed(FError) then
   begin
-    fCreated := False;
-//    xLog('QueryInterface IID_IDXGIOutput1 Error: ' + SysErrorMessage(FError));
+    Debug.Log('QueryInterface IID_IDXGIOutput1 Error: '
+      + IntToStr(FError));
     Exit;
   end;
 
+  Debug.Log('O1.DuplicateOutput(FDevice, FDuplicate) '
+    + IntToStr(Integer(O1)) + ' ' + IntToStr(Integer(FDevice)));
   FError := O1.DuplicateOutput(FDevice, FDuplicate);
   if Failed(FError) then
   begin
-    fCreated := False;
-//    xLog('DuplicateOutput Error: ' + SysErrorMessage(FError));
+    Debug.Log('DuplicateOutput Error: ' +
+      IntToStr(FError));
     Exit;
   end;
-
-  fCreated := True;
+  // DXGI_ERROR_NOT_CURRENTLY_AVAILABLE
+   // E_ACCESSDENIED
+  Debug.Log('DesktopDupilcation object created');
+  DDExists := true;
+  Result := True;
 end;
 
-destructor TDesktopDuplicationWrapper.Destroy;
+procedure TDesktopDuplicationWrapper.DestroyDD;
 begin
-  inherited;
+  DDExists := false;
 
-  if FTexture <> nil then
-    FTexture := nil;
+  if (FContext <> NIL) and (FTexture <> NIL) then
+    FContext.Unmap(FTexture, 0);
 
-  if Bitmap <> nil then
-    Bitmap.Free;
-end;
+  FTexture := nil;
 
-function TDesktopDuplicationWrapper.GetFrame(var fNeedRecreate: Boolean): Boolean;
-var
-  FrameInfo: TDXGI_OUTDUPL_FRAME_INFO;
-  DesktopResource: IDXGIResource;
-  BufLen : Integer;
-  BufSize: Uint;
-begin
-  Result := False;
-  fNeedRecreate := False;
+  FTempTexture := NIL;
+  DesktopResource := NIL;
 
-  if FDuplicate = nil then
+//  if Assigned(FTexture) then
+//  begin
+//    FContext.Unmap(FTexture, 0); //Это нужно?
+//    FTexture := NIL;
+//  end;
+  if Assigned(FDuplicate) then
   begin
-    fNeedRecreate := True;
-    Exit;
-  end
-  else
     FDuplicate.ReleaseFrame;
+    FDuplicate := NIL;
+  end;
+end;
 
-//  Sleep(1);
+function TDesktopDuplicationWrapper.DDCaptureScreen : Boolean;
+var
+ // DesktopResource: IDXGIResource;
+ // Desc: TD3D11_TEXTURE2D_DESC;
+ // Temp: ID3D11Texture2D;
+  Resource: TD3D11_MAPPED_SUBRESOURCE;
+  BadAttempt: Boolean;
+  AttemptId: Integer;
+  ResourceDesc: TDXGI_OUTDUPL_DESC;
+  time: DWORD;
+ // BufLen : Integer;
+  label CaptureStart, ErrorInCapture, FailedCapture, AttemptFinish;
+begin
+  Debug.Log('Capturing screen');
+  time := GetTickCount;
 
-  DesktopResource := nil;
+  BadAttempt := false;
+  AttemptId := 1;
 
-  FError := FDuplicate.AcquireNextFrame(500, FrameInfo, DesktopResource);
+//  if (not DDExists) or (not DDCaptureScreen) or (not DDRecieveRects) then
+//  if (not CreateDD) or (not DDCaptureScreen) or (not DDRecieveRects) then
+ // begin
+  //  Result := false;
+  //end;
+ //fNeedRecreate := False;
+  if not DDExists then goto ErrorInCapture;
+
+  CaptureStart:
+
+  if FDuplicate = nil then goto ErrorInCapture;
+  //else
+   // FDuplicate.ReleaseFrame;
+
+  //Sleep(1);
+
+
+  FDuplicate.ReleaseFrame;
+  Sleep(1);
+  FError := FDuplicate.AcquireNextFrame(50, FrameInfo, DesktopResource);
   if Failed(FError) then
   begin
-//    xLog('AcquireNextFrame Error: ' + SysErrorMessage(FError));
+    Debug.Log('AcquireNextFrame Error: ' + IntToStr(FError));
 //    if FError = DXGI_ERROR_ACCESS_LOST then
-      fNeedRecreate := True;
-
-    Exit;
+   //   fNeedRecreate := True;
+    goto ErrorInCapture;
   end;
 
-  if FTexture <> nil then
+  //if FrameInfo.TotalMetadataBufferSize <= 0 then Exit;
+
+  //if FTexture <> nil then
     FTexture := nil;
 
   FError := DesktopResource.QueryInterface(IID_ID3D11Texture2D, FTexture);
   DesktopResource := nil;
   if Failed(FError) then
   begin
-//    xLog('QueryInterface.IID_ID3D11Texture2D Error: ' + SysErrorMessage(FError));
-    Exit;
+    Debug.Log('QueryInterface.IID_ID3D11Texture2D Error: ' + IntToStr(FError));
+    goto ErrorInCapture;
   end;
-
-  if FrameInfo.TotalMetadataBufferSize > 0 then
-  begin
-    BufLen := FrameInfo.TotalMetadataBufferSize;
-    if Length(FMetaData) < BufLen then
-      SetLength(FMetaData, BufLen);
-
-    FMoveRects := Pointer(FMetaData);
-
-    FError := FDuplicate.GetFrameMoveRects(BufLen, FMoveRects, BufSize);
-    if Failed(FError) then
-      Exit;
-    FMoveCount := BufSize div sizeof(TDXGI_OUTDUPL_MOVE_RECT);
-
-    FDirtyRects := @FMetaData[BufSize];
-    Dec(BufLen, BufSize);
-
-    FError := FDuplicate.GetFrameDirtyRects(BufLen, FDirtyRects, BufSize);
-    if Failed(FError) then
-     Exit;
-    FDirtyCount := BufSize div SizeOf(TRECT);
-
-    Result := True;
-  end
-//  else
-//    FDuplicate.ReleaseFrame;
-end;
-
-procedure TDesktopDuplicationWrapper.DrawArea(X1, Y1, X2, Y2 : Integer; aPixelFormat: TPixelFormat); //inline;
-var
-  i, BytesToCopy : integer;
-  P1Cur, P2Cur : PByte;
-begin
-  P1Cur := BitmapP1 + (X1 shl 2) + Y1 * BytesInRow;
-  P2Cur := BitmapP2 + (X1 shl 2) - Y1 * BytesInRow;
-  BytesToCopy := (X2 - X1) * GetBitsPerPixel(aPixelFormat) shr 3;
-  if (((X2 - X1) * GetBitsPerPixel(aPixelFormat) mod 8) <> 0) then
-    Inc(BytesToCopy);
-
-  for i := Y1 to Y2 - 1 do
-  begin
-    Move(P1Cur^, P2Cur^, BytesToCopy);
-    Inc(P1Cur, BytesInRow);
-    Dec(P2Cur, BytesInRow);
-  end;
-end;
-
-function TDesktopDuplicationWrapper.DrawFrame(var Bitmap: TBitmap; aPixelFormat: TPixelFormat = pf32bit): Boolean;
-var
-  Desc: TD3D11_TEXTURE2D_DESC;
-  Temp: ID3D11Texture2D;
-  Resource: TD3D11_MAPPED_SUBRESOURCE;
-  i, RId: Integer;
-  p : pbyte;
-begin
-  Result := False;
-
-  FLastChangedX1 := 0;
-  FLastChangedY1 := 0;
-  FLastChangedX2 := 0;
-  FLastChangedY2 := 0;
 
   FTexture.GetDesc(Desc);
 
-  if Bitmap = nil then
-    Bitmap := TBitmap.Create;
+  FDuplicate.GetDesc(ResourceDesc);
 
-  Bitmap.PixelFormat := pf32bit;
-//  Bitmap.PixelFormat := aPixelFormat;
-  Bitmap.SetSize(Desc.Width, Desc.Height);
-
+  ZeroMemory(@Desc, SizeOf(Desc));
+  Desc.Width := ResourceDesc.ModeDesc.Width;
+  Desc.Height := ResourceDesc.ModeDesc.Height;
+  Desc.MipLevels := 1;
+  Desc.ArraySize := 1;
+  Desc.Format := DXGI_FORMAT_B8G8R8A8_TYPELESS;
+  Desc.SampleDesc.Count := 1;
+  Desc.Usage := D3D11_USAGE_STAGING;
   Desc.BindFlags := 0;
   Desc.CPUAccessFlags := Ord(D3D11_CPU_ACCESS_READ) or Ord(D3D11_CPU_ACCESS_WRITE);
-  Desc.Usage := D3D11_USAGE_STAGING;
   Desc.MiscFlags := 0;
 
-  //  READ/WRITE texture
-  FError := FDevice.CreateTexture2D(@Desc, nil, Temp);
-  if Failed(FError) then
-  begin
-//    xLog('CreateTexture2D Error: ' + SysErrorMessage(FError));
-    FTexture := nil;
-    FDuplicate.ReleaseFrame;
-
-    Exit;
-  end;
-
-  // copy original to the RW texture
-  FContext.CopyResource(Temp, FTexture);
-
-  // get texture bits
-  FContext.Map(Temp, 0, D3D11_MAP_READ_WRITE, 0, Resource);
-
-  //BytesInRow := Desc.Width shl 2;
-  //BytesInRow := Desc.Width * GetBitsPerPixel(aPixelFormat) div 8;
-  BytesInRow := Desc.Width * GetBitsPerPixel(aPixelFormat) shr 3;
-  if ((Desc.Width * GetBitsPerPixel(aPixelFormat) mod 8) <> 0) then
-    Inc(BytesInRow);
-  BitmapP1 := Resource.pData;
-  BitmapP2 := Bitmap.ScanLine[0];
-
-{  if FirstDraw
-    or ((MoveCount + DirtyCount = 0)) then
-  begin
-    FirstDraw := false;
-
-    FLastChangedX1 := 0;
-    FLastChangedY1 := 0;
-    FLastChangedX2 := Desc.Width;
-    FLastChangedY2 := Desc.Height;
-
-    DrawArea(0, 0, Desc.Width, Desc.Height, aPixelFormat);
-  end else
-    case OptimDrawAlg of
-    0 : begin // default algorithm
-          FLastChangedX1 := 0;
-          FLastChangedY1 := 0;
-          FLastChangedX2 := Desc.Width;
-          FLastChangedY2 := Desc.Height;
-
-          DrawArea(0, 0, Desc.Width, Desc.Height, aPixelFormat);
-        end;
-    1 : begin // objects almost do not cross with each other
-
-          // Painting MoveRects
-          for RId := 0 to MoveCount - 1 do
-            DrawArea(Min(MoveRects[RId].SourcePoint.X, MoveRects[RId].DestinationRect.Left),
-              Min(MoveRects[RId].SourcePoint.Y, MoveRects[RId].DestinationRect.Top),
-              Max(MoveRects[RId].SourcePoint.X + MoveRects[RId].DestinationRect.Right - MoveRects[RId].DestinationRect.Left, MoveRects[RId].DestinationRect.Right),
-              Max(MoveRects[RId].SourcePoint.Y + MoveRects[RId].DestinationRect.Bottom - MoveRects[RId].DestinationRect.Top, MoveRects[RId].DestinationRect.Bottom), aPixelFormat);
-
-        FLastChangedX1 := 0;
-        FLastChangedY1 := 0;
-        FLastChangedX2 := Desc.Width;
-        FLastChangedY2 := Desc.Height;
-
-          // Painting DirtyRects
-          for RId := 0 to DirtyCount - 1 do
-            DrawArea(DirtyRects[RId].Left, DirtyRects[RId].Top,
-                     DirtyRects[RId].Right, DirtyRects[RId].Bottom, aPixelFormat);
-
-        end;
-    2 : begin // objects crosses with each other much
-          // Ischem koordinati priamougolnika, kotorii vkluchaet
-          // vse priamougolniki MoveRects i DrityRects
-          FLastChangedX1 := 1 shl 30;
-          FLastChangedY1 := 1 shl 30;
-          FLastChangedX2 := 0;
-          FLastChangedY2 := 0;
-
-          for RId := 0 to MoveCount - 1 do
-          begin
-            FLastChangedX1 := Min(FLastChangedX1, Min(MoveRects[RId].SourcePoint.X, MoveRects[RId].DestinationRect.Left));
-            FLastChangedY1 := Min(FLastChangedY1, Min(MoveRects[RId].SourcePoint.Y, MoveRects[RId].DestinationRect.Top));
-            FLastChangedX2 := Max(FLastChangedX2, Max(MoveRects[RId].SourcePoint.X + MoveRects[RId].DestinationRect.Right - MoveRects[RId].DestinationRect.Left, MoveRects[RId].DestinationRect.Right));
-            FLastChangedY2 := Max(FLastChangedY2, Max(MoveRects[RId].SourcePoint.Y + MoveRects[RId].DestinationRect.Bottom - MoveRects[RId].DestinationRect.Top, MoveRects[RId].DestinationRect.Bottom));
-          end;
-
-          for RId := 0 to DirtyCount - 1 do
-          begin
-            FLastChangedX1 := Min(FLastChangedX1, DirtyRects[RId].Left);
-            FLastChangedY1 := Min(FLastChangedY1, DirtyRects[RId].Top);
-            FLastChangedX2 := Max(FLastChangedX2, DirtyRects[RId].Right);
-            FLastChangedY2 := Max(FLastChangedY2, DirtyRects[RId].Bottom);
-          end;
-
-          DrawArea(FLastChangedX1, FLastChangedY1, FLastChangedX2, FLastChangedY2, aPixelFormat);
-        end;
-    3:  begin}
-          // copy pixels - we assume a 32bits bitmap !
-         for i := 0 to Desc.Height - 1 do
-          begin
-            Move(BitmapP1^, Bitmap.ScanLine[i]^, 4 * Desc.Width);
-            Inc(BitmapP1, 4 * Desc.Width);
-          end;
-//          for i := 0 to Desc.Height - 1 do
-//          begin
-//            Move(BitmapP1^, Bitmap.ScanLine[i]^, BytesInRow);
-//            Inc(BitmapP1, BytesInRow);
-//          end;
-
-          FLastChangedX1 := 0;
-          FLastChangedY1 := 0;
-          FLastChangedX2 := Desc.Width;
-          FLastChangedY2 := Desc.Height;
-      {end;
-    end; }
-
-  FContext.Unmap(FTexture, 0); //Это нужно?
-  FTexture := nil;
-  FDuplicate.ReleaseFrame;
-
-  Result := True;
-end;
-
-//procedure TDesktopDuplicationWrapper.FreeDIB(BitmapInfo: PBitmapInfo;
-//  InfoSize: DWORD;
-//  Bits: pointer;
-//  BitsSize: DWORD);
-//begin
-//  if BitmapInfo <> nil then
-//    FreeMem(BitmapInfo, InfoSize);
-////  if Bits <> nil then
-////    GlobalFreePtr(Bits);
-//end;
-//
-//procedure TDesktopDuplicationWrapper.BitmapToDIB(Bitmap: TBitmap;
-//  var BitmapInfo: PBitmapInfo;
-//  var InfoHeaderSize: DWORD;
-//  var Bits: pointer;
-//  var ImageSize: DWORD);
-//begin
-//  BitmapInfo := nil;
-//  InfoHeaderSize := 0;
-////  Bits := nil;
-//  ImageSize := 0;
-//  if not Bitmap.Empty then
-//  try
-//    GetDIBSizes(Bitmap.Handle, InfoHeaderSize, ImageSize);
-//    GetMem(BitmapInfo, InfoHeaderSize);
-////    Bits := GlobalAllocPtr(GMEM_MOVEABLE, ImageSize);
-////    if Bits = nil then
-////      raise
-////        EOutOfMemory.Create('Не хватает памяти для пикселей изображения');
-////      Exit;
-//    if not GetDIB(Bitmap.Handle, Bitmap.Palette, BitmapInfo^, Bits^) then
-//      //raise Exception.Create('Не могу создать DIB');
-//      Exit;
-//  finally
-//    if BitmapInfo <> nil then
-//      FreeMem(BitmapInfo, InfoHeaderSize);
-////    if Bits <> nil then
-////      GlobalFreePtr(Bits);
-//    BitmapInfo := nil;
-////    Bits := nil;
-//  end;
-//end;
-
-//function TDesktopDuplicationWrapper.DrawFrameToDib(pBits: PByte): Boolean;
-//var
-//  Desc: TD3D11_TEXTURE2D_DESC;
-//  Temp: ID3D11Texture2D;
-//  Resource: TD3D11_MAPPED_SUBRESOURCE;
-//  i: Integer;
-//  p: PByte;
-////  pDest: PByte;
-////  Bitmap: TBitmap;
-//  InfoHeaderSize: DWORD;
-//  ImageSize: DWORD ;
-//  BitmapInfo: PBitmapInfo;
-//begin
-//  Result := True;
-//
-//  FTexture.GetDesc(Desc);
-//
-//  if Bitmap = nil then
-//    Bitmap := TBitmap.Create;
-//
-//  Bitmap.PixelFormat := pf32Bit;
-//  Bitmap.SetSize(Desc.Width, Desc.Height);
-//
 //  Desc.BindFlags := 0;
+////  Desc.Format := DXGI_FORMAT_B8G8R8X8_TYPELESS; //DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 //  Desc.CPUAccessFlags := Ord(D3D11_CPU_ACCESS_READ) or Ord(D3D11_CPU_ACCESS_WRITE);
 //  Desc.Usage := D3D11_USAGE_STAGING;
 //  Desc.MiscFlags := 0;
-//
-//  //  READ/WRITE texture
-//  FError := FDevice.CreateTexture2D(@Desc, nil, Temp);
-//  if Failed(FError) then
-//  begin
-//    FTexture := nil;
-//    FDuplicate.ReleaseFrame;
-//
-//    Result := False;
-//    Exit;
-//  end;
-//
-//  // copy original to the RW texture
-//  FContext.CopyResource(Temp, FTexture);
-//
-//  // get texture bits
-//  FContext.Map(Temp, 0, D3D11_MAP_READ_WRITE, 0, Resource);
-//  p := Resource.pData;
-//
-////  CopyMemory(pBits, p, 4 * Desc.Width * Desc.Height);
-////  Move(p^, pBits^, 4 * Desc.Width * Desc.Height);
-//
-//  // copy pixels - we assume a 32bits bitmap !
-//  for i := 0 to Desc.Height - 1 do
-//  begin
-//    Move(p^, Bitmap.ScanLine[i]^, 4 * Desc.Width);
-//    Inc(p, 4 * Desc.Width);
-//  end;
-//
-////  pDest := pBits;
-////  for i := 0 to Desc.Height - 1 do
-////  begin
-////    Move(p^, pDest^, 4 * Desc.Width);
-////    Inc(p, 4 * Desc.Width);
-////    Inc(pDest, 4 * Desc.Width);
-////  end;
-//
-////  Bitmap.SaveToFile('C:\Rufus\dda.bmp');
-//
-////  BitmapToDIB(Bitmap,
-////    BitmapInfo,
-////    InfoHeaderSize,
-////    pBits,
-////    ImageSize);
-//
-////  FreeDIB(BitmapInfo, InfoHeaderSize, pBits, ImageSize);
-//
-//  FTexture := nil;
-//  FDuplicate.ReleaseFrame;
-//end;
 
-//function TDesktopDuplicationWrapper.GetFrame(var fNeedRecreate: Boolean): Boolean;  //Original
-//var
-//  FrameInfo: TDXGI_OUTDUPL_FRAME_INFO;
-//  Resource: IDXGIResource;
-//  BufLen : Integer;
-//  BufSize: Uint;
-//begin
-//  Result := False;
-//
-//  if FTexture <> nil then
-//  begin
-//    FTexture := nil;
-//    FDuplicate.ReleaseFrame;
-//  end;
-//
-//  FError := FDuplicate.AcquireNextFrame(0, FrameInfo, Resource);
-//  if Failed(FError) then
-//  begin
-////    if FError = DXGI_ERROR_ACCESS_LOST then
-////      fNeedRecreate := True;
-//
+  //  READ/WRITE texture
+  FError := FDevice.CreateTexture2D(@Desc, nil, FTempTexture);
+  if Failed(FError) then
+  begin
+    Debug.Log('CreateTexture2D Error: ' + IntToStr(FError));
+   // FTexture := nil;
+   // FDuplicate.ReleaseFrame;
+
+    goto ErrorInCapture;
+  end;
+
+  // copy original to the RW texture
+  FContext.CopyResource(FTempTexture, FTexture);
+  if Failed(FError) then
+  begin
+    Debug.Log('FContext.CopyResource Error: ' + IntToStr(FError));
+
+    goto ErrorInCapture;
+  end;
+
+  // get texture bits
+  FError := FContext.Map(FTempTexture, 0, D3D11_MAP_READ_WRITE, 0, Resource);
+  if Failed(FError) then
+  begin
+    Debug.Log('FContext.Map Error: ' + IntToStr(FError));
+  //  FTexture := nil;
+    //FDuplicate.ReleaseFrame;
+
+    goto ErrorInCapture;
+  end;
+
+ // CheckScreenInfo(@Desc);
+
+  //Result := false;
+
+  FScreenBuff := Resource.pData;
+ // getmem(ScreenBuff, 1920 * 1090 * 4);
+  //Move(Resource.pData^, ScreenBuff^, 1280 * 1024 * 4);
+ // ScreenBuff^:= 0;
+
+  if not DDRecieveRects then ;//goto ErrorInCapture;
+
+AttemptFinish:
+  if BadAttempt then
+  begin
+    if (FContext <> NIL) and (FTexture <> NIL) then FContext.Unmap(FTexture, 0); //
+    FTexture := nil;
+
+    FTempTexture := NIL;
+    DesktopResource := NIL;
+
+  if AttemptId > 1 then goto FailedCapture;
+
+    Inc(AttemptId);
+    BadAttempt := false;
+
+    if not CreateDD then goto FailedCapture;
+
+    goto CaptureStart;
+  end;
+
+  Result := true;
+  time := GetTickCount - time;
+  Debug.Log('cap time: ' + IntToStr(time));
+  Debug.Log('Screen successfully captured');
+
+  Exit;
+
+ErrorInCapture:
+  BadAttempt := true;
+  goto AttemptFinish;
+
+FailedCapture:
+  Debug.Log('Failed to capture screen');
+  Result := false;
+end;
+
+function TDesktopDuplicationWrapper.DDRecieveRects : Boolean;
+var
+  i, j, S1, S2, SU, SI : Integer;
+  BytesRecieved : UInt;
+  RctU, RctI : TRect;
+
+  PMoveRect : PDXGI_OUTDUPL_MOVE_RECT;
+  PDirtyRect : PRECT;
+
+  CLeft, CTop, CRight, CBottom : Boolean;
+  time: DWORD;
+begin
+  Result := true;
+  time := GetTickCount;
+
+  {if FrameInfo.TotalMetadataBufferSize <= 0 then
+  begin
+    FMovedRCnt := 0;
+    FDirtyRCnt := 0;
+    Exit;
+  end;}
+
+  // Получаем MoveRects и зансоим их в FChangeRects
+  FError := FDuplicate.GetFrameMoveRects(TempBuffLen,
+        PDXGI_OUTDUPL_MOVE_RECT(@TempBuff[0]), BytesRecieved);
+  if Failed(FError) then
+  begin
+    //Result := false;
+   // Exit;
+    FMovedRCnt := 0;
+  end else FMovedRCnt := (BytesRecieved div SizeOf(TDXGI_OUTDUPL_MOVE_RECT));
+
+  for i := 0 to FMovedRCnt - 1 do
+  begin
+    PMoveRect := PDXGI_OUTDUPL_MOVE_RECT(@TempBuff[0]) + i;
+  {  ChangedRects[ChangedRectsCnt] := TRect.Create(TPoint.Create(PMoveRect.SourcePoint.X, PMoveRect.SourcePoint.Y),
+    PMoveRect.DestinationRect.Right - PMoveRect.DestinationRect.Left,
+    PMoveRect.DestinationRect.Bottom - PMoveRect.DestinationRect.Top);
+    ChangedRects[ChangedRectsCnt + 1] := TRect.Create(PMoveRect.DestinationRect.Left, PMoveRect.DestinationRect.Top,
+    PMoveRect.DestinationRect.Right, PMoveRect.DestinationRect.Bottom);
+    Inc(ChangedRectsCnt, 2);}
+    with PMoveRect^ do
+    begin
+      MovedR[i] := DestinationRect;//TRect.Create(DestinationRect.Left,
+       // DestinationRect.Top, DestinationRect.Right, DestinationRect.Bottom);
+      MovedRP[i] := SourcePoint;//TPoint.Create(PMoveRect.SourcePoint.X,
+     //   PMoveRect.SourcePoint.Y
+    end;
+
+  end;
+
+
+  // Получаем DirtyRects и зансоим их в FChangeRects
+  FDuplicate.GetFrameDirtyRects(TempBuffLen, PRECT(@TempBuff[0]), BytesRecieved);
+  if Failed(FError) then
+  begin
+    //Result := false;
+    FDirtyRCnt := 0;
 //    Exit;
-//  end;
-//
-//  if FrameInfo.TotalMetadataBufferSize > 0 then
-//  begin
-//    FError := Resource.QueryInterface(IID_ID3D11Texture2D, FTexture);
-//    if failed(FError) then
-//      Exit;
-//
-//    Resource := nil;
-//
-//    BufLen := FrameInfo.TotalMetadataBufferSize;
-//    if Length(FMetaData) < BufLen then
-//      SetLength(FMetaData, BufLen);
-//
-//    FMoveRects := Pointer(FMetaData);
-//
-//    FError := FDuplicate.GetFrameMoveRects(BufLen, FMoveRects, BufSize);
-//    if Failed(FError) then
-//      Exit;
-//    FMoveCount := BufSize div sizeof(TDXGI_OUTDUPL_MOVE_RECT);
-//
-//    FDirtyRects := @FMetaData[BufSize];
-//    Dec(BufLen, BufSize);
-//
-//    FError := FDuplicate.GetFrameDirtyRects(BufLen, FDirtyRects, BufSize);
-//    if Failed(FError) then
-//      Exit;
-//    FDirtyCount := BufSize div sizeof(TRECT);
-//
-//    Result := True;
-//  end else begin
-//    FDuplicate.ReleaseFrame;
-//  end;
-//end;
+  end else FDirtyRCnt := (BytesRecieved div SizeOf(TRECT));
+
+ // Result := true;
+
+  FDirtyRCnt := (Integer(BytesRecieved) div SizeOf(TRECT));
+  for i := 0 to FDirtyRCnt - 1 do
+  begin
+    PDirtyRect := PRECT(@TempBuff[0]) + i;
+    with PDirtyRect^ do
+    begin
+      DirtyR[i] := TRect.Create(Left, Top, Right, Bottom);
+      Debug.Log('DirtyRect recieved (' + IntToStr(Left)
+         + ', ' + IntToStr(Top) + ', ' + IntToStr(Right)
+         + ', ' + IntToStr(Bottom) + ')');
+    end;
+  end;
+
+  // Отсекаем части прямоугольников из DirtyRecs, выходящие за ClipRect
+  if (ClipRect.Width <> 0) and (ClipRect.Height <> 0) then
+    for i := 0 to FDirtyRCnt - 1 do
+      DirtyR[i] := TRect.Intersect(DirtyR[i], ClipRect);
+
+  time := GetTickCount - time;
+  Debug.Log('enc time: ' + IntToStr(time));
+
+  Exit;//!!!!!!!!!!!!!!!!!!!!!!!!
+  // Если при перемещении областей MoveR часть окна попала из невидимой
+  // зоны в видимую то эту часть нужно добавить в DirtyR
+  // Если движение было по диагонали добавляем 3 прямоуголника, иначе 1
+
+  for i := 0 to FMovedRCnt - 1 do
+    with MovedR[i], MovedRP[i] do
+    begin
+      CLeft := (X < Left) and (X < ClipRect.Left); // нужно перерисовать область слева от окна
+      CTop := (Y < Top) and (Y < ClipRect.Top); // сверху
+      CRight := (X >= Left) and (X + Width >= ClipRect.Right); // справа
+      CBottom := (Y >= Bottom) and (Y + Height >= ClipRect.Bottom); // снизу
+
+      // Горизонтальные или вертикальные области по боковым граням окна
+      if CLeft then
+      begin
+        DirtyR[FDirtyRCnt] := TRect.Create(ClipRect.Left, Top,
+          ClipRect.Left + Left - X + 1, Bottom);
+        Inc(FDirtyRCnt);
+      end;
+      if CTop then
+      begin
+        DirtyR[FDirtyRCnt] := TRect.Create(Left, ClipRect.Top,
+          Right, ClipRect.Top + Top - Y + 1);
+        Inc(FDirtyRCnt);
+      end;
+      if CRight then
+      begin
+        DirtyR[FDirtyRCnt] := TRect.Create(ClipRect.Right - (X - Left) - 1,
+          Top, ClipRect.Right, Bottom);
+        Inc(FDirtyRCnt);
+      end;
+      if CBottom then
+      begin
+        DirtyR[FDirtyRCnt] := TRect.Create(Left, ClipRect.Bottom - (Y - Bottom) - 1,
+          Right, ClipRect.Bottom);
+        Inc(FDirtyRCnt);
+      end;
+
+      // Пересечение горизонтальных и вертикальных областей
+      // нужно если перемещение было по обоим осям сразу
+      if CLeft and CTop then
+      begin
+        DirtyR[FDirtyRCnt] := TRect.Create(ClipRect.Left, ClipRect.Top,
+          ClipRect.Left + Left - X, ClipRect.Top + Top - Y);
+        Inc(FDirtyRCnt);
+      end;
+      if CLeft and CBottom then
+      begin
+        DirtyR[FDirtyRCnt] := TRect.Create(ClipRect.Left,
+          ClipRect.Bottom - (Y - Top) - 1,
+          ClipRect.Left + Left - X, ClipRect.Bottom);
+        Inc(FDirtyRCnt);
+      end;
+      if CRight and CTop then
+      begin
+        DirtyR[FDirtyRCnt] := TRect.Create(ClipRect.Right - (X - Left) - 1,
+          ClipRect.Top, ClipRect.Right, ClipRect.Top + Top - Y);
+        Inc(FDirtyRCnt);
+      end;
+      if CRight and CBottom then
+      begin
+        DirtyR[FDirtyRCnt] := TRect.Create(ClipRect.Right - (X - Left) - 1,
+          ClipRect.Bottom - (Y - Top) - 1, ClipRect.Right, ClipRect.Bottom);
+        Inc(FDirtyRCnt);
+      end;
+
+      // Корректируем MoveR и MoveRP чтобы они не выходили за ClipRect
+      if CLeft then begin Left := ClipRect.Left + Left - X; X := ClipRect.Left; end;
+      if CTop then begin Top := ClipRect.Top + Top - Y; Y := ClipRect.Top; end;
+      if CRight then begin Right := ClipRect.Right - (X - Left); X := ClipRect.Left + (X - Left); end;
+      if CBottom then begin Bottom := ClipRect.Bottom - (Y - Bottom); Y := ClipRect.Top + (Y - Top); end;
+    end;
+
+
+  // Обьеденяем прямоугольники из ChangedRects если их площадь пересечения велика
+ { for i := 0 to ChangedRectsCnt - 1 do
+  begin
+    j := i + 1;
+    while j < ChangedRectsCnt do
+    begin
+      RctU := TRect.Union(ChangedRects[i], ChangedRects[j]);
+      RctI := TRect.Intersect(ChangedRects[i], ChangedRects[j]);
+
+      S1 := ChangedRects[i].Width * ChangedRects[i].Height;
+      S2 := ChangedRects[j].Width * ChangedRects[j].Height;
+      SU := RctU.Width * RctU.Height; SI := RctI.Width * RctI.Height;
+
+      if SU - (S1 + S2) > SI then
+      begin
+        Inc(j);
+        continue; // Площадь пересечения двух прямоугольников мала
+      end;
+          // Площадь пересечения двух прямоугольников велика
+          // Заносим в i-ый прямоугольник прямоугольник обьединения i и j
+          // j-ый прямоугольник удаляем
+      ChangedRects[i] := RctU;
+
+      Move(ChangedRects[j + 1], ChangedRects[j],
+        (ChangedRectsCnt - j - 1) * SizeOf(TRect));
+
+      Dec(ChangedRectsCnt);
+    end;
+  end; }
+  Result := true;
+  time := GetTickCount - time;
+  Debug.Log('enc time: ' + IntToStr(time));
+end;
+
+function TDesktopDuplicationWrapper.GetScreenInfoChanged: Boolean;
+var
+  NewBitsPerPixel : Integer;
+begin
+  Result := false;
+
+  if FScreenWidth <> Desc.Width then
+  begin
+    FScreenWidth := Desc.Width;
+    Result := true;
+  end;
+
+  if FScreenHeight <> Desc.Height then
+  begin
+    FScreenHeight := Desc.Height;
+    Result := true;
+  end;
+
+  if Result and FFullScreen then
+    FClipRect := TRect.Create(0, 0, FScreenWidth, FScreenHeight);
+
+  case Desc.Format of
+    DXGI_FORMAT_R8G8B8A8_TYPELESS,
+    DXGI_FORMAT_R8G8B8A8_UNORM,
+    DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+    DXGI_FORMAT_R8G8B8A8_UINT,
+    DXGI_FORMAT_R8G8B8A8_SNORM,
+    DXGI_FORMAT_R8G8B8A8_SINT,
+    DXGI_FORMAT_B8G8R8A8_UNORM,
+    DXGI_FORMAT_B8G8R8X8_UNORM,
+    DXGI_FORMAT_B8G8R8A8_TYPELESS,
+    DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+    DXGI_FORMAT_B8G8R8X8_TYPELESS,
+    DXGI_FORMAT_B8G8R8X8_UNORM_SRGB : NewBitsPerPixel := 32;
+  end;
+  if FBitsPerPixel <> NewBitsPerPixel then
+  begin
+    FBitsPerPixel := NewBitsPerPixel;
+    Result := true;
+  end;
+end;
+
+procedure TDesktopDuplicationWrapper.SetClipRect(const Rect : TRect);
+begin
+  if (Rect.Width = 0) or (Rect.Height = 0) then
+  begin
+    FullScreen := true;
+    FClipRect := TRect.Create(0, 0, FScreenWidth, FScreenHeight);
+  end else
+  begin
+    FullScreen := false;
+    FClipRect := Rect;
+  end;
+end;
 
 end.

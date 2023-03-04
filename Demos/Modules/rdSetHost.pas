@@ -203,7 +203,7 @@ procedure TrdHostSettings.Setup;
     xUseMirrorDriver.Checked:=PDesktop.GUseMirrorDriver;
     xUseMouseDriver.Checked:=PDesktop.GUseMouseDriver;
 
-    xCaptureLayered.Checked:=PDesktop.GCaptureLayeredWindows;
+//    xCaptureLayered.Checked:=PDesktop.GCaptureLayeredWindows;
     xCaptureAllMonitors.Checked:=PDesktop.GCaptureAllMonitors;
     xShowFullScreen.Checked:=PDesktop.GFullScreen;
     cbColorLimit.ItemIndex:=Ord(PDesktop.GColorLimit);
@@ -555,7 +555,7 @@ procedure TrdHostSettings.btnOKClick(Sender: TObject);
       begin
       PDesktop.GUseMirrorDriver:=xUseMirrorDriver.Checked;
       PDesktop.GUseMouseDriver:=xUseMouseDriver.Checked;
-      PDesktop.GCaptureLayeredWindows:=xCaptureLayered.Checked;
+//      PDesktop.GCaptureLayeredWindows:=xCaptureLayered.Checked;
       PDesktop.GCaptureAllMonitors:=xCaptureAllMonitors.Checked;
       PDesktop.GColorLimit:=TrdColorLimit(cbColorLimit.ItemIndex);
       PDesktop.GColorLowLimit:=TrdLowColorLimit(cbLowColorLimit.ItemIndex);

@@ -4,20 +4,18 @@ object rdHostSettings: TrdHostSettings
   BorderIcons = []
   BorderStyle = bsDialog
   Caption = 'Host Settings'
-  ClientHeight = 435
-  ClientWidth = 267
+  ClientHeight = 434
+  ClientWidth = 263
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'Arial'
   Font.Style = []
-  OldCreateOrder = False
   Position = poScreenCenter
   PrintScale = poNone
   Scaled = False
   OnClose = FormClose
-  PixelsPerInch = 96
   TextHeight = 14
   object PageControl1: TPageControl
     Left = 4
@@ -29,10 +27,6 @@ object rdHostSettings: TrdHostSettings
     TabOrder = 0
     object TabSheet1: TTabSheet
       Caption = 'Users'
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Label6: TLabel
         Left = 0
         Top = 192
@@ -245,10 +239,6 @@ object rdHostSettings: TrdHostSettings
     object TabSheet2: TTabSheet
       Caption = 'Super Users'
       ImageIndex = 2
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Label19: TLabel
         Left = 4
         Top = 192
