@@ -45,6 +45,8 @@ type
 
     function GetDirtyRCnt: Integer;
     function GetMovedRCnt: Integer;
+    procedure SetDirtyRCnt(Value: Integer);
+    procedure SetMovedRCnt(Value: Integer);
     function GetDirtyR(Index: Integer): TRect;
     function GetMovedR(Index: Integer): TRect;
     function GetMovedRP(Index: Integer): TPoint;
@@ -69,8 +71,8 @@ type
     property BitsPerPixel: Integer read FBitsPerPixel;
     property MouseFlags: Integer read FMouseFlags;
     property MouseCursor: Integer read FMouseCursor;
-    property DirtyRCnt: Integer read GetDirtyRCnt;
-    property MovedRCnt: Integer read GetMovedRCnt;
+    property DirtyRCnt: Integer read GetDirtyRCnt write SetDirtyRCnt;
+    property MovedRCnt: Integer read GetMovedRCnt write SetMovedRCnt;
     property DirtyR[Index: Integer]: TRect read GetDirtyR write SetDirtyR;
     property MovedR[Index: Integer]: TRect read GetMovedR write SetMovedR;
     property MovedRP[Index: Integer]: TPoint read GetMovedRP write SetMovedRP;
@@ -136,12 +138,28 @@ begin
     Result := FDesktopDuplicator.MovedRCnt;
 end;
 
+procedure TRtcScreenEncoder.SetMovedRCnt(Value: Integer);
+begin
+  if IsService then
+    FMovedRCnt := Value
+  else
+    FDesktopDuplicator.MovedRCnt := Value;
+end;
+
 function TRtcScreenEncoder.GetDirtyRCnt: Integer;
 begin
   if IsService then
     Result := FDirtyRCnt
   else
     Result := FDesktopDuplicator.DirtyRCnt;
+end;
+
+procedure TRtcScreenEncoder.SetDirtyRCnt(Value: Integer);
+begin
+  if IsService then
+    FDirtyRCnt := Value
+  else
+    FDesktopDuplicator.DirtyRCnt := Value;
 end;
 
 function TRtcScreenEncoder.GetDirtyR(Index: Integer): TRect;
@@ -221,7 +239,7 @@ var
   numberRead : SIZE_T;
   WaitTimeout: DWORD;
   SaveBitMap: TBitmap;
-  i, j: LongInt;
+  i, j, TempInt: LongInt;
   fScreenGrabbed: Boolean;
 begin
   if not IsWindows8orLater then
@@ -311,14 +329,42 @@ begin
         CurOffset := CurOffset + SizeOf(FMouseX);
         CopyMemory(@FMouseY, PByte(pMap) + CurOffset, SizeOf(FMouseY));
         CurOffset := CurOffset + SizeOf(FMouseY);
-//        CopyMemory(@FLastChangedX1, PByte(pMap) + CurOffset, SizeOf(FLastChangedX1));
-//        CurOffset := CurOffset + SizeOf(FLastChangedX1);
-//        CopyMemory(@FLastChangedY1, PByte(pMap) + CurOffset, SizeOf(FLastChangedY1));
-//        CurOffset := CurOffset + SizeOf(FLastChangedY1);
-//        CopyMemory(@FLastChangedX2, PByte(pMap) + CurOffset, SizeOf(FLastChangedX2));
-//        CurOffset := CurOffset + SizeOf(FLastChangedX2);
-//        CopyMemory(@FLastChangedY2, PByte(pMap) + CurOffset, SizeOf(FLastChangedY2));
-//        CurOffset := CurOffset + SizeOf(FLastChangedY2);
+
+        CopyMemory(@TempInt, PByte(pMap) + CurOffset, SizeOf(DirtyRCnt));
+        DirtyRCnt := TempInt;
+        CurOffset := CurOffset + SizeOf(DirtyRCnt);
+        for i := 0 to DirtyRCnt - 1 do
+        begin
+          CopyMemory(@FDesktopDuplicator.DirtyR[i].Top, PByte(pMap) + CurOffset, SizeOf(FDesktopDuplicator.DirtyR[i].Top));
+          CurOffset := CurOffset + SizeOf(FDesktopDuplicator.DirtyR[i].Top);
+          CopyMemory(@FDesktopDuplicator.DirtyR[i].Left, PByte(pMap) + CurOffset, SizeOf(FDesktopDuplicator.DirtyR[i].Left));
+          CurOffset := CurOffset + SizeOf(FDesktopDuplicator.DirtyR[i].Left);
+          CopyMemory(@FDesktopDuplicator.DirtyR[i].Bottom, PByte(pMap) + CurOffset, SizeOf(FDesktopDuplicator.DirtyR[i].Bottom));
+          CurOffset := CurOffset + SizeOf(FDesktopDuplicator.DirtyR[i].Bottom);
+          CopyMemory(@FDesktopDuplicator.DirtyR[i].Right, PByte(pMap) + CurOffset, SizeOf(FDesktopDuplicator.DirtyR[i].Right));
+          CurOffset := CurOffset + SizeOf(FDesktopDuplicator.DirtyR[i].Right);
+        end;
+
+        CopyMemory(@TempInt, PByte(pMap) + CurOffset, SizeOf(MovedRCnt));
+        DirtyRCnt := TempInt;
+        CurOffset := CurOffset + SizeOf(MovedRCnt);
+        for i := 0 to MovedRCnt - 1 do
+        begin
+          CopyMemory(@FDesktopDuplicator.MovedR[i].Top, PByte(pMap) + CurOffset, SizeOf(FDesktopDuplicator.MovedR[i].Top));
+          CurOffset := CurOffset + SizeOf(FDesktopDuplicator.MovedR[i].Top);
+          CopyMemory(@FDesktopDuplicator.MovedR[i].Left, PByte(pMap) + CurOffset, SizeOf(FDesktopDuplicator.MovedR[i].Left));
+          CurOffset := CurOffset + SizeOf(FDesktopDuplicator.MovedR[i].Left);
+          CopyMemory(@FDesktopDuplicator.MovedR[i].Bottom, PByte(pMap) + CurOffset, SizeOf(FDesktopDuplicator.MovedR[i].Bottom));
+          CurOffset := CurOffset + SizeOf(FDesktopDuplicator.MovedR[i].Bottom);
+          CopyMemory(@FDesktopDuplicator.MovedR[i].Right, PByte(pMap) + CurOffset, SizeOf(FDesktopDuplicator.MovedR[i].Right));
+          CurOffset := CurOffset + SizeOf(FDesktopDuplicator.MovedR[i].Right);
+
+          CopyMemory(@FDesktopDuplicator.MovedRP[i].X, PByte(pMap) + CurOffset, SizeOf(FDesktopDuplicator.MovedRP[i].X));
+          CurOffset := CurOffset + SizeOf(FDesktopDuplicator.MovedRP[i].X);
+          CopyMemory(@FDesktopDuplicator.MovedRP[i].Y, PByte(pMap) + CurOffset, SizeOf(FDesktopDuplicator.MovedRP[i].Y));
+          CurOffset := CurOffset + SizeOf(FDesktopDuplicator.MovedRP[i].Y);
+        end;
+
 
         if OnlyGetScreenParams then
           Exit;
@@ -742,23 +788,23 @@ begin
     Rec := TRtcRecord.Create;
     with Rec.newRecord('res') do//Res.newRecord('res') do
     begin
-      asInteger['Width'] := FDesktopDuplicator.ClipRect.Width;//ScreenDD.ScreenWidth;
-      asInteger['Height'] := FDesktopDuplicator.ClipRect.Height;//ScreenDD.ScreenHeight;
-      asInteger['Bits'] := FDesktopDuplicator.BitsPerPixel;
-      //if FullScreen then FScreenRect := FClipRect;
-         // asInteger['BytesPerPixel'] := FBytesPerPixel;
+      asInteger['Width'] := ClipRect.Width;//ScreenDD.ScreenWidth;
+      asInteger['Height'] := ClipRect.Height;//ScreenDD.ScreenHeight;
+      asInteger['Bits'] := BitsPerPixel;
+      //if FullScreen then FScreenRect := ClipRect;
+         // asInteger['BytesPerPixel'] := BytesPerPixel;
     end;
 
     //Debug.Log('Encoding full screen1');
 
    // DirtyRCnt := 1;
-   // DirtyR[0] := FClipRect;
+   // DirtyR[0] := ClipRect;
    {$IFDEF DEBUG}
     CurTick := Debug.GetMCSTick;
    {$ENDIF}
     //Debug.Log('Encoding full screen2');
 
-    EncodeImage(Rec.newArray('scrdr').NewRecord(0){AsRecord[0]}, FClipRect);
+    EncodeImage(Rec.newArray('scrdr').NewRecord(0){AsRecord[0]}, ClipRect);
 
     {$IFDEF DEBUG}
       EncLat := Debug.GetMCSTick - CurTick;
