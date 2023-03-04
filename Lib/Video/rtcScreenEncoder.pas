@@ -41,7 +41,7 @@ type
     FScreenWidth, FScreenHeight, FBitsPerPixel, FMouseFlags, FMouseCursor, FMouseX, FMouseY: Integer;
     FClipRect: TRect;
     FScreenBuff: PByte;
-   // FScreenInfoChanged : Boolean;
+    FScreenInfoChanged : Boolean;
 
     function GetScreenWidth: Integer;
     function GetScreenHeight: Integer;
@@ -60,6 +60,7 @@ type
     procedure SetMovedRP(Index: Integer; const Value: TPoint);
     function GetClipRect: TRect;
     procedure SetClipRect(Value: TRect);
+    function GetScreenInfoChanged: Boolean;
 
     procedure EncodeImage(Rec : TRtcRecord; Rect : TRect);
 
@@ -82,6 +83,7 @@ type
     property MovedR[Index: Integer]: TRect read GetMovedR write SetMovedR;
     property MovedRP[Index: Integer]: TPoint read GetMovedRP write SetMovedRP;
     property ClipRect : TRect read GetClipRect write SetClipRect;
+    property ScreenInfoChanged: Boolean read GetScreenInfoChanged;
   end;
 
 implementation
@@ -118,6 +120,14 @@ begin
   end;
 end;
  }
+
+function TRtcScreenEncoder.GetScreenInfoChanged: Boolean;
+begin
+  if IsService then
+    Result := FScreenInfoChanged
+  else
+    FDesktopDuplicator.ScreenInfoChanged;
+end;
 
 function TRtcScreenEncoder.GetScreenWidth: Integer;
 begin
@@ -351,15 +361,22 @@ begin
         FScreenWidth := 0;
         FScreenHeight := 0;
         FBitsPerPixel := 0;
+        FScreenInfoChanged := False;
         CurOffset := 0;
         CopyMemory(@BitmapSize, pMap, SizeOf(BitmapSize));
         CurOffset := CurOffset + SizeOf(BitmapSize);
         CopyMemory(@fScreenGrabbed, PByte(pMap) + CurOffset, SizeOf(fScreenGrabbed));
         CurOffset := CurOffset + SizeOf(fScreenGrabbed);
-        CopyMemory(@FScreenWidth, PByte(pMap) + CurOffset, SizeOf(FScreenWidth));
-        CurOffset := CurOffset + SizeOf(FScreenWidth);
-        CopyMemory(@FScreenHeight, PByte(pMap) + CurOffset, SizeOf(FScreenHeight));
-        CurOffset := CurOffset + SizeOf(FScreenHeight);
+        CopyMemory(@TempInt, PByte(pMap) + CurOffset, SizeOf(TempInt));
+        CurOffset := CurOffset + SizeOf(TempInt);
+        if TempInt <> FScreenWidth then
+          FScreenInfoChanged := True;
+        FScreenWidth := TempInt;
+        CopyMemory(@TempInt, PByte(pMap) + CurOffset, SizeOf(TempInt));
+        CurOffset := CurOffset + SizeOf(TempInt);
+        if TempInt <> FScreenHeight then
+          FScreenInfoChanged := True;
+        FScreenHeight := TempInt;
         CopyMemory(@FBitsPerPixel, PByte(pMap) + CurOffset, SizeOf(FBitsPerPixel));
         CurOffset := CurOffset + SizeOf(FBitsPerPixel);
 //        CopyMemory(@PID, PByte(pMap) + CurOffset, SizeOf(PID));
@@ -375,9 +392,8 @@ begin
         CopyMemory(@FMouseY, PByte(pMap) + CurOffset, SizeOf(FMouseY));
         CurOffset := CurOffset + SizeOf(FMouseY);
 
-        CopyMemory(@TempInt, PByte(pMap) + CurOffset, SizeOf(DirtyRCnt));
-        DirtyRCnt := TempInt;
-        CurOffset := CurOffset + SizeOf(DirtyRCnt);
+        CopyMemory(@FDirtyRCnt, PByte(pMap) + CurOffset, SizeOf(FDirtyRCnt));
+        CurOffset := CurOffset + SizeOf(FDirtyRCnt);
         for i := 0 to DirtyRCnt - 1 do
         begin
           CopyMemory(@FDesktopDuplicator.DirtyR[i].Top, PByte(pMap) + CurOffset, SizeOf(FDesktopDuplicator.DirtyR[i].Top));
@@ -390,8 +406,7 @@ begin
           CurOffset := CurOffset + SizeOf(FDesktopDuplicator.DirtyR[i].Right);
         end;
 
-        CopyMemory(@TempInt, PByte(pMap) + CurOffset, SizeOf(MovedRCnt));
-        DirtyRCnt := TempInt;
+        CopyMemory(@FMovedRCnt, PByte(pMap) + CurOffset, SizeOf(FMovedRCnt));
         CurOffset := CurOffset + SizeOf(MovedRCnt);
         for i := 0 to MovedRCnt - 1 do
         begin
@@ -758,23 +773,34 @@ var
   CurTick, CapLat, EncLat : UInt64;
   IniF: TIniFile;
 begin
-  DataCS.Enter;
   //ShowMessage('GrabScreen');
   {$IFDEF DEBUG}
     CurTick := Debug.GetMCSTick;
   {$ENDIF}
 
-  if not FDesktopDuplicator.DDCaptureScreen then
+  if IsService then
   begin
-    DataCS.Leave;
+    GetScreenFromHelperByMMF;
 
-    ScrDelta^ := '';
-    if Assigned(ScrFull) then ScrFull^ := '';
+    InfoChanged := True;
+  end
+  else
+  begin
+    DataCS.Enter;
+    if not FDesktopDuplicator.DDCaptureScreen then
+    begin
+      DataCS.Leave;
 
-    Exit;
+      ScrDelta^ := '';
+      if Assigned(ScrFull) then ScrFull^ := '';
+
+      Exit;
+    end;
+
+    FScreenBuff := FDesktopDuplicator.ScreenBuff;
   end;
 
-  FScreenBuff := FDesktopDuplicator.ScreenBuff;
+  InfoChanged := ScreenInfoChanged;
 
   {$IFDEF DEBUG}
   CapLat := Debug.GetMCSTick - CurTick;
@@ -783,7 +809,7 @@ begin
 
 
  //ShowMessage('DDRecieved');
-  InfoChanged := FDesktopDuplicator.ScreenInfoChanged;
+//  InfoChanged := FDesktopDuplicator.ScreenInfoChanged;
 //  DDRecieveRects;
 
  {
