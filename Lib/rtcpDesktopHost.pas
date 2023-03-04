@@ -760,166 +760,166 @@ var
   ScrChanged: boolean;
 
   //FileTrans+
-  tofolder, tofile: String;
-  loop: integer;
-  WriteOK,ReadOK:boolean;
-
-  function allZeroes:boolean;
-    var
-      a:integer;
-    begin
-    if length(s)=0 then
-      Result:=False
-    else
-      begin
-      Result:=True;
-      for a:=1 to length(s) do
-        if s[a]<>#0 then
-          begin
-          Result:=False;
-          Break;
-          end;
-      end;
-    end;
-  procedure WriteNow(const tofile:String);
-    begin
-    loop:=0; ReadOK:=False;
-    repeat
-      Inc(loop);
-      WriteOK:=Write_File(tofile, s, rtc_ShareDenyNone);
-      if WriteOK then
-        begin
-        ReadOK:=Read_File(tofile)=s;
-        if not ReadOK then
-          begin
-          Log('"'+tofile+'" - '+IntToStr(loop)+'. Read FAIL @'+Data.asString['at']+' ('+IntToStr(length(s))+')','FILES');
-          Sleep(100);
-          end;
-        end
-      else
-        begin
-        Log('"'+tofile+'" - '+IntToStr(loop)+'. Write FAIL @'+Data.asString['at']+' ('+IntToStr(length(s))+')','FILES');
-        Sleep(100);
-        end;
-      until (WriteOK and ReadOK) or (loop>=10);
-    end;
-  procedure WriteNowAt(const tofile:String);
-    begin
-    loop:=0; ReadOK:=False;
-    repeat
-      Inc(loop);
-      WriteOK:=Write_File(tofile, s, Data.asLargeInt['at'], rtc_ShareDenyNone);
-      if WriteOK then
-        begin
-        ReadOK:=Read_File(tofile, Data.asLargeInt['at'], length(s))=s;
-        if not ReadOK then
-          begin
-          Log('"'+tofile+'" - '+IntToStr(loop)+'. Read FAIL @'+Data.asString['at']+' ('+IntToStr(length(s))+')','FILES');
-          Sleep(100);
-          end;
-        end
-      else
-        begin
-        Log('"'+tofile+'" - '+IntToStr(loop)+'. Write FAIL @'+Data.asString['at']+' ('+IntToStr(length(s))+')','FILES');
-        Sleep(100);
-        end;
-      until (WriteOK and ReadOK) or (loop>=10);
-    end;
+//  tofolder, tofile: String;
+//  loop: integer;
+//  WriteOK,ReadOK:boolean;
+//
+//  function allZeroes:boolean;
+//    var
+//      a:integer;
+//    begin
+//    if length(s)=0 then
+//      Result:=False
+//    else
+//      begin
+//      Result:=True;
+//      for a:=1 to length(s) do
+//        if s[a]<>#0 then
+//          begin
+//          Result:=False;
+//          Break;
+//          end;
+//      end;
+//    end;
+//  procedure WriteNow(const tofile:String);
+//    begin
+//    loop:=0; ReadOK:=False;
+//    repeat
+//      Inc(loop);
+//      WriteOK:=Write_File(tofile, s, rtc_ShareDenyNone);
+//      if WriteOK then
+//        begin
+//        ReadOK:=Read_File(tofile)=s;
+//        if not ReadOK then
+//          begin
+//          Log('"'+tofile+'" - '+IntToStr(loop)+'. Read FAIL @'+Data.asString['at']+' ('+IntToStr(length(s))+')','FILES');
+//          Sleep(100);
+//          end;
+//        end
+//      else
+//        begin
+//        Log('"'+tofile+'" - '+IntToStr(loop)+'. Write FAIL @'+Data.asString['at']+' ('+IntToStr(length(s))+')','FILES');
+//        Sleep(100);
+//        end;
+//      until (WriteOK and ReadOK) or (loop>=10);
+//    end;
+//  procedure WriteNowAt(const tofile:String);
+//    begin
+//    loop:=0; ReadOK:=False;
+//    repeat
+//      Inc(loop);
+//      WriteOK:=Write_File(tofile, s, Data.asLargeInt['at'], rtc_ShareDenyNone);
+//      if WriteOK then
+//        begin
+//        ReadOK:=Read_File(tofile, Data.asLargeInt['at'], length(s))=s;
+//        if not ReadOK then
+//          begin
+//          Log('"'+tofile+'" - '+IntToStr(loop)+'. Read FAIL @'+Data.asString['at']+' ('+IntToStr(length(s))+')','FILES');
+//          Sleep(100);
+//          end;
+//        end
+//      else
+//        begin
+//        Log('"'+tofile+'" - '+IntToStr(loop)+'. Write FAIL @'+Data.asString['at']+' ('+IntToStr(length(s))+')','FILES');
+//        Sleep(100);
+//        end;
+//      until (WriteOK and ReadOK) or (loop>=10);
+//    end;
   //FileTrans-
 begin
   //FileTrans+
-  if Data.FunctionName = 'file' then // user is sending us a file
-  begin
-    if isSubscriber(uname) then
-    begin
-      s := Data.asString['data'];
-
-      tofolder := Data.asText['to'];
-      tofile := tofolder;
-      if Copy(tofile, length(tofile), 1) <> '\' then
-        tofile := tofile + '\';
-      tofile := tofile + Data.asText['file'];
-
-      if not DirectoryExists(ExtractFilePath(tofile)) then
-        ForceDirectories(ExtractFilePath(tofile));
-
-      if (length(s)>0) or // content received, or ...
-         (Copy(tofile, length(tofile), 1) <> '\') then // NOT a folder
-        begin
-        if allZeroes then
-          Log('"'+tofile+'" - ZERO DATA @'+Data.asString['at']+' ('+IntToStr(length(s))+')','FILES');
-        // write file content
-        if Data.asLargeInt['at'] = 0 then
-          // overwrite old file on first write access
-          begin
-          WriteNow(tofile);
-          if not (WriteOK and ReadOK) then
-            WriteNow(tofile+'.{ACCESS_DENIED}');
-          end
-        else
-          // append to the end later
-          begin
-          if (File_Size(tofile)<>Data.asLargeInt['at']) then
-            begin
-            if File_Size(tofile+'.{ACCESS_DENIED}')=Data.asLargeInt['at'] then
-              WriteNowAt(tofile+'.{ACCESS_DENIED}')
-            else if (File_Size(tofile)>Data.asLargeInt['at']) then
-              Log('"'+tofile+'" - DOUBLE DATA @'+Data.asString['at']+' /'+IntToStr(File_Size(tofile))+' ('+IntToStr(length(s))+')','FILES')
-            else
-              Log('"'+tofile+'" - MISSING DATA @'+Data.asString['at']+' /'+IntToStr(File_Size(tofile))+' ('+IntToStr(length(s))+')','FILES');
-            end
-          else
-            begin
-            WriteNowAt(tofile);
-            if not (WriteOK and ReadOK) then
-              WriteNowAt(tofile+'.{ACCESS_DENIED}');
-            end;
-          end;
-        end;
-
-      // set file attributes
-      if not Data.isNull['fattr'] then
-        FileSetAttr(tofile, Data.asInteger['fattr']);
-
-      // set file age
-      if not Data.isNull['fage'] then
-        FileSetDate(tofile, DateTimeToFileDate(Data.asDateTime['fage']));
-
-      if Data.asBoolean['stop'] then
-        Event_FileWriteStop(Sender, uname, Data.asText['path'], tofolder,
-          length(s))
-      else
-        Event_FileWrite(Sender, uname, Data.asText['path'], tofolder,
-          length(s));
-    end;
-  end
-  else if Data.FunctionName = 'putfile' then // user wants to send us a file
-  begin
-    if isSubscriber(uname) then
-    begin
-      // tell user we are ready to accept his file
-      r := TRtcFunctionInfo.Create;
-      r.FunctionName := 'pfile';
-      r.asInteger['id'] := Data.asInteger['id'];
-      r.asText['path'] := Data.asText['path'];
-      Client.SendToUser(Sender, uname, r);
-      tofolder := Data.asText['to'];
-      Event_FileWriteStart(Sender, uname, Data.asText['path'], tofolder,
-        Data.asLargeInt['size']);
-    end;
-  end
-  else if Data.FunctionName = 'pfile' then
-  begin
-    if isSubscriber(uname) then
-    // user is letting us know that we may start sending the file
-      StartSendingFile(uname, Data.asText['path'], Data.asInteger['id']);
-  end
-  else if Data.FunctionName = 'getfile' then
-  begin
-    if isSubscriber(uname) then
-      Send(uname, Data.asText['file'], Data.asText['to'], Sender);
-  end
-  else
+//  if Data.FunctionName = 'file' then // user is sending us a file
+//  begin
+//    if isSubscriber(uname) then
+//    begin
+//      s := Data.asString['data'];
+//
+//      tofolder := Data.asText['to'];
+//      tofile := tofolder;
+//      if Copy(tofile, length(tofile), 1) <> '\' then
+//        tofile := tofile + '\';
+//      tofile := tofile + Data.asText['file'];
+//
+//      if not DirectoryExists(ExtractFilePath(tofile)) then
+//        ForceDirectories(ExtractFilePath(tofile));
+//
+//      if (length(s)>0) or // content received, or ...
+//         (Copy(tofile, length(tofile), 1) <> '\') then // NOT a folder
+//        begin
+//        if allZeroes then
+//          Log('"'+tofile+'" - ZERO DATA @'+Data.asString['at']+' ('+IntToStr(length(s))+')','FILES');
+//        // write file content
+//        if Data.asLargeInt['at'] = 0 then
+//          // overwrite old file on first write access
+//          begin
+//          WriteNow(tofile);
+//          if not (WriteOK and ReadOK) then
+//            WriteNow(tofile+'.{ACCESS_DENIED}');
+//          end
+//        else
+//          // append to the end later
+//          begin
+//          if (File_Size(tofile)<>Data.asLargeInt['at']) then
+//            begin
+//            if File_Size(tofile+'.{ACCESS_DENIED}')=Data.asLargeInt['at'] then
+//              WriteNowAt(tofile+'.{ACCESS_DENIED}')
+//            else if (File_Size(tofile)>Data.asLargeInt['at']) then
+//              Log('"'+tofile+'" - DOUBLE DATA @'+Data.asString['at']+' /'+IntToStr(File_Size(tofile))+' ('+IntToStr(length(s))+')','FILES')
+//            else
+//              Log('"'+tofile+'" - MISSING DATA @'+Data.asString['at']+' /'+IntToStr(File_Size(tofile))+' ('+IntToStr(length(s))+')','FILES');
+//            end
+//          else
+//            begin
+//            WriteNowAt(tofile);
+//            if not (WriteOK and ReadOK) then
+//              WriteNowAt(tofile+'.{ACCESS_DENIED}');
+//            end;
+//          end;
+//        end;
+//
+//      // set file attributes
+//      if not Data.isNull['fattr'] then
+//        FileSetAttr(tofile, Data.asInteger['fattr']);
+//
+//      // set file age
+//      if not Data.isNull['fage'] then
+//        FileSetDate(tofile, DateTimeToFileDate(Data.asDateTime['fage']));
+//
+//      if Data.asBoolean['stop'] then
+//        Event_FileWriteStop(Sender, uname, Data.asText['path'], tofolder,
+//          length(s))
+//      else
+//        Event_FileWrite(Sender, uname, Data.asText['path'], tofolder,
+//          length(s));
+//    end;
+//  end
+//  else if Data.FunctionName = 'putfile' then // user wants to send us a file
+//  begin
+//    if isSubscriber(uname) then
+//    begin
+//      // tell user we are ready to accept his file
+//      r := TRtcFunctionInfo.Create;
+//      r.FunctionName := 'pfile';
+//      r.asInteger['id'] := Data.asInteger['id'];
+//      r.asText['path'] := Data.asText['path'];
+//      Client.SendToUser(Sender, uname, r);
+//      tofolder := Data.asText['to'];
+//      Event_FileWriteStart(Sender, uname, Data.asText['path'], tofolder,
+//        Data.asLargeInt['size']);
+//    end;
+//  end
+//  else if Data.FunctionName = 'pfile' then
+//  begin
+//    if isSubscriber(uname) then
+//    // user is letting us know that we may start sending the file
+//      StartSendingFile(uname, Data.asText['path'], Data.asInteger['id']);
+//  end
+//  else if Data.FunctionName = 'getfile' then
+//  begin
+//    if isSubscriber(uname) then
+//      Send(uname, Data.asText['file'], Data.asText['to'], Sender);
+//  end
+//  else
   //FileTrans-
   if data.FunctionName = 'mouse' then
   begin
@@ -1417,33 +1417,33 @@ begin
   end;
 
 //FileTrans+
-  CS.Acquire;
-  try
-    if File_Sending then
-    begin
-      if UpdateFiles.Count > 0 then
-      begin
-        loop_update := TRtcArray.Create;
-        for a := 0 to UpdateFiles.Count - 1 do
-        begin
-          uname := UpdateFiles.FieldName[a];
-          if UpdateFiles.asBoolean[uname] then
-          begin
-            UpdateFiles.asBoolean[uname] := False;
-            loop_update.asText[loop_update.Count] := uname;
-          end;
-        end;
-        UpdateFiles.Clear;
-      end;
-
-      if File_Senders > 0 then
-        loop_tosendfile := True
-      else
-        File_Sending := False;
-    end;
-  finally
-    CS.Release;
-  end;
+//  CS.Acquire;
+//  try
+//    if File_Sending then
+//    begin
+//      if UpdateFiles.Count > 0 then
+//      begin
+//        loop_update := TRtcArray.Create;
+//        for a := 0 to UpdateFiles.Count - 1 do
+//        begin
+//          uname := UpdateFiles.FieldName[a];
+//          if UpdateFiles.asBoolean[uname] then
+//          begin
+//            UpdateFiles.asBoolean[uname] := False;
+//            loop_update.asText[loop_update.Count] := uname;
+//          end;
+//        end;
+//        UpdateFiles.Clear;
+//      end;
+//
+//      if File_Senders > 0 then
+//        loop_tosendfile := True
+//      else
+//        File_Sending := False;
+//    end;
+//  finally
+//    CS.Release;
+//  end;
 //FileTrans-
 end;
 
