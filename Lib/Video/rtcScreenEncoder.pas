@@ -18,7 +18,7 @@ uses
   Math, Vcl.Dialogs, System.SyncObjs, Execute.DesktopDuplicationAPI,
   rtcInfo, rtcLog,// rtcZLib, SyncObjs, rtcScrUtils,
   ServiceMgr, CommonData, uVircessTypes,
-  rtcCompress, Vcl.Imaging.JPEG, Vcl.Imaging.PNGImage, RtcWebPCodec,//rtcXJPEGEncode,
+  rtcCompress, Vcl.Imaging.JPEG, Vcl.Imaging.PNGImage, //RtcWebPCodec,//rtcXJPEGEncode,
    {$IFDEF WithSynLZTest} SynLZ, {$ENDIF} lz4d, lz4d.lz4, lz4d.lz4s,
  {ServiceMgr,} rtcWinLogon;
 
@@ -568,7 +568,7 @@ begin
       Bmp.Free;
     end;
 
-    if (CodecId = 4) and (FScreenHeight >= 4) then
+{    if (CodecId = 4) and (FScreenHeight >= 4) then
     begin
 
     //  DataPos := @(TempBuff[0]);
@@ -588,17 +588,15 @@ begin
         Rect.Height := 16;
       end;
 
-    {
-       if Rect.Top > 16 then
-       begin
-         Rect.Height := 16;
-         Rect.Top := Rect.Top - (16 - Rect.Height);
-         Rect.Height := 16;
-       end else
-       begin
-         Rect.Height := 16;
-       end;
-     }
+//       if Rect.Top > 16 then
+//       begin
+//         Rect.Height := 16;
+//         Rect.Top := Rect.Top - (16 - Rect.Height);
+//         Rect.Height := 16;
+//       end else
+//       begin
+//         Rect.Height := 16;
+//       end;
 
      // выравнивание по 32 байтам чтобы внутренние алгоритмы кодека могли с ним работать
 
@@ -611,18 +609,18 @@ begin
 
       //  if Len = 0 then ShowMessage('Len=0');
 
-      { if (Rect.Width > 100) and (Rect.Height > 100) then
-       begin
-       FS := TFileStream.Create('c:\out\img' + IntToStr(FInd) + '.webp', fmCreate);
-       FS.Write(DataPos^, Len);
-       FS.Free;
-       Inc(FInd);
-       end;  }
+//     if (Rect.Width > 100) and (Rect.Height > 100) then
+//       begin
+//       FS := TFileStream.Create('c:\out\img' + IntToStr(FInd) + '.webp', fmCreate);
+//       FS.Write(DataPos^, Len);
+//       FS.Free;
+//       Inc(FInd);
+//       end;
       // TWebPCodec.
        MS.WriteData(DataPos, Len);
 
        FreeMem(DataPos);
-    end;
+    end;}
 
     if CodecId in [5, 6, 7] then
     begin

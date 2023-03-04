@@ -503,7 +503,7 @@ var
 begin
   if (Value.Width = 0) or (Value.Height = 0) then
   begin
-    FClipRect := Value;
+    ScrEnc.ClipRect := Value;
     exit;
   end;
 

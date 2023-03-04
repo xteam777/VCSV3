@@ -20,7 +20,7 @@ uses
   rtcZLib,
 
   IniFiles, System.SyncObjs,
-  rtcCompress, Vcl.Imaging.JPEG, Vcl.Imaging.PNGImage, RtcWebPCodec,
+  rtcCompress, Vcl.Imaging.JPEG, Vcl.Imaging.PNGImage, //RtcWebPCodec,
   {$IFDEF WithSynLZTest} SynLZ, {$ENDIF} lz4d, lz4d.lz4, lz4d.lz4s,
   Math;
 
@@ -412,7 +412,7 @@ begin
        //  s := s2;
      end;
 
-      if CodecId = 4 then
+ {     if CodecId = 4 then
       begin
         if (Height < 2) or (Cardinal(FImage.ScanLine[0]) <
            Cardinal(FImage.ScanLine[1])) then ScreenRowSize := 1 else
@@ -430,7 +430,8 @@ begin
 
        TWebPCodec.DeCompressImage(MS.Memory, MS.Size, @TmpBuff[0],//ImagePos,// PByte(FImage.ScanLine[0]),//ImagePos,
           Height * ((FImage.Width * FSCreenBPP) shr 3),
-          {ScreenRowSize}(Width * FSCreenBPP) shr 3);
+          //ScreenRowSize
+          (Width * FSCreenBPP) shr 3);
 
         if (Height < 2) or (Cardinal(FImage.ScanLine[0]) <
            Cardinal(FImage.ScanLine[1])) then ScreenRowSize := 1 else
@@ -457,7 +458,7 @@ begin
          // (FImage.Width * FSCreenBPP) shr 3);
 
       // FImage.Canvas.Unlock;
-      end;
+      end;}
 
       if CodecId = 3 then
       begin
