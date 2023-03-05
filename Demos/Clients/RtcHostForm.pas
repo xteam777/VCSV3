@@ -603,6 +603,7 @@ type
     function GetPortalConnection(AAction: String; AID: String): PPortalConnection;
 //    procedure SetActiveUIRecStoppedByPClient(AClient: TAbsPortalClient);
     //procedure RemovePortalConnectionByUIHandle(AUIHandle: THandle);
+    procedure RemovePortalConnectionByUserAndAction(AID, AAction: String);
     procedure RemovePortalConnectionByThreadId(AThreadId: Cardinal; ACloseFUI: Boolean);
     procedure RemovePortalConnectionByUser(ID: String);
 //    function GetActiveUICountByGatewayRec(AGatewayRec: PGatewayRec): Integer;
@@ -2570,6 +2571,45 @@ begin
 //  if GatewayClientsList.Count = 1 then
 //    Application.Restore;
 end;}
+
+procedure TMainForm.RemovePortalConnectionByUserAndAction(AID, AAction: String);
+var
+  i: Integer;
+begin
+  //XLog('RemovePortalConnectionByUIHandle');
+
+  CS_GW.Acquire;
+  try
+    i := PortalConnectionsList.Count - 1;
+    while i >= 0 do
+    begin
+      if (PPortalConnection(PortalConnectionsList[i])^.ID = AID)
+        and (PPortalConnection(PortalConnectionsList[i])^.Action = AAction) then
+      begin
+//        if (PPortalConnection(PortalConnectionsList[i])^.ThisThread <> nil) then
+//        begin
+////          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Terminate;
+////          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.WaitFor;
+////          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Free;
+////          PPortalConnection(PortalConnectionsList[i])^.ThisThread := nil;
+//          FreeAndNil(PPortalConnection(PortalConnectionsList[i])^.ThisThread);
+//        end;
+        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, 0, 0); //Закрываем поток с пклиентом
+        PostMessage(PPortalConnection(PortalConnectionsList[i])^.UIHandle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
+
+        Dispose(PortalConnectionsList[i]);
+        PortalConnectionsList.Delete(i);
+      end;
+
+      i := i - 1;
+    end;
+  finally
+    CS_GW.Release;
+  end;
+
+//  if GatewayClientsList.Count = 1 then
+//    Application.Restore;
+end;
 
 procedure TMainForm.RemovePortalConnectionByThreadId(AThreadId: Cardinal; ACloseFUI: Boolean);
 var
@@ -10406,6 +10446,8 @@ begin
   try
     if PendingRequests.Count > 0 then
     begin
+      RemovePortalConnectionByUserAndAction(PPendingRequestItem(PendingRequests[PendingRequests.Count - 1])^.UserName, PPendingRequestItem(PendingRequests[PendingRequests.Count - 1])^.Action);
+
       Dispose(PendingRequests[PendingRequests.Count - 1]);
       PendingRequests.Delete(PendingRequests.Count - 1);
     end;
