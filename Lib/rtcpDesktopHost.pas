@@ -1385,7 +1385,7 @@ end;
 
 procedure TRtcPDesktopHost.tCopyFilesFromControlTimer(Sender: TObject);
 begin
-  FetchFilesFromControl;
+//  FetchFilesFromControl;
 end;
 
 procedure TRtcPDesktopHost.FetchFilesFromControl;
