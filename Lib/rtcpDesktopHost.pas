@@ -10,7 +10,7 @@ interface
 
 uses
   Windows, Messages, Classes, SysUtils, Graphics, Controls, Forms, CommonData, BlackLayered, rtcBlankOutForm,
-  ShlObj, Clipbrd, IOUtils, DateUtils, SHDocVw, ExtCtrls,
+  ShlObj, Clipbrd, IOUtils, DateUtils, SHDocVw, ExtCtrls, ActiveX, ShellApi, ComObj,
 {$IFNDEF IDE_1}
   Variants,
 {$ENDIF}
@@ -514,7 +514,7 @@ type
 //function GetCursorInfo2(var pci: PCursorInfo): BOOL; stdcall; external 'user32.dll' name 'GetCursorInfo';
 
 const
-  TG_F='';
+  TG_F ='';
 
 var
   FHelper_Width, FHelper_Height: Integer;
@@ -1344,12 +1344,14 @@ begin
 end;
 
 function gTemp: String;
-var
-  a: array[0..MAX_PATH] of Char;
+//var
+//  a: array[0..MAX_PATH] of Char;
+//begin
+//  SHGetFolderPath(0, CSIDL_TEMP, 0, 0, a);
+//  result := a;
+//  result := result + '\';
 begin
-  SHGetFolderPath(0, CSIDL_TEMPLATES, 0, 0, a);
-  result := a;
-  result := result + '\';
+  Result := System.IOUtils.TPath.GetTempPath;
 end;
 
 {Получить размер файла Filename в байтах}
@@ -1466,10 +1468,8 @@ begin
   except
   end;
 
-   tCopyFilesFromControl.Enabled := True;
+  tCopyFilesFromControl.Enabled := True;
 end;
-
-{
 
 {процедура вставки сигнального файла в clipboard Windows}
 procedure TRtcPDesktopHost.CopyFilesToClipboard(FileList: AnsiString);
@@ -1481,20 +1481,45 @@ begin
   try
     iLen := Length(FileList) + 2;
     FileList := FileList + #0#0;
-    hGlobal := GlobalAlloc(GMEM_SHARE or GMEM_MOVEABLE or GMEM_ZEROINIT, SizeOf(TDropFiles) + iLen * SizeOf(Char));
+    hGlobal := GlobalAlloc(GMEM_SHARE or GMEM_MOVEABLE or GMEM_ZEROINIT, SizeOf(TDropFiles) + iLen); //* SizeOf(Char)
     if (hGlobal = 0) then
       raise Exception.Create('Could not allocate memory.');
     begin
       DropFiles := GlobalLock(hGlobal);
       DropFiles^.pFiles := SizeOf(TDropFiles);
-      DropFiles^.fWide := True;
-      Move(FileList[1], (PansiChar(DropFiles) + SizeOf(TDropFiles))^, iLen * SizeOf(Char));
+//     DropFiles^.fWide := True;
+      Move(FileList[1], (PansiChar(DropFiles) + SizeOf(TDropFiles))^, iLen); // * SizeOf(Char)
       GlobalUnlock(hGlobal);
       Clipboard.SetAsHandle(CF_HDROP, hGlobal);
     end;
   except
   end;
 end;
+
+{procedure TRtcPDesktopHost.CopyFilesToClipboard(FileList: AnsiString);
+var
+  Pidls: array of PItemIdList;
+  Attrs: DWORD;
+  I: Integer;
+  obj: IDataObject;
+begin
+  CoInitialize(nil);
+  SetLength(Pidls, 1);
+  for I := Low(Pidls) to High(Pidls) do
+    Pidls[I] := nil;
+  try
+//    for I := 0 to 0 do
+//      OleCheck(SHParseDisplayName(PChar(FileList), nil, Pidls[I], 0, Attrs));
+    OleCheck(CIDLData_CreateFromIDArray(nil, 1, PItemIDList(Pidls), obj));
+  finally
+    for I := Low(Pidls) to High(Pidls) do
+      CoTaskMemFree(Pidls[I]);
+  end;
+  OleCheck(OleSetClipboard(obj));
+  OleCheck(OleFlushClipboard);
+  CoUninitialize;
+end;}
+
 //..............................................................................
 {Прием пакетов от сервера}
 procedure TRtcPDesktopHost.AcceptFilesDirsList(uname, sFilesDirs: String);
@@ -1542,7 +1567,7 @@ begin
       begin
         hr := TStringList.Create;
         {Создать все предшествующие над-каталоги, если какой-либо из них не сущ.}
-        if not DirectoryExists (ExtractFilePath(f)) then
+        if not DirectoryExists(ExtractFilePath(f)) then
           ForceDirectories(ExtractFilePath(f));
 
         {Сохранить}
