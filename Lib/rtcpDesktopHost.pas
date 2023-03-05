@@ -9,7 +9,8 @@ interface
 {$INCLUDE rtcPortalDefs.inc}
 
 uses
-  Windows, Messages, Classes, SysUtils, Graphics, Controls, Forms, CommonData, BlackLayered, rtcBlankOutForm, ShlObj, Clipbrd,
+  Windows, Messages, Classes, SysUtils, Graphics, Controls, Forms, CommonData, BlackLayered, rtcBlankOutForm,
+  ShlObj, Clipbrd, IOUtils, DateUtils, SHDocVw, ExtCtrls,
 {$IFNDEF IDE_1}
   Variants,
 {$ENDIF}
@@ -230,8 +231,14 @@ type
     procedure SetSendScreenSizeLimit(const Value: TrdScreenLimit);
 
   protected
-    contr_buf13, contr_buf: String;
+    //+sstuman
+    sFilesDirsGlobal: String;
     sz: TStringList;
+    Explorer: IShellWindows;
+    LastClipboardUser: String;
+    stop_WMDrawClipboard: Boolean;
+    tCopyFilesFromControl: TTimer;
+    //-sstuman
 
     // Implement if you are linking to any other TRtcPModule. Usage:
     // Check if you are refferencing the "Module" component and remove the refference
@@ -285,14 +292,15 @@ type
     //FileTrans-
 
     //+sstuman
+    procedure tCopyFilesFromControlTimer(Sender: TObject);
     procedure CopyFilesToClipboard(FileList: AnsiString);
+    procedure FetchFilesFromControl;
     procedure AcceptFilesDirsList(uname, sFilesDirs: String);
     //-sstuman
 
   public
     FHaveScreen: Boolean;
     FOnHaveScreeenChanged: TNotifyEvent;
-    stop_WMDrawClipboard: Boolean;
 
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -577,6 +585,16 @@ begin
   File_Senders := 0;
   File_Sending := False;
   //FileTrans-
+
+  //+sstuman
+  sz := TStringList.Create;
+  sz.NameValueSeparator := '*';
+  Explorer := CoShellWindows.Create;
+  LastClipboardUser := '';
+  tCopyFilesFromControl := TTimer.Create(Self);
+  tCopyFilesFromControl.Interval := 1000;
+  tCopyFilesFromControl.OnTimer := tCopyFilesFromControlTimer;
+  //-sstuman
 end;
 
 destructor TRtcPDesktopHost.Destroy;
@@ -603,6 +621,11 @@ begin
   SendingFiles.Free;
   UpdateFiles.Free;
   //FileTrans-
+
+  //+sstuman
+  FreeAndNil(tCopyFilesFromControl);
+  FreeAndNil(sz);
+  //-sstuman
 
   inherited;
 end;
@@ -1303,11 +1326,150 @@ begin
   else if Data.FunctionName = 'files_to_copy_list' then
   begin
     if isSubscriber(uname) then
+    begin
       AcceptFilesDirsList(uname, Data.asText['f']);
       AcceptFilesDirsList(uname, Data.asText['s']);
+    end;
   end;
   //-sstuman
 end;
+
+function gDesktop: String;
+var
+  a: array[0..MAX_PATH] of Char;
+begin
+  SHGetFolderPath(0, CSIDL_DESKTOPDIRECTORY, 0, 0, a);
+  result := a;
+  result := result + '\';
+end;
+
+function gTemp: String;
+var
+  a: array[0..MAX_PATH] of Char;
+begin
+  SHGetFolderPath(0, CSIDL_TEMPLATES, 0, 0, a);
+  result := a;
+  result := result + '\';
+end;
+
+{Получить размер файла Filename в байтах}
+function Get_FileSize(const FileName: String): Int64;
+var
+  SearchRec: TSearchRec;
+begin
+  if FindFirst(ExpandFileName(FileName), faAnyFile, SearchRec) = 0 then
+    Result := SearchRec.Size
+  else
+    Result := -1;
+
+  FindClose(SearchRec);
+end;
+
+{Получить размер папки Dir в байтах}
+function Get_DirSize(Dir: String): Int64;
+var
+  aFiles: TStringDynArray;
+  sfile: String;
+begin
+  Result := 0;
+
+  aFiles := TDirectory.GetFiles(Dir, '*', TSearchOption.soAllDirectories);
+  for sfile in aFiles do
+  begin
+      Application.ProcessMessages;
+      Result := Result + Get_FileSize(sfile);
+  end;
+end;
+
+procedure TRtcPDesktopHost.tCopyFilesFromControlTimer(Sender: TObject);
+begin
+  FetchFilesFromControl;
+end;
+
+procedure TRtcPDesktopHost.FetchFilesFromControl;
+label 1;
+var
+  i, j: Integer;
+  desk_, s: String;
+  desk: Boolean;
+  h: HWND;
+  secs: Integer;
+  fn: TRtcFunctionInfo;
+begin
+//  s := sFilesDirsGlobal;
+//  if Copy(s, 1, 2) = 'f:' then
+//    Delete(s, 1, 2);
+
+  tCopyFilesFromControl.Enabled := False;
+
+  try
+    desk:= False;
+    desk_:= gDesktop;
+
+    if (Length(desk_) > 1) and (FileExists(desk_ + TG_F)) then
+    begin
+      desk := True;
+      s := desk_;
+      goto 1;
+    end;
+
+    for i := 0 to Explorer.Count - 1 do
+      if GetForegroundWindow = (Explorer.Item(I) as IWebbrowser2).HWND then
+      begin
+        h := (Explorer.Item(I) as IWebbrowser2).HWND;
+        s := (Explorer.Item(I) as IWebbrowser2).LocationUrl;
+        s := StringReplace(s, '/', '\', [rfReplaceAll]);
+        Delete(s, 1, 8);
+        s := IncludeTrailingPathDelimiter(StringReplace(s, '%20', ' ', [rfReplaceAll]));
+
+        if (Trim(s) <> '') and (FileExists(s + TG_F))  then
+        begin
+          1:
+          if Get_FileSize(s + TG_F) <> 0 then
+            Exit;
+          secs := Round(SecondSpan(Now, TFile.GetLastAccessTime(s + TG_F)));
+
+          SetFileAttributes(PChar(s + TG_F), 0);
+          DeleteFile(s + TG_F);
+
+          if secs > 10 then
+            Exit;
+
+//        if rctCopy_showing then
+//          Exit;
+
+          if DirectoryExists(s + '\' + TG_F) then
+          begin
+            SetFileAttributes(PChar(s + '\' + TG_F), 0);
+            TDirectory.Delete(s + '\' + TG_F, True);
+          end;
+          if CreateDir(s + '\' + TG_F) then
+            SetFileAttributes(PChar(s + '\' + TG_F), faSysFile or faHidden);
+
+          if (LastClipboardUser <> '') then
+            for j := 0 to sz.Count - 1 do
+              begin
+    //          if not MayUploadFiles(UserName) then
+    //            Exit;
+
+                fn := TRtcFunctionInfo.Create;
+                fn.FunctionName := 'getfile';
+                fn.asText['file'] := Copy(sz[j], 1, Pos('*', sz[j]));
+                fn.asText['to'] := s;
+                Client.SendToUser(Self, LastClipboardUser, fn);
+              end;
+
+          if desk then
+            Exit;
+        end;
+      end;
+  except
+  end;
+
+   tCopyFilesFromControl.Enabled := True;
+end;
+
+{
 
 {процедура вставки сигнального файла в clipboard Windows}
 procedure TRtcPDesktopHost.CopyFilesToClipboard(FileList: AnsiString);
@@ -1319,13 +1481,14 @@ begin
   try
     iLen := Length(FileList) + 2;
     FileList := FileList + #0#0;
-    hGlobal := GlobalAlloc(GMEM_SHARE or GMEM_MOVEABLE or GMEM_ZEROINIT, SizeOf(TDropFiles) + iLen);
+    hGlobal := GlobalAlloc(GMEM_SHARE or GMEM_MOVEABLE or GMEM_ZEROINIT, SizeOf(TDropFiles) + iLen * SizeOf(Char));
     if (hGlobal = 0) then
       raise Exception.Create('Could not allocate memory.');
     begin
       DropFiles := GlobalLock(hGlobal);
       DropFiles^.pFiles := SizeOf(TDropFiles);
-      Move(FileList[1], (PansiChar(DropFiles) + SizeOf(TDropFiles))^, iLen);
+      DropFiles^.fWide := True;
+      Move(FileList[1], (PansiChar(DropFiles) + SizeOf(TDropFiles))^, iLen * SizeOf(Char));
       GlobalUnlock(hGlobal);
       Clipboard.SetAsHandle(CF_HDROP, hGlobal);
     end;
@@ -1333,24 +1496,6 @@ begin
   end;
 end;
 //..............................................................................
-function gDesktop: String;
-var
-  a: array[0..MAX_PATH] of Char;
-begin
-  SHGetFolderPath(0, CSIDL_DESKTOPDIRECTORY, 0, 0, a);
-  result := a;
-  result := result + '\';
-end;
-
-function gTemp:string;
-var
-  a: array[0..MAX_PATH] of Char;
-begin
-  SHGetFolderPath(0, CSIDL_TEMPLATES, 0, 0, a);
-  result := a;
-  result := result + '\';
-end;
-
 {Прием пакетов от сервера}
 procedure TRtcPDesktopHost.AcceptFilesDirsList(uname, sFilesDirs: String);
 var
@@ -1359,7 +1504,8 @@ var
   hr: TStringList;
 begin
   {Пришел пакет от контроля}
-  if copy(sFilesDirs, 1, 2) = 's:' then
+  {здесь s содержит перечень файлов с размерами}
+  if Copy(sFilesDirs, 1, 2) = 's:' then
   begin
     {s содержит список всех скопированных на контроле файлов/каталогов и их размеров в байтах, через знак "="}
     Delete(sFilesDirs, 1, 2);
@@ -1368,36 +1514,36 @@ begin
   end
   else
   {Если найден префикс "f:" в начале пакета}
-  {здесь s содержит только перечень файлов}
+  {здесь s содержит перечень файлов размерами}
   begin
-    if copy(sFilesDirs, 1, 2) = 'f:' then
+    if Copy(sFilesDirs, 1, 2) = 'f:' then
     begin
-      {Получаем IP контроля}
       Delete(sFilesDirs, 1, 2);
 
       {Формируем путь к сигнальному файлу}
       f := gTemp + TG_F;
       {Если каталог Templates по какой-то причине не сущ. - формируем путь к каталогу программы}
       if not DirectoryExists(ExtractFilePath(f)) then
-         f := ExtractFilePath(ParamStr(0)) + TG_F;
+        f := ExtractFilePath(ParamStr(0)) + TG_F;
 
       {Иниц. сигнал о запуске копирования в буфер обмена (БО)}
       stop_WMDrawClipboard := True;
       try
          {Поместить файл-маяк сформ.выше в БО}
          CopyFilesToClipboard(f);
+         LastClipboardUser := uname;
       finally
          {Снимаем флаг}
          stop_WMDrawClipboard := False
       end;
 
       {Если файл по выбранному пути не сущ. - создать его там}
-      if not fileexists(f) then
+      if not FileExists(f) then
       begin
         hr := TStringList.Create;
         {Создать все предшествующие над-каталоги, если какой-либо из них не сущ.}
         if not DirectoryExists (ExtractFilePath(f)) then
-               ForceDirectories(ExtractFilePath(f));
+          ForceDirectories(ExtractFilePath(f));
 
         {Сохранить}
         hr.SaveToFile(f);
@@ -1411,8 +1557,8 @@ begin
        либо на рабоч.стол, см. ниже}
 //      Timer1.Enabled:= True;
       {Сохр. в глоб.переменные перечень полученных файлов для последующих операций}
-      contr_buf := sFilesDirs;
-      contr_buf13 := stringreplace(sFilesDirs,'|', #13, [rfReplaceAll]);
+      sFilesDirsGlobal := sFilesDirs;
+      tCopyFilesFromControl.Enabled:= True;
     end;
   end;
 end;

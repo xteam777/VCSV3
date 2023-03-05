@@ -140,10 +140,7 @@
             </Delphi.Personality>
             <Deployment Version="4">
                 <DeployFile LocalName="Win32\Debug\rmx_w32.exe" Configuration="Debug" Class="ProjectOutput"/>
-                <DeployFile LocalName="Win32\Debug\rmx_w32.exe" Configuration="Debug" Class="ProjectOutput"/>
                 <DeployFile LocalName="rmx_w32.exe" Configuration="Debug" Class="ProjectOutput"/>
-                <DeployFile LocalName="rmx_w32.exe" Configuration="Debug" Class="ProjectOutput"/>
-                <DeployFile LocalName="rmx_w32.exe" Configuration="Release" Class="ProjectOutput"/>
                 <DeployFile LocalName="rmx_w32.exe" Configuration="Release" Class="ProjectOutput"/>
                 <DeployClass Name="AdditionalDebugSymbols">
                     <Platform Name="iOSSimulator">
