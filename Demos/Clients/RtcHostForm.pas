@@ -13,9 +13,9 @@ interface
 uses
   Windows, Messages, SysUtils, CommonData, System.Types, uProcess, ServiceMgr, //BlackLayered,
   Classes, Graphics, Controls, Forms, DateUtils, CommonUtils, WtsApi, uSysAccount,
-  Dialogs, StdCtrls, ExtCtrls, ShellApi, rdFileTransLog, VirtualTrees.Types,
+  Dialogs, StdCtrls, ExtCtrls, ShellApi, rdFileTransLog, VirtualTrees.Types, SHDocVw,
   ComCtrls, Registry, Math, RtcIdentification, SyncObjs, System.Net.HTTPClient, System.Net.URLClient,
-  rtcSystem, rtcInfo, uMessageBox, rtcScrUtils, IOUtils, uAcceptEula,
+  rtcSystem, rtcInfo, uMessageBox, rtcScrUtils, IOUtils, uAcceptEula, ProgressDialog,
 
 {$IFDEF IDE_XE3up}
   UITypes,
@@ -486,7 +486,6 @@ type
     procedure tStatusTimer(Sender: TObject);
     procedure rGetPartnerInfoRequestAborted(Sender: TRtcConnection; Data,
       Result: TRtcValue);
-    procedure Timer1Timer(Sender: TObject);
     procedure aMinimizeExecute(Sender: TObject);
     procedure aCloseExecute(Sender: TObject);
     procedure rGetHostLockedStateRequestAborted(Sender: TRtcConnection; Data,
@@ -565,6 +564,10 @@ type
 //    ActiveUIList: TList;
     PortalConnectionsList: TList;
     hwndNextViewer: THandle;
+    sz: TStringList;
+    contr_buf13,contr_buf: String;
+    Explorer: IShellWindows;
+    stop_WMDrawClipboard: boolean;
 
     function FormatID(AID: String): String;
     function ConnectedToAllGateways: Boolean;
@@ -626,6 +629,8 @@ type
     function RunHTTPCall(verb, url, path, data: String): String;
     function FileVersion(const FileName: TFileName): String;
     procedure CheckUpdates;
+
+    procedure ProgressDialogOnCancel(Sender: TObject);
   public
     { Public declarations }
 //    SilentMode: Boolean;
@@ -796,6 +801,8 @@ var
 //  FInputThread: TInputThread;
   CS_GW, CS_Status, CS_Pending, CS_ActivateHost, CS_HostGateway: TCriticalSection; //CS_SetConnectedState
   DeviceId, ConsoleId: String;
+
+  pd: TProgressDialog;
 
 implementation
 
@@ -3103,6 +3110,8 @@ begin
   DeviceId := '';
   ConsoleId := '';
 
+ {Explorer - глобальная переменная для доступа ко всем откр.окнам Explorer}
+  Explorer := CoShellWindows.Create;
   hwndNextViewer := SetClipboardViewer(Handle);
 
   ActivationInProcess := False;
@@ -5735,19 +5744,6 @@ begin
   tDelayedStatus.Enabled := False;
 end;
 
-procedure TMainForm.Timer1Timer(Sender: TObject);
-begin
-//  Timer1.Enabled := False;
-//  Block_ZOrder_Hook(False);
-//  SetBlankMonitor(False);
-//  ShowCursor(True);
-//  if @BlankDllHookProc <> nil then
-//    BlankDllHookProc(False);
-//
-//  FreeLibrary(hBlankDll);
-//  CloseAllActiveUI;
-end;
-
 procedure TMainForm.TimerClientConnect(Sender: TRtcConnection);
 begin
 //  xLog('TimerClientConnect');
@@ -7301,6 +7297,22 @@ begin
 //  PDesktopControl.Open('34343434');
 
 //  TSendDestroyClientToGatewayThread.Create(False, '95.216.96.8:443', '111222333', False);
+
+  pd := TProgressDialog.Create(Self);
+  pd.OnCancel := ProgressDialogOnCancel;
+  pd.Execute;
+end;
+
+
+procedure TMainForm.ProgressDialogOnCancel(Sender: TObject);
+begin
+//    PClient.Disconnect;
+//    PClient.Active := False;
+////    PClient.Stop;
+////    PClient.GParamsLoaded:=True;
+//    PClient.Active := True;
+
+  pd.Stop;
 end;
 
 procedure TMainForm.AddHistoryRecord(username, userdesc: String);
@@ -11032,6 +11044,7 @@ begin
     res := SystemParametersInfo(SPI_SETDRAGFULLWINDOWS, 0, nil, SPIF_UPDATEINIFILE);
   ChangedDragFullWindows := False;
 end;
+
 
 initialization
   CS_GW := TCriticalSection.Create;

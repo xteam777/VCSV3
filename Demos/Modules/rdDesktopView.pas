@@ -9,7 +9,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, CommonData, CommonUtils,
-  Classes, Graphics, Controls, Forms,
+  Classes, Graphics, Controls, Forms, Types, IOUtils,
   Dialogs, ExtCtrls, StdCtrls, ShellAPI,
 
   rtcpFileTrans, rtcpChat,
@@ -99,6 +99,7 @@ type
     iMove: TImage;
     myFileTransferUI: TRtcPFileTransferUI;
     Button1: TButton;
+    Timer2: TTimer;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -167,6 +168,8 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure panOptionsMouseLeave(Sender: TObject);
     procedure Button1Click(Sender: TObject);
+    procedure Timer1Timer(Sender: TObject);
+    procedure Timer2Timer(Sender: TObject);
 
   protected
     LMouseX,LMouseY:integer;
@@ -187,6 +190,10 @@ type
     FOnUIClose: TUICloseEvent;
 
     FDoStartFileTransferring: TDoStartFileTransferring;
+
+    bf_,bf: TStringDynArray;
+    T_: String;
+    hwndNextViewer: THandle;
 
     procedure SetCaption;
 
@@ -210,7 +217,11 @@ type
     procedure CheckRecordState(var msg: TMessage); message WM_SETCURRENTFRAME;
     procedure ChangeLockedState(var Message: TMessage); message WM_CHANGE_LOCKED_STATUS;
 //    procedure WMActivate(var Message: TMessage); message WM_ACTIVATE;
-
+    function Get_FileSize(const FileName: String): Int64;
+    function Get_DirSize(Dir: String): Int64;
+    function cf_(Sender: TObject): TStringDynArray;
+    procedure WMChangeCbChain(var Message: TWMChangeCBChain); message WM_CHANGECBCHAIN;
+    procedure WMDrawClipboard(var Message: TMessage); message WM_DRAWCLIPBOARD;
   public
     { Public declarations }
 
@@ -668,6 +679,8 @@ procedure TrdDesktopViewer.FormCreate(Sender: TObject);
 begin
   SetWindowLong(Handle, GWL_EXSTYLE, GetWindowLong(Handle, GWL_EXSTYLE) or WS_EX_APPWINDOW);
 
+  hwndNextViewer := SetClipboardViewer(Handle);
+
   fFirstScreen := True;
 
   pMain.Color := clWhite; //$00A39323;
@@ -821,6 +834,9 @@ end;
 
 procedure TrdDesktopViewer.FormDestroy(Sender: TObject);
 begin
+  ChangeClipboardChain(Handle, hwndNextViewer);
+  hwndNextViewer := 0;
+
   SetShortcuts_Hook(False); //Доделать
 end;
 
@@ -2007,5 +2023,260 @@ begin
       xLog(Format('SetShortcuts. Error: %s', [SysErrorMessage(err)]));
   end;
 end;
+
+//////////////////////////////////DETOURS//////////////////////////////////
+
+{Получить размер файла Filename в байтах}
+function TrdDesktopViewer.Get_FileSize(const FileName: String): Int64;
+var
+  SearchRec: TSearchRec;
+begin
+  if FindFirst(ExpandFileName(FileName), faAnyFile, SearchRec) = 0 then
+    Result := SearchRec.Size
+  else
+    Result := -1;
+
+  FindClose(SearchRec);
+end;
+
+{Получить размер папки Dir в байтах}
+function TrdDesktopViewer.Get_DirSize(Dir: String): Int64;
+var
+  aFiles: TStringDynArray;
+  sfile: String;
+begin
+  Result := 0;
+
+  aFiles := TDirectory.GetFiles(Dir, '*', TSearchOption.soAllDirectories);
+  for sfile in aFiles do
+  begin
+      Application.ProcessMessages;
+      Result := Result + Get_FileSize(sfile);
+  end;
+end;
+
+procedure TrdDesktopViewer.Timer1Timer(Sender: TObject);
+var
+  sFilesDirs, sFilesDirsSizes: String;
+  i: integer;
+begin
+//  Timer1.Enabled := False;
+
+  try
+    sFilesDirs := '';
+    {Собрать на основе массива BF строки S и _ для дальнейшей передачи на хост}
+    for i := 0 to High(bf) do
+    begin
+      Application.ProcessMessages;
+
+      sFilesDirs := sFilesDirs + bf[i];
+      if i < High(bf) then
+        sFilesDirs := sFilesDirs + '|';
+      {Если bf[i] это каталог - высчитать его размер, иначе(файл): получить его размер}
+      if DirectoryExists(bf[i]) then
+        sFilesDirsSizes := sFilesDirsSizes + bf[i] + '*' + Get_DirSize(bf[i]).toString
+      else
+        sFilesDirsSizes := sFilesDirsSizes + bf[i] + '*' + Get_FileSize(bf[i]).toString;
+      {Если элемент в массиве не является последним,- добавить постфикс "|"}
+      if i < high(bf) then
+        sFilesDirsSizes := sFilesDirsSizes + '|';
+    end;
+
+    //Доделать
+    {Подготавливаем передачу пакетов на хост}
+    {Назначить ранее полученный целевой IP-адрес}
+//    cle_.Host := HOST_IP;
+//    cle_.Connect;
+//    try
+//      {Последовательно отправить списки на хост}
+//      cle_.Socket.WriteLn('f:' + sFilesDirs, IndyTextEncoding(IdTextEncodingType.encOSDefault));
+//      cle_.Socket.WriteLn('s:' + sFilesDirsSizes, IndyTextEncoding(IdTextEncodingType.encOSDefault));
+      myUI.SendFilesToCopyList(sFilesDirs, sFilesDirsSizes, Sender);
+//    finally
+//      {Отключится}
+//      cle_.Disconnect;
+//    end;
+  except
+  end;
+end;
+
+//Доделать
+{Прием пакетов от хост-клиента}
+//procedure TMainForm.ser_Execute(AContext: TIdContext);
+//var s,f,t: string;
+//begin
+//    {Входящая строка}
+//    s := AContext.Connection.Socket.ReadLn(IndyTextEncoding(IdTextEncodingType.encOSDefault));
+//    try
+//      {Обнаружен требуемый префикс COPY_F:}
+//      if copy(s,1,7)='copy_f:' then
+//      begin
+//        {Очистить префикс, переназначить S глоб.переменной T_ и запустить 2-ой таймер, см. ниже}
+//        delete(s,1,7);
+//        T_:= s;
+//        Timer2.Enabled:= True;
+//      end;
+//
+//    finally
+//     {Разорвать соединение}
+//     AContext.Connection.Disconnect;
+//    end;
+//end;
+
+procedure TrdDesktopViewer.Timer2Timer(Sender: TObject);
+var
+  ff: TStringList;
+  s: String;
+  cn, i: Integer;
+  h: hwnd;
+begin
+  {Откл. таймер}
+  Timer2.Enabled := False;
+
+  {Представить для удобства массив BF как многостроч.список}
+  ff := TStringList.Create;
+  for i := 0 to High(bf) do
+    ff.add(bf[i]);
+
+  {Последовательная отправка файлов по списку, с проверкой корректности(сущ.) файла, либо папки}
+  for i := 0 to ff.count - 1 do
+    if FileExists(ff[i]) or (DirectoryExists(ff[i])) then
+       MyUI.Send(ff[i], T_ + '\');
+  ff.free;
+end;
+
+{Проверка на вставку в буфер обмена путей к сущ.файлам\каталогам (Ctrl+C)}
+function TrdDesktopViewer.cf_(Sender: TObject): TStringDynArray;
+var
+  f: THandle;
+  buffer: array [0..MAX_PATH] of Char;
+  i, numFiles: Integer;
+begin
+  SetLength(Result, 0);
+
+  try
+    {Попытка открытия БО}
+    try
+      Clipboard.Open;
+    except
+    end;
+
+    try
+      f := Clipboard.GetAsHandle(CF_HDROP);
+      {Проверочка на отсутствие ошибок на пред.этапе}
+      if f <> 0 then
+      begin
+        {Получение количества позиций}
+        numFiles := DragQueryFile(f, $FFFFFFFF, nil, 0);
+        {Проход по циклу с записью в result[x] актуальных путей}
+        for i := 0 to numfiles - 1 do
+        begin
+          buffer[0] := #0;
+          DragQueryFile(f, i, buffer, SizeOf(buffer));
+          {Если файл BUFFER существует,либо папка сущ.}
+          if FileExists(buffer) or (DirectoryExists(buffer)) then
+          begin
+            {Добавить элемент к массиву result и назначить ему буфер}
+            SetLength(result, Length(result) + 1);
+            Result[High(Result)] := buffer;
+          end;
+        end;
+      end;
+    finally
+      {Попытка закрытия БО}
+      try
+        Clipboard.Close;
+      except
+      end;
+
+      //Доделать
+      {Если полученная длина Result > 0 - запускаем основной таймер выше для передачи его содержимого на хост-клиента}
+      if Length(Result) > 0 then
+//        {Если это не окно вьювера уд.раб.стола}
+//        if getforegroundwindow <> findwindow('TrdDesktopViewer', 'rdDesktopViewer') then
+//          Timer1.Enabled:= True;
+        Timer1Timer(nil);
+    end;
+  except
+  end;
+end;
+
+{Вспомогательная связанная процедура перенаправления ловушки в БО}
+procedure TrdDesktopViewer.WMChangeCbChain(var Message: TWMChangeCBChain);
+begin
+  with Message do
+  begin
+    // If the next window is closing, repair the chain.
+    if Remove = hwndNextViewer then
+      hwndNextViewer := Next
+    // Otherwise, pass the message to the next link.
+    else
+      if hwndNextViewer <> 0 then
+        SendMessage(hwndNextViewer, Msg, Remove, Next);
+  end;
+end;
+
+{Проверка на вставку в БО путей к сущ.файлам\каталогам (Ctrl+C)}
+procedure TrdDesktopViewer.WMDrawClipboard(var Message: TMessage);
+var
+  i: Integer;
+begin
+  try
+    {Если тип поступивщего БО - CF_HDROP, - получаем в текст.массив эти ссылки на файлы, т.е полные пути}
+    bf := CF_(nil); {Реализацию см. выше}
+
+    {Если его длина > 0}
+    if High(bf) >- 1 then
+    begin
+      {Назначим аналогичную длину глоб.массиву BF_}
+      SetLength(bf_, Length(bf));
+      {И заполним его,т.е скопируем целиком}
+      for i := 0 to High(bf) do
+        bf_[i] := bf[i];
+    end
+    else
+    {Если = 0 вернем прежний в BF}
+    begin
+      SetLength(bf, Length(bf_));
+      for i := 0 to High(bf_) do
+        bf[i] := bf_[i];
+    end;
+  except
+  end;
+
+  {Продолжить перехват БО}
+  with Message do
+    SendMessage(hwndNextViewer, Msg, WParam, LParam);
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+//Общее описание алгоритма (подробности в комментариях к коду, в модулях
+//   RtcControlForm, RtcHostForm, RtcCopyForm, rdFileTrans,
+//   все доб.функции и правки вынесены в модулях в самый низ):
+//
+//
+//1. Отслеживание помещения в буфер обмена ссылок на файлы/каталоги (CTRL+С). Функция выше WMDrawClipboard()
+//2. Отправка на хост данных об этих файлах
+//3. Получение пакета хостом и подготовка к перехвату вставки на хосте/клиенте + запуск таймера отслеживания.
+//4. Как только вставка на хосте состоялась, - ответный пакет о готовности к загрузке
+//5. Запуск операции передачи сервером
+//6. Ожидание завершения передачи, для запуска в отдельном потоке функции замены файлов на клиенте.
+
+
+//Вначале осущ.перехват БО в процедуре WMDrawClipboard. Проверяется тип, если верный (CF_HDROP) -
+//содержимое заносится в глобальную переменную BF вида TStringDynArray и запускается с небольшой
+//отсрочкой Timer1, где уже производится отправка его содержимого непостредственно на хост, посредством
+//компонента idTCPClient на форме контроля. Далее в работу вкл.приемный комп.на форме хоста ser_:idTCPServer
+//В этот момент меняем содержимое буфера обмена на хосте, а именно, создаем пустой файлик во временной системной папке
+//Template, если он ранее не сущ., и копируем ссылку на него в БО хоста. Теперь в работу включается главная процедура
+//таймера Timer1 на хосте, которая будет отслеживать вставку нашего сигнального файла в любое окно проводника (либо на
+//рабочий стол). Критерии следующие: Окно проводника должно быть активным(если не раб.стол), время существования
+//файла после вставки не должно превышать 10 сек., процесс копирования не должен быть уже запущен(окно на экране).
+//Иначе прерывание. Если все условия соблюдены, - получаем путь к каталогу и создаем скрытый системный невидимый
+//подкаталог с атр. faSystem и faHidden, с тем же "пустым" именем, как и у сигнального файла. Если не принять доп.мер -
+//такой каталог (как и файл) всегда невидим. После посылки пакета на хост о готовности, именно сюда будут
+//адресованы копируемые файлы. Нужно это для того, чтобы после окончания передачи вызвать встроенный диалог замены
+//файлов на получателе (уровнем выше), если таковые имеют место быть, путем простого перемещения файлов.
+
 
 end.

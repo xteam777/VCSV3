@@ -5764,7 +5764,6 @@ object MainForm: TMainForm
       Height = 25
       Caption = 'Button4'
       TabOrder = 4
-      Visible = False
       OnClick = Button4Click
     end
     object Button1: TButton
@@ -5774,7 +5773,6 @@ object MainForm: TMainForm
       Height = 25
       Caption = 'Button1'
       TabOrder = 5
-      Visible = False
       OnClick = Button1Click
     end
     object Button2: TButton

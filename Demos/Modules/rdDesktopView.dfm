@@ -49,6 +49,8 @@ object rdDesktopViewer: TrdDesktopViewer
     ParentFont = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
+    ExplicitWidth = 1066
+    ExplicitHeight = 663
     object iScreenLocked: TImage
       Left = 0
       Top = 0
@@ -2983,6 +2985,8 @@ object rdDesktopViewer: TrdDesktopViewer
       TabOrder = 0
       StyleElements = [seFont, seBorder]
       OnMouseMove = ScrollMouseMove
+      ExplicitWidth = 1066
+      ExplicitHeight = 663
       object pImage: TRtcPDesktopViewer
         Left = 0
         Top = 0
@@ -3105,7 +3109,6 @@ object rdDesktopViewer: TrdDesktopViewer
           Top = 1
           Width = 343
           Height = 34
-          UseSystemFont = False
           ActionManager = ActionManagerTop
           Align = alNone
           Color = clMenuBar
@@ -3115,7 +3118,7 @@ object rdDesktopViewer: TrdDesktopViewer
           ColorMap.SelectedFontColor = clWhite
           ColorMap.UnusedColor = clWhite
           Font.Charset = DEFAULT_CHARSET
-          Font.Color = clBlack
+          Font.Color = clWindowText
           Font.Height = -12
           Font.Name = 'Segoe UI'
           Font.Style = []
@@ -5147,5 +5150,10 @@ object rdDesktopViewer: TrdDesktopViewer
   object myFileTransferUI: TRtcPFileTransferUI
     Left = 48
     Top = 202
+  end
+  object Timer2: TTimer
+    OnTimer = Timer2Timer
+    Left = 954
+    Top = 80
   end
 end
