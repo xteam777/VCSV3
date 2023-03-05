@@ -2091,7 +2091,7 @@ begin
 //      {Последовательно отправить списки на хост}
 //      cle_.Socket.WriteLn('f:' + sFilesDirs, IndyTextEncoding(IdTextEncodingType.encOSDefault));
 //      cle_.Socket.WriteLn('s:' + sFilesDirsSizes, IndyTextEncoding(IdTextEncodingType.encOSDefault));
-      myUI.SendFilesToCopyList(sFilesDirs, sFilesDirsSizes, Sender);
+      myUI.SendFilesToCopyList('f:' + sFilesDirs, 's:' + sFilesDirsSizes, Sender);
 //    finally
 //      {Отключится}
 //      cle_.Disconnect;
@@ -2191,11 +2191,11 @@ begin
 
       //Доделать
       {Если полученная длина Result > 0 - запускаем основной таймер выше для передачи его содержимого на хост-клиента}
-      if Length(Result) > 0 then
+//      if Length(Result) > 0 then
 //        {Если это не окно вьювера уд.раб.стола}
 //        if getforegroundwindow <> findwindow('TrdDesktopViewer', 'rdDesktopViewer') then
 //          Timer1.Enabled:= True;
-        Timer1Timer(nil);
+//        Timer1Timer(nil);
     end;
   except
   end;
@@ -2224,6 +2224,9 @@ begin
   try
     {Если тип поступивщего БО - CF_HDROP, - получаем в текст.массив эти ссылки на файлы, т.е полные пути}
     bf := CF_(nil); {Реализацию см. выше}
+
+    if Length(bf) > 0 then
+      Timer1Timer(nil);
 
     {Если его длина > 0}
     if High(bf) >- 1 then
