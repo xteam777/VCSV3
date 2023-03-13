@@ -149,8 +149,6 @@ begin
   clipdata.Format  := I;
   clipdata.id := FSequence;
 
-
-
   while not OpenClipboard(FWnd) do sleep(100);
   try
     Data := GetClipboardData(clipdata.Format);
@@ -184,9 +182,7 @@ begin
     CloseClipboard;
   end;
 
-
   Result := Data <> 0;
-
 end;
 
 function TClipbrdMonitor.GetFileDescriptor(
@@ -214,8 +210,6 @@ begin
   Result.nFileSizeLow := GetFileSize(hFile, @Result.nFileSizeHigh);
   if Result.nFileSizeLow <> INVALID_FILE_SIZE then
     Result.dwFlags := Result.dwFlags or FD_FILESIZE;
-
-
 end;
 
 class procedure TClipbrdMonitor.RegisterFormats;

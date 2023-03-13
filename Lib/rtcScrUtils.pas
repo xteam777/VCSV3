@@ -48,7 +48,7 @@ function Get_Clipboard: RtcString;
 procedure Put_Clipboard(const s: RtcString);
 procedure Empty_Clipboard;
 
-function Get_ClipboardFiles: TRtcArray;
+//function Get_ClipboardFiles: TRtcArray;
 
 function Post_CtrlAltDel(fromLauncher: boolean = False): boolean; //Need aw_sas32.dll
 
@@ -184,7 +184,7 @@ begin Exit;
   end;
 end;
 
-function Get_ClipboardFiles: TRtcArray;
+{function Get_ClipboardFiles: TRtcArray;
 var
   len, fmt: integer;
   tmp: RtcByteArray;
@@ -293,7 +293,7 @@ begin Exit;
       MyClip.Free;
     end;
   end;
-end;
+end;}
 
 procedure Put_Clipboard(const s: RtcString);
 var
