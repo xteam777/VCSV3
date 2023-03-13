@@ -760,9 +760,11 @@ var
   F : TextFile;
   CurTick, CapLat, EncLat : UInt64;
   IniF: TIniFile;
-//  time: DWORD;
+  time: DWORD;
 begin
 //  DataCS.Enter;
+
+time := GetTickCount;
 
   //ShowMessage('GrabScreen');
   {$IFDEF DEBUG}
@@ -968,6 +970,9 @@ begin
   end;
 
   DataCS.Leave;
+
+  time := GetTickCount - time;
+  Debug.Log('grab: ' + IntToStr(time));
 
  //FDuplicate.ReleaseFrame;
 end;

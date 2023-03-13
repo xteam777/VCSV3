@@ -166,7 +166,7 @@ var
   {$ELSE}
   style: LONG_PTR;
   {$ENDIF}
-  margins: TMargins;
+//  margins: TMargins;
 begin
 //	ZeroMemory(@wndClass, sizeof(wndClass));
   FillChar(wndClass, SizeOf(wndClass), 0);
