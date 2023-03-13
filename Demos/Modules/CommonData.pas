@@ -5,6 +5,17 @@ interface
 uses
   Windows, Classes, Messages, SyncObjs, uVircessTypes, RunElevatedSupport;
 
+type
+  TMessageTypeEvent = (mteUnknown,
+                       mteNewClipText,
+                       mteGetSingleFile,
+                       mteApplySingleFile,
+                       mteNewClipFiles,
+                       mteClearClipFiles,
+                       mteNoFile,
+                       mteRegistration,
+                       mteRegistrationOK);
+
 const
   RMX_VERSION = '3.0';
 

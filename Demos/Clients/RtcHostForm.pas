@@ -563,11 +563,6 @@ type
     PendingRequests: TList;
 //    ActiveUIList: TList;
     PortalConnectionsList: TList;
-    hwndNextViewer: THandle;
-    sz: TStringList;
-    contr_buf13,contr_buf: String;
-    Explorer: IShellWindows;
-    stop_WMDrawClipboard: boolean;
 
     function FormatID(AID: String): String;
     function ConnectedToAllGateways: Boolean;
@@ -3150,10 +3145,6 @@ begin
   DeviceId := '';
   ConsoleId := '';
 
- {Explorer - глобальная переменная для доступа ко всем откр.окнам Explorer}
-  Explorer := CoShellWindows.Create;
-  hwndNextViewer := SetClipboardViewer(Handle);
-
   ActivationInProcess := False;
   AccountLoginInProcess := False;
 
@@ -3319,9 +3310,6 @@ var
   i: Integer;
 begin
   //XLog('FormDestroy');
-
-  ChangeClipboardChain(Handle, hwndNextViewer);
-  hwndNextViewer := 0;
 
   FStatusUpdateThread.Terminate;
 
