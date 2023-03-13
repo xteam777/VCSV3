@@ -1281,7 +1281,7 @@ var
 begin
   // Get Clipboard from Host
   fn := TRtcFunctionInfo.Create;
-  fn.FunctionName := 'gcbrd';
+  fn.FunctionName := 'getcbrd';
 
   Client.SendToUser(Sender, UserName, fn);
 end;

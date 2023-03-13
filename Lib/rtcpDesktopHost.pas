@@ -10,7 +10,7 @@ interface
 
 uses
   Windows, Messages, Classes, SysUtils, Graphics, Controls, Forms, CommonData, BlackLayered, rtcBlankOutForm,
-  ShlObj, Clipbrd, IOUtils, DateUtils, SHDocVw, ExtCtrls, ActiveX, ShellApi, ComObj,
+  ShlObj, Clipbrd, IOUtils, DateUtils, SHDocVw, ExtCtrls, ActiveX, ShellApi, ComObj, ClipbrdMonitor,
 {$IFNDEF IDE_1}
   Variants,
 {$ENDIF}
@@ -232,12 +232,20 @@ type
 
   protected
     //+sstuman
-    sFilesDirsGlobal: String;
-    sz: TStringList;
-    Explorer: IShellWindows;
+//    sFilesDirsGlobal: String;
+//    sz: TStringList;
+//    Explorer: IShellWindows;
+//    stop_WMDrawClipboard: Boolean;
+//    tCopyFilesFromControl: TTimer;
     LastClipboardUser: String;
-    stop_WMDrawClipboard: Boolean;
-    tCopyFilesFromControl: TTimer;
+    FMonitor: TClipbrdMonitor;
+    FClipData: TClipBrdFileData;
+
+    procedure ClipbrdChanged(Sender: TObject);
+    procedure OnServerLog(const Msg: string);
+    procedure SendToReceiver(data: TClipBrdFileData);
+    procedure OnSocketMessage(Sender: TObject; const Msg: PSocketMessage);
+    procedure GetFiles(var Message: TMessage); message WM_GET_FILES;
     //-sstuman
 
     // Implement if you are linking to any other TRtcPModule. Usage:
@@ -539,6 +547,40 @@ end;
 
 { TRtcPDesktopHost }
 
+procedure TRtcPDesktopHost.ClipbrdChanged(Sender: TObject);
+begin
+  if FMonitor.GetClipbrdData(FClipData) then
+    begin
+//      if chkLog.Checked then
+//        mmLog.Lines.Add(FClipData.FilesToString);
+       SendToReceiver(FClipData);
+    end;
+end;
+
+procedure TRtcPDesktopHost.SendToReceiver(data: TClipBrdFileData);
+var
+  ms: TMemoryStream;
+  r: TRtcFunctionInfo;
+begin
+  ms := TMemoryStream.Create();
+  try
+    data.SaveToStream(ms);
+    ms.Position := 0;
+
+    r := TRtcFunctionInfo.Create;
+    r.FunctionName := 'fclipbrd';
+    r.asObject['ms'] := ms.Memory;
+    r.asInteger['s'] := ms.Size;
+    r.asInteger['t'] := Ord(mteNewClipFiles);
+    Client.SendToUser(Self, uname, r);
+
+//    FServer.SendBufMesasge(ms.Memory, ms.Size, mteNewClipFiles);
+
+  finally
+    ms.Free;
+  end;
+end;
+
 constructor TRtcPDesktopHost.Create(AOwner: TComponent);
 begin
   inherited;
@@ -587,13 +629,13 @@ begin
   //FileTrans-
 
   //+sstuman
-  sz := TStringList.Create;
-  sz.NameValueSeparator := '*';
-  Explorer := CoShellWindows.Create;
+//  sz := TStringList.Create;
+//  sz.NameValueSeparator := '*';
+//  Explorer := CoShellWindows.Create;
+//  tCopyFilesFromControl := TTimer.Create(Self);
+//  tCopyFilesFromControl.Interval := 1000;
+//  tCopyFilesFromControl.OnTimer := tCopyFilesFromControlTimer;
   LastClipboardUser := '';
-  tCopyFilesFromControl := TTimer.Create(Self);
-  tCopyFilesFromControl.Interval := 1000;
-  tCopyFilesFromControl.OnTimer := tCopyFilesFromControlTimer;
   //-sstuman
 end;
 
@@ -1062,23 +1104,23 @@ begin
             else if data.isType['s'] = rtc_String then
             begin
               Scr.SpecialKey(data.asString['s']);
-              if data.asString['s'] = 'COPY' then
-              begin
-                if assigned(FileTransfer) then
-                begin
-                  // wait for Ctrl+C to be processed by the receiving app
-                  Sleep(250);
-                  // Clipboard has changed. Check if we have files in it and start sending them
-                  MyFiles := Get_ClipboardFiles;
-                  if assigned(MyFiles) then
-                    try
-                      for k := 0 to MyFiles.Count - 1 do
-                        FileTransfer.Send(uname, MyFiles.asText[k]);
-                    finally
-                      MyFiles.Free;
-                    end;
-                end;
-              end;
+//              if data.asString['s'] = 'COPY' then
+//              begin
+//                if assigned(FileTransfer) then
+//                begin
+//                  // wait for Ctrl+C to be processed by the receiving app
+//                  Sleep(250);
+//                  // Clipboard has changed. Check if we have files in it and start sending them
+//                  MyFiles := Get_ClipboardFiles;
+//                  if assigned(MyFiles) then
+//                    try
+//                      for k := 0 to MyFiles.Count - 1 do
+//                        FileTransfer.Send(uname, MyFiles.asText[k]);
+//                    finally
+//                      MyFiles.Free;
+//                    end;
+//                end;
+//              end;
             end;
           end;
         finally
@@ -1184,7 +1226,7 @@ begin
       setClipboard(uname, s);
     end;
   end
-  else if data.FunctionName = 'gcbrd' then
+  else if data.FunctionName = 'getcbrd' then
   begin
     if MayControlDesktop(uname) and isSubscriber(uname) then
     begin

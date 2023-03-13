@@ -1,0 +1,379 @@
+unit ClipBrdRecvDataObject;
+
+interface
+uses
+  Winapi.Windows, System.SysUtils, Winapi.Messages, System.Classes,
+  Winapi.SHLObj, Winapi.ActiveX, ComObj, ClipbrdMonitror;
+type
+  TDataObject = class;
+  TFormatEtcDynArray = array of FORMATETC;
+  TDataOwnership = (soCopied, soReference, soOwned);
+  TOnGetData = function (Sender: TDataObject; Index: Integer;
+                      var stream: TStream; var Ownership: TDataOwnership): Boolean of object;
+
+  TFileInfo = record
+    desc: TFileDescriptor;
+    data: TStream;
+    ownership: TDataOwnership;
+  end;
+
+  TClipBrdDataObject = class (TInterfacedObject, IDataObject, IEnumFORMATETC)
+  private
+	  FFormats: TFormatEtcDynArray;
+    FFiles: TArray<TFileInfo>;
+    FCount: Integer;
+    FOnGetData: TOnGetData;
+
+    FEnumIndex: Integer;
+    procedure ReleaseFiles;
+    function InternalGetData(Index: Integer; out data: TStream): Boolean;
+    function InternalGetName(Index: Integer; out name: string): Boolean;
+
+  public
+    // IDataObject
+    function GetData(const formatetcIn: TFormatEtc; out medium: TStgMedium):
+      HResult; stdcall;
+    function GetDataHere(const formatetc: TFormatEtc; out medium: TStgMedium):
+      HResult; stdcall;
+    function QueryGetData(const formatetc: TFormatEtc): HResult;
+      stdcall;
+    function GetCanonicalFormatEtc(const formatetc: TFormatEtc;
+      out formatetcOut: TFormatEtc): HResult; stdcall;
+    function SetData(const formatetc: TFormatEtc; var medium: TStgMedium;
+      fRelease: BOOL): HResult; stdcall;
+    function EnumFormatEtc(dwDirection: Longint; out enumFormatEtc:
+      IEnumFormatEtc): HResult; stdcall;
+    function DAdvise(const formatetc: TFormatEtc; advf: Longint;
+      const advSink: IAdviseSink; out dwConnection: Longint): HResult; stdcall;
+    function DUnadvise(dwConnection: Longint): HResult; stdcall;
+    function EnumDAdvise(out enumAdvise: IEnumStatData): HResult;
+      stdcall;
+
+    // IEnumFORMATETC
+    function Next(celt: Longint; out elt;
+      pceltFetched: PLongint): HResult; stdcall;
+    function Skip(celt: Longint): HResult; stdcall;
+    function Reset: HResult; stdcall;
+    function Clone(out Enum: IEnumFormatEtc): HResult; stdcall;
+
+    constructor Create(const AFiles: TArray<TFileDescriptor>; const AOnGetData: TOnGetData); overload;
+    destructor Destroy; override;
+
+
+  end;
+
+
+implementation
+
+{ TDataObject }
+
+function TClipBrdDataObject.Clone(out Enum: IEnumFormatEtc): HResult;
+var
+  data: TClipBrdDataObject;
+begin
+
+  data := TClipBrdDataObject.Create(nil, nil);
+  data.FFormats := FFormats;
+  data.FEnumIndex := FEnumIndex;
+  Enum := data;
+  Result := S_OK;
+
+end;
+
+constructor TClipBrdDataObject.Create(const AFiles: TArray<TFileDescriptor>;
+  const AOnGetData: TOnGetData);
+begin
+  inherited Create;
+  FOnGetData := AOnGetData;
+  FCount := Length(AFiles);
+  SetLength(FFiles, Length(AFiles));
+  for var i: Integer := 0 to Length(AFiles)-1 do
+    FFiles[i].desc := AFiles[i];
+
+
+	SetLength(FFormats, 2);
+
+	FFormats[0].cfFormat  := TClipbrdMonitor.CF_FILECONTENTS;
+	FFormats[0].dwAspect  := DVASPECT_CONTENT;
+	FFormats[0].lindex    := -1;
+	FFormats[0].tymed     := TYMED_ISTREAM;
+	FFormats[0].ptd       := nil;
+
+	FFormats[1].cfFormat  := TClipbrdMonitor.CF_FILEDESCRIPTOR;
+	FFormats[1].dwAspect  := DVASPECT_CONTENT;
+	FFormats[1].tymed     := TYMED_HGLOBAL;
+	FFormats[1].lindex    := -1;
+	FFormats[1].ptd       := nil;
+
+//	FFormats[2].cfFormat  := CF_HDROP;
+//	FFormats[2].dwAspect  := DVASPECT_CONTENT;
+//	FFormats[2].tymed     := TYMED_HGLOBAL;
+//	FFormats[2].lindex    := -1;
+//	FFormats[2].ptd       := nil;
+end;
+
+
+function TClipBrdDataObject.DAdvise(const formatetc: TFormatEtc; advf: Longint;
+  const advSink: IAdviseSink; out dwConnection: Longint): HResult;
+begin
+  Result := OLE_E_ADVISENOTSUPPORTED;
+end;
+
+
+destructor TClipBrdDataObject.Destroy;
+begin
+  ReleaseFiles;
+  inherited;
+end;
+
+function TClipBrdDataObject.DUnadvise(dwConnection: Longint): HResult;
+begin
+  Result := OLE_E_ADVISENOTSUPPORTED;
+end;
+
+function TClipBrdDataObject.EnumDAdvise(out enumAdvise: IEnumStatData): HResult;
+begin
+  Result := OLE_E_ADVISENOTSUPPORTED;
+end;
+
+function TDataObject.EnumFormatEtc(dwDirection: Longint;
+  out enumFormatEtc: IEnumFormatEtc): HResult;
+begin
+	enumFormatEtc := nil;
+  Result :=  S_OK;
+	case (dwDirection) of
+	  DATADIR_GET: enumFormatEtc := Self;
+    else
+	  	Result :=  E_NOTIMPL;
+  end;
+
+end;
+
+function TClipBrdDataObject.GetCanonicalFormatEtc(const formatetc: TFormatEtc;
+  out formatetcOut: TFormatEtc): HResult;
+begin
+	Result := DATA_S_SAMEFORMATETC;
+end;
+
+function TClipBrdDataObject.GetData(const formatetcIn: TFormatEtc;
+  out medium: TStgMedium): HResult;
+begin
+
+	if (formatetcIn.dwAspect and DVASPECT_CONTENT) = 0 then
+		exit(DV_E_DVASPECT);
+
+	medium.hGlobal := 0;
+	medium.unkForRelease := nil;
+
+	if (formatetcIn.tymed and TYMED_ISTREAM <> 0) and
+     (formatetcIn.cfFormat = TClipbrdMonitor.CF_FILECONTENTS) then
+	  begin
+      var data: TStream;
+      var fname: String;
+      if not InternalGetData(formatetcIn.lindex, data) then exit (E_INVALIDARG);
+      if not InternalGetName(formatetcIn.lindex, fname) then exit (E_INVALIDARG);
+
+		  // supports the IStream format.
+//      var local_stream: TMemoryStream;
+//		  local_stream := TMemoryStream.Create;
+//		  local_stream.CopyFrom(data);
+//		  local_stream.Position := 0;
+//		  var pIStream: IStream := TStreamAdapter.Create(local_stream, TStreamOwnership.soOwned);
+//      pIStream._AddRef;
+//		  medium.stm := pIStream;
+		  medium.tymed := TYMED_NULL;
+		  exit(S_OK);
+    end
+	else if (formatetcIn.tymed and  TYMED_HGLOBAL <> 0) and
+			    (formatetcIn.cfFormat = TClipbrdMonitor.CF_FILEDESCRIPTOR) then
+	  begin
+
+	  	var dataSize: size_t := sizeof(FILEGROUPDESCRIPTOR) + (FCount-1) * SizeOf(TFileDescriptor);
+	  	var data: HGLOBAL := GlobalAlloc(GMEM_MOVEABLE or GMEM_SHARE or GMEM_ZEROINIT, dataSize);
+
+	  	var files: PFileGroupDescriptor := GlobalLock(data);
+	  	files.cItems := FCount;
+	  	for var index: Integer := 0 to FCount-1 do
+        begin
+          files.fgd[Index] := FFiles[Index].desc;
+//          Move(Pointer(FFileName)^, files.fgd[index].cFileName[0], Length(FFileName) * SizeOf(Char));
+//    	  	files.fgd[index].dwFlags := FD_ATTRIBUTES or FD_FILESIZE;
+//    	  	files.fgd[index].dwFileAttributes := FILE_ATTRIBUTE_NORMAL;
+//          files.fgd[index].nFileSizeHigh := 0;
+//    	  	files.fgd[index].nFileSizeLow  := FData.Size;
+        end;
+
+
+	  	GlobalUnlock(data);
+
+	  	medium.hGlobal := data;
+	  	medium.tymed := TYMED_HGLOBAL;
+	  	exit(S_OK);
+	  end;
+
+
+  (*
+  система сама конвертнет, времени нет реализовывать
+	else if (formatetcIn.tymed and TYMED_HGLOBAL <> 1) and
+          (formatetcIn.cfFormat = CF_HDROP) then
+    begin
+
+		var nBufferSize: Integer := sizeof(TDropFiles) + (FFileName.Length() + 1) * sizeof(Char);
+		var pBuffer: TArray<Byte>;
+		SetLength(pBuffer, nBufferSize);
+
+		var df: PDropFiles := @pBuffer[0];
+		df.pFiles := sizeof(TDropFiles);
+		df.fWide := 1;
+
+		var pFilename: PChar := (PChar(@pBuffer[0] + sizeof(TDropFiles)));
+    Move(Pointer(FFileName)^, pFilename[0], Length(FFileName) * SizeOf(Char));
+		pFilename^ := #0; // separator between file names
+
+
+		medium.tymed := TYMED_HGLOBAL;
+		medium.hGlobal := GlobalAlloc(GMEM_ZEROINIT or GMEM_MOVEABLE or GMEM_DDESHARE, nBufferSize);
+		if (medium.hGlobal <> 0) then
+		  begin
+  			var pMem: Pointer := GlobalLock(medium.hGlobal);
+	  		if (pMem <> nil) then
+		  		CopyMemory(pMem, @pBuffer[0], nBufferSize);
+			  GlobalUnlock(medium.hGlobal);
+		  end;
+		exit(S_OK);
+	end;
+  *)
+//			CopyMedium(pmedium, m_vecStgMedium[i], m_vecFormatEtc[i]);
+
+	Result := DV_E_FORMATETC;
+end;
+
+function TClipBrdDataObject.GetDataHere(const formatetc: TFormatEtc;
+  out medium: TStgMedium): HResult;
+begin
+  Result := E_NOTIMPL;
+end;
+
+function TClipBrdDataObject.InternalGetData(Index: Integer;
+  out data: TStream): Boolean;
+begin
+  data := nil;
+  if (Index >= 0) and (Index < FCount) then
+    begin
+      data := FFiles[Index].data;
+      if (data = nil) and Assigned(FOnGetData) then
+        if FOnGetData(Self, Index, FFiles[Index].data, FFiles[Index].ownership) then
+          data := FFiles[Index].data;
+    end;
+  Result := data <> nil;
+end;
+
+function TClipBrdDataObject.InternalGetName(Index: Integer; out name: string): Boolean;
+begin
+  name := '';
+  if (Index >= 0) and (Index < FCount) then
+    name := FFiles[Index].desc.cFileName;
+  Result := name <> '';
+end;
+
+function TClipBrdDataObject.Next(celt: Longint; out elt;
+  pceltFetched: PLongint): HResult;
+var
+  FormatEtc: PFormatEtc;
+begin
+  FormatEtc := PFormatEtc(@Elt);
+//---------
+ 	if (celt <= 0) then
+		exit(E_INVALIDARG);
+//	if (pceltFetched = nil and celt <> 1) then // pceltFetched can be NULL only for 1 item request
+//		exit(E_POINTER);
+	if (FormatEtc = nil) then
+		exit(E_POINTER);
+
+	if (pceltFetched <> nil) then
+		pceltFetched^ := 0;
+
+	if FEnumIndex >= Length(FFormats) then
+		exit(S_FALSE);
+
+	var cReturn: ULONG := celt;
+
+	while (FEnumIndex < Length(FFormats)) and (cReturn > 0) do
+    begin
+      FormatEtc^ := FFormats[FEnumIndex];
+      Inc(FormatEtc);
+      Inc(FEnumIndex);
+      Dec(cReturn);
+	  end;
+
+	if (pceltFetched <> nil) then
+		pceltFetched^ := celt - cReturn;
+
+  if cReturn = 0 then
+    Result := S_OK else
+    Result := S_FALSE;
+end;
+
+function TClipBrdDataObject.QueryGetData(const formatetc: TFormatEtc): HResult;
+var
+  i: Integer;
+begin
+
+	if (formatetc.dwAspect and DVASPECT_CONTENT) = 0  then
+    begin
+  		Result :=  DV_E_DVASPECT;
+      exit;
+    end;
+
+	for i := 0 to Length(FFormats)-1 do
+    begin
+  		if (
+          (formatetc.tymed = FFormats[i].tymed) and
+          (formatetc.cfFormat = FFormats[i].cfFormat)
+         ) then
+        begin
+    			Result :=  S_OK;
+          exit;
+        end;
+    end;
+
+	Result :=  DV_E_TYMED;
+end;
+
+procedure TClipBrdDataObject.ReleaseFiles;
+var
+  i: Integer;
+begin
+  for I := 0 to FCount-1 do
+    begin
+      if FFiles[i].data <> nil then
+        case FFiles[i].ownership of
+          soCopied, soOwned: FreeAndNil(FFiles[i].data);
+          soReference: FFiles[i].data := nil;
+        end;
+    end;
+  FCount := 0;
+  SetLength(FFiles, 0);
+end;
+
+function TClipBrdDataObject.Reset: HResult;
+begin
+  FEnumIndex := 0;
+  Result := S_OK;
+end;
+
+function TClipBrdDataObject.SetData(const formatetc: TFormatEtc;
+  var medium: TStgMedium; fRelease: BOOL): HResult;
+begin
+  Result := E_NOTIMPL;
+end;
+
+function TClipBrdDataObject.Skip(celt: Longint): HResult;
+begin
+  Result := S_OK;
+	if FEnumIndex + celt >= Length(FFormats) then
+		Result :=  S_FALSE else
+    FEnumIndex := FEnumIndex + celt;
+end;
+
+end.
