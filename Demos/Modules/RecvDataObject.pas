@@ -8,7 +8,7 @@ type
   TDataObject = class;
   TFormatEtcDynArray = array of FORMATETC;
   TDataOwnership = (soCopied, soReference, soOwned);
-  TOnGetData = procedure (Sender: TDataObject; AUserName, AFilePath: String; AFileDesc: TFileDescriptor) of Object;
+  TOnGetData = procedure (Sender: TDataObject; AUserName: String) of Object;
   TFileInfo = record
     desc: TFileDescriptor;
     filePath: String;
@@ -172,9 +172,10 @@ begin
 //      if not InternalGetData(formatetcIn.lindex, data) then exit (E_INVALIDARG);
       //if not InternalGetName(formatetcIn.lindex, fname) then exit (E_INVALIDARG);
 
-      if (formatetcIn.lindex >= 0) and (formatetcIn.lindex < FCount) then
-        if Assigned(FOnGetData) then
-          FOnGetData(Self, FUserName, FFiles[formatetcIn.lindex].filePath, FFiles[formatetcIn.lindex].desc);
+//      if (formatetcIn.lindex >= 0) and (formatetcIn.lindex < FCount) then
+        if Assigned(FOnGetData)
+          and (formatetcIn.lindex = 0) then
+          FOnGetData(Self, FUserName);
 
 		  // supports the IStream format.
 //      var local_stream: TMemoryStream;

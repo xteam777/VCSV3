@@ -667,7 +667,7 @@ type
     CB_DataObject: IDataObject;
 
     procedure SetFilesToClipboard(var Message: TMessage); message WM_SET_FILES_TO_CLIPBOARD;
-    procedure OnGetData(Sender: TDataObject; AUserName, AFilePath: String; AFileDesc: TFileDescriptor);
+    procedure OnGetCbrdFilesData(Sender: TDataObject; AUserName: String);
 
     procedure DoPowerPause;
     procedure DoPowerResume;
@@ -810,7 +810,7 @@ implementation
 
 {$R *.dfm}
 
-procedure TMainForm.OnGetData(Sender: TDataObject; AUserName, AFilePath: String; AFileDesc: TFileDescriptor);
+procedure TMainForm.OnGetCbrdFilesData(Sender: TDataObject; AUserName: String);
 begin
   var i := 1;
 end;
@@ -820,7 +820,7 @@ var
   data: TClipBrdFileData;
 begin
   data := TClipBrdFileData(Message.LParam);
-  CB_DataObject := TDataObject.Create(data.FUserName, data.files, data.FFilePaths, OnGetData);
+  CB_DataObject := TDataObject.Create(data.FUserName, data.files, data.FFilePaths, OnGetCbrdFilesData);
   OleCheck(OleSetClipboard(CB_DataObject));
 end;
 
