@@ -664,8 +664,7 @@ type
 
     OpenedModalForm: TForm;
 
-    CB_DataObject: IDataObject;
-
+    Function GetCurrentExplorerDirectory: String;
     procedure SetFilesToClipboard(var Message: TMessage); message WM_SET_FILES_TO_CLIPBOARD;
     procedure OnGetCbrdFilesData(Sender: TDataObject; AUserName: String);
 
@@ -810,9 +809,58 @@ implementation
 
 {$R *.dfm}
 
-procedure TMainForm.OnGetCbrdFilesData(Sender: TDataObject; AUserName: String);
+Function TMainForm.GetCurrentExplorerDirectory: String;
+var
+  ShellWindows: IShellWindows;
+  spDisp: IDispatch;
+  WB: IWebbrowser2;
+  i: Integer;
+  h: HWND;
 begin
-  var i := 1;
+  Result := '';
+
+  {Explorer - глобальная переменная для доступа ко всем откр.окнам Explorer}
+  ShellWindows := CoShellWindows.Create;
+
+  {Цикл прохода по всем откр.в настоящий момент окнам Explorer}
+  for i := 0 to ShellWindows.Count - 1 do      
+  begin
+    spDisp := ShellWindows.Item(i);  
+    if spDisp = nil then
+      Continue;
+      
+    {Если очередное окно пребывает сейчас в фокусе}
+    if GetForegroundWindow = (ShellWindows.Item(i) as IWebbrowser2).HWND then
+    begin
+      spDisp.QueryInterface(iWebBrowser2, WB);
+      if WB = nil then    
+        Continue;
+        
+      {Получаем его Handle (дескриптор окна) }
+      h := WB.HWND;
+      {Получаем адресную локацию,т.е путь к каталогу }
+      Result := WB.LocationUrl;
+      {Замена левосторонних слешев в пути на классич. правосторонний разделитель}
+      Result := StringReplace(Result, '/','\', [rfReplaceAll]);
+      {Удаляем 1-ые лишнии 8 символов (http:///)}
+      Delete(Result, 1, 8);
+      {Замена URL-представления пробела %20 на нормальный символ #32}
+      Result := IncludeTrailingPathDelimiter(StringReplace(Result, '%20', ' ', [rfReplaceAll]));
+    end;
+  end;
+end;
+
+procedure TMainForm.OnGetCbrdFilesData(Sender: TDataObject; AUserName: String);
+var
+  pPc: PPortalConnection;
+  CurExplorerDir: String;
+begin
+  pPc := GetPortalConnection('desk', AUserName);
+  if pPc <> nil then
+  begin
+    CurExplorerDir := GetCurrentExplorerDirectory;
+    SendMessage(pPc^.UIHandle, WM_GET_FILES_FROM_HOST_CLIPBOARD, 0, LPARAM(CurExplorerDir));
+  end;
 end;
 
 procedure TMainForm.SetFilesToClipboard(var Message: TMessage);
@@ -11101,7 +11149,7 @@ end;
 
 
 initialization
-  OleInitialize(nil);
+//  OleInitialize(nil);
   CS_GW := TCriticalSection.Create;
   CS_Status := TCriticalSection.Create;
   CS_Pending := TCriticalSection.Create;
@@ -11110,7 +11158,7 @@ initialization
   Randomize;
 
 finalization
-  OleUninitialize;
+//  OleUninitialize;
   RestorePowerChanges;
   CS_Pending.Free;
   CS_Status := TCriticalSection.Create;

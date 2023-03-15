@@ -3,7 +3,7 @@ unit CommonData;
 interface
 
 uses
-  Windows, Classes, Messages;
+  Windows, Classes, Messages, RecvDataObject;
 
 type
   TMessageTypeEvent = (mteUnknown,
@@ -25,7 +25,8 @@ const
   WM_BLOCK_INPUT_MESSAGE = WM_USER + 1004;
   WM_DRAG_FULL_WINDOWS_MESSAGE = WM_USER + 1005;
   WM_SET_FILES_TO_CLIPBOARD = WM_USER + 1006;
-//  WM_BROADCAST_LOGOFF = WM_USER + 1007;
+  WM_GET_FILES_FROM_HOST_CLIPBOARD = WM_USER + 1007;
+//  WM_BROADCAST_LOGOFF = WM_USER + 1008;
 
   EVENT_KEY_DOWN = 0;
   EVENT_KEY_UP = 1;
@@ -61,6 +62,7 @@ var
   ActiveConsoleSessionID: DWORD;
   CurrentProcessID: DWORD;
   IsWinServer: Boolean;
+  CB_DataObject: TDataObject;
 //  TorServiceID: String;
 //  TorProcessID: DWORD;
 

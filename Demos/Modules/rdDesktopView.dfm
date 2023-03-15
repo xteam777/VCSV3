@@ -3109,6 +3109,7 @@ object rdDesktopViewer: TrdDesktopViewer
           Top = 1
           Width = 343
           Height = 34
+          UseSystemFont = False
           ActionManager = ActionManagerTop
           Align = alNone
           Color = clMenuBar
@@ -3118,7 +3119,7 @@ object rdDesktopViewer: TrdDesktopViewer
           ColorMap.SelectedFontColor = clWhite
           ColorMap.UnusedColor = clWhite
           Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
+          Font.Color = clBlack
           Font.Height = -12
           Font.Name = 'Segoe UI'
           Font.Style = []
@@ -5150,10 +5151,5 @@ object rdDesktopViewer: TrdDesktopViewer
   object myFileTransferUI: TRtcPFileTransferUI
     Left = 48
     Top = 202
-  end
-  object Timer2: TTimer
-    OnTimer = Timer2Timer
-    Left = 954
-    Top = 80
   end
 end

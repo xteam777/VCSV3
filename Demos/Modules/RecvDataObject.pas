@@ -18,8 +18,6 @@ type
   TDataObject = class (TInterfacedObject, IDataObject, IEnumFORMATETC)
   private
 	  FFormats: TFormatEtcDynArray;
-    FFiles: TArray<TFileInfo>;
-    FCount: Integer;
     FOnGetData: TOnGetData;
     FUserName: String;
 
@@ -28,6 +26,9 @@ type
     function InternalGetName(Index: Integer; out name: string): Boolean;
 
   public
+    FFiles: TArray<TFileInfo>;
+    FCount: Integer;
+    FDirectory: String;
     // IDataObject
     function GetData(const formatetcIn: TFormatEtc; out medium: TStgMedium):
       HResult; stdcall;
