@@ -205,16 +205,16 @@ begin
                 SetLength(s, DragQueryFile(Data, i, PChar(s), 1024));
                 FilesDS.asString['p'] := s;
                 fDesc := GetFileDescriptor(s);
-                FilesDS.asInteger['a'] := fDesc.dwFileAttributes;
-                FilesDS.asInteger['f'] := fDesc.dwFlags;
-                FilesDS.asInteger['cl'] := fDesc.ftCreationTime.dwLowDateTime;
-                FilesDS.asInteger['ch'] := fDesc.ftCreationTime.dwHighDateTime;
-                FilesDS.asInteger['ll'] := fDesc.ftLastAccessTime.dwLowDateTime;
-                FilesDS.asInteger['lh'] := fDesc.ftLastAccessTime.dwHighDateTime;
-                FilesDS.asInteger['wl'] := fDesc.ftLastWriteTime.dwLowDateTime;
-                FilesDS.asInteger['wh'] := fDesc.ftLastWriteTime.dwHighDateTime;
-                FilesDS.asInteger['sl'] := fDesc.nFileSizeLow;
-                FilesDS.asInteger['sh'] := fDesc.nFileSizeHigh;
+                FilesDS.asLargeInt['a'] := fDesc.dwFileAttributes;
+                FilesDS.asLargeInt['f'] := fDesc.dwFlags;
+                FilesDS.asLargeInt['cl'] := fDesc.ftCreationTime.dwLowDateTime;
+                FilesDS.asLargeInt['ch'] := fDesc.ftCreationTime.dwHighDateTime;
+                FilesDS.asLargeInt['ll'] := fDesc.ftLastAccessTime.dwLowDateTime;
+                FilesDS.asLargeInt['lh'] := fDesc.ftLastAccessTime.dwHighDateTime;
+                FilesDS.asLargeInt['wl'] := fDesc.ftLastWriteTime.dwLowDateTime;
+                FilesDS.asLargeInt['wh'] := fDesc.ftLastWriteTime.dwHighDateTime;
+                FilesDS.asLargeInt['sl'] := fDesc.nFileSizeLow;
+                FilesDS.asLargeInt['sh'] := fDesc.nFileSizeHigh;
               end;
             end;
           end
@@ -334,7 +334,9 @@ begin
               while not FilesDS.EOF do
               begin
                 CB_FileData.FFilePaths[i] := FilesDS.asString['p'];
-                CB_FileData.files[I] := GetFileDescriptorByParams(FilesDS.asString['p'], FilesDS.asInteger['a'], FilesDS.asInteger['f'], FilesDS.asInteger['cl'], FilesDS.asInteger['ch'], FilesDS.asInteger['ll'], FilesDS.asInteger['lh'], FilesDS.asInteger['wl'], FilesDS.asInteger['wh'], FilesDS.asInteger['sl'], FilesDS.asInteger['sh']);
+                CB_FileData.files[I] := GetFileDescriptorByParams(FilesDS.asString['p'], FilesDS.asLargeInt['a'], FilesDS.asLargeInt['f'],
+                  FilesDS.asLargeInt['cl'], FilesDS.asLargeInt['ch'], FilesDS.asLargeInt['ll'], FilesDS.asLargeInt['lh'], FilesDS.asLargeInt['wl'],
+                  FilesDS.asLargeInt['wh'], FilesDS.asLargeInt['sl'], FilesDS.asLargeInt['sh']);
 
                 i := i + 1;
                 FilesDS.Next;
