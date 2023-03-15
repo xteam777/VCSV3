@@ -21,7 +21,8 @@ uses
   rtcSystem,
 
   rtcInfo,
-  ShellApi;
+  ShellApi,
+  ShlObj, ClipbrdMonitor, CommonData;
 
 type
   _MARGINS = packed record
@@ -45,8 +46,11 @@ function Get_ComputerName: RtcString;
 function Get_UserName: RtcString;
 
 function Get_Clipboard: RtcString;
-procedure Put_Clipboard(const s: RtcString);
+procedure Put_Clipboard(const uname, s: RtcString);
 procedure Empty_Clipboard;
+
+function GetFileDescriptor(const FileName: String): TFileDescriptor;
+function GetFileDescriptorByParams(const FileName: String; dwFileAttributes, dwFlags: Cardinal; ftCreationTime_Low, ftCreationTime_High, ftLastAccessTime_Low, ftLastAccessTime_High, ftLastWriteTime_Low, ftLastWriteTime_High, nFileSizeLow, nFileSizeHigh: DWORD): TFileDescriptor;
 
 //function Get_ClipboardFiles: TRtcArray;
 
@@ -120,36 +124,104 @@ begin
     Result := RtcString('');
 end;
 
+function GetFileDescriptor(const FileName: String): TFileDescriptor;
+var
+  hFile: THandle;
+  s: string;
+begin
+  FillChar(Result, SizeOf(Result), 0);
+  s := ExtractFileName(FileName);
+  if Length(s) < MAX_PATH then
+    Move(Pointer(s)^, Result.cFileName[0], Length(s) * SizeOf(Char))
+  else
+    Exit;
+
+  Result.dwFileAttributes := GetFileAttributes(PChar(FileName));
+  if Result.dwFileAttributes <> INVALID_FILE_ATTRIBUTES then
+    Result.dwFlags := Result.dwFlags or FD_ATTRIBUTES;
+
+  hFile := CreateFile(PChar(FileName), GENERIC_READ, FILE_SHARE_READ, nil, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+  if hFile = INVALID_HANDLE_VALUE then
+    Exit; // raise
+
+  if GetFileTime(hFile, @Result.ftCreationTime, @Result.ftLastAccessTime, @Result.ftLastWriteTime) then
+    Result.dwFlags := Result.dwFlags or FD_CREATETIME or FD_ACCESSTIME or FD_WRITESTIME;
+
+  Result.nFileSizeLow := GetFileSize(hFile, @Result.nFileSizeHigh);
+  if Result.nFileSizeLow <> INVALID_FILE_SIZE then
+    Result.dwFlags := Result.dwFlags or FD_FILESIZE;
+end;
+
 function Get_Clipboard: RtcString;
 var
-  len, fmt: integer;
+  len, fmt, i: Integer;
   tmp: RtcByteArray;
 
   Data: THandle;
   DataPtr: Pointer;
   DataLen: integer;
 
-  pFormatName: String;
+  pFormatName, s: String;
 
-  MyClip: TRtcDataSet;
-begin Exit;
+  MyClip, FilesDS: TRtcDataSet;
+  fHasHDROP: Boolean;
+  fDesc: TFileDescriptor;
+begin
+  MyClip := TRtcDataSet.Create;
   try
-    MyClip := TRtcDataSet.Create;
+    Clipboard.Open;
     try
-      Clipboard.Open;
-    except
-      xLog('Failed to open clipboard');
-      Exit;
-    end;
-    try
+      fHasHDROP := False;
+      fmt := EnumClipboardFormats(0);
+      while (fmt > 0) do
+      begin
+        if fmt = CF_HDROP then
+        begin
+          fHasHDROP := True;
+          Break;
+        end;
+        fmt := EnumClipboardFormats(fmt);
+      end;
+
       fmt := EnumClipboardFormats(0);
       while (fmt > 0) do
       begin
         Data := GetClipboardData(fmt);
         if Data <> 0 then
         begin
-          DataPtr := GlobalLock(Data);
-          if DataPtr <> nil then
+          if fHasHDROP then
+          begin
+            if fmt = CF_HDROP then
+            begin
+              MyClip.Append;
+              MyClip.asInteger['fmt'] := fmt;
+
+              MyClip.asInteger['cnt'] := DragQueryFile(Data, DWORD(-1), nil, 0);
+              FilesDS := MyClip.NewDataSet('fs');
+              for i := 0 to MyClip.asInteger['cnt'] - 1 do
+              begin
+                FilesDS.Append;
+                SetLength(s, 1024);
+                SetLength(s, DragQueryFile(Data, i, PChar(s), 1024));
+                FilesDS.asString['p'] := s;
+                fDesc := GetFileDescriptor(s);
+                FilesDS.asInteger['a'] := fDesc.dwFileAttributes;
+                FilesDS.asInteger['f'] := fDesc.dwFlags;
+                FilesDS.asInteger['cl'] := fDesc.ftCreationTime.dwLowDateTime;
+                FilesDS.asInteger['ch'] := fDesc.ftCreationTime.dwHighDateTime;
+                FilesDS.asInteger['ll'] := fDesc.ftLastAccessTime.dwLowDateTime;
+                FilesDS.asInteger['lh'] := fDesc.ftLastAccessTime.dwHighDateTime;
+                FilesDS.asInteger['wl'] := fDesc.ftLastWriteTime.dwLowDateTime;
+                FilesDS.asInteger['wh'] := fDesc.ftLastWriteTime.dwHighDateTime;
+                FilesDS.asInteger['sl'] := fDesc.nFileSizeLow;
+                FilesDS.asInteger['sh'] := fDesc.nFileSizeHigh;
+              end;
+            end;
+          end
+          else
+          begin
+            DataPtr := GlobalLock(Data);
+            if DataPtr <> nil then
             try
               DataLen := GlobalSize(Data);
               if DataLen > 0 then
@@ -172,6 +244,7 @@ begin Exit;
             finally
               GlobalUnlock(Data);
             end;
+          end;
         end;
         fmt := EnumClipboardFormats(fmt);
       end;
@@ -184,118 +257,28 @@ begin Exit;
   end;
 end;
 
-{function Get_ClipboardFiles: TRtcArray;
+function GetFileDescriptorByParams(const FileName: String; dwFileAttributes, dwFlags: Cardinal; ftCreationTime_Low, ftCreationTime_High, ftLastAccessTime_Low, ftLastAccessTime_High, ftLastWriteTime_Low, ftLastWriteTime_High, nFileSizeLow, nFileSizeHigh: DWORD): TFileDescriptor;
 var
-  len, fmt: integer;
-  tmp: RtcByteArray;
-  tmpw: WideString;
+  s: string;
+begin
+  FillChar(Result, SizeOf(Result), 0);
+  s := ExtractFileName(FileName);
+  if Length(s) < MAX_PATH then
+    Move(Pointer(s)^, Result.cFileName[0], Length(s) * SizeOf(Char)) else
+    exit;
+  Result.dwFileAttributes := dwFileAttributes;
+  Result.dwFlags := dwFlags;
+  Result.ftCreationTime.dwLowDateTime := ftCreationTime_Low;
+  Result.ftCreationTime.dwHighDateTime := ftCreationTime_High;
+  Result.ftLastAccessTime.dwLowDateTime := ftLastAccessTime_Low;
+  Result.ftLastAccessTime.dwHighDateTime := ftLastAccessTime_High;
+  Result.ftLastWriteTime.dwLowDateTime := ftLastWriteTime_Low;
+  Result.ftLastWriteTime.dwHighDateTime := ftLastWriteTime_High;
+  Result.nFileSizeLow := nFileSizeLow;
+  Result.nFileSizeHigh := nFileSizeHigh;
+end;
 
-  Data: THandle;
-  DataPtr: Pointer;
-  DataLen: integer;
-
-  pFormatName: String;
-
-  MyClip: TRtcArray;
-begin Exit;
-  try
-    MyClip := TRtcArray.Create;
-    try
-      Clipboard.Open;
-    except
-      xLog('Failed to open clipboard');
-      Exit;
-    end;
-    try
-      fmt := EnumClipboardFormats(0);
-      while (fmt > 0) do
-      begin
-        SetLength(pFormatName, 255);
-        len := GetClipboardFormatName(fmt, @pFormatName[1], 255);
-        SetLength(pFormatName, len);
-        if UpperCase(pFormatName) = 'FILENAMEW' then
-        begin
-          Data := GetClipboardData(fmt);
-          if Data <> 0 then
-          begin
-            DataPtr := GlobalLock(Data);
-            if DataPtr <> nil then
-              try
-                DataLen := GlobalSize(Data);
-                if DataLen > 0 then
-                begin
-                  SetLength(tmpw, DataLen div 2);
-                  Move(DataPtr^, tmpw[1], DataLen);
-                  if copy(tmpw, length(tmpw), 1) = #0 then
-                    SetLength(tmpw, length(tmpw) - 1);
-                  MyClip.asText[MyClip.Count] := tmpw;
-                  SetLength(tmpw, 0);
-                end;
-              finally
-                GlobalUnlock(Data);
-              end;
-          end;
-        end;
-        fmt := EnumClipboardFormats(fmt);
-      end;
-    finally
-      Clipboard.Close;
-    end;
-
-    if MyClip.Count = 0 then
-    begin
-      try
-        Clipboard.Open;
-      except
-        xLog('Failed to open clipboard');
-        Exit;
-      end;
-      try
-        fmt := EnumClipboardFormats(0);
-        while (fmt > 0) do
-        begin
-          SetLength(pFormatName, 255);
-          len := GetClipboardFormatName(fmt, @pFormatName[1], 255);
-          SetLength(pFormatName, len);
-          if UpperCase(pFormatName) = 'FILENAME' then
-          begin
-            Data := GetClipboardData(fmt);
-            if Data <> 0 then
-            begin
-              DataPtr := GlobalLock(Data);
-              if DataPtr <> nil then
-                try
-                  DataLen := GlobalSize(Data);
-                  if DataLen > 0 then
-                  begin
-                    SetLength(tmp, DataLen);
-                    Move(DataPtr^, tmp[0], DataLen);
-                    MyClip.asString[MyClip.Count] := RtcBytesZeroToString(tmp);
-                    SetLength(tmp, 0);
-                  end;
-                finally
-                  GlobalUnlock(Data);
-                end;
-            end;
-          end;
-          fmt := EnumClipboardFormats(fmt);
-        end;
-      finally
-        Clipboard.Close;
-      end;
-    end;
-  finally
-    if MyClip.Count > 0 then
-      Result := MyClip
-    else
-    begin
-      Result := nil;
-      MyClip.Free;
-    end;
-  end;
-end;}
-
-procedure Put_Clipboard(const s: RtcString);
+procedure Put_Clipboard(const uname, s: RtcString);
 var
   fmt: integer;
   fname: String;
@@ -305,16 +288,18 @@ var
   DataPtr: Pointer;
   DataLen: integer;
 
-  MyClip: TRtcDataSet;
+  MyClip, FilesDS: TRtcDataSet;
 
-begin  Exit;
+  CB_DataHandle: THandle;
+  CB_FileData: TClipBrdFileData;
+  CB_Closed: Boolean;
+  i: Integer;
+  fg_desc: PFileGroupDescriptor;
+  wStr: WideString;
+begin
   tmp := nil;
-  try
-    Clipboard.Open;
-  except
-    xLog('Failed to open clipboard');
-    Exit;
-  end;
+  Clipboard.Open;
+  CB_Closed := False;
   try
     EmptyClipboard;
 
@@ -326,27 +311,60 @@ begin  Exit;
         while not MyClip.EOF do
         begin
           fname := MyClip.asText['form'];
-          tmp := RtcStringToBytes(MyClip.asString['data']);
 
           if fname <> '' then
             fmt := RegisterClipboardFormat(PChar(fname))
           else
             fmt := MyClip.asInteger['fmt'];
 
-          DataLen := length(tmp);
-          Data := GlobalAlloc(GMEM_MOVEABLE + GMEM_DDESHARE, DataLen);
-          try
-            DataPtr := GlobalLock(Data);
+          tmp := RtcStringToBytes(MyClip.asString['data']);
+
+          if fmt = CF_HDROP then
+          begin
+            CB_FileData := TClipBrdFileData.Create;
             try
-              Move(tmp[0], DataPtr^, DataLen);
-              SetClipboardData(fmt, Data);
+              CB_FileData.FUserName := uname;
+              CB_FileData.files_count := MyClip.asInteger['cnt'];
+              SetLength(CB_FileData.files, CB_FileData.files_count);
+              SetLength(CB_FileData.FFilePaths, CB_FileData.files_count);
+
+              FilesDS := MyClip.asDataSet['fs'];
+              FilesDS.First;
+              i := 0;
+              while not FilesDS.EOF do
+              begin
+                CB_FileData.FFilePaths[i] := FilesDS.asString['p'];
+                CB_FileData.files[I] := GetFileDescriptorByParams(FilesDS.asString['p'], FilesDS.asInteger['a'], FilesDS.asInteger['f'], FilesDS.asInteger['cl'], FilesDS.asInteger['ch'], FilesDS.asInteger['ll'], FilesDS.asInteger['lh'], FilesDS.asInteger['wl'], FilesDS.asInteger['wh'], FilesDS.asInteger['sl'], FilesDS.asInteger['sh']);
+
+                i := i + 1;
+                FilesDS.Next;
+              end;
+
+              Clipboard.Close;
+              CB_Closed := True;
+              SendMessage(MainFormHandle, WM_SET_FILES_TO_CLIPBOARD, 0, LPARAM(CB_FileData));
             finally
-              GlobalUnlock(Data);
+              FreeAndNil(CB_FileData);
             end;
-          except
-            GlobalFree(Data);
-            raise;
+          end
+          else
+          begin
+            DataLen := length(tmp);
+            Data := GlobalAlloc(GMEM_MOVEABLE + GMEM_DDESHARE, DataLen);
+            try
+              DataPtr := GlobalLock(Data);
+              try
+                Move(tmp[0], DataPtr^, DataLen);
+                SetClipboardData(fmt, Data);
+              finally
+                GlobalUnlock(Data);
+              end;
+            except
+              GlobalFree(Data);
+              raise;
+            end;
           end;
+
           MyClip.Next;
         end;
       finally
@@ -354,7 +372,8 @@ begin  Exit;
       end;
     end;
   finally
-    Clipboard.Close;
+    if not CB_Closed then
+      Clipboard.Close;
   end;
 end;
 
@@ -846,6 +865,244 @@ begin
 
   ChangedAero := False;
 end;
+
+{function Get_Clipboard: RtcString;
+var
+  len, fmt: integer;
+  tmp: RtcByteArray;
+
+  Data: THandle;
+  DataPtr: Pointer;
+  DataLen: integer;
+
+  pFormatName: String;
+
+  MyClip: TRtcDataSet;
+begin Exit;
+  try
+    MyClip := TRtcDataSet.Create;
+    try
+      Clipboard.Open;
+    except
+      xLog('Failed to open clipboard');
+      Exit;
+    end;
+    try
+      fmt := EnumClipboardFormats(0);
+      while (fmt > 0) do
+      begin
+        Data := GetClipboardData(fmt);
+        if Data <> 0 then
+        begin
+          DataPtr := GlobalLock(Data);
+          if DataPtr <> nil then
+            try
+              DataLen := GlobalSize(Data);
+              if DataLen > 0 then
+              begin
+                SetLength(pFormatName, 255);
+                len := GetClipboardFormatName(fmt, @pFormatName[1], 255);
+                SetLength(pFormatName, len);
+
+                MyClip.Append;
+                if pFormatName <> '' then
+                  MyClip.asText['form'] := pFormatName
+                else
+                  MyClip.asInteger['fmt'] := fmt;
+
+                SetLength(tmp, DataLen);
+                Move(DataPtr^, tmp[0], DataLen);
+                MyClip.asString['data'] := RtcBytesToString(tmp);
+                SetLength(tmp, 0);
+              end;
+            finally
+              GlobalUnlock(Data);
+            end;
+        end;
+        fmt := EnumClipboardFormats(fmt);
+      end;
+    finally
+      Clipboard.Close;
+    end;
+  finally
+    Result := MyClip.toCode;
+    MyClip.Free;
+  end;
+end;}
+
+{function Get_ClipboardFiles: TRtcArray;
+var
+  len, fmt: integer;
+  tmp: RtcByteArray;
+  tmpw: WideString;
+
+  Data: THandle;
+  DataPtr: Pointer;
+  DataLen: integer;
+
+  pFormatName: String;
+
+  MyClip: TRtcArray;
+begin Exit;
+  try
+    MyClip := TRtcArray.Create;
+    try
+      Clipboard.Open;
+    except
+      xLog('Failed to open clipboard');
+      Exit;
+    end;
+    try
+      fmt := EnumClipboardFormats(0);
+      while (fmt > 0) do
+      begin
+        SetLength(pFormatName, 255);
+        len := GetClipboardFormatName(fmt, @pFormatName[1], 255);
+        SetLength(pFormatName, len);
+        if UpperCase(pFormatName) = 'FILENAMEW' then
+        begin
+          Data := GetClipboardData(fmt);
+          if Data <> 0 then
+          begin
+            DataPtr := GlobalLock(Data);
+            if DataPtr <> nil then
+              try
+                DataLen := GlobalSize(Data);
+                if DataLen > 0 then
+                begin
+                  SetLength(tmpw, DataLen div 2);
+                  Move(DataPtr^, tmpw[1], DataLen);
+                  if copy(tmpw, length(tmpw), 1) = #0 then
+                    SetLength(tmpw, length(tmpw) - 1);
+                  MyClip.asText[MyClip.Count] := tmpw;
+                  SetLength(tmpw, 0);
+                end;
+              finally
+                GlobalUnlock(Data);
+              end;
+          end;
+        end;
+        fmt := EnumClipboardFormats(fmt);
+      end;
+    finally
+      Clipboard.Close;
+    end;
+
+    if MyClip.Count = 0 then
+    begin
+      try
+        Clipboard.Open;
+      except
+        xLog('Failed to open clipboard');
+        Exit;
+      end;
+      try
+        fmt := EnumClipboardFormats(0);
+        while (fmt > 0) do
+        begin
+          SetLength(pFormatName, 255);
+          len := GetClipboardFormatName(fmt, @pFormatName[1], 255);
+          SetLength(pFormatName, len);
+          if UpperCase(pFormatName) = 'FILENAME' then
+          begin
+            Data := GetClipboardData(fmt);
+            if Data <> 0 then
+            begin
+              DataPtr := GlobalLock(Data);
+              if DataPtr <> nil then
+                try
+                  DataLen := GlobalSize(Data);
+                  if DataLen > 0 then
+                  begin
+                    SetLength(tmp, DataLen);
+                    Move(DataPtr^, tmp[0], DataLen);
+                    MyClip.asString[MyClip.Count] := RtcBytesZeroToString(tmp);
+                    SetLength(tmp, 0);
+                  end;
+                finally
+                  GlobalUnlock(Data);
+                end;
+            end;
+          end;
+          fmt := EnumClipboardFormats(fmt);
+        end;
+      finally
+        Clipboard.Close;
+      end;
+    end;
+  finally
+    if MyClip.Count > 0 then
+      Result := MyClip
+    else
+    begin
+      Result := nil;
+      MyClip.Free;
+    end;
+  end;
+end;}
+
+{procedure Put_Clipboard(const s: RtcString);
+var
+  fmt: integer;
+  fname: String;
+  tmp: RtcByteArray;
+
+  Data: THandle;
+  DataPtr: Pointer;
+  DataLen: integer;
+
+  MyClip: TRtcDataSet;
+
+begin  Exit;
+  tmp := nil;
+  try
+    Clipboard.Open;
+  except
+    xLog('Failed to open clipboard');
+    Exit;
+  end;
+  try
+    EmptyClipboard;
+
+    if s <> '' then
+    begin
+      MyClip := TRtcDataSet.FromCode(s);
+      try
+        MyClip.First;
+        while not MyClip.EOF do
+        begin
+          fname := MyClip.asText['form'];
+          tmp := RtcStringToBytes(MyClip.asString['data']);
+
+          if fname <> '' then
+            fmt := RegisterClipboardFormat(PChar(fname))
+          else
+            fmt := MyClip.asInteger['fmt'];
+
+          DataLen := length(tmp);
+          Data := GlobalAlloc(GMEM_MOVEABLE + GMEM_DDESHARE, DataLen);
+          try
+            DataPtr := GlobalLock(Data);
+            try
+              Move(tmp[0], DataPtr^, DataLen);
+              SetClipboardData(fmt, Data);
+            finally
+              GlobalUnlock(Data);
+            end;
+          except
+            GlobalFree(Data);
+            raise;
+          end;
+          MyClip.Next;
+        end;
+      finally
+        MyClip.Free;
+      end;
+    end;
+  finally
+    Clipboard.Close;
+  end;
+end;}
 
 initialization
 

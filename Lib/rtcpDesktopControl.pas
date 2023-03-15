@@ -678,7 +678,7 @@ begin
   CS.Acquire;
   try
     Clipboards.asString[UserName] := data;
-    Put_Clipboard(data);
+    Put_Clipboard(UserName, data);
   finally
     CS.Release;
   end;
@@ -1246,7 +1246,7 @@ begin
     if (Clipboards.isType[UserName] = rtc_Null) or
       (clip <> Clipboards.asString[UserName]) then
     begin
-      Put_Clipboard(clip);
+      Put_Clipboard(UserName, clip);
       clip := Get_Clipboard;
       if (Clipboards.isType[UserName] = rtc_Null) or
         (clip <> Clipboards.asString[UserName]) then

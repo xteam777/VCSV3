@@ -12,10 +12,10 @@ interface
 
 uses
   Windows, Messages, SysUtils, CommonData, System.Types, uProcess, ServiceMgr, //BlackLayered,
-  Classes, Graphics, Controls, Forms, DateUtils, CommonUtils, WtsApi, uSysAccount,
+  Classes, Graphics, Controls, Forms, DateUtils, CommonUtils, WtsApi, uSysAccount, ClipbrdMonitor,
   Dialogs, StdCtrls, ExtCtrls, ShellApi, rdFileTransLog, VirtualTrees.Types, SHDocVw,
-  ComCtrls, Registry, Math, RtcIdentification, SyncObjs, System.Net.HTTPClient, System.Net.URLClient,
-  rtcSystem, rtcInfo, uMessageBox, rtcScrUtils, IOUtils, uAcceptEula, ProgressDialog,
+  ComCtrls, Registry, Math, RtcIdentification, SyncObjs, System.Net.HTTPClient, System.Net.URLClient, ActiveX, ComObj,
+  rtcSystem, rtcInfo, uMessageBox, rtcScrUtils, IOUtils, uAcceptEula, ProgressDialog, ShlObj, RecvDataObject,
 
 {$IFDEF IDE_XE3up}
   UITypes,
@@ -664,6 +664,11 @@ type
 
     OpenedModalForm: TForm;
 
+    CB_DataObject: IDataObject;
+
+    procedure SetFilesToClipboard(var Message: TMessage); message WM_SET_FILES_TO_CLIPBOARD;
+    procedure OnGetData(Sender: TDataObject; AUserName, AFilePath: String; AFileDesc: TFileDescriptor);
+
     procedure DoPowerPause;
     procedure DoPowerResume;
 
@@ -803,6 +808,20 @@ var
 implementation
 
 {$R *.dfm}
+
+procedure TMainForm.OnGetData(Sender: TDataObject; AUserName, AFilePath: String; AFileDesc: TFileDescriptor);
+begin
+  var i := 1;
+end;
+
+procedure TMainForm.SetFilesToClipboard(var Message: TMessage);
+var
+  data: TClipBrdFileData;
+begin
+  data := TClipBrdFileData(Message.LParam);
+  CB_DataObject := TDataObject.Create(data.FUserName, data.files, data.FFilePaths, OnGetData);
+  OleCheck(OleSetClipboard(CB_DataObject));
+end;
 
 function TMainForm.GetHostGatewayClientActive: Boolean;
 begin

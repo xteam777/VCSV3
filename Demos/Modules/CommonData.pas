@@ -3,7 +3,7 @@ unit CommonData;
 interface
 
 uses
-  Windows, Classes, Messages, SyncObjs, uVircessTypes, RunElevatedSupport;
+  Windows, Classes, Messages;
 
 type
   TMessageTypeEvent = (mteUnknown,
@@ -24,7 +24,8 @@ const
   WM_CHANGE_LOCKED_STATUS = WM_USER + 1003;
   WM_BLOCK_INPUT_MESSAGE = WM_USER + 1004;
   WM_DRAG_FULL_WINDOWS_MESSAGE = WM_USER + 1005;
-//  WM_BROADCAST_LOGOFF = WM_USER + 1006;
+  WM_SET_FILES_TO_CLIPBOARD = WM_USER + 1006;
+//  WM_BROADCAST_LOGOFF = WM_USER + 1007;
 
   EVENT_KEY_DOWN = 0;
   EVENT_KEY_UP = 1;
