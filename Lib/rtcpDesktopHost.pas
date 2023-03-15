@@ -1429,30 +1429,12 @@ begin
   end;
 
 //FileTrans+
+  loop_update := nil;
+  loop_tosendfile := False;
+
   CS.Acquire;
   try
-    if File_Sending then
-    begin
-      if UpdateFiles.Count > 0 then
-      begin
-        loop_update := TRtcArray.Create;
-        for a := 0 to UpdateFiles.Count - 1 do
-        begin
-          uname := UpdateFiles.FieldName[a];
-          if UpdateFiles.asBoolean[uname] then
-          begin
-            UpdateFiles.asBoolean[uname] := False;
-            loop_update.asText[loop_update.Count] := uname;
-          end;
-        end;
-        UpdateFiles.Clear;
-      end;
-
-      if File_Senders > 0 then
-        loop_tosendfile := True
-      else
-        File_Sending := False;
-    end;
+    Result := File_Sending;
   finally
     CS.Release;
   end;

@@ -1040,7 +1040,7 @@ begin
         result:= MessageDlg(s, mtInformation, [mbYes,mbYesToAll,mbNo,mbNoToAll,mbClose],0)
       end else
       begin
-
+        add_lg(timetostr(now) + ': ' + src +' - файл не изменен');
         result:= mrIgnore;
         EXIT;
       end;

@@ -15,7 +15,6 @@ object rdFileTransfer: TrdFileTransfer
   Font.Name = 'Verdana'
   Font.Style = []
   KeyPreview = True
-  OldCreateOrder = False
   Position = poScreenCenter
   PrintScale = poNone
   Scaled = False
@@ -29,7 +28,6 @@ object rdFileTransfer: TrdFileTransfer
   OnKeyDown = FormKeyDown
   OnResize = FormResize
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 13
   object Splitter1: TSplitter
     Left = 0
@@ -60,7 +58,6 @@ object rdFileTransfer: TrdFileTransfer
     ParentFont = False
     TabOrder = 0
     StyleElements = []
-    ExplicitHeight = 423
     object Panel3: TPanel
       Left = 0
       Top = 52
@@ -327,7 +324,6 @@ object rdFileTransfer: TrdFileTransfer
       OnKeyUp = eFilesListKeyUp
       OnSelectItem = eFilesListSelectItem
       OnDirectoryChange = eFilesListDirectoryChange
-      ExplicitHeight = 238
     end
     object Panel5: TPanel
       Left = 0
@@ -351,7 +347,6 @@ object rdFileTransfer: TrdFileTransfer
       StyleElements = [seFont]
       OnDragDrop = DownLabelDragDrop
       OnDragOver = DownLabelDragOver
-      ExplicitTop = 354
       object pn: TPanel
         Left = 0
         Top = 0
@@ -1376,7 +1371,6 @@ object rdFileTransfer: TrdFileTransfer
     ParentFont = False
     TabOrder = 1
     StyleElements = []
-    ExplicitHeight = 423
     object eFilesList_: TRtcPFileExplorer
       Left = 0
       Top = 116
@@ -1412,7 +1406,6 @@ object rdFileTransfer: TrdFileTransfer
       OnKeyUp = eFilesList_KeyUp
       OnSelectItem = eFilesList_SelectItem
       OnDirectoryChange = eFilesList_DirectoryChange
-      ExplicitHeight = 238
     end
     object Panel7: TPanel
       Left = 0
@@ -1436,7 +1429,6 @@ object rdFileTransfer: TrdFileTransfer
       StyleElements = [seFont]
       OnDragDrop = DownLabelDragDrop
       OnDragOver = DownLabelDragOver
-      ExplicitTop = 354
       object pn_: TPanel
         Left = 0
         Top = 0
@@ -2589,14 +2581,13 @@ object rdFileTransfer: TrdFileTransfer
     Panels = <>
     SimplePanel = True
     StyleElements = []
-    ExplicitTop = 585
   end
   object pg: TPageControl
     Left = 0
     Top = 420
     Width = 1212
     Height = 137
-    ActivePage = TabSheet1
+    ActivePage = TabSheet2
     Align = alBottom
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -2608,7 +2599,6 @@ object rdFileTransfer: TrdFileTransfer
     TabOrder = 3
     TabStop = False
     StyleElements = [seFont]
-    ExplicitTop = 423
     object TabSheet1: TTabSheet
       Caption = ' '#1054#1095#1077#1088#1077#1076#1100' '#1079#1072#1076#1072#1085#1080#1081' '
       Font.Charset = DEFAULT_CHARSET
@@ -2800,7 +2790,6 @@ object rdFileTransfer: TrdFileTransfer
     Font.Style = []
     ParentFont = False
     TabOrder = 4
-    ExplicitTop = 560
     object Label7: TLabel
       AlignWithMargins = True
       Left = 1019
@@ -2895,7 +2884,7 @@ object rdFileTransfer: TrdFileTransfer
     Left = 897
     Top = 288
     Bitmap = {
-      494C0101010008003C0010001000FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C010101000800040010001000FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000001000000001002000000000000010
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -3046,7 +3035,7 @@ object rdFileTransfer: TrdFileTransfer
     Left = 961
     Top = 287
     Bitmap = {
-      494C010105000800500010001000FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C010105000800040010001000FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000002000000001002000000000000020
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
