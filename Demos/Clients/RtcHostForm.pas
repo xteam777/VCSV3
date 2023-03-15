@@ -815,7 +815,6 @@ var
   spDisp: IDispatch;
   WB: IWebbrowser2;
   i: Integer;
-  h: HWND;
 begin
   Result := '';
 
@@ -827,17 +826,15 @@ begin
   begin
     spDisp := ShellWindows.Item(i);  
     if spDisp = nil then
+      Continue;  
+      
+    spDisp.QueryInterface(iWebBrowser2, WB);
+    if WB = nil then    
       Continue;
       
     {Если очередное окно пребывает сейчас в фокусе}
-    if GetForegroundWindow = (ShellWindows.Item(i) as IWebbrowser2).HWND then
+    if GetForegroundWindow = WB.HWND then
     begin
-      spDisp.QueryInterface(iWebBrowser2, WB);
-      if WB = nil then    
-        Continue;
-        
-      {Получаем его Handle (дескриптор окна) }
-      h := WB.HWND;
       {Получаем адресную локацию,т.е путь к каталогу }
       Result := WB.LocationUrl;
       {Замена левосторонних слешев в пути на классич. правосторонний разделитель}
