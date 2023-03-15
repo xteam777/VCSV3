@@ -1434,7 +1434,7 @@ begin
 
   CS.Acquire;
   try
-    Result := File_Sending;
+    Result := Result or File_Sending;
   finally
     CS.Release;
   end;
