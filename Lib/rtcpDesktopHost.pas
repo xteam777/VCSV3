@@ -1161,11 +1161,11 @@ begin
       CS2.Acquire;
       try
         s := Get_Clipboard;
-        if (Clipboards.isType[uname] = rtc_Null) or
-          (s <> Clipboards.asString[uname]) then
-        begin
-          Put_Clipboard(uname, s);
-          s := Get_Clipboard;
+//        if (Clipboards.isType[uname] = rtc_Null) or
+//          (s <> Clipboards.asString[uname]) then
+//        begin
+//          Put_Clipboard(uname, s);
+//          s := Get_Clipboard;
           if (Clipboards.isType[uname] = rtc_Null) or
             (s <> Clipboards.asString[uname]) then
           begin
@@ -1184,7 +1184,7 @@ begin
               r.asString['s'] := s;
             end;
           end;
-        end;
+//        end;
       finally
         CS2.Release;
       end;

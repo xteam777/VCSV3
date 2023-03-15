@@ -172,8 +172,9 @@ begin
 //      if not InternalGetData(formatetcIn.lindex, data) then exit (E_INVALIDARG);
       //if not InternalGetName(formatetcIn.lindex, fname) then exit (E_INVALIDARG);
 
-      if Assigned(FOnGetData) then
-        FOnGetData(Self, FUserName, FFiles[formatetcIn.lindex].filePath, FFiles[formatetcIn.lindex].desc);
+      if (formatetcIn.lindex >= 0) and (formatetcIn.lindex < FCount) then
+        if Assigned(FOnGetData) then
+          FOnGetData(Self, FUserName, FFiles[formatetcIn.lindex].filePath, FFiles[formatetcIn.lindex].desc);
 
 		  // supports the IStream format.
 //      var local_stream: TMemoryStream;

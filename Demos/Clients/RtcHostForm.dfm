@@ -60,8 +60,8 @@ object MainForm: TMainForm
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
-    ExplicitWidth = 835
-    ExplicitHeight = 489
+    ExplicitWidth = 825
+    ExplicitHeight = 484
     DesignSize = (
       829
       485)

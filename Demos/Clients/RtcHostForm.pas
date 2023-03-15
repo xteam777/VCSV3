@@ -804,6 +804,7 @@ var
   DeviceId, ConsoleId: String;
 
   pd: TProgressDialog;
+  CB_Monitor: TClipbrdMonitor;
 
 implementation
 
@@ -3322,6 +3323,7 @@ begin
 //  Application.OnMessage := AppMessage;
 
 // DisableAero;
+  CB_Monitor := TClipbrdMonitor.Create;
 end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
@@ -3329,6 +3331,9 @@ var
   i: Integer;
 begin
   //XLog('FormDestroy');
+
+  FreeAndNil(CB_Monitor);
+
 
   FStatusUpdateThread.Terminate;
 
@@ -11096,6 +11101,7 @@ end;
 
 
 initialization
+  OleInitialize(nil);
   CS_GW := TCriticalSection.Create;
   CS_Status := TCriticalSection.Create;
   CS_Pending := TCriticalSection.Create;
@@ -11104,6 +11110,7 @@ initialization
   Randomize;
 
 finalization
+  OleUninitialize;
   RestorePowerChanges;
   CS_Pending.Free;
   CS_Status := TCriticalSection.Create;

@@ -1243,11 +1243,11 @@ begin
   try
     // send Clipboard to Host
     clip := Get_Clipboard;
-    if (Clipboards.isType[UserName] = rtc_Null) or
-      (clip <> Clipboards.asString[UserName]) then
-    begin
-      Put_Clipboard(UserName, clip);
-      clip := Get_Clipboard;
+//    if (Clipboards.isType[UserName] = rtc_Null) or
+//      (clip <> Clipboards.asString[UserName]) then
+//    begin
+//      Put_Clipboard(UserName, clip);
+//      clip := Get_Clipboard;
       if (Clipboards.isType[UserName] = rtc_Null) or
         (clip <> Clipboards.asString[UserName]) then
       begin
@@ -1266,7 +1266,7 @@ begin
           fn.asString['s'] := clip;
         end;
       end;
-    end;
+//    end;
   finally
     CS.Release;
   end;
