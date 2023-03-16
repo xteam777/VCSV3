@@ -9,10 +9,10 @@ unit ProgressDialog;
 
 interface
 
-uses Windows, SysUtils, ActiveX, Classes, Graphics, Controls, Shlobj;
+uses Windows, SysUtils, ActiveX, Classes, Graphics, Controls, Shlobj, ComCtrls, rtcScrUtils;
 
-type
-  TCommonAVI = (aviNone, aviFindFolder, aviFindFile, aviFindComputer, aviCopyFiles, aviCopyFile, aviRecycleFile, aviEmptyRecycle, aviDeleteFile);
+//type
+//  TCommonAVI = (aviNone, aviFindFolder, aviFindFile, aviFindComputer, aviCopyFiles, aviCopyFile, aviRecycleFile, aviEmptyRecycle, aviDeleteFile);
 
 // Constants for enum PROGDLG_FLAGS
 type
@@ -49,6 +49,7 @@ type
     function SetLine(dwLineNum: Integer; pwzString: PWideChar; fCompactPath: Integer; var pvResevered: Pointer): HResult; stdcall;
     function SetCancelMsg(pwzCancelMsg: PWideChar; var pvResevered: Pointer): HResult; stdcall;
     function Timer(dwTimerAction: PDTIMER_FLAGS; var pvResevered: Pointer): HResult; stdcall;
+    function GetHWND: HWND; stdcall;
   end;
 
 // Interface: IOleWindow
@@ -71,7 +72,6 @@ type
     fCancel: WideString;
 		fMax: Integer;
 		fPosition: Integer;
-    fHwndParent: HWnd;
     fModal: Boolean;
     fAutoCalc: Boolean;
 
@@ -87,6 +87,7 @@ type
 		procedure SetFooter(Value: WideString);
 		procedure SetCancel(Value: WideString);
   public
+    fHwndParent: HWnd;
     constructor Create(AOwner: TComponent); override;
 		procedure Execute;
 		procedure Stop;
@@ -131,10 +132,12 @@ end;
 
 constructor TProgressDialog.Create(AOwner: TComponent);
 begin
-  if Not(AOwner.InheritsFrom(TWinControl)) then Raise Exception.CreateFmt('Error: Component must be owned by TForm or descendent of TForm %s',[AOwner.Classname]);
+  if not(AOwner.InheritsFrom(TWinControl)) then
+    Raise Exception.CreateFmt('Error: Component must be owned by TForm or descendent of TForm %s', [AOwner.Classname]);
   inherited Create(AOwner);
-  if csDesigning in ComponentState then Exit;
-  fHwndParent:=(AOwner as TWinControl).Handle;
+  if csDesigning in ComponentState then
+    Exit;
+  fHwndParent := (AOwner as TWinControl).Handle;
 end;
 
 destructor TProgressDialog.Destroy;
@@ -261,7 +264,8 @@ Begin
       SetLine(2, PWideChar(fLine2), 1, pNil);
       SetLine(3, PWideChar(fFooter), 1, pNil);
       SetCancelMsg( PWideChar(fCancel), pNil);
-      StartProgressDialog( fHwndParent, nil, dwFlags, pNil);
+      StartProgressDialog(fHwndParent, nil, dwFlags, pNil);
+//      SetForegroundWindow(iiProgressDialog.GetHWND);
     End;
   TWaitThread.Create(Self);
 End;

@@ -10,7 +10,7 @@ interface
 uses
   Windows, Messages, SysUtils, CommonData, CommonUtils,
   Classes, Graphics, Controls, Forms, Types, IOUtils,
-  Dialogs, ExtCtrls, StdCtrls, ShellAPI,
+  Dialogs, ExtCtrls, StdCtrls, ShellAPI, ProgressDialog,
 
   rtcpFileTrans, rtcpChat,
   rtcpDesktopControl, rtcpDesktopControlUI, rtcPortalMod,
@@ -97,7 +97,6 @@ type
     iMiniPanelHide: TImage;
     iMiniPanelShow: TImage;
     iMove: TImage;
-    myFileTransferUI: TRtcPFileTransferUI;
     Button1: TButton;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
@@ -167,6 +166,10 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure panOptionsMouseLeave(Sender: TObject);
     procedure Button1Click(Sender: TObject);
+    procedure myUIRecv(Sender: TRtcPDesktopControlUI);
+    procedure myUIRecvCancel(Sender: TRtcPDesktopControlUI);
+    procedure myUIRecvStart(Sender: TRtcPDesktopControlUI);
+    procedure myUIRecvStop(Sender: TRtcPDesktopControlUI);
 
   protected
     LMouseX,LMouseY:integer;
@@ -176,6 +179,8 @@ type
     RMouseDown,
     LWinDown,
     RWinDown: Boolean;
+
+    FProgressDialog: TProgressDialog;
 
     RecordState: TRecordState;
 //    RecordThread: TRecordThrd;
@@ -188,9 +193,8 @@ type
 
     FDoStartFileTransferring: TDoStartFileTransferring;
 
-    bf_,bf: TStringDynArray;
-    T_: String;
-    hwndNextViewer: THandle;
+    FLastActiveExplorerHandle: THandle;
+    procedure OnProgressDialogCancel(Sender: TObject);
 
     procedure SetCaption;
 
@@ -403,7 +407,7 @@ var
   Bitmap: TBitmap;
   saveDialog : TSaveDialog;
 begin
-  saveDialog := TSaveDialog.Create(self);
+  saveDialog := TSaveDialog.Create(nil);
   saveDialog.Title := 'Выберите место для сохранения';
   saveDialog.InitialDir := GetCurrentDir;
   saveDialog.Filter := 'Bitmap file|*.bmp';
@@ -636,6 +640,8 @@ end;
 
 procedure TrdDesktopViewer.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
+  FProgressDialog.Stop;
+
   DesktopTimer.Enabled := False;
   Action := caFree;
 
@@ -672,7 +678,7 @@ procedure TrdDesktopViewer.FormCreate(Sender: TObject);
 begin
   SetWindowLong(Handle, GWL_EXSTYLE, GetWindowLong(Handle, GWL_EXSTYLE) or WS_EX_APPWINDOW);
 
-  hwndNextViewer := SetClipboardViewer(Handle);
+  FProgressDialog := TProgressDialog.Create(Self);
 
   fFirstScreen := True;
 
@@ -827,8 +833,7 @@ end;
 
 procedure TrdDesktopViewer.FormDestroy(Sender: TObject);
 begin
-  ChangeClipboardChain(Handle, hwndNextViewer);
-  hwndNextViewer := 0;
+  FreeAndNil(FProgressDialog);
 
   SetShortcuts_Hook(False); //Доделать
 end;
@@ -900,6 +905,57 @@ begin
   if Assigned(PFileTrans) then
     DragAcceptFiles( Handle, True );
   {$ENDIF}
+end;
+
+procedure TrdDesktopViewer.myUIRecv(Sender: TRtcPDesktopControlUI);
+begin
+  FProgressDialog.TextLine1 := myUI.Recv_FileName;
+
+  if myUI.Recv_BytesTotal > 0 then
+    FProgressDialog.Position := Round(myUI.Recv_BytesComplete * 100 / myUI.Recv_BytesTotal)
+  else
+    FProgressDialog.Position := 0;
+
+  if myUI.Recv_BytesTotal > 1024 * 1024 then
+    FProgressDialog.TextFooter := FormatFloat('0.00', myUI.Recv_BytesComplete / (1024 * 1024)) + ' Mb из ' + FormatFloat('0.00', myUI.Recv_BytesTotal / (1024 * 1024)) + ' Mb'
+  else
+    FProgressDialog.TextFooter := FormatFloat('0.00', myUI.Recv_BytesComplete / 1024) + ' Kb из ' + FormatFloat('0.00', myUI.Recv_BytesTotal / 1024) + ' Kb';
+end;
+
+procedure TrdDesktopViewer.myUIRecvCancel(Sender: TRtcPDesktopControlUI);
+begin
+  FProgressDialog.Stop;
+end;
+
+procedure TrdDesktopViewer.OnProgressDialogCancel(Sender: TObject);
+begin
+  FProgressDialog.Stop;
+end;
+
+procedure TrdDesktopViewer.myUIRecvStart(Sender: TRtcPDesktopControlUI);
+begin
+  if myUI.Recv_FirstTime then
+  begin
+    FProgressDialog.Title := 'Копирование';
+    FProgressDialog.CommonAVI := TCommonAVI.aviCopyFiles;
+    FProgressDialog.TextLine1 := myUI.Recv_FileName;
+    FProgressDialog.TextLine2 := myUI.Recv_ToFolder;
+    FProgressDialog.Max := 100;
+    if myUI.Recv_BytesTotal > 0 then
+      FProgressDialog.Position := Round(myUI.Recv_BytesComplete * 100 / myUI.Recv_BytesTotal)
+    else
+       FProgressDialog.Position := 0;
+    FProgressDialog.TextCancel := 'Прерывание...';
+    FProgressDialog.OnCancel := OnProgressDialogCancel;
+//    FProgressDialog.AutoCalcFooter := True;
+    FProgressDialog.fHwndParent := FLastActiveExplorerHandle;
+    FProgressDialog.Execute;
+  end;
+end;
+
+procedure TrdDesktopViewer.myUIRecvStop(Sender: TRtcPDesktopControlUI);
+begin
+  FProgressDialog.Stop;
 end;
 
 procedure TrdDesktopViewer.myUIClose(Sender: TRtcPDesktopControlUI);
@@ -1406,6 +1462,7 @@ procedure TrdDesktopViewer.GetFilesFromHostClipboard(var Message: TMessage);
 var
   i: Integer;
 begin
+  FLastActiveExplorerHandle := THandle(Message.WParam);
   for i := 0 to CB_DataObject.FCount - 1 do
     myUI.Fetch(CB_DataObject.FFiles[i].filePath, String(Message.LParam));
 end;

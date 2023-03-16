@@ -4033,6 +4033,10 @@ object rdDesktopViewer: TrdDesktopViewer
     OnError = myUIError
     OnLogOut = myUILogOut
     OnData = myUIData
+    OnRecvStart = myUIRecvStart
+    OnRecv = myUIRecv
+    OnRecvStop = myUIRecvStop
+    OnRecvCancel = myUIRecvCancel
     Left = 6
     Top = 264
   end
@@ -5147,9 +5151,5 @@ object rdDesktopViewer: TrdDesktopViewer
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
       000000000000000000000000000000000000}
-  end
-  object myFileTransferUI: TRtcPFileTransferUI
-    Left = 48
-    Top = 202
   end
 end

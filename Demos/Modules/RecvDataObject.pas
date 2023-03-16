@@ -197,17 +197,40 @@ begin
 	  	var data: HGLOBAL := GlobalAlloc(GMEM_MOVEABLE or GMEM_SHARE or GMEM_ZEROINIT, dataSize);
 
 	  	var files: PFileGroupDescriptor := GlobalLock(data);
-	  	files.cItems := FCount;
-	  	for var index: Integer := 0 to FCount-1 do
-        begin
-          files.fgd[Index] := FFiles[Index].desc;
-//          Move(Pointer(FFileName)^, files.fgd[index].cFileName[0], Length(FFileName) * SizeOf(Char));
-//    	  	files.fgd[index].dwFlags := FD_ATTRIBUTES or FD_FILESIZE;
-//    	  	files.fgd[index].dwFileAttributes := FILE_ATTRIBUTE_NORMAL;
-//          files.fgd[index].nFileSizeHigh := 0;
-//    	  	files.fgd[index].nFileSizeLow  := FData.Size;
-        end;
+	  	files.cItems := 1;
+      files.fgd[0] := FFiles[0].desc;
 
+//      var pFNDest: String;
+//      var pSep: Char;
+//      pSep := #0; // separator between file names
+
+//      if FCount > 0 then
+//      begin
+//        for var index: Integer := 0 to FCount - 1 do
+//          begin
+//            if index < FCount - 1 then
+//            begin
+//              pFNDest := pFNDest + String(FFiles[Index].desc.cFileName);
+//              pFNDest := pFNDest + pSep;
+//            end
+//            else
+//            begin
+//              pFNDest := pFNDest + String(FFiles[Index].desc.cFileName);
+//              pFNDest := pFNDest + pSep;
+////              pFNDest := pFNDest + pSep;
+//            end;
+//
+//  //          Move(Pointer(FFileName)^, files.fgd[index].cFileName[0], Length(FFileName) * SizeOf(Char));
+//  //    	  	files.fgd[index].dwFlags := FD_ATTRIBUTES or FD_FILESIZE;
+//  //    	  	files.fgd[index].dwFileAttributes := FILE_ATTRIBUTE_NORMAL;
+//  //          files.fgd[index].nFileSizeHigh := 0;
+//  //    	  	files.fgd[index].nFileSizeLow  := FData.Size;
+//          end;
+
+//          files.fgd[0] := FFiles[0].desc;
+
+//          Move(PChar(pFNDest)^, files.fgd[0].cFileName, (Length(pFNDest) + 1) * SizeOf(WideChar));
+//      end;
 
 	  	GlobalUnlock(data);
 

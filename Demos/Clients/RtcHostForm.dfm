@@ -60,6 +60,8 @@ object MainForm: TMainForm
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
+    ExplicitWidth = 821
+    ExplicitHeight = 483
     DesignSize = (
       825
       484)
@@ -5544,7 +5546,7 @@ object MainForm: TMainForm
             Colors.HotColor = clBlack
             Colors.SelectionRectangleBlendColor = 15385233
             Colors.SelectionRectangleBorderColor = 15385233
-            Colors.SelectionTextColor = clWhite
+            Colors.SelectionTextColor = clBlack
             Colors.TreeLineColor = 9471874
             Colors.UnfocusedColor = clGray
             Colors.UnfocusedSelectionColor = 13421772
@@ -5832,8 +5834,12 @@ object MainForm: TMainForm
   end
   object PDesktopControl: TRtcPDesktopControl
     OnNewUI = PDesktopControlNewUI
+    On_FileRecvStart = PDesktopControl_FileRecvStart
+    On_FileRecv = PDesktopControl_FileRecv
+    On_FileRecvStop = PDesktopControl_FileRecvStop
+    On_FileRecvCancel = PDesktopControl_FileRecvCancel
     Left = 40
-    Top = 44
+    Top = 42
   end
   object tHcAccountsReconnect: TTimer
     Enabled = False
