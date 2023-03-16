@@ -66,7 +66,6 @@ type
     ProxyAddr: String;
     ProxyUserName: String;
     ProxyPassword: String;
-    FCB_Monitor: TClipbrdMonitor;
 
     constructor Create(CreateSuspended: Boolean; AUserName, AGateway, APort, AProxyAddr, AProxyUserName, AProxyPassword: String; AProxyEnabled: Boolean); overload;
     destructor Destroy; override;
@@ -74,6 +73,8 @@ type
     procedure GetFilesFromClipboard(ACurExplorerHandle: THandle; ACurExplorerDir: String);
   private
     procedure Execute; override;
+  protected
+    procedure ProcessMessage(MSG: TMSG);
   end;
 
   PPortalThread = ^TPortalThread;
@@ -1070,8 +1071,6 @@ constructor TPortalHostThread.Create(CreateSuspended: Boolean; AUserName, AGatew
 begin
   inherited Create(CreateSuspended);
 
-  FCB_Monitor := TClipbrdMonitor.Create;
-
   FCS := TCriticalSection.Create;
 
   FreeOnTerminate := True;
@@ -1256,8 +1255,6 @@ begin
 
   TSendDestroyClientToGatewayThread.Create(False, Gateway, FUserName, False);
 
-  FreeAndNil(FCB_Monitor);
-
   TerminateThread(ThreadID, ExitCode);
 end;
 
@@ -1292,6 +1289,17 @@ var
 begin
   while (not Terminated) do
   begin
+    if not Windows.GetMessage(msg, 0, 0, 0) then
+      Terminate;
+
+    if not Terminated then
+    begin
+      if (MSG.message = WM_CLOSE) then
+        Terminate
+      else
+        ProcessMessage(msg);
+    end;
+
     FCS.Acquire;
     try
       lNeedRestartThread := FNeedRestartThread;
@@ -1321,6 +1329,18 @@ begin
     Sleep(1);
   end;
 end;
+
+procedure TPortalHostThread.ProcessMessage(MSG: TMSG);
+var
+  Message: TMessage;
+begin
+  Message.Msg := Msg.message;
+  Message.WParam := MSG.wParam;
+  Message.LParam := MSG.lParam;
+  Message.Result := 0;
+  Dispatch(Message);
+end;
+
 
 constructor TSendDestroyClientToGatewayThread.Create(CreateSuspended: Boolean; AGateway, AClientName: String; AAllConnectionsById: Boolean);
 begin
