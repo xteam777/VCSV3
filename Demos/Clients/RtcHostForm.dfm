@@ -5976,8 +5976,8 @@ object MainForm: TMainForm
     DrawingStyle = dsTransparent
     Height = 8
     Width = 8
-    Left = 11
-    Top = 44
+    Left = 7
+    Top = 40
     Bitmap = {
       494C010102001400040008000800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000200000000800000001002000000000000004
@@ -6179,7 +6179,7 @@ object MainForm: TMainForm
     MaxHeaderSize = 16000
     TimeoutsOfAPI.ConnectTimeout = 5
     Left = 16
-    Top = 81
+    Top = 85
   end
   object HostTimerModule: TRtcClientModule
     AutoSyncEvents = True
@@ -6194,7 +6194,7 @@ object MainForm: TMainForm
     ModuleFileName = '/gatefunc'
     OnResponseAbort = HostTimerModuleResponseAbort
     Left = 44
-    Top = 80
+    Top = 82
   end
   object HostPingTimer: TTimer
     Enabled = False
@@ -6402,8 +6402,8 @@ object MainForm: TMainForm
   object tActivateHost: TTimer
     Interval = 100
     OnTimer = tActivateHostTimer
-    Left = 68
-    Top = 44
+    Left = 74
+    Top = 40
   end
   object ApplicationEvents: TApplicationEvents
     OnRestore = ApplicationEventsRestore

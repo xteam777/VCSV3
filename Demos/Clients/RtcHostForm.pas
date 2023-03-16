@@ -634,7 +634,8 @@ type
     function FileVersion(const FileName: TFileName): String;
     procedure CheckUpdates;
 
-    procedure ProgressDialogOnCancel(Sender: TObject);
+    procedure OnProgressDialogCancel(Sender: TObject);
+    procedure OnDesktpHostFileRecv(Sender: TRtcPDesktopControlUI);
   public
     { Public declarations }
 //    SilentMode: Boolean;
@@ -809,7 +810,7 @@ var
   CS_GW, CS_Status, CS_Pending, CS_ActivateHost, CS_HostGateway: TCriticalSection; //CS_SetConnectedState
   DeviceId, ConsoleId: String;
 
-  pd: TProgressDialog;
+  FProgressDialog: TProgressDialog;
   CB_Monitor: TClipbrdMonitor;
 
 implementation
@@ -999,6 +1000,57 @@ begin
   end;
 end;
 
+procedure TMainForm.OnDesktpHostFileRecv(Sender: TRtcPDesktopHostUI);
+begin
+  FProgressDialog.TextLine1 := myUI.Recv_FileName;
+
+  if myUI.Recv_BytesTotal > 0 then
+    FProgressDialog.Position := Round(myUI.Recv_BytesComplete * 100 / myUI.Recv_BytesTotal)
+  else
+    FProgressDialog.Position := 0;
+
+  if myUI.Recv_BytesTotal > 1024 * 1024 then
+    FProgressDialog.TextFooter := FormatFloat('0.00', myUI.Recv_BytesComplete / (1024 * 1024)) + ' Mb из ' + FormatFloat('0.00', myUI.Recv_BytesTotal / (1024 * 1024)) + ' Mb'
+  else
+    FProgressDialog.TextFooter := FormatFloat('0.00', myUI.Recv_BytesComplete / 1024) + ' Kb из ' + FormatFloat('0.00', myUI.Recv_BytesTotal / 1024) + ' Kb';
+end;
+
+procedure TMainForm.OnDesktpHostFileRecvCancel(Sender: TRtcPDesktopControlUI);
+begin
+  FProgressDialog.Stop;
+end;
+
+procedure TMainForm.OnDesktpHostFileRecvStart(Sender: TRtcPDesktopControlUI);
+begin
+  if myUI.Recv_FirstTime then
+  begin
+    FProgressDialog.Title := 'Копирование';
+    FProgressDialog.CommonAVI := TCommonAVI.aviCopyFiles;
+    FProgressDialog.TextLine1 := myUI.Recv_FileName;
+    FProgressDialog.TextLine2 := myUI.Recv_ToFolder;
+    FProgressDialog.Max := 100;
+    if myUI.Recv_BytesTotal > 0 then
+      FProgressDialog.Position := Round(myUI.Recv_BytesComplete * 100 / myUI.Recv_BytesTotal)
+    else
+       FProgressDialog.Position := 0;
+    FProgressDialog.TextCancel := 'Прерывание...';
+    FProgressDialog.OnCancel := OnProgressDialogCancel;
+//    FProgressDialog.AutoCalcFooter := True;
+    FProgressDialog.fHwndParent := FLastActiveExplorerHandle;
+    FProgressDialog.Execute;
+  end;
+end;
+
+procedure TMainForm.OnDesktpHostFileRecvStop(Sender: TRtcPDesktopControlUI);
+begin
+  FProgressDialog.Stop;
+end;
+
+procedure TMainForm.OnProgressDialogCancel(Sender: TObject);
+begin
+  FProgressDialog.Stop;
+end;
+
 constructor TPortalHostThread.Create(CreateSuspended: Boolean; AUserName, AGateway, APort, AProxyAddr, AProxyUserName, AProxyPassword: String; AProxyEnabled: Boolean);
 begin
   inherited Create(CreateSuspended);
@@ -1143,6 +1195,10 @@ begin
   FDesktopHost.OnQueryAccess := MainForm.PDesktopHostQueryAccess;
   FDesktopHost.OnUserJoined := MainForm.PModuleUserJoined;
   FDesktopHost.OnUserLeft := MainForm.PModuleUserLeft;
+  FDesktopHost.On_FileRecv := OnDesktpHostFileRecv;
+  FDesktopHost.On_FileRecvCancel := OnDesktpHostFileRecvCancel;
+  FDesktopHost.On_FileRecvStart := OnDesktpHostFileRecvStart;
+  FDesktopHost.On_FileRecvStop := OnDesktpHostFileRecvStop;
   FDesktopHost.Tag := ThreadID;
 
   FGatewayClient.Active := True;
@@ -7408,21 +7464,9 @@ begin
 
 //  TSendDestroyClientToGatewayThread.Create(False, '95.216.96.8:443', '111222333', False);
 
-  pd := TProgressDialog.Create(Self);
-  pd.OnCancel := ProgressDialogOnCancel;
-  pd.Execute;
-end;
-
-
-procedure TMainForm.ProgressDialogOnCancel(Sender: TObject);
-begin
-//    PClient.Disconnect;
-//    PClient.Active := False;
-////    PClient.Stop;
-////    PClient.GParamsLoaded:=True;
-//    PClient.Active := True;
-
-  pd.Stop;
+//  pd := TProgressDialog.Create(Self);
+//  pd.OnCancel := OnProgressDialogCancel;
+//  pd.Execute;
 end;
 
 procedure TMainForm.AddHistoryRecord(username, userdesc: String);
