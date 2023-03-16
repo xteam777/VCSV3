@@ -1071,6 +1071,8 @@ constructor TPortalHostThread.Create(CreateSuspended: Boolean; AUserName, AGatew
 begin
   inherited Create(CreateSuspended);
 
+  OleInitialize(nil);
+
   FCS := TCriticalSection.Create;
 
   FreeOnTerminate := True;
@@ -1254,6 +1256,8 @@ begin
   FCS.Free;
 
   TSendDestroyClientToGatewayThread.Create(False, Gateway, FUserName, False);
+
+  OleUninitialize;
 
   TerminateThread(ThreadID, ExitCode);
 end;
