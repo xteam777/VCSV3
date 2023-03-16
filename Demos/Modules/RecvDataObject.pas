@@ -102,7 +102,7 @@ begin
 
 	FFormats[1].cfFormat  := TClipbrdMonitor.CF_FILEDESCRIPTOR;
 	FFormats[1].dwAspect  := DVASPECT_CONTENT;
-	FFormats[1].tymed     := TYMED_HGLOBAL; //TYMED_HGLOBAL;
+	FFormats[1].tymed     := TYMED_ISTREAM; //TYMED_HGLOBAL; //TYMED_HGLOBAL;
 	FFormats[1].lindex    := -1;
 	FFormats[1].ptd       := nil;
 
@@ -197,9 +197,15 @@ begin
 	  	var data: HGLOBAL := GlobalAlloc(GMEM_MOVEABLE or GMEM_SHARE or GMEM_ZEROINIT, dataSize);
 
 	  	var files: PFileGroupDescriptor := GlobalLock(data);
-	  	files.cItems := 1;
+      files.cItems := 1;
       files.fgd[0] := FFiles[0].desc;
 
+      for var i := 0 to FCount - 1 do
+        if (FFiles[i].desc.dwFileAttributes and FILE_ATTRIBUTE_DIRECTORY) <> 0 then //Это папка
+          if Assigned(FOnGetData) then
+          begin
+            FOnGetData(Self, FUserName);
+          end;
 //      var pFNDest: String;
 //      var pSep: Char;
 //      pSep := #0; // separator between file names

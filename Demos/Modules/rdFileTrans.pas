@@ -1274,7 +1274,10 @@ begin
       cn := rr[i].sel_files.count;
     end;
 
-    curr_g.Progress := Round(myUI.Recv_BytesComplete / myUI.Recv_BytesTotal * 10000);
+    if myUI.Recv_BytesTotal <> 0 then
+      curr_g.Progress := Round(myUI.Recv_BytesComplete / myUI.Recv_BytesTotal * 10000)
+    else
+      curr_g.Progress := 0;
 
     TLabel(curr_g.Tag).Caption := IntToStr(cn - myUI.Recv_FileCount) + '/' + cn.ToString;
     TLabel(TPanel(curr_g.Parent).Tag).Caption:= ExtractFileName(myUI.Recv_FileName);
@@ -1348,7 +1351,10 @@ begin
       cn := rr[i].sel_files.Count;
     end;
 
-    curr_g.Progress := Round(myUI.Send_BytesPrepared / myUI.Send_BytesTotal * 10000);
+    if myUI.Send_BytesTotal <> 0 then
+      curr_g.Progress := Round(myUI.Send_BytesPrepared / myUI.Send_BytesTotal * 10000)
+    else
+      curr_g.Progress := 0;
     TLabel(curr_g.Tag).Caption := IntToStr(cn - myUI.Send_FileCount) + '/' + cn.ToString;
     TLabel(TPanel(curr_g.Parent).Tag).Caption:= ExtractFileName(myUI.Send_FileName);
 

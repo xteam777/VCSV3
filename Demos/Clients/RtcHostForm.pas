@@ -868,8 +868,8 @@ begin
   pPc := GetPortalConnection('desk', AUserName);
   if pPc <> nil then
   begin
-    GetCurrentExplorerDirectory(CurExplorerDir, CurExplorerHandle);
-    SendMessage(pPc^.UIHandle, WM_GET_FILES_FROM_HOST_CLIPBOARD, WPARAM(CurExplorerHandle), LPARAM(CurExplorerDir));
+    if GetCurrentExplorerDirectory(CurExplorerDir, CurExplorerHandle) then
+      SendMessage(pPc^.UIHandle, WM_GET_FILES_FROM_HOST_CLIPBOARD, WPARAM(CurExplorerHandle), LPARAM(CurExplorerDir));
   end;
 end;
 
