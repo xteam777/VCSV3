@@ -355,9 +355,7 @@ begin
     			Result :=  S_OK;
           exit;
         end;
-
     end;
-
 
 	Result :=  DV_E_TYMED;
 end;
