@@ -70,6 +70,7 @@ type
     constructor Create(CreateSuspended: Boolean; AUserName, AGateway, APort, AProxyAddr, AProxyUserName, AProxyPassword: String; AProxyEnabled: Boolean); overload;
     destructor Destroy; override;
     procedure Restart;
+    procedure GetFilesFromClipboard(ACurExplorerHandle: THandle; ACurExplorerDir: String);
   private
     procedure Execute; override;
   end;
@@ -635,7 +636,10 @@ type
     procedure CheckUpdates;
 
     procedure OnProgressDialogCancel(Sender: TObject);
-    procedure OnDesktpHostFileRecv(Sender: TRtcPDesktopControlUI);
+    procedure OnDesktopHostFileRecv(Sender: TRtcPDesktopHost);
+    procedure OnDesktopHostFileRecvCancel(Sender: TRtcPDesktopHost);
+    procedure OnDesktopHostFileRecvStart(Sender: TRtcPDesktopHost);
+    procedure OnDesktopHostFileRecvStop(Sender: TRtcPDesktopHost);
   public
     { Public declarations }
 //    SilentMode: Boolean;
@@ -675,7 +679,8 @@ type
 
     function GetCurrentExplorerDirectory(var ADir: String; var AHandle: THandle): Boolean;
     procedure SetFilesToClipboard(var Message: TMessage); message WM_SET_FILES_TO_CLIPBOARD;
-    procedure OnGetCbrdFilesData(Sender: TDataObject; AUserName: String);
+    procedure OnGetCbrdFilesDataOnControl(Sender: TDataObject; AUserName: String);
+    procedure OnGetCbrdFilesDataOnHost(Sender: TDataObject; AUserName: String);
 
     procedure DoPowerPause;
     procedure DoPowerResume;
@@ -860,7 +865,7 @@ begin
   end;
 end;
 
-procedure TMainForm.OnGetCbrdFilesData(Sender: TDataObject; AUserName: String);
+procedure TMainForm.OnGetCbrdFilesDataOnControl(Sender: TDataObject; AUserName: String);
 var
   pPc: PPortalConnection;
   CurExplorerDir: String;
@@ -870,8 +875,17 @@ begin
   if pPc <> nil then
   begin
     if GetCurrentExplorerDirectory(CurExplorerDir, CurExplorerHandle) then
-      SendMessage(pPc^.UIHandle, WM_GET_FILES_FROM_HOST_CLIPBOARD, WPARAM(CurExplorerHandle), LPARAM(CurExplorerDir));
+      SendMessage(pPc^.UIHandle, WM_GET_FILES_FROM_CLIPBOARD, WPARAM(CurExplorerHandle), LPARAM(CurExplorerDir));
   end;
+end;
+
+procedure TMainForm.OnGetCbrdFilesDataOnHost(Sender: TDataObject; AUserName: String);
+var
+  CurExplorerDir: String;
+  CurExplorerHandle: THandle;
+begin
+  if GetCurrentExplorerDirectory(CurExplorerDir, CurExplorerHandle) then
+    tPHostThread.GetFilesFromClipboard(CurExplorerHandle, CurExplorerDir);
 end;
 
 procedure TMainForm.SetFilesToClipboard(var Message: TMessage);
@@ -879,7 +893,7 @@ var
   data: TClipBrdFileData;
 begin
   data := TClipBrdFileData(Message.LParam);
-  CB_DataObject := TDataObject.Create(data.FUserName, data.files, data.FFilePaths, OnGetCbrdFilesData);
+  CB_DataObject := TDataObject.Create(data.FUserName, data.files, data.FFilePaths, OnGetCbrdFilesDataOnControl);
   OleCheck(OleSetClipboard(CB_DataObject));
 end;
 
@@ -1000,48 +1014,48 @@ begin
   end;
 end;
 
-procedure TMainForm.OnDesktpHostFileRecv(Sender: TRtcPDesktopHostUI);
+procedure TMainForm.OnDesktopHostFileRecv(Sender: TRtcPDesktopHost);
 begin
-  FProgressDialog.TextLine1 := myUI.Recv_FileName;
+  FProgressDialog.TextLine1 := Sender.Recv_FileName;
 
-  if myUI.Recv_BytesTotal > 0 then
-    FProgressDialog.Position := Round(myUI.Recv_BytesComplete * 100 / myUI.Recv_BytesTotal)
+  if Sender.Recv_BytesTotal > 0 then
+    FProgressDialog.Position := Round(Sender.Recv_BytesComplete * 100 / Sender.Recv_BytesTotal)
   else
     FProgressDialog.Position := 0;
 
-  if myUI.Recv_BytesTotal > 1024 * 1024 then
-    FProgressDialog.TextFooter := FormatFloat('0.00', myUI.Recv_BytesComplete / (1024 * 1024)) + ' Mb из ' + FormatFloat('0.00', myUI.Recv_BytesTotal / (1024 * 1024)) + ' Mb'
+  if Sender.Recv_BytesTotal > 1024 * 1024 then
+    FProgressDialog.TextFooter := FormatFloat('0.00', Sender.Recv_BytesComplete / (1024 * 1024)) + ' Mb из ' + FormatFloat('0.00', Sender.Recv_BytesTotal / (1024 * 1024)) + ' Mb'
   else
-    FProgressDialog.TextFooter := FormatFloat('0.00', myUI.Recv_BytesComplete / 1024) + ' Kb из ' + FormatFloat('0.00', myUI.Recv_BytesTotal / 1024) + ' Kb';
+    FProgressDialog.TextFooter := FormatFloat('0.00', Sender.Recv_BytesComplete / 1024) + ' Kb из ' + FormatFloat('0.00', Sender.Recv_BytesTotal / 1024) + ' Kb';
 end;
 
-procedure TMainForm.OnDesktpHostFileRecvCancel(Sender: TRtcPDesktopControlUI);
+procedure TMainForm.OnDesktopHostFileRecvCancel(Sender: TRtcPDesktopHost);
 begin
   FProgressDialog.Stop;
 end;
 
-procedure TMainForm.OnDesktpHostFileRecvStart(Sender: TRtcPDesktopControlUI);
+procedure TMainForm.OnDesktopHostFileRecvStart(Sender: TRtcPDesktopHost);
 begin
-  if myUI.Recv_FirstTime then
+  if Sender.Recv_FirstTime then
   begin
     FProgressDialog.Title := 'Копирование';
     FProgressDialog.CommonAVI := TCommonAVI.aviCopyFiles;
-    FProgressDialog.TextLine1 := myUI.Recv_FileName;
-    FProgressDialog.TextLine2 := myUI.Recv_ToFolder;
+    FProgressDialog.TextLine1 := Sender.Recv_FileName;
+    FProgressDialog.TextLine2 := Sender.Recv_ToFolder;
     FProgressDialog.Max := 100;
-    if myUI.Recv_BytesTotal > 0 then
-      FProgressDialog.Position := Round(myUI.Recv_BytesComplete * 100 / myUI.Recv_BytesTotal)
+    if Sender.Recv_BytesTotal > 0 then
+      FProgressDialog.Position := Round(Sender.Recv_BytesComplete * 100 / Sender.Recv_BytesTotal)
     else
-       FProgressDialog.Position := 0;
+      FProgressDialog.Position := 0;
     FProgressDialog.TextCancel := 'Прерывание...';
     FProgressDialog.OnCancel := OnProgressDialogCancel;
 //    FProgressDialog.AutoCalcFooter := True;
-    FProgressDialog.fHwndParent := FLastActiveExplorerHandle;
+    FProgressDialog.fHwndParent := Sender.FLastActiveExplorerHandle;
     FProgressDialog.Execute;
   end;
 end;
 
-procedure TMainForm.OnDesktpHostFileRecvStop(Sender: TRtcPDesktopControlUI);
+procedure TMainForm.OnDesktopHostFileRecvStop(Sender: TRtcPDesktopHost);
 begin
   FProgressDialog.Stop;
 end;
@@ -1195,10 +1209,10 @@ begin
   FDesktopHost.OnQueryAccess := MainForm.PDesktopHostQueryAccess;
   FDesktopHost.OnUserJoined := MainForm.PModuleUserJoined;
   FDesktopHost.OnUserLeft := MainForm.PModuleUserLeft;
-  FDesktopHost.On_FileRecv := OnDesktpHostFileRecv;
-  FDesktopHost.On_FileRecvCancel := OnDesktpHostFileRecvCancel;
-  FDesktopHost.On_FileRecvStart := OnDesktpHostFileRecvStart;
-  FDesktopHost.On_FileRecvStop := OnDesktpHostFileRecvStop;
+  FDesktopHost.OnRecv := MainForm.OnDesktopHostFileRecv;
+  FDesktopHost.OnRecvCancel := MainForm.OnDesktopHostFileRecvCancel;
+  FDesktopHost.OnRecvStart := MainForm.OnDesktopHostFileRecvStart;
+  FDesktopHost.OnRecvStop := MainForm.OnDesktopHostFileRecvStop;
   FDesktopHost.Tag := ThreadID;
 
   FGatewayClient.Active := True;
@@ -1247,6 +1261,16 @@ begin
   FCS.Acquire;
   try
     FNeedRestartThread := True;
+  finally
+    FCS.Release;
+  end;
+end;
+
+procedure TPortalHostThread.GetFilesFromClipboard(ACurExplorerHandle: THandle; ACurExplorerDir: String);
+begin
+  FCS.Acquire;
+  try
+    FDesktopHost.FLastActiveExplorerHandle := ACurExplorerHandle;
   finally
     FCS.Release;
   end;

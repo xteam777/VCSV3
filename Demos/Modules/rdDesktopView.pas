@@ -217,7 +217,7 @@ type
     procedure ScreenRecordStop;
     procedure CheckRecordState(var msg: TMessage); message WM_SETCURRENTFRAME;
     procedure ChangeLockedState(var Message: TMessage); message WM_CHANGE_LOCKED_STATUS;
-    procedure GetFilesFromHostClipboard(var Message: TMessage); message WM_GET_FILES_FROM_HOST_CLIPBOARD;
+    procedure GetFilesFromHostClipboard(var Message: TMessage); message WM_GET_FILES_FROM_CLIPBOARD;
 //    procedure WMActivate(var Message: TMessage); message WM_ACTIVATE;
   public
     { Public declarations }
