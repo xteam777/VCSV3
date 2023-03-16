@@ -2587,7 +2587,7 @@ object rdFileTransfer: TrdFileTransfer
     Top = 420
     Width = 1212
     Height = 137
-    ActivePage = TabSheet2
+    ActivePage = TabSheet1
     Align = alBottom
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText

@@ -1118,399 +1118,401 @@ begin
 end;
 
 procedure TrdFileTransfer.SpeedButton10Click(Sender: TObject);
-label 0,1;
+label
+  0, 1;
 var
-    i,a:integer; f0,send,coping: boolean;
-    g_:TGauge; p:TPanel; ff:TStringList;
+  i, a: Integer;
+  f0, send, copying: Boolean;
+  g_: TGauge;
+  p:TPanel;
+  ff: TStringList;
 begin
-    p:= TPanel(TSpeedButton(Sender).parent);
-    coping:= False;
-    g_:= TGauge(longint(p.HelpContext));
+  p := TPanel(TSpeedButton(Sender).Parent);
+  copying := False;
+  g_ := TGauge(LongInt(p.HelpContext));
 
-    Send:= TPanel(g_.parent).Caption='Send';
+  Send := TPanel(g_.Parent).Caption = 'Send';
 
-    if (cur_files.Count=0)or(g_.ForeColor = $00FFD9FF) or
-       (copy(TLabel(TPanel(g_.parent).Tag).caption,1,7)='PAUSED.')
-    then
+  if (cur_files.Count = 0) or (g_.ForeColor = $00FFD9FF) or (Copy(TLabel(TPanel(g_.Parent).Tag).Caption, 1, 7) = 'PAUSED.')
+  then
+    goto 0;
+
+  copying := True;
+  curr_g := g_;
+  stopped := True;
+
+  0:
+    if copying then
     begin
-        goto 0;
+      if Send then
+      begin
+        if myUI.Send_FileName <> '' then
+        begin
+          f0 := (myUI.Send_FileCount = 1);
+          myUI.Cancel_Send(IncludeTrailingPathDelimiter(myUI.Send_FromFolder) + myUI.Send_FileName);
+
+          if myUI.Send_FileCount = 0 then
+            goto 1
+          else
+          if f0 then
+          begin
+            sb.HelpContext := 0;
+            tr_dy.Tag := longint(p);
+            sb.Tag := 0;
+            tr_dy.Enabled := True;
+          end;
+        end;
+      end
+      else
+      begin
+        if myUI.Recv_FileName <> '' then
+        begin
+          f0 := (myUI.Recv_FileCount = 1);
+          myUI.Cancel_Fetch(myUI.Recv_FileName);
+
+          if myUI.Recv_FileCount = 0 then
+            goto 1
+          else
+          if f0 then
+          begin
+            sb.HelpContext := 0;
+            tr_dy.Tag := LongInt(p);
+            sb.Tag := 1;
+            tr_dy.Enabled := True;
+          end;
+        end;
+      end;
+    end
+    else
+    begin
+      1:
+        if copying then
+         next_task(p, True)
+        else
+        begin
+         i := rec_finished(p, True);
+         p.Free;
+        end;
     end;
 
-         coping:=    True; curr_g:= g_;
-         stopped:=   True;
-
-     0:
-     if coping then
-     begin
-
-          if Send then
-          begin
-            if myUI.Send_FileName <> '' then
-            begin
-               f0:= myUI.Send_FileCount=1;
-               myUI.Cancel_Send (IncludeTrailingPathDelimiter(myUI.Send_FromFolder) + myUI.Send_FileName);
-
-               if myUI.Send_FileCount=0 then
-               begin
-               goto 1;
-               end else
-                 if f0 then begin sb.HelpContext:= 0; tr_dy.Tag:= longint(p); sb.Tag:=0; tr_dy.Enabled:= True; end;
-            end;
-
-          end else
-          begin
-            if myUI.Recv_FileName <> '' then
-            begin
-               f0:= myUI.Recv_FileCount=1;
-               myUI.Cancel_Fetch(myUI.Recv_FileName);
-
-               if myUI.Recv_FileCount=0 then
-               begin
-               goto 1;
-               end else
-
-               if f0 then begin sb.HelpContext:= 0; tr_dy.Tag:= longint(p); sb.Tag:=1; tr_dy.Enabled:= True; end;
-            end;
-          end;
-
-     end else
-
-     begin
-     1:
-
-       if coping then
-       begin
-         next_task(p, True);
-       end else
-       begin
-         i:= rec_finished(p, True);
-         p.Free;
-       end;
-
-     end;
-
-     check_task;
-
+  check_task;
 end;
 
 procedure TrdFileTransfer.tr_dyTimer(Sender: TObject);
 begin
-  tr_dy.Enabled:= False; if not assigned(myUI) then EXIT;
+  tr_dy.Enabled := False;
+  if not Assigned(myUI) then
+    Exit;
 
-  sb.HelpContext:= sb.HelpContext+1;
+  sb.HelpContext := sb.HelpContext + 1;
   try
-  if ((sb.Tag=1) and (myUI.Recv_FileCount=0))
-  or ((sb.Tag=0) and (myUI.Send_FileCount=0)) then
-  begin
-    next_task(TPanel(tr_dy.Tag), True); EXIT
-  end else
-
-  if sb.HelpContext < 50 then
-  tr_dy.Enabled:= True;
-
+    if ((sb.Tag = 1) and (myUI.Recv_FileCount = 0))
+    or ((sb.Tag = 0) and (myUI.Send_FileCount = 0)) then
+    begin
+      next_task(TPanel(tr_dy.Tag), True);
+      Exit;
+    end
+    else
+    if sb.HelpContext < 50 then
+      tr_dy.Enabled := True;
   except
   end;
-
 end;
 
 procedure TrdFileTransfer.eFilesListEnter(Sender: TObject);
 begin
- Panel11.Color:= $00FFF9F2;
- Panel12.Color:= clwhite;
+  Panel11.Color := $00FFF9F2;
+  Panel12.Color := clwhite;
 
- pn.Color:=       Panel11.Color;
- Panel5.Color:=   Panel11.Color;
+  pn.Color := Panel11.Color;
+  Panel5.Color := Panel11.Color;
 
- pn_.Color:=      Panel12.Color;
- Panel7.Color:=   Panel12.Color;
+  pn_.Color := Panel12.Color;
+  Panel7.Color := Panel12.Color;
 
- with eFilesList do
- begin
-  if selCount=0 then selected:= ItemFocused;
- end;
+  with eFilesList do
+    if selCount = 0 then
+      selected := ItemFocused;
 
- eFilesListSelectItem(nil, eFilesList.ItemFocused, True);
+  eFilesListSelectItem(nil, eFilesList.ItemFocused, True);
 end;
 
 procedure TrdFileTransfer.eFilesList_Enter(Sender: TObject);
 begin
+  Panel12.Color := $00FFF9F2;
+  Panel11.Color := clWhite;
 
- Panel12.Color:= $00FFF9F2;
- Panel11.Color:= clWhite;
+  pn_.Color := Panel12.Color;
+  Panel7.Color := Panel12.Color;
 
- pn_.Color:=     Panel12.Color;
- Panel7.Color:=  Panel12.Color;
+  pn.Color := Panel11.Color;
+  Panel5.Color := Panel11.Color;
 
- pn.Color:=      Panel11.Color;
- Panel5.Color:=  Panel11.Color;
+  with eFilesList_ do
+    if selCount = 0 then
+      selected := ItemFocused;
 
- with eFilesList_ do
- begin
-  if selCount=0 then selected:= ItemFocused;
- end;
-
- eFilesList_SelectItem(nil, eFilesList_.ItemFocused, True);
+  eFilesList_SelectItem(nil, eFilesList_.ItemFocused, True);
 end;
 
 procedure TrdFileTransfer.myUIRecv(Sender: TRtcPFileTransferUI);
-var cn,i: int64; from_,s: string;
-  begin
-
+var
+  cn,i: int64; from_,s: String;
+begin
   set_info(False, myUI.Recv_BytesComplete);
 
-  if curr_g=nil then EXIT;
-  if resv_stop  then EXIT;
+  if curr_g = nil then
+    Exit;
+  if resv_stop then
+    Exit;
 
   try
-    i:= fnd_rec(TPanel(curr_g.parent));
-    if i>-1 then
+    i := fnd_rec(TPanel(curr_g.Parent));
+    if i >- 1 then
     begin
-      from_:= rr[i].from_path; cn:= rr[i].sel_files.count;
-
+      from_ := rr[i].from_path;
+      cn := rr[i].sel_files.count;
     end;
 
-     curr_g.Progress:= round(myUI.Recv_BytesComplete/myUI.Recv_BytesTotal*10000);
+    curr_g.Progress := Round(myUI.Recv_BytesComplete / myUI.Recv_BytesTotal * 10000);
 
-     TLabel(curr_g.Tag).caption:= inttostr(cn-myUI.Recv_FileCount)+'/'+cn.tostring;
-     TLabel(TPanel(curr_g.parent).Tag).caption:=
-                                                extractfilename(myUI.Recv_FileName);
+    TLabel(curr_g.Tag).Caption := IntToStr(cn - myUI.Recv_FileCount) + '/' + cn.ToString;
+    TLabel(TPanel(curr_g.Parent).Tag).Caption:= ExtractFileName(myUI.Recv_FileName);
 
-     caption:= 'Передано: '+str_size(myUI.Recv_BytesComplete,False,False)+' Итого: '+str_size(myUI.Recv_BytesTotal,False,False);
+    Caption := 'Передано: ' + str_size(myUI.Recv_BytesComplete, False, False) + ' Итого: ' + str_size(myUI.Recv_BytesTotal, False, False);
 
-  s:=  from_+ myUI.Recv_FileName;
-  if myUI.Recv_FileIn = myUI.Recv_FileSize then
-     add_lg(timetostr(now)+':  Загрузка из "' +s +'" в "'+myUI.Recv_ToFolder +
-                               extractfilename(s)+'" ('+str_size(myUI.Recv_FileSize)+')');
-
+    s := from_+ myUI.Recv_FileName;
+    if myUI.Recv_FileIn = myUI.Recv_FileSize then
+      add_lg(TimeToStr(Now) + ':  Загрузка из "' + s +'" в "' + myUI.Recv_ToFolder + ExtractFileName(s) + '" (' + str_size(myUI.Recv_FileSize) + ')');
   except
-  caption:= 'E: '+caption;
+    Caption:= 'E: ' + Caption;
   end;
 end;
 
 procedure TrdFileTransfer.myUIRecvCancel(Sender: TRtcPFileTransferUI);
-var i: integer;
 begin
-  EXIT;
+  Exit;
 end;
 
 procedure TrdFileTransfer.myUIRecvStart(Sender: TRtcPFileTransferUI);
 begin
- stopped:= False;
- myUIRecv(sender);
+  stopped := False;
+  myUIRecv(Sender);
 end;
 
 procedure TrdFileTransfer.myUIRecvStop(Sender: TRtcPFileTransferUI);
-var a,n,i: integer;
-  begin
+var
+  a,n,i: integer;
+begin
+  if resv_stop then
+    Exit;
 
-    if resv_stop then EXIT;
+  myUIRecv(Sender);
+  if (myUI.Recv_FileCount = 0) then
+  try
+    recv_bytes := recv_bytes + myUI.Recv_BytesTotal;
+    stopped := True;
 
-    myUIRecv(sender);
-    if (myUI.Recv_FileCount=0) then
-    try
+    TLabel(TPanel(curr_g.Parent).Tag).Caption:= Format('%.0n / %.0n KB', [myUI.Recv_BytesComplete / 1024, myUI.Recv_BytesTotal / 1024]);
 
-       recv_bytes:= recv_bytes + myUI.Recv_BytesTotal;
-       stopped:= True;
+   curr_g.Progress := curr_g.MaxValue;
+   curr_g.ForeColor := $00FFD9FF;
 
-       TLabel(TPanel(curr_g.parent).Tag).caption:=
-         Format('%.0n / %.0n KB', [myUI.Recv_BytesComplete/1024, myUI.Recv_BytesTotal/1024]);
+   btnReload_.Click;
+   Timer1_cn := 0;
+   Timer1.Tag := LongInt(TPanel(curr_g.Parent));
+   Timer1.Enabled := True;
 
-     curr_g.Progress:= curr_g.MaxValue;
-     curr_g.ForeColor:= $00FFD9FF;
-
-     btnReload_.click;
-     Timer1_cn:= 0;
-     Timer1.Tag:= longint(TPanel(curr_g.Parent));
-     Timer1.Enabled:= True;
-
-     if assigned(curr_g) then
-        next_task(TPanel(curr_g.parent));
-
-    except
-
-    end;
+    if assigned(curr_g) then
+      next_task(TPanel(curr_g.Parent));
+  except
+  end;
 end;
 
 procedure TrdFileTransfer.myUISend(Sender: TRtcPFileTransferUI);
-var s,to_: string;
-    cn,i: integer;
-  begin
-
+var
+  s, to_: String;
+  cn, i: Integer;
+begin
   set_info(True, myUI.Send_BytesComplete);
 
-  if send_stop  then EXIT;
-  if curr_g=nil then EXIT;
+  if send_stop then
+    Exit;
+  if curr_g = nil then
+    Exit;
   try
-
-    i:= fnd_rec(TPanel(curr_g.parent));
-    if i>-1 then
+    i := fnd_rec(TPanel(curr_g.Parent));
+    if i >- 1 then
     begin
-      to_:= rr[i].to_path; cn:= rr[i].sel_files.count;
+      to_:= rr[i].to_path;
+      cn := rr[i].sel_files.Count;
     end;
 
-     curr_g.Progress:=round(myUI.Send_BytesPrepared/myUI.Send_BytesTotal*10000);
-     TLabel(curr_g.Tag).caption:= inttostr(cn-myUI.Send_FileCount)+'/'+cn.tostring;
-     TLabel(TPanel(curr_g.parent).Tag).caption:=
-                                                 extractfilename(myUI.Send_FileName);
+    curr_g.Progress := Round(myUI.Send_BytesPrepared / myUI.Send_BytesTotal * 10000);
+    TLabel(curr_g.Tag).Caption := IntToStr(cn - myUI.Send_FileCount) + '/' + cn.ToString;
+    TLabel(TPanel(curr_g.Parent).Tag).Caption:= ExtractFileName(myUI.Send_FileName);
 
-     caption:= 'Передано: '+str_size(myUI.Send_BytesComplete,False,False)+' Итого: '+str_size(myUI.Send_BytesTotal,False,False);
+    Caption:= 'Передано: ' + str_size(myUI.Send_BytesComplete, False, False) + ' Итого: ' + str_size(myUI.Send_BytesTotal, False, False);
 
-     s:= myUI.Send_FromFolder + myUI.Send_FileName;
+    s := myUI.Send_FromFolder + myUI.Send_FileName;
 
-  if myUI.Send_FileOut = myUI.Send_FileSize then
-     add_lg(timetostr(now)+':  Выгрузка из "' +s +'" в "'+ to_ +
-                               extractfilename(s)+'" ('+str_size(myUI.Send_FileSize)+')');
-
+    if myUI.Send_FileOut = myUI.Send_FileSize then
+      add_lg(TimeToStr(now) + ':  Выгрузка из "' + s + '" в "' + to_ + ExtractFileName(s) + '" (' + str_size(myUI.Send_FileSize) + ')');
   except
-   caption:= 'E: '+caption;
+    Caption := 'E: ' + Caption;
   end;
 end;
 
 procedure TrdFileTransfer.myUISendCancel(Sender: TRtcPFileTransferUI);
-var i: integer;
 begin
-  EXIT;
+  Exit;
 end;
 
 procedure TrdFileTransfer.myUISendStart(Sender: TRtcPFileTransferUI);
 begin
- stopped:= False;
- MyUISend(sender);
+  stopped := False;
+  MyUISend(Sender);
 end;
 
 procedure TrdFileTransfer.myUISendStop(Sender: TRtcPFileTransferUI);
-var a,n,i: integer;
-  begin
+var
+  a, n, i: integer;
+begin
+  MyUISend(sender);
+  if (myUI.Send_FileCount = 0) then
+  try
+    send_bytes := send_bytes + myUI.Send_BytesTotal;
+    stopped := True;
 
-    MyUISend(sender);
-    if (myUI.Send_FileCount=0) then
-    try
-       send_bytes:= send_bytes + myUI.Send_BytesTotal;
-       stopped:= True;
+    TLabel(TPanel(curr_g.Parent).Tag).Caption:= Format('%.0n / %.0n KB', [myUI.Send_BytesPrepared / 1024, myUI.Send_BytesTotal / 1024]);
 
-       TLabel(TPanel(curr_g.parent).Tag).caption:=
-       Format('%.0n / %.0n KB', [myUI.Send_BytesPrepared/1024, myUI.Send_BytesTotal/1024]);
+    curr_g.Progress := curr_g.MaxValue;
+    curr_g.ForeColor := $00FFD9FF;
 
-     curr_g.Progress:= curr_g.MaxValue;
-     curr_g.ForeColor:= $00FFD9FF;
+    btnReload.Click;
+    Timer1_cn := 0;
+    Timer1.Tag := LongInt(TPanel(curr_g.Parent));
+    Timer1.Enabled := True;
 
-     btnReload.click;
-     Timer1_cn:= 0;
-     Timer1.Tag:= longint(TPanel(curr_g.Parent));
-     Timer1.Enabled:= True;
-
-     if assigned(curr_g) then
-        next_task(TPanel(curr_g.parent));
-
-    except
-
-    end;
+    if assigned(curr_g) then
+      next_task(TPanel(curr_g.Parent));
+  except
+  end;
 end;
 
 function TrdFileTransfer.wrong_caption(s: string): Integer;
 var
   i: Integer;
 begin
-  result:= -1;
-  for i:=1 to length(s) do
-  if not TPath.IsValidFileNameChar(s[i]) then
-  begin
-   result:= i;
-   EXIT
-  end;
-
+  Result := -1;
+  for i := 1 to Length(s) do
+    if not TPath.IsValidFileNameChar(s[i]) then
+    begin
+      Result := i;
+      Exit;
+    end;
 end;
 
 procedure TrdFileTransfer.N3Click(Sender: TObject);
-label 1;
-var s: string;
+label
+  1;
+var
+  s: String;
 begin
-  if eFilesList.ItemFocused=nil then EXIT;
-  s:=eFilesList.ItemFocused.caption;
+  if eFilesList.ItemFocused = nil then
+    Exit;
+  s := eFilesList.ItemFocused.Caption;
   1:
-  if inputquery('Переименование', 'Введите новое имя файла', s) then
-  begin
-     if s='' then EXIT;
-     if s=eFilesList.ItemFocused.caption then EXIT;
-     if wrong_caption(s)>-1 then goto 1;
-     rename_file(eFilesList.ItemFocused,s);
-  end;
+    if InputQuery('Переименование', 'Введите новое имя файла', s) then
+    begin
+      if s= '' then
+        Exit;
+      if s = eFilesList.ItemFocused.Caption then
+        Exit;
+      if wrong_caption(s) > -1 then
+        goto 1;
+      rename_file(eFilesList.ItemFocused, s);
+    end;
 end;
 
 function TrdFileTransfer.next_task(pan:TPanel; del:boolean=False; all:boolean=False): integer;
 var
-   a,n,i: integer;
+  a, n, i: integer;
 begin
+  Result := -1;
+  clear_deleted;
+  i := fnd_rec(pan, all);
+  if i = -1 then
+    Exit;
 
-     result:= -1;
-     clear_deleted;
-     i:= fnd_rec(pan, all);
-     if i=-1 then EXIT;
-
-     with rr[i] do
-     begin
-       finished:= True;
-       if del then
-       begin
-          deleted:= True;
-          pn.Free;
-       end;
-
-     end;
-
-     n:= next_rec(i);
-     if n=-1 then EXIT;
-
-    if not assigned(myUI) then EXIT;
-
-    with rr[n] do
+  with rr[i] do
+  begin
+    finished := True;
+    if del then
     begin
-    stopped:= False;
-    if is_send then
-       send_stop:= False else
-       resv_stop:= False;
-
-        g_.Progress:= 0;
-        curr_g:= g_;
-        cur_files.Assign(sel_files);
-
-        with cur_files do
-        if count>0 then
-          for a:=0 to Count-1 do
-          if is_send then
-
-            myUI.Send (Strings[a], to_path) else
-            myUI.Fetch(Strings[a], to_path);
+      deleted := True;
+      pn.Free;
     end;
+  end;
+
+  n := next_rec(i);
+  if n = -1 then
+    Exit;
+
+  if not assigned(myUI) then
+    Exit;
+
+  with rr[n] do
+  begin
+    stopped := False;
+    if is_send then
+      send_stop:= False
+    else
+      resv_stop := False;
+
+    g_.Progress := 0;
+    curr_g := g_;
+    cur_files.Assign(sel_files);
+
+    with cur_files do
+    if count > 0 then
+      for a := 0 to Count - 1 do
+      if is_send then
+        myUI.Send(Strings[a], to_path)
+      else
+        myUI.Fetch(Strings[a], to_path);
+  end;
 end;
 
 procedure TrdFileTransfer.comp_border(cp:twincontrol; pix:byte);
 var formrgn : hrgn;
 begin
-  formrgn:=createrectrgn(pix,pix,cp.width - pix, cp.height - pix);
-  setwindowrgn(cp.handle,formrgn,true);
+  formrgn := CreateRectRgn(pix,pix, cp.width - pix, cp.height - pix);
+  SetWindowRgn(cp.Handle, formrgn, True);
 end;
 
 procedure TrdFileTransfer.FormShow(Sender: TObject);
-var i: integer;
-
+var
+  i: Integer;
 begin
-  eFilesList_.Local:= False;
-  eFilesList_.Local:= True;
+  eFilesList_.Local := False;
+  eFilesList_.Local := True;
 
-  eFilesList. StyleElements:= [];
-  eFilesList_.StyleElements:= []; Splitter1.StyleElements:= [];
-  eFilesList.GridLines:= True; eFilesList_.GridLines:= True;
-  eFilesList_.ReadOnly:= True;
-  eFilesList. ReadOnly:= True;
+  eFilesList.StyleElements := [];
+  eFilesList_.StyleElements := [];
+  Splitter1.StyleElements := [];
+  eFilesList.GridLines := True;
+  eFilesList_.GridLines := True;
+  eFilesList_.ReadOnly := True;
+  eFilesList.ReadOnly := True;
 
-//      Label1.caption:= host_nn;
-//      Label3.caption:= serv_nn;
-
+//  Label1.caption:= host_nn;
+//  Label3.caption:= serv_nn;
 end;
 
 procedure TrdFileTransfer.FormActivate(Sender: TObject);
-var i: integer;
+var
+  i: Integer;
 begin
   if load_first then
   begin

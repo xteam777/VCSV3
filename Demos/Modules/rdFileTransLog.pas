@@ -366,9 +366,9 @@ end;
 procedure TrdFileTransferLog.myUISendCancel(Sender: TRtcPFileTransferUI);
 begin
   if myUI.Send_FileCount > 1 then
-    mLog.Lines.Add('Отправка отменена: ' + myUI.Send_FromFolder + '\' + ' [' + IntToStr(myUI.Send_FileCount) + '] '+ myUI.Send_FileName)
+    mLog.Lines.Add('Отправка отменена: ' + myUI.Send_FromFolder + ' [' + IntToStr(myUI.Send_FileCount) + '] '+ myUI.Send_FileName)
   else
-    mLog.Lines.Add('Отправка отменена: ' + myUI.Send_FromFolder + '\' + myUI.Send_FileName);
+    mLog.Lines.Add('Отправка отменена: ' + myUI.Send_FromFolder + myUI.Send_FileName);
 
 //  lSendFileName.Caption:='Cancelled';
 end;
@@ -378,9 +378,9 @@ begin
     if myUI.Send_FirstTime then
     begin
       if myUI.Send_FileCount > 1 then
-        mLog.Lines.Add('Отправка: ' + myUI.Send_FromFolder + '\' + ' [' + IntToStr(myUI.Send_FileCount) + '] '+ myUI.Send_FileName)
+        mLog.Lines.Add('Отправка: ' + myUI.Send_FromFolder + ' [' + IntToStr(myUI.Send_FileCount) + '] '+ myUI.Send_FileName)
       else
-        mLog.Lines.Add('Отправка: ' + myUI.Send_FromFolder + '\' + myUI.Send_FileName);
+        mLog.Lines.Add('Отправка: ' + myUI.Send_FromFolder + myUI.Send_FileName);
     end;
 end;
 

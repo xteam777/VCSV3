@@ -783,10 +783,12 @@ procedure TRtcPFileTransferUI.Call_WriteCancel(Sender: TObject;
   const fname, tofolder: String; size: int64);
 begin
   if fname = '' then
-    raise Exception.Create('Folder undefined');
+    Exit;  //Доделать
+//    raise Exception.Create('Folder undefined');
 
   if FRecvFolders.isType[fname] <> rtc_Record then
-    raise Exception.Create('File "' + fname + '" not initialized for upload.');
+    Exit;  //Доделать
+//    raise Exception.Create('File "' + fname + '" not initialized for upload.');
 
   Dec(FRecvFilesCnt);
 
