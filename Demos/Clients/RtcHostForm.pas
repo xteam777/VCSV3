@@ -66,6 +66,7 @@ type
     ProxyAddr: String;
     ProxyUserName: String;
     ProxyPassword: String;
+    FCB_Monitor: TClipbrdMonitor;
 
     constructor Create(CreateSuspended: Boolean; AUserName, AGateway, APort, AProxyAddr, AProxyUserName, AProxyPassword: String; AProxyEnabled: Boolean); overload;
     destructor Destroy; override;
@@ -1069,6 +1070,8 @@ constructor TPortalHostThread.Create(CreateSuspended: Boolean; AUserName, AGatew
 begin
   inherited Create(CreateSuspended);
 
+  FCB_Monitor := TClipbrdMonitor.Create;
+
   FCS := TCriticalSection.Create;
 
   FreeOnTerminate := True;
@@ -1252,6 +1255,8 @@ begin
   FCS.Free;
 
   TSendDestroyClientToGatewayThread.Create(False, Gateway, FUserName, False);
+
+  FreeAndNil(FCB_Monitor);
 
   TerminateThread(ThreadID, ExitCode);
 end;
