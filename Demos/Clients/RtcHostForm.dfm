@@ -5834,10 +5834,6 @@ object MainForm: TMainForm
   end
   object PDesktopControl: TRtcPDesktopControl
     OnNewUI = PDesktopControlNewUI
-    On_FileRecvStart = PDesktopControl_FileRecvStart
-    On_FileRecv = PDesktopControl_FileRecv
-    On_FileRecvStop = PDesktopControl_FileRecvStop
-    On_FileRecvCancel = PDesktopControl_FileRecvCancel
     Left = 40
     Top = 42
   end

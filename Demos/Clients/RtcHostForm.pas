@@ -543,15 +543,6 @@ type
     procedure bSetupMouseLeave(Sender: TObject);
     procedure bSetupClick(Sender: TObject);
     procedure bGetUpdateClick(Sender: TObject);
-    procedure PDesktopControl_FileRecv(Sender: TRtcPDesktopControl; const user,
-      FileName, path: string; const size: Int64);
-    procedure PDesktopControl_FileRecvCancel(Sender: TRtcPDesktopControl;
-      const user, FileName, path: string; const size: Int64);
-    procedure PDesktopControl_FileRecvStart(Sender: TRtcPDesktopControl;
-      const user, FileName, path: string; const size: Int64);
-    procedure PDesktopControl_FileRecvStop(Sender: TRtcPDesktopControl;
-      const user, FileName, path: string; const size: Int64);
-
   protected
 
 //    FAutoRun: Boolean;
@@ -9532,30 +9523,6 @@ begin
 //    SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
 //  else
 //    SetStatusString('Готов к подключению');
-end;
-
-procedure TMainForm.PDesktopControl_FileRecv(Sender: TRtcPDesktopControl;
-  const user, FileName, path: string; const size: Int64);
-begin
-  var i := 0;
-end;
-
-procedure TMainForm.PDesktopControl_FileRecvCancel(Sender: TRtcPDesktopControl;
-  const user, FileName, path: string; const size: Int64);
-begin
-  var i := 0;
-end;
-
-procedure TMainForm.PDesktopControl_FileRecvStart(Sender: TRtcPDesktopControl;
-  const user, FileName, path: string; const size: Int64);
-begin
-  var i := 0;
-end;
-
-procedure TMainForm.PDesktopControl_FileRecvStop(Sender: TRtcPDesktopControl;
-  const user, FileName, path: string; const size: Int64);
-begin
-  var i := 0;
 end;
 
 procedure TMainForm.pingTimerTimer(Sender: TObject);
