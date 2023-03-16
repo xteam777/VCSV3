@@ -1213,10 +1213,10 @@ begin
   FDesktopHost.OnQueryAccess := MainForm.PDesktopHostQueryAccess;
   FDesktopHost.OnUserJoined := MainForm.PModuleUserJoined;
   FDesktopHost.OnUserLeft := MainForm.PModuleUserLeft;
-  FDesktopHost.OnRecv := MainForm.OnDesktopHostFileRecv;
-  FDesktopHost.OnRecvCancel := MainForm.OnDesktopHostFileRecvCancel;
-  FDesktopHost.OnRecvStart := MainForm.OnDesktopHostFileRecvStart;
-  FDesktopHost.OnRecvStop := MainForm.OnDesktopHostFileRecvStop;
+//  FDesktopHost.OnRecv := MainForm.OnDesktopHostFileRecv;
+//  FDesktopHost.OnRecvCancel := MainForm.OnDesktopHostFileRecvCancel;
+//  FDesktopHost.OnRecvStart := MainForm.OnDesktopHostFileRecvStart;
+//  FDesktopHost.OnRecvStop := MainForm.OnDesktopHostFileRecvStop;
   FDesktopHost.Tag := ThreadID;
 
   FGatewayClient.Active := True;
