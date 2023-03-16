@@ -1267,10 +1267,14 @@ begin
 end;
 
 procedure TPortalHostThread.GetFilesFromClipboard(ACurExplorerHandle: THandle; ACurExplorerDir: String);
+var
+  i: Integer;
 begin
   FCS.Acquire;
   try
     FDesktopHost.FLastActiveExplorerHandle := ACurExplorerHandle;
+    for i := 0 to CB_DataObject.FCount - 1 do
+      FDesktopHost.Fetch(CB_DataObject.FFiles[i].filePath, ACurExplorerDir);
   finally
     FCS.Release;
   end;
