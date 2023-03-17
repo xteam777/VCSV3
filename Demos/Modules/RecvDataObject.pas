@@ -158,7 +158,14 @@ end;
 
 function TDataObject.GetData(const formatetcIn: TFormatEtc;
   out medium: TStgMedium): HResult;
+var
+  pFormatName: String;
+  len: Integer;
 begin
+   SetLength(pFormatName, 255);
+   len := GetClipboardFormatName(formatetcIn.cfFormat, @pFormatName[1], 255);
+   SetLength(pFormatName, len);
+
 	if (formatetcIn.dwAspect and DVASPECT_CONTENT) = 0 then
 		exit(DV_E_DVASPECT);
 
@@ -174,9 +181,9 @@ begin
       //if not InternalGetName(formatetcIn.lindex, fname) then exit (E_INVALIDARG);
 
 //      if (formatetcIn.lindex >= 0) and (formatetcIn.lindex < FCount) then
-        if Assigned(FOnGetData)
+{        if Assigned(FOnGetData)
           and (formatetcIn.lindex = 0) then
-          FOnGetData(Self, FUserName);
+          FOnGetData(Self, FUserName); }
 
 		  // supports the IStream format.
 //      var local_stream: TMemoryStream;
@@ -186,13 +193,22 @@ begin
 //		  var pIStream: IStream := TStreamAdapter.Create(local_stream, TStreamOwnership.soOwned);
 //      pIStream._AddRef;
 //		  medium.stm := pIStream;
-		  medium.tymed := TYMED_NULL;
-		  exit(S_OK);
+
+//		  medium.tymed := TYMED_NULL;
+//		  exit(S_OK);
+
+	  	var dataSize: size_t := 1;
+	  	var data: HGLOBAL := GlobalAlloc(GMEM_MOVEABLE or GMEM_SHARE or GMEM_ZEROINIT, dataSize);
+
+	  	GlobalUnlock(data);
+
+	  	medium.hGlobal := data;
+	  	medium.tymed := TYMED_HGLOBAL;
+	  	exit(S_OK);
     end
 	else if (formatetcIn.tymed and  TYMED_HGLOBAL <> 0) and
 			    (formatetcIn.cfFormat = TClipbrdMonitor.CF_FILEDESCRIPTOR) then
 	  begin
-
 	  	var dataSize: size_t := sizeof(FILEGROUPDESCRIPTOR) + (FCount-1) * SizeOf(TFileDescriptor);
 	  	var data: HGLOBAL := GlobalAlloc(GMEM_MOVEABLE or GMEM_SHARE or GMEM_ZEROINIT, dataSize);
 
