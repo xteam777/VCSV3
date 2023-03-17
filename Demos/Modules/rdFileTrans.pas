@@ -678,8 +678,8 @@ var
    buffer: Array [0..MAX_PATH] of Char;
    i, numFiles: Integer;
 begin
-   Clipboard.Open;
    try
+     Clipboard.Open;
      f:= Clipboard.GetAsHandle( CF_HDROP ) ;
      If f <> 0 Then
      Begin

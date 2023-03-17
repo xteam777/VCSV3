@@ -359,9 +359,9 @@ var
   wStr: WideString;
 begin
   tmp := nil;
-  Clipboard.Open;
   CB_Closed := False;
   try
+    Clipboard.Open;
     EmptyClipboard;
 
     if s <> '' then

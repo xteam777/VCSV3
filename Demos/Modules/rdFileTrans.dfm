@@ -6,6 +6,7 @@ object rdFileTransfer: TrdFileTransfer
   ClientHeight = 605
   ClientWidth = 1212
   Color = clWhite
+  CustomTitleBar.CaptionAlignment = taCenter
   Constraints.MinHeight = 500
   Constraints.MinWidth = 500
   DoubleBuffered = True
