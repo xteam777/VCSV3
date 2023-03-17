@@ -19,7 +19,6 @@ type
   private
 	  FFormats: TFormatEtcDynArray;
     FOnGetData: TOnGetData;
-    FUserName: String;
 
     FEnumIndex: Integer;
     procedure ReleaseFiles;
@@ -29,6 +28,7 @@ type
     FFiles: TArray<TFileInfo>;
     FCount: Integer;
     FDirectory: String;
+    FUserName: String;
     // IDataObject
     function GetData(const formatetcIn: TFormatEtc; out medium: TStgMedium):
       HResult; stdcall;

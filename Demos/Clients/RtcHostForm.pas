@@ -672,8 +672,7 @@ type
 
     function GetCurrentExplorerDirectory(var ADir: String; var AHandle: THandle): Boolean;
     procedure SetFilesToClipboard(var Message: TMessage); message WM_SET_FILES_TO_CLIPBOARD;
-    procedure OnGetCbrdFilesDataOnControl(Sender: TDataObject; AUserName: String);
-    procedure OnGetCbrdFilesDataOnHost(Sender: TDataObject; AUserName: String);
+    procedure OnGetCbrdFilesData(Sender: TDataObject; AUserName: String);
 
     procedure DoPowerPause;
     procedure DoPowerResume;
@@ -858,27 +857,22 @@ begin
   end;
 end;
 
-procedure TMainForm.OnGetCbrdFilesDataOnControl(Sender: TDataObject; AUserName: String);
+procedure TMainForm.OnGetCbrdFilesData(Sender: TDataObject; AUserName: String);
 var
   pPc: PPortalConnection;
   CurExplorerDir: String;
   CurExplorerHandle: THandle;
 begin
-  pPc := GetPortalConnection('desk', AUserName);
+  pPc := GetPortalConnection('desk', AUserName); //Если подключены контролем к хосту-овнеру-клибоарда, то с хоста тянем файлы
   if pPc <> nil then
   begin
     if GetCurrentExplorerDirectory(CurExplorerDir, CurExplorerHandle) then
       SendMessage(pPc^.UIHandle, WM_GET_FILES_FROM_CLIPBOARD, WPARAM(CurExplorerHandle), LPARAM(CurExplorerDir));
-  end;
-end;
-
-procedure TMainForm.OnGetCbrdFilesDataOnHost(Sender: TDataObject; AUserName: String);
-var
-  CurExplorerDir: String;
-  CurExplorerHandle: THandle;
-begin
-  if GetCurrentExplorerDirectory(CurExplorerDir, CurExplorerHandle) then
-    tPHostThread.GetFilesFromClipboard(CurExplorerHandle, CurExplorerDir);
+  end
+  else
+  if tPHostThread.FDesktopHost.isSubscriber(AUserName) then  //Если мы хост, то с контроля-овнера-клибоарда тянем файлы
+    if GetCurrentExplorerDirectory(CurExplorerDir, CurExplorerHandle) then
+      tPHostThread.GetFilesFromClipboard(CurExplorerHandle, CurExplorerDir);
 end;
 
 procedure TMainForm.SetFilesToClipboard(var Message: TMessage);
@@ -886,7 +880,7 @@ var
   data: TClipBrdFileData;
 begin
   data := TClipBrdFileData(Message.LParam);
-  CB_DataObject := TDataObject.Create(data.FUserName, data.files, data.FFilePaths, OnGetCbrdFilesDataOnControl);
+  CB_DataObject := TDataObject.Create(data.FUserName, data.files, data.FFilePaths, OnGetCbrdFilesData);
   OleCheck(OleSetClipboard(CB_DataObject));
 end;
 
@@ -1271,7 +1265,7 @@ begin
   try
     FDesktopHost.FLastActiveExplorerHandle := ACurExplorerHandle;
     for i := 0 to CB_DataObject.FCount - 1 do
-      FDesktopHost.Fetch(CB_DataObject.FFiles[i].filePath, ACurExplorerDir);
+      FDesktopHost.Fetch(CB_DataObject.FUserName, CB_DataObject.FFiles[i].filePath, ACurExplorerDir);
   finally
     FCS.Release;
   end;
@@ -1284,6 +1278,38 @@ var
 begin
   while (not Terminated) do
   begin
+    while GetMessage(msg, 0, 0, 0) do
+    begin
+      TranslateMessage(msg);
+      DispatchMessage(msg);
+
+      FCS.Acquire;
+      try
+        lNeedRestartThread := FNeedRestartThread;
+      finally
+        FCS.Release;
+      end;
+
+      if lNeedRestartThread then
+      begin
+        FGatewayClient.Disconnect;
+        FGatewayClient.Active := False;
+        FGatewayClient.GateAddr := Gateway;
+        FGatewayClient.Gate_Proxy := ProxyEnabled;
+        FGatewayClient.Gate_ProxyAddr := ProxyAddr;
+        FGatewayClient.Gate_ProxyUserName := ProxyUserName;
+        FGatewayClient.Gate_ProxyPassword := ProxyPassword;
+        FGatewayClient.Active := True;
+
+        FCS.Acquire;
+        try
+          FNeedRestartThread := False;
+        finally
+          FCS.Release;
+        end;
+      end;
+    end;
+
 //    if not Windows.GetMessage(msg, 0, 0, 0) then
 //      Terminate;
 //
@@ -1294,32 +1320,6 @@ begin
 //      else
 //        ProcessMessage(msg);
 //    end;
-
-    FCS.Acquire;
-    try
-      lNeedRestartThread := FNeedRestartThread;
-    finally
-      FCS.Release;
-    end;
-
-    if lNeedRestartThread then
-    begin
-      FGatewayClient.Disconnect;
-      FGatewayClient.Active := False;
-      FGatewayClient.GateAddr := Gateway;
-      FGatewayClient.Gate_Proxy := ProxyEnabled;
-      FGatewayClient.Gate_ProxyAddr := ProxyAddr;
-      FGatewayClient.Gate_ProxyUserName := ProxyUserName;
-      FGatewayClient.Gate_ProxyPassword := ProxyPassword;
-      FGatewayClient.Active := True;
-
-      FCS.Acquire;
-      try
-        FNeedRestartThread := False;
-      finally
-        FCS.Release;
-      end;
-    end;
 
     Sleep(1);
   end;

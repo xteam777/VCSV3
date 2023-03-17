@@ -196,7 +196,6 @@ type
     CS: TCriticalSection;
 
     procedure initSubscribers;
-    function isSubscriber(const username: String): boolean;
     function setSubscriber(const username: String; active: boolean): boolean;
     function getSubscriberCnt: integer;
 
@@ -330,6 +329,7 @@ type
       Object being assigned and replace the UserInfo stored in this component,
       but it will NOT affect any UserInfo data stored on the Gateway. }
     property RemoteUserInfo[const UserName:String]:TRtcRecord read GetRemoteUserInfo write SetRemoteUserInfo;
+    function isSubscriber(const username: String): boolean;
 
   published
     property Client: TAbsPortalClient read GetClient write SetClient;

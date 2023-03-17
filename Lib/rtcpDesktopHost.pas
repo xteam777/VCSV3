@@ -348,7 +348,6 @@ type
   public
     FHaveScreen: Boolean;
     FOnHaveScreeenChanged: TNotifyEvent;
-
     FLastActiveExplorerHandle: THandle;
 
     constructor Create(AOwner: TComponent); override;
