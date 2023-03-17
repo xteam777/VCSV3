@@ -1,7 +1,6 @@
 package rtcPortal;
 
 {$R *.res}
-{$R *.otares}
 {$R 'rtcPortalCli.dcr'}
 {$R 'rtcpFileTrans.dcr'}
 {$R 'rtcpChat.dcr'}
@@ -45,7 +44,9 @@ requires
   rtl,
   rtcSDK,
   designide,
-  dbrtl;
+  dbrtl,
+  vclie,
+  vcledge;
 
 contains
   rtcPortalReg in 'rtcPortalReg.pas',
