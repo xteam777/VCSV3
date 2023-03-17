@@ -208,7 +208,7 @@ begin
 
 	  	medium.stm := nil;
 	  	medium.tymed := TYMED_NULL;
-	  	exit(S_FALSE);
+	  	exit(S_OK);
     end
 	else if (formatetcIn.tymed and TYMED_HGLOBAL <> 0) and
 			    (formatetcIn.cfFormat = TClipbrdMonitor.CF_FILEDESCRIPTOR) then
