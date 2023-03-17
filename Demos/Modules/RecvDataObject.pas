@@ -97,12 +97,12 @@ begin
 	FFormats[0].cfFormat  := TClipbrdMonitor.CF_FILECONTENTS;
 	FFormats[0].dwAspect  := DVASPECT_CONTENT;
 	FFormats[0].lindex    := -1;
-	FFormats[0].tymed     := TYMED_ISTREAM; //TYMED_NULL;
+	FFormats[0].tymed     := TYMED_HGLOBAL; //TYMED_ISTREAM; //TYMED_NULL;
 	FFormats[0].ptd       := nil;
 
 	FFormats[1].cfFormat  := TClipbrdMonitor.CF_FILEDESCRIPTOR;
 	FFormats[1].dwAspect  := DVASPECT_CONTENT;
-	FFormats[1].tymed     := TYMED_HGLOBAL; //TYMED_HGLOBAL;
+	FFormats[1].tymed     := TYMED_HGLOBAL;
 	FFormats[1].lindex    := -1;
 	FFormats[1].ptd       := nil;
 
@@ -181,9 +181,9 @@ begin
       //if not InternalGetName(formatetcIn.lindex, fname) then exit (E_INVALIDARG);
 
 //      if (formatetcIn.lindex >= 0) and (formatetcIn.lindex < FCount) then
-{        if Assigned(FOnGetData)
+        if Assigned(FOnGetData)
           and (formatetcIn.lindex = 0) then
-          FOnGetData(Self, FUserName); }
+          FOnGetData(Self, FUserName);
 
 		  // supports the IStream format.
 //      var local_stream: TMemoryStream;
