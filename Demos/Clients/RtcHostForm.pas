@@ -1012,10 +1012,13 @@ begin
   else
     FProgressDialog.Position := 0;
 
-  if Sender.Recv_BytesTotal > 1024 * 1024 then
-    FProgressDialog.TextFooter := FormatFloat('0.00', Sender.Recv_BytesComplete / (1024 * 1024)) + ' Mb из ' + FormatFloat('0.00', Sender.Recv_BytesTotal / (1024 * 1024)) + ' Mb'
+  if Sender.Recv_BytesTotal > 1024 * 1024 * 1024 then
+    FProgressDialog.TextFooter := FormatFloat('0.00', Sender.Recv_BytesComplete / (1024 * 1024 * 1024)) + ' GB из ' + FormatFloat('0.00', Sender.Recv_BytesTotal / (1024 * 1024 * 1024)) + ' GB'
   else
-    FProgressDialog.TextFooter := FormatFloat('0.00', Sender.Recv_BytesComplete / 1024) + ' Kb из ' + FormatFloat('0.00', Sender.Recv_BytesTotal / 1024) + ' Kb';
+  if Sender.Recv_BytesTotal > 1024 * 1024 then
+    FProgressDialog.TextFooter := FormatFloat('0.00', Sender.Recv_BytesComplete / (1024 * 1024)) + ' MB из ' + FormatFloat('0.00', Sender.Recv_BytesTotal / (1024 * 1024)) + ' MB'
+  else
+    FProgressDialog.TextFooter := FormatFloat('0.00', Sender.Recv_BytesComplete / 1024) + ' KB из ' + FormatFloat('0.00', Sender.Recv_BytesTotal / 1024) + ' KB';
 end;
 
 procedure TMainForm.OnDesktopHostFileRecvCancel(Sender: TRtcPDesktopHost);
