@@ -97,7 +97,7 @@ begin
 	FFormats[0].cfFormat  := TClipbrdMonitor.CF_FILECONTENTS;
 	FFormats[0].dwAspect  := DVASPECT_CONTENT;
 	FFormats[0].lindex    := -1;
-	FFormats[0].tymed     := TYMED_ISTREAM; //TYMED_HGLOBAL; //TYMED_NULL;
+	FFormats[0].tymed     := TYMED_HGLOBAL; //TYMED_NULL;
 	FFormats[0].ptd       := nil;
 
 	FFormats[1].cfFormat  := TClipbrdMonitor.CF_FILEDESCRIPTOR;
