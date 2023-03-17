@@ -197,18 +197,18 @@ begin
 //		  medium.tymed := TYMED_NULL;
 //		  exit(S_OK);
 
-//	  	var dataSize: size_t := 1;
-//	  	var data: HGLOBAL := GlobalAlloc(GMEM_MOVEABLE or GMEM_SHARE or GMEM_ZEROINIT, dataSize);
-//
-//	  	GlobalUnlock(data);
-//
-//	  	medium.hGlobal := data;
-//	  	medium.tymed := TYMED_HGLOBAL;
-//	  	exit(S_OK);
+	  	var dataSize: size_t := 1;
+	  	var data: HGLOBAL := GlobalAlloc(GMEM_MOVEABLE or GMEM_SHARE or GMEM_ZEROINIT, dataSize);
 
-	  	medium.stm := nil;
-	  	medium.tymed := TYMED_NULL;
+	  	GlobalUnlock(data);
+
+	  	medium.hGlobal := data;
+	  	medium.tymed := TYMED_HGLOBAL;
 	  	exit(S_OK);
+
+//	  	medium.stm := nil;
+//	  	medium.tymed := TYMED_NULL;
+//	  	exit(S_OK);
     end
 	else if (formatetcIn.tymed and TYMED_HGLOBAL <> 0) and
 			    (formatetcIn.cfFormat = TClipbrdMonitor.CF_FILEDESCRIPTOR) then
