@@ -3153,8 +3153,8 @@ begin
   FSendFileName := fname;
   FSendFromFolder := fromfolder;
 
-//  if assigned(FOnReadStart) then
-//    Module.CallEvent(Sender, xOnReadStart, self);
+  if assigned(FOnReadStart) then
+    FOnReadStart(TRtcPDesktopHost(Sender));
 
   FSendFirst := False;
 end;
@@ -3176,8 +3176,8 @@ begin
     FSendMax := asLargeInt['size'];
   end;
 
-//  if assigned(FOnRead) then
-//    Module.CallEvent(Sender, xOnRead, self);
+  if assigned(FOnRead) then
+    FOnRead(TRtcPDesktopHost(Sender));
 end;
 
 procedure TRtcPDesktopHost.Call_ReadStop(Sender: TObject;
@@ -3209,8 +3209,8 @@ begin
     FSendFolders.isNull[fname] := True;
   end;
 
-//  if assigned(FOnReadStop) then
-//    Module.CallEvent(Sender, xOnReadStop, self);
+  if assigned(FOnReadStop) then
+    FOnReadStop(TRtcPDesktopHost(Sender));
 end;
 
 procedure TRtcPDesktopHost.Call_ReadCancel(Sender: TObject;
@@ -3242,8 +3242,8 @@ begin
     FSendFolders.isNull[fname] := True;
   end;
 
-//  if assigned(FOnReadCancel) then
-//    Module.CallEvent(Sender, xOnReadCancel, self);
+  if assigned(FOnReadCancel) then
+    FOnReadCancel(TRtcPDesktopHost(Sender));
 end;
 
 function SecondsToStr(LeftTime: Cardinal): String;
@@ -3338,8 +3338,8 @@ procedure TRtcPDesktopHost.Call_ReadUpdate(Sender: TObject);
 begin
   FSendCompleted := FSendPrepared;
 
-//  if assigned(FOnReadUpdate) then
-//    Module.CallEvent(Sender, xOnReadUpdate, self);
+  if assigned(FOnReadUpdate) then
+    FOnReadUpdate(TRtcPDesktopHost(Sender));
 
   if FSendFilesCnt = 0 then
     InitSend;
@@ -3377,8 +3377,8 @@ begin
   FRecvNow := 0;
   FRecvMax := size;
 
-//  if assigned(FOnWriteStart) then
-//    Module.CallEvent(Sender, xOnWriteStart, self);
+  if assigned(FOnWriteStart) then
+    FOnWriteStart(TRtcPDesktopHost(Sender));
 
   FRecvFirst := False;
 end;
@@ -3458,8 +3458,8 @@ begin
     FRecvMax := asLargeInt['size'];
   end;
 
-//  if assigned(FOnWrite) then
-//    Module.CallEvent(Sender, xOnWrite, self);
+  if assigned(FOnWrite) then
+    FOnWrite(TRtcPDesktopHost(Sender));
 end;
 
 procedure TRtcPDesktopHost.Call_WriteStop(Sender: TObject;
@@ -3493,8 +3493,8 @@ begin
     FRecvFolders.isNull[fname] := True;
   end;
 
-//  if assigned(FOnWriteStop) then
-//    Module.CallEvent(Sender, xOnWriteStop, self);
+  if assigned(FOnWriteStop) then
+    FOnWriteStop(TRtcPDesktopHost(Sender));
 
   if FRecvFilesCnt = 0 then
     InitRecv;
@@ -3531,8 +3531,8 @@ begin
     FRecvFolders.isNull[fname] := True;
   end;
 
-//  if assigned(FOnWriteCancel) then
-//    Module.CallEvent(Sender, xOnWriteCancel, self);
+  if assigned(FOnWriteCancel) then
+    FOnWriteCancel(TRtcPDesktopHost(Sender));
 
   if FRecvFilesCnt = 0 then
     InitRecv;
