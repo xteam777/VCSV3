@@ -159,12 +159,12 @@ end;
 function TDataObject.GetData(const formatetcIn: TFormatEtc;
   out medium: TStgMedium): HResult;
 var
-  pFormatName: String;
+//  pFormatName: String;
   len: Integer;
 begin
-   SetLength(pFormatName, 255);
-   len := GetClipboardFormatName(formatetcIn.cfFormat, @pFormatName[1], 255);
-   SetLength(pFormatName, len);
+//   SetLength(pFormatName, 255);
+//   len := GetClipboardFormatName(formatetcIn.cfFormat, @pFormatName[1], 255);
+//   SetLength(pFormatName, len);
 
 	if (formatetcIn.dwAspect and DVASPECT_CONTENT) = 0 then
 		exit(DV_E_DVASPECT);
