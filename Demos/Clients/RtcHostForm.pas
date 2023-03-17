@@ -8518,6 +8518,7 @@ begin
   SetStatus(STATUS_NO_CONNECTION);
 
   ActivationInProcess := False;
+  SetStatus(STATUS_ACTIVATING_ON_MAIN_GATE);
 end;
 
 function TMainForm.FormatID(AID: String): String;
