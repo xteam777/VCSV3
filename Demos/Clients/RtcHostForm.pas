@@ -3319,6 +3319,8 @@ var
 begin
   //XLog('FormCreate');
 
+  FProgressDialog := TProgressDialog.Create(nil);
+
   HintWindowClass := TRmxHintWindow;
 
   FUpdateAvailable := False;
@@ -3568,6 +3570,8 @@ begin
 
     i := i - 1;
   end;
+
+  FreeAndNil(FProgressDialog);
 end;
 
 procedure TMainForm.FormHide(Sender: TObject);
