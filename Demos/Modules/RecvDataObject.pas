@@ -97,7 +97,7 @@ begin
 	FFormats[0].cfFormat  := TClipbrdMonitor.CF_FILECONTENTS;
 	FFormats[0].dwAspect  := DVASPECT_CONTENT;
 	FFormats[0].lindex    := -1;
-	FFormats[0].tymed     := TYMED_HGLOBAL; //TYMED_NULL;
+	FFormats[0].tymed     := TYMED_ISTREAM; //TYMED_HGLOBAL; //TYMED_NULL;
 	FFormats[0].ptd       := nil;
 
 	FFormats[1].cfFormat  := TClipbrdMonitor.CF_FILEDESCRIPTOR;
@@ -197,18 +197,24 @@ begin
 //		  medium.tymed := TYMED_NULL;
 //		  exit(S_OK);
 
-	  	var dataSize: size_t := 1;
+	  	{var dataSize: size_t := 1;
 	  	var data: HGLOBAL := GlobalAlloc(GMEM_MOVEABLE or GMEM_SHARE or GMEM_ZEROINIT, dataSize);
 
 	  	GlobalUnlock(data);
 
 	  	medium.hGlobal := data;
 	  	medium.tymed := TYMED_HGLOBAL;
-	  	exit(S_OK);
+	  	exit(S_OK);}
 
-//	  	medium.stm := nil;
-//	  	medium.tymed := TYMED_NULL;
-//	  	exit(S_OK);
+      FillChar(medium, SizeOf(medium), 0);
+      var local_stream: TMemoryStream;
+		  local_stream := TMemoryStream.Create;
+		  local_stream.Position := 0;
+		  var pIStream: IStream := TStreamAdapter.Create(local_stream, TStreamOwnership.soOwned);
+      pIStream._AddRef;
+		  medium.stm := pIStream;
+	  	medium.tymed := TYMED_NULL;
+	  	exit(S_OK);
     end
 	else if (formatetcIn.tymed and TYMED_HGLOBAL <> 0) and
 			    (formatetcIn.cfFormat = TClipbrdMonitor.CF_FILEDESCRIPTOR) then

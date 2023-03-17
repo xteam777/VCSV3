@@ -282,9 +282,12 @@ type
     procedure SenderLoop_Prepare(Sender: TObject); override;
     procedure SenderLoop_Execute(Sender: TObject); override;
 
-    procedure Call_LogIn(Sender: TObject); override;
+    procedure Call_Init(Sender: TObject);
+    procedure Call_Open(Sender: TObject);
+    procedure Call_Close(Sender: TObject);
+    procedure Call_Error(Sender: TObject; Data: TRtcValue); override;
     procedure Call_LogOut(Sender: TObject); override;
-    procedure Call_Error(Sender: TObject; data: TRtcValue); override;
+    procedure Call_LogIn(Sender: TObject); override;
     procedure Call_FatalError(Sender: TObject; data: TRtcValue); override;
 
     procedure Call_Start(Sender: TObject; data: TRtcValue); override;
@@ -842,10 +845,6 @@ procedure TRtcPDesktopHost.Call_LogIn(Sender: TObject);
 begin
 end;
 
-procedure TRtcPDesktopHost.Call_LogOut(Sender: TObject);
-begin
-end;
-
 procedure TRtcPDesktopHost.Call_Params(Sender: TObject; data: TRtcValue);
 begin
   CS2.Acquire;
@@ -888,10 +887,6 @@ procedure TRtcPDesktopHost.Call_Start(Sender: TObject; data: TRtcValue);
 begin
   ScrStart;
   InitData;
-end;
-
-procedure TRtcPDesktopHost.Call_Error(Sender: TObject; data: TRtcValue);
-begin
 end;
 
 procedure TRtcPDesktopHost.Call_FatalError(Sender: TObject; data: TRtcValue);
@@ -3154,7 +3149,7 @@ begin
   FSendFromFolder := fromfolder;
 
   if assigned(FOnReadStart) then
-    FOnReadStart(TRtcPDesktopHost(Sender));
+    FOnReadStart(Self);
 
   FSendFirst := False;
 end;
@@ -3177,7 +3172,7 @@ begin
   end;
 
   if assigned(FOnRead) then
-    FOnRead(TRtcPDesktopHost(Sender));
+    FOnRead(Self);
 end;
 
 procedure TRtcPDesktopHost.Call_ReadStop(Sender: TObject;
@@ -3210,7 +3205,7 @@ begin
   end;
 
   if assigned(FOnReadStop) then
-    FOnReadStop(TRtcPDesktopHost(Sender));
+    FOnReadStop(Self);
 end;
 
 procedure TRtcPDesktopHost.Call_ReadCancel(Sender: TObject;
@@ -3243,7 +3238,7 @@ begin
   end;
 
   if assigned(FOnReadCancel) then
-    FOnReadCancel(TRtcPDesktopHost(Sender));
+    FOnReadCancel(Self);
 end;
 
 function SecondsToStr(LeftTime: Cardinal): String;
@@ -3339,7 +3334,7 @@ begin
   FSendCompleted := FSendPrepared;
 
   if assigned(FOnReadUpdate) then
-    FOnReadUpdate(TRtcPDesktopHost(Sender));
+    FOnReadUpdate(Self);
 
   if FSendFilesCnt = 0 then
     InitSend;
@@ -3378,7 +3373,7 @@ begin
   FRecvMax := size;
 
   if assigned(FOnWriteStart) then
-    FOnWriteStart(TRtcPDesktopHost(Sender));
+    FOnWriteStart(Self);
 
   FRecvFirst := False;
 end;
@@ -3459,7 +3454,7 @@ begin
   end;
 
   if assigned(FOnWrite) then
-    FOnWrite(TRtcPDesktopHost(Sender));
+    FOnWrite(Self);
 end;
 
 procedure TRtcPDesktopHost.Call_WriteStop(Sender: TObject;
@@ -3494,7 +3489,7 @@ begin
   end;
 
   if assigned(FOnWriteStop) then
-    FOnWriteStop(TRtcPDesktopHost(Sender));
+    FOnWriteStop(Self);
 
   if FRecvFilesCnt = 0 then
     InitRecv;
@@ -3532,10 +3527,52 @@ begin
   end;
 
   if assigned(FOnWriteCancel) then
-    FOnWriteCancel(TRtcPDesktopHost(Sender));
+    FOnWriteCancel(Self);
 
   if FRecvFilesCnt = 0 then
     InitRecv;
+end;
+
+procedure TRtcPDesktopHost.Call_Init(Sender: TObject);
+begin
+  InitSend;
+  InitRecv;
+//  if assigned(FOnInit) then
+//    Module.CallEvent(Sender, xOnInit, self);
+end;
+
+procedure TRtcPDesktopHost.Call_Open(Sender: TObject);
+begin
+
+end;
+
+procedure TRtcPDesktopHost.Call_Close(Sender: TObject);
+begin
+  if getSubscriberCnt = 0 then
+  begin
+    InitSend;
+    InitRecv;
+//    if assigned(FOnClose) then
+//      Module.CallEvent(Sender, xOnClose, self);
+  end;
+end;
+
+procedure TRtcPDesktopHost.Call_Error(Sender: TObject; Data: TRtcValue);
+begin
+  InitSend;
+  InitRecv;
+
+//  if assigned(FOnError) then
+//    Module.CallEvent(Sender, xOnError, self);
+end;
+
+procedure TRtcPDesktopHost.Call_LogOut(Sender: TObject);
+begin
+  InitSend;
+  InitRecv;
+
+//  if assigned(FOnLogOut) then
+//    FOnLogOut(Sender, xOnLogOut, self);
 end;
 //FileTransUI-
 

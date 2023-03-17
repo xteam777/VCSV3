@@ -880,8 +880,10 @@ var
   data: TClipBrdFileData;
 begin
   data := TClipBrdFileData(Message.LParam);
+  OleInitialize(nil);
   CB_DataObject := TDataObject.Create(data.FUserName, data.files, data.FFilePaths, OnGetCbrdFilesData);
   OleCheck(OleSetClipboard(CB_DataObject));
+  OleUninitialize;
 end;
 
 function TMainForm.GetHostGatewayClientActive: Boolean;
@@ -11196,7 +11198,6 @@ end;
 
 
 initialization
-//  OleInitialize(nil);
   CS_GW := TCriticalSection.Create;
   CS_Status := TCriticalSection.Create;
   CS_Pending := TCriticalSection.Create;
@@ -11205,7 +11206,6 @@ initialization
   Randomize;
 
 finalization
-//  OleUninitialize;
   RestorePowerChanges;
   CS_Pending.Free;
   CS_Status := TCriticalSection.Create;
