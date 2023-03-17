@@ -380,9 +380,17 @@ begin
 end;
 
 procedure TDataObject.ReleaseFiles;
-var
-  i: Integer;
+//var
+//  i: Integer;
 begin
+//  for i := 0 to FCount-1 do
+//  begin
+//    if FFiles[i].data <> nil then
+//      case FFiles[i].ownership of
+//        soCopied, soOwned: FreeAndNil(FFiles[i].data);
+//        soReference: FFiles[i].data := nil;
+//      end;
+//  end;
   FCount := 0;
   SetLength(FFiles, 0);
 end;
