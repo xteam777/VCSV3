@@ -3319,7 +3319,7 @@ var
 begin
   //XLog('FormCreate');
 
-  FProgressDialog := TProgressDialog.Create(nil);
+  FProgressDialog := TProgressDialog.Create(Self);
 
   HintWindowClass := TRmxHintWindow;
 
