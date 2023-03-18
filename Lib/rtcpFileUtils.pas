@@ -32,6 +32,12 @@ Function DelFolderTree(DirName: String): Boolean;
 
 function FileTimeToDateTime(FT: FILETIME): TDateTime;
 
+function File_Exists(const fname:RtcWideString):boolean;
+
+function File_Size(const fname:RtcWideString):int64;
+
+function File_Age(const fname:RtcWideString):TDateTime;
+
 implementation
 
 const
@@ -50,6 +56,48 @@ type
       Serial: DWORD;
     Capacity, FreeSpace: int64;
     VolumeLabel, SerialNumber, FileSystem: String;
+  end;
+
+function File_Exists(const fname:RtcWideString):boolean;
+  var
+    f: THandle;
+  begin
+  f:=FileOpen(fname,fmOpenRead+fmShareDenyNone);
+  if f = INVALID_HANDLE_VALUE then
+    Result:=False
+  else
+    begin
+    FileClose(f);
+    Result:=True;
+    end;
+  end;
+
+function File_Size(const fname:RtcWideString):int64;
+  var
+    f: THandle;
+  begin
+  f:=FileOpen(fname,fmOpenRead+fmShareDenyNone);
+  if f = INVALID_HANDLE_VALUE then
+    Result:=-1
+  else
+    begin
+    Result:=FileSeek(f,int64(0),2);
+    FileClose(f);
+    end;
+  end;
+
+function File_Age(const fname:RtcWideString):TDateTime;
+  var
+    f: THandle;
+  begin
+  f:=FileOpen(fname,fmOpenRead+fmShareDenyNone);
+  if f = INVALID_HANDLE_VALUE then
+    Result:=-1
+  else
+    begin
+    Result:=FileDateToDateTime(FileGetDate(f));
+    FileClose(f);
+    end;
   end;
 
 function FormatFileSize(const Number: int64): String;
