@@ -167,10 +167,6 @@ type
       Sender: TObject = nil); virtual;
     //FileTrans-
 
-    //+sstuman
-    procedure SendFilesToCopyList(sFilesDirs, sFilesDirsSizes: String; Sender: TObject);  virtual;
-    //-sstuman
-
   published
     { Chat Module used for sending and receiving messages. }
     property Module: TRtcPDesktopControl read GetModule write SetModule;
@@ -487,10 +483,6 @@ type
     procedure Call(const UserName: String; const Data: TRtcFunctionInfo;
       Sender: TObject = nil);
     //FileTrans-
-
-    //+sstuman
-    procedure SendFilesToCopyList(const UserName: String; sFilesDirs, sFilesDirsSizes: String; Sender: TObject = nil);
-    //-sstuman
 
   published
     { This event will be triggered when a RtcPChatUI component is required, but still not assigned for this user.
@@ -926,7 +918,7 @@ begin
     begin
       // tell user we are ready to accept his file
       r := TRtcFunctionInfo.Create;
-      r.FunctionName := 'pfile';
+      r.FunctionName := 'hpfile';
       r.asInteger['id'] := Data.asInteger['id'];
       r.asText['path'] := Data.asText['path'];
       Client.SendToUser(Sender, uname, r);
@@ -2475,7 +2467,7 @@ var
   fn: TRtcFunctionInfo;
 begin
   fn := TRtcFunctionInfo.Create;
-  fn.FunctionName := 'filecmd';
+  fn.FunctionName := 'hfilecmd';
   fn.asString['c'] := 'call';
   fn.asObject['i'] := Data;
   Client.SendToUser(Sender, UserName, fn);
@@ -2530,7 +2522,7 @@ begin
       PrepareFiles.asArray[UserName].asObject[idx] := dts;
 
       fn := TRtcFunctionInfo.Create;
-      fn.FunctionName := 'putfile';
+      fn.FunctionName := 'hputfile';
       fn.asInteger['id'] := idx;
       fn.asText['path'] := ExtractFileName(FileName);
       fn.asText['to'] := tofolder;
@@ -2550,7 +2542,7 @@ var
   fn: TRtcFunctionInfo;
 begin
   fn := TRtcFunctionInfo.Create;
-  fn.FunctionName := 'getfile';
+  fn.FunctionName := 'hgetfile';
   fn.asText['file'] := FileName;
   fn.asText['to'] := tofolder;
   Client.SendToUser(Sender, UserName, fn);
@@ -2571,7 +2563,7 @@ begin
   fsize := CancelFileSending(Sender, UserName, fname, ffolder);
 
   fn := TRtcFunctionInfo.Create;
-  fn.FunctionName := 'filecmd';
+  fn.FunctionName := 'hfilecmd';
   fn.asString['c'] := 'abort';
   fn.asText['file'] := fname;
   fn.asText['to'] := tofolder;
@@ -2585,7 +2577,7 @@ var
   fn: TRtcFunctionInfo;
 begin
   fn := TRtcFunctionInfo.Create;
-  fn.FunctionName := 'filecmd';
+  fn.FunctionName := 'hfilecmd';
   fn.asString['c'] := 'cancel';
   fn.asText['file'] := FileName;
   fn.asText['to'] := tofolder;
@@ -2749,7 +2741,7 @@ var
           myLoc := dts.asLargeInt['sent'];
 
           fn := TRtcFunctionInfo.Create;
-          fn.FunctionName := 'file';
+          fn.FunctionName := 'hfile';
           fn.asText['file'] := myFile;
           fn.asText['path'] := myPath;
           if myDest <> '' then
@@ -2897,26 +2889,5 @@ begin
   InitData;
 end;
 //FileTrans-
-
-//////////////////////////////////DETOURS//////////////////////////////////
-
-procedure TRtcAbsPDesktopControlUI.SendFilesToCopyList(sFilesDirs, sFilesDirsSizes: String; Sender: TObject);
-begin
-  if (UserName <> '') and assigned(FModule) then
-    FModule.SendFilesToCopyList(UserName, sFilesDirs, sFilesDirsSizes, Sender);
-end;
-
-procedure TRtcPDesktopControl.SendFilesToCopyList(const UserName: String;
-  sFilesDirs, sFilesDirsSizes: String; Sender: TObject);
-var
-  fn: TRtcFunctionInfo;
-begin
-  fn := TRtcFunctionInfo.Create;
-  fn.FunctionName := 'files_to_copy_list';
-  fn.asString['f'] := sFilesDirs;
-  fn.asString['s'] := sFilesDirsSizes;
-
-  Client.SendToUser(Sender, UserName, fn);
-end;
 
 end.
