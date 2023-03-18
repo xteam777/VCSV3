@@ -121,7 +121,7 @@ begin
   end;
 end;
 
-{function Folder_Size(const FolderName: String): int64;
+function Folder_Size(const FolderName: String): int64;
 var
   sr: TSearchRec;
 begin
@@ -144,32 +144,9 @@ begin
   finally
     FindClose(sr);
   end;
-end}
+end
 
-function Folder_Size(const FolderName: String): Int64;
-var
-  sr: TSearchRec;
-  size: Int64;
-begin
-  size := 0;
-  if FindFirst(IncludeTrailingPathDelimiter(FolderName) + '*.*', faAnyFile, sr) = 0 then
-  try
-    repeat
-      if (sr.Name <> '.') and (sr.Name <> '..') then
-      begin
-        if (sr.Attr and faDirectory) = faDirectory then
-          size := size + Folder_Size(IncludeTrailingPathDelimiter(FolderName + sr.Name))
-        else
-          size := size + (Int64(sr.FindData.nFileSizeHigh) shl 32) or Int64(sr.FindData.nFileSizeLow);
-      end;
-    until FindNext(sr) <> 0;
-  finally
-    FindClose(sr);
-  end;
-  Result := size;
-end;
-
-{function Folder_Content(const FolderName, SubFolderName: String;
+function Folder_Content(const FolderName, SubFolderName: String;
   Folder: TRtcDataSet): int64;
 var
   sr: TSearchRec;
@@ -219,58 +196,9 @@ begin
   finally
     FindClose(sr);
   end;
-end;}
-
-function Folder_Content(const FolderName, SubFolderName: String;
-  Folder: TRtcDataSet): Int64;
-var
-  sr: TSearchRec;
-  TempResult: Int64;
-begin
-  Result := 0;
-  if FindFirst(IncludeTrailingPathDelimiter(FolderName) + '*.*', faAnyFile, sr) = 0 then
-  try
-    repeat
-      if (sr.Name <> '.') and (sr.Name <> '..') then
-      begin
-        if (sr.Attr and faDirectory) = faDirectory then
-        begin
-          TempResult := Folder_Content(IncludeTrailingPathDelimiter(FolderName + sr.Name), SubFolderName + sr.Name + '\', Folder);
-          if TempResult = 0 then
-          begin
-            Folder.Append;
-            Folder.asText['name'] := SubFolderName + sr.Name + '\';
-            try
-              Folder.asDateTime['age'] := FileDateToDateTime(sr.Time);
-            except
-              Folder.isNull['age'] := True;
-            end;
-            Folder.asInteger['attr'] := sr.Attr;
-          end
-          else
-            Result := Result + TempResult;
-        end
-        else
-        begin
-          Folder.Append;
-          Folder.asText['name'] := SubFolderName + sr.Name;
-          try
-            Folder.asDateTime['age'] := FileDateToDateTime(sr.Time);
-          except
-            Folder.isNull['age'] := True;
-          end;
-          Folder.asInteger['attr'] := sr.Attr;
-          Folder.asLargeInt['size'] := (Int64(sr.FindData.nFileSizeHigh) shl 32) or Int64(sr.FindData.nFileSizeLow);
-          Result := Result + Folder.asLargeInt['size'];
-        end;
-      end;
-    until FindNext(sr) <> 0;
-  finally
-    FindClose(sr);
-  end;
 end;
 
-{function File_Content(const FileName: String; Folder: TRtcDataSet): int64;
+function File_Content(const FileName: String; Folder: TRtcDataSet): int64;
 var
   sr: TSearchRec;
   FolderName: String;
@@ -317,68 +245,6 @@ begin
               end;
               Folder.asInteger['attr'] := sr.Attr;
               //Folder.asLargeInt['size']:= File_Size(FolderName+'\'+sr.Name);
-              Folder.asLargeInt['size'] :=
-                (int64(sr.FindData.nFileSizeHigh) shl 32) or
-                (sr.FindData.nFileSizeLow);
-              Result := Result + Folder.asLargeInt['size'];
-            end;
-          end;
-        until (FindNext(sr) <> 0);
-    finally
-      FindClose(sr);
-    end;
-  end;
-end;}
-
-function File_Content(const FileName: String; Folder: TRtcDataSet): int64;
-var
-  sr: TSearchRec;
-  FolderName: String;
-  TempResult: int64;
-begin
-  // Если последний символ в имени файла является символом '\' , то удаляем его
-  if Copy(FileName, length(FileName), 1) = '\' then
-    Result := File_Content(Copy(FileName, 1, length(FileName) - 1) + '*.*', Folder)
-  else
-  begin
-    FolderName := ExtractFilePath(FileName);
-    // Удаляем символ '\' с конца строки, если он есть
-    if Copy(FolderName, length(FolderName), 1) = '\' then
-      Delete(FolderName, length(FolderName), 1);
-    try
-      Result := 0;
-      if FindFirst(FileName, faAnyFile, sr) = 0 then
-        repeat
-          if (sr.Name <> '.') and (sr.Name <> '..') then
-          begin
-            if (sr.Attr and faDirectory) = faDirectory then
-              begin
-              // Исправляем вызов функции Folder_Content на вызов функции File_Content
-              TempResult := File_Content(FolderName + '\' + sr.Name + '\*.*', Folder);
-              if TempResult = 0 then
-                begin
-                Folder.Append;
-                Folder.asText['name'] := sr.Name + '\';
-                try
-                  Folder.asDateTime['age'] := FileDateToDateTime(sr.Time);
-                except
-                  Folder.isNull['age'] := True;
-                  end;
-                Folder.asInteger['attr'] := sr.Attr;
-                end
-              else
-                Result := Result + TempResult;
-              end
-            else
-            begin
-              Folder.Append;
-              Folder.asText['name'] := sr.Name;
-              try
-                Folder.asDateTime['age'] := FileDateToDateTime(sr.Time);
-              except
-                Folder.isNull['age'] := True;
-              end;
-              Folder.asInteger['attr'] := sr.Attr;
               Folder.asLargeInt['size'] :=
                 (int64(sr.FindData.nFileSizeHigh) shl 32) or
                 (sr.FindData.nFileSizeLow);

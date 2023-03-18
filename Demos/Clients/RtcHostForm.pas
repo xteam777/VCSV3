@@ -1078,7 +1078,7 @@ end;
 
 procedure TMainForm.OnProgressDialogCancel(Sender: TObject);
 begin
-  FProgressDialog.Stop;
+  TProgressDialog(Sender).Stop;
 end;
 
 constructor TPortalHostThread.Create(CreateSuspended: Boolean; AUserName, AGateway, APort, AProxyAddr, AProxyUserName, AProxyPassword: String; AProxyEnabled: Boolean);
