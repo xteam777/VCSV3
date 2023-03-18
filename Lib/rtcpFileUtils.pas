@@ -135,9 +135,9 @@ begin
             Result := Result + Folder_Size(FolderName + '\' + sr.Name)
           else
           begin
-            Result := Result + File_Size(FolderName+'\'+sr.Name);
-            {Result := Result + (int64(sr.FindData.nFileSizeHigh) shl 32) or
-              (sr.FindData.nFileSizeLow);}
+            //Result := Result + File_Size(FolderName+'\'+sr.Name);
+            Result := Result + (int64(sr.FindData.nFileSizeHigh) shl 32) or
+              (sr.FindData.nFileSizeLow);
           end;
         end;
       until (FindNext(sr) <> 0);
@@ -185,10 +185,10 @@ begin
               Folder.isNull['age'] := True;
             end;
             Folder.asInteger['attr'] := sr.Attr;
-            Folder.asLargeInt['size']:= File_Size(FolderName+'\'+sr.Name);
-            {Folder.asLargeInt['size'] :=
+            //Folder.asLargeInt['size']:= File_Size(FolderName+'\'+sr.Name);
+            Folder.asLargeInt['size'] :=
               (int64(sr.FindData.nFileSizeHigh) shl 32) or
-              (sr.FindData.nFileSizeLow);}
+              (sr.FindData.nFileSizeLow);
             Result := Result + Folder.asLargeInt['size'];
           end;
         end;
@@ -244,10 +244,10 @@ begin
                 Folder.isNull['age'] := True;
               end;
               Folder.asInteger['attr'] := sr.Attr;
-              Folder.asLargeInt['size']:= File_Size(FolderName+'\'+sr.Name);
-              {Folder.asLargeInt['size'] :=
+              //Folder.asLargeInt['size']:= File_Size(FolderName+'\'+sr.Name);
+              Folder.asLargeInt['size'] :=
                 (int64(sr.FindData.nFileSizeHigh) shl 32) or
-                (sr.FindData.nFileSizeLow);}
+                (sr.FindData.nFileSizeLow);
               Result := Result + Folder.asLargeInt['size'];
             end;
           end;
@@ -408,10 +408,10 @@ var
               Folder.asInteger['attr'] := sr.Attr;
               if (sr.Attr and faDirectory) <> faDirectory then
               begin
-                Folder.asLargeInt['size']:= File_Size(FolderName+'\'+sr.Name);
-                {Folder.asLargeInt['size'] :=
+                //Folder.asLargeInt['size']:= File_Size(FolderName+'\'+sr.Name);
+                Folder.asLargeInt['size'] :=
                   (int64(sr.FindData.nFileSizeHigh) shl 32) or
-                  (sr.FindData.nFileSizeLow);}
+                  (sr.FindData.nFileSizeLow);
               end;
             end;
           until (FindNext(sr) <> 0);
