@@ -712,6 +712,13 @@ begin
   fn.FunctionName := 'desk';
 
   Client.SendToUser(Sender, UserName, fn);
+
+  //+FileTrans
+  fn := TRtcFunctionInfo.Create;
+  fn.FunctionName := 'file';
+
+  Client.SendToUser(Sender, UserName, fn);
+  //-FileTrans
 end;
 
 procedure TRtcPDesktopControl.Close(const UserName: String;
