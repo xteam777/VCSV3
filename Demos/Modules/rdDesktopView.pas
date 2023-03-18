@@ -923,9 +923,6 @@ begin
     FProgressDialog.TextFooter := FormatFloat('0.00', myUI.Recv_BytesComplete / (1024 * 1024)) + ' MB из ' + FormatFloat('0.00', myUI.Recv_BytesTotal / (1024 * 1024)) + ' MB'
   else
     FProgressDialog.TextFooter := FormatFloat('0.00', myUI.Recv_BytesComplete / 1024) + ' KB из ' + FormatFloat('0.00', myUI.Recv_BytesTotal / 1024) + ' KB';
-
-  if myUI.Recv_BytesComplete = myUI.Recv_BytesTotal then
-    FProgressDialog.Stop;
 end;
 
 procedure TrdDesktopViewer.myUIRecvCancel(Sender: TRtcPDesktopControlUI);
@@ -958,7 +955,7 @@ end;
 
 procedure TrdDesktopViewer.myUIRecvStop(Sender: TRtcPDesktopControlUI);
 begin
-//  FProgressDialog.Stop;
+  FProgressDialog.Stop;
 end;
 
 procedure TrdDesktopViewer.myUIClose(Sender: TRtcPDesktopControlUI);

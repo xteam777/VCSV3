@@ -1042,9 +1042,6 @@ begin
     FProgressDialog.TextFooter := FormatFloat('0.00', Sender.Recv_BytesComplete / (1024 * 1024)) + ' MB из ' + FormatFloat('0.00', Sender.Recv_BytesTotal / (1024 * 1024)) + ' MB'
   else
     FProgressDialog.TextFooter := FormatFloat('0.00', Sender.Recv_BytesComplete / 1024) + ' KB из ' + FormatFloat('0.00', Sender.Recv_BytesTotal / 1024) + ' KB';
-
-  if Sender.Recv_BytesComplete = Sender.Recv_BytesTotal then
-    FProgressDialog.Stop;
 end;
 
 procedure TMainForm.OnDesktopHostFileRecvCancel(Sender: TRtcPHostFileTransferUI);
@@ -1072,7 +1069,7 @@ end;
 
 procedure TMainForm.OnDesktopHostFileRecvStop(Sender: TRtcPHostFileTransferUI);
 begin
-//  FProgressDialog.Stop;
+  FProgressDialog.Stop;
 end;
 
 procedure TMainForm.OnProgressDialogCancel(Sender: TObject);

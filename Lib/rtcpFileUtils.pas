@@ -9,7 +9,7 @@ interface
 {$INCLUDE rtcDefs.inc}
 
 uses
-  Windows, SysUtils, Classes, Math, ShellAPI, rtcInfo;
+  Windows, SysUtils, Classes, Math, ShellAPI, rtcInfo, rtcSystem;
 
 type
   TRtcPMediaType = (dtUnknown, dtNotExists, dtRemovable, dtFixed, dtRemote,
@@ -32,12 +32,6 @@ Function DelFolderTree(DirName: String): Boolean;
 
 function FileTimeToDateTime(FT: FILETIME): TDateTime;
 
-function File_Exists(const fname:RtcWideString):boolean;
-
-function File_Size(const fname:RtcWideString):int64;
-
-function File_Age(const fname:RtcWideString):TDateTime;
-
 implementation
 
 const
@@ -56,48 +50,6 @@ type
       Serial: DWORD;
     Capacity, FreeSpace: int64;
     VolumeLabel, SerialNumber, FileSystem: String;
-  end;
-
-function File_Exists(const fname:RtcWideString):boolean;
-  var
-    f: THandle;
-  begin
-  f:=FileOpen(fname,fmOpenRead+fmShareDenyNone);
-  if f = INVALID_HANDLE_VALUE then
-    Result:=False
-  else
-    begin
-    FileClose(f);
-    Result:=True;
-    end;
-  end;
-
-function File_Size(const fname:RtcWideString):int64;
-  var
-    f: THandle;
-  begin
-  f:=FileOpen(fname,fmOpenRead+fmShareDenyNone);
-  if f = INVALID_HANDLE_VALUE then
-    Result:=-1
-  else
-    begin
-    Result:=FileSeek(f,int64(0),2);
-    FileClose(f);
-    end;
-  end;
-
-function File_Age(const fname:RtcWideString):TDateTime;
-  var
-    f: THandle;
-  begin
-  f:=FileOpen(fname,fmOpenRead+fmShareDenyNone);
-  if f = INVALID_HANDLE_VALUE then
-    Result:=-1
-  else
-    begin
-    Result:=FileDateToDateTime(FileGetDate(f));
-    FileClose(f);
-    end;
   end;
 
 function FormatFileSize(const Number: int64): String;
@@ -183,9 +135,9 @@ begin
             Result := Result + Folder_Size(FolderName + '\' + sr.Name)
           else
           begin
-            // Result := Result + File_Size(FolderName+'\'+sr.Name);
-            Result := Result + (int64(sr.FindData.nFileSizeHigh) shl 32) or
-              (sr.FindData.nFileSizeLow);
+            Result := Result + File_Size(FolderName+'\'+sr.Name);
+            {Result := Result + (int64(sr.FindData.nFileSizeHigh) shl 32) or
+              (sr.FindData.nFileSizeLow);}
           end;
         end;
       until (FindNext(sr) <> 0);
@@ -233,10 +185,10 @@ begin
               Folder.isNull['age'] := True;
             end;
             Folder.asInteger['attr'] := sr.Attr;
-            // Folder.asLargeInt['size']:= File_Size(FolderName+'\'+sr.Name);
-            Folder.asLargeInt['size'] :=
+            Folder.asLargeInt['size']:= File_Size(FolderName+'\'+sr.Name);
+            {Folder.asLargeInt['size'] :=
               (int64(sr.FindData.nFileSizeHigh) shl 32) or
-              (sr.FindData.nFileSizeLow);
+              (sr.FindData.nFileSizeLow);}
             Result := Result + Folder.asLargeInt['size'];
           end;
         end;
@@ -292,10 +244,10 @@ begin
                 Folder.isNull['age'] := True;
               end;
               Folder.asInteger['attr'] := sr.Attr;
-              // Folder.asLargeInt['size']:= File_Size(FolderName+'\'+sr.Name);
-              Folder.asLargeInt['size'] :=
+              Folder.asLargeInt['size']:= File_Size(FolderName+'\'+sr.Name);
+              {Folder.asLargeInt['size'] :=
                 (int64(sr.FindData.nFileSizeHigh) shl 32) or
-                (sr.FindData.nFileSizeLow);
+                (sr.FindData.nFileSizeLow);}
               Result := Result + Folder.asLargeInt['size'];
             end;
           end;
@@ -456,10 +408,10 @@ var
               Folder.asInteger['attr'] := sr.Attr;
               if (sr.Attr and faDirectory) <> faDirectory then
               begin
-                // Folder.asLargeInt['size']:= File_Size(FolderName+'\'+sr.Name);
-                Folder.asLargeInt['size'] :=
+                Folder.asLargeInt['size']:= File_Size(FolderName+'\'+sr.Name);
+                {Folder.asLargeInt['size'] :=
                   (int64(sr.FindData.nFileSizeHigh) shl 32) or
-                  (sr.FindData.nFileSizeLow);
+                  (sr.FindData.nFileSizeLow);}
               end;
             end;
           until (FindNext(sr) <> 0);
