@@ -1147,7 +1147,7 @@ begin
     begin
       // tell user we are ready to accept his file
       r := TRtcFunctionInfo.Create;
-      r.FunctionName := 'pfile';
+      r.FunctionName := 'hpfile';
       r.asInteger['id'] := Data.asInteger['id'];
       r.asText['path'] := Data.asText['path'];
       Client.SendToUser(Sender, uname, r);
@@ -1868,7 +1868,7 @@ var
           myLoc := dts.asLargeInt['sent'];
 
           fn := TRtcFunctionInfo.Create;
-          fn.FunctionName := 'file';
+          fn.FunctionName := 'hfile';
           fn.asText['file'] := myFile;
           fn.asText['path'] := myPath;
           if myDest <> '' then

@@ -384,10 +384,6 @@ type
     property CursorX: Integer read GetCursorX;
     property CursorY: Integer read GetCursorY;
 
-    //+sstuman
-    procedure SendFilesToCopyList(sFilesDirs, sFilesDirsSizes: String; Sender: TObject);
-    //-sstuman
-
   published
     property Active: boolean read GetActive write SetActive default False;
 
@@ -2729,12 +2725,5 @@ begin
   FOnCallReceived(self);
 end;
 //FileTrans-
-
-//////////////////////////////////DETOURS//////////////////////////////////
-
-procedure TRtcPDesktopControlUI.SendFilesToCopyList(sFilesDirs, sFilesDirsSizes: String; Sender: TObject);
-begin
-  inherited SendFilesToCopyList(sFilesDirs, sFilesDirsSizes, Sender);
-end;
 
 end.
