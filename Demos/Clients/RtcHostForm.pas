@@ -328,6 +328,7 @@ type
     bSetup: TColorSpeedButton;
     pBtnSetup: TPanel;
     bGetUpdate: TSpeedButton;
+    Memo1: TMemo;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -1026,6 +1027,8 @@ end;
 
 procedure TMainForm.OnDesktopHostFileRecv(Sender: TRtcPHostFileTransferUI);
 begin
+  Memo1.Lines.Add(IntToStr(Sender.Recv_FileCount) + ' - ' + Sender.Recv_FileName + ' - ' + IntToStr(Sender.Recv_BytesComplete) + ' - '+ IntToStr(Sender.Recv_BytesTotal));
+
   FProgressDialog.TextLine1 := Sender.Recv_FileName;
 
   if Sender.Recv_BytesTotal > 0 then

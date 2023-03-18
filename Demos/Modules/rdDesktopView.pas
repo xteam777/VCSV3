@@ -98,6 +98,7 @@ type
     iMiniPanelShow: TImage;
     iMove: TImage;
     Button1: TButton;
+    Memo1: TMemo;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -909,6 +910,7 @@ end;
 
 procedure TrdDesktopViewer.myUIRecv(Sender: TRtcPDesktopControlUI);
 begin
+  Memo1.Lines.Add(IntToStr(Sender.Recv_FileCount) + ' - ' + Sender.Recv_FileName + ' - ' + IntToStr(Sender.Recv_BytesComplete) + ' - '+ IntToStr(Sender.Recv_BytesTotal));
   FProgressDialog.TextLine1 := myUI.Recv_FileName;
 
   if myUI.Recv_BytesTotal > 0 then

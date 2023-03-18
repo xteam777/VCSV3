@@ -2999,9 +2999,8 @@ object rdDesktopViewer: TrdDesktopViewer
         OnMouseDown = pImageMouseDown
         OnMouseMove = pImageMouseMove
         OnMouseUp = pImageMouseUp
-        ExplicitTop = 1
-        ExplicitWidth = 1074
-        ExplicitHeight = 665
+        ExplicitLeft = 3
+        ExplicitTop = -3
       end
       object iMiniPanelHide: TImage
         Left = 10
@@ -4018,6 +4017,15 @@ object rdDesktopViewer: TrdDesktopViewer
         TabOrder = 3
         Visible = False
         OnClick = Button1Click
+      end
+      object Memo1: TMemo
+        Left = 488
+        Top = 56
+        Width = 529
+        Height = 285
+        Lines.Strings = (
+          'Memo1')
+        TabOrder = 4
       end
     end
   end

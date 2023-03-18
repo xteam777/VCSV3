@@ -3,8 +3,8 @@ object MainForm: TMainForm
   Top = 309
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'Remox'
-  ClientHeight = 475
-  ClientWidth = 789
+  ClientHeight = 476
+  ClientWidth = 793
   Color = clBtnFace
   CustomTitleBar.CaptionAlignment = taCenter
   DoubleBuffered = True
@@ -46,8 +46,8 @@ object MainForm: TMainForm
   object pInMain: TPanel
     Left = 0
     Top = 0
-    Width = 789
-    Height = 475
+    Width = 793
+    Height = 476
     Margins.Left = 0
     Margins.Top = 0
     Margins.Right = 0
@@ -60,16 +60,16 @@ object MainForm: TMainForm
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
-    ExplicitWidth = 813
-    ExplicitHeight = 481
+    ExplicitWidth = 789
+    ExplicitHeight = 475
     DesignSize = (
-      789
-      475)
+      793
+      476)
     object lblStatus: TLabel
       AlignWithMargins = True
       Left = 46
       Top = 467
-      Width = 549
+      Width = 553
       Height = 17
       Margins.Left = 75
       Anchors = [akLeft, akTop, akRight]
@@ -4470,6 +4470,15 @@ object MainForm: TMainForm
         TabOrder = 2
         Text = '-'
         OnDblClick = eConsoleIDDblClick
+      end
+      object Memo1: TMemo
+        Left = 6
+        Top = 12
+        Width = 249
+        Height = 251
+        Lines.Strings = (
+          'Memo1')
+        TabOrder = 3
       end
     end
     object pRight: TPanel
