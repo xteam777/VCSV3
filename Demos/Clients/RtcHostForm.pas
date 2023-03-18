@@ -13,7 +13,7 @@ interface
 uses
   Windows, Messages, SysUtils, CommonData, System.Types, uProcess, ServiceMgr, //BlackLayered,
   Classes, Graphics, Controls, Forms, DateUtils, CommonUtils, WtsApi, uSysAccount, ClipbrdMonitor,
-  Dialogs, StdCtrls, ExtCtrls, ShellApi, rdFileTransLog, VirtualTrees.Types, SHDocVw,
+  Dialogs, StdCtrls, ExtCtrls, ShellApi, rdFileTransLog, VirtualTrees.Types, SHDocVw, rtcpHostFileTransUI,
   ComCtrls, Registry, Math, RtcIdentification, SyncObjs, System.Net.HTTPClient, System.Net.URLClient, ActiveX, ComObj,
   rtcSystem, rtcInfo, uMessageBox, rtcScrUtils, IOUtils, uAcceptEula, ProgressDialog, ShlObj, RecvDataObject,
 
@@ -629,10 +629,10 @@ type
     procedure CheckUpdates;
 
     procedure OnProgressDialogCancel(Sender: TObject);
-    procedure OnDesktopHostFileRecv(Sender: TRtcPDesktopHost);
-    procedure OnDesktopHostFileRecvCancel(Sender: TRtcPDesktopHost);
-    procedure OnDesktopHostFileRecvStart(Sender: TRtcPDesktopHost);
-    procedure OnDesktopHostFileRecvStop(Sender: TRtcPDesktopHost);
+    procedure OnDesktopHostFileRecv(Sender: TRtcPHostFileTransferUI);
+    procedure OnDesktopHostFileRecvCancel(Sender: TRtcPHostFileTransferUI);
+    procedure OnDesktopHostFileRecvStart(Sender: TRtcPHostFileTransferUI);
+    procedure OnDesktopHostFileRecvStop(Sender: TRtcPHostFileTransferUI);
   public
     { Public declarations }
 //    SilentMode: Boolean;
@@ -669,6 +669,8 @@ type
     FRegisteredSessionNotification: Boolean;
 
     OpenedModalForm: TForm;
+
+    HostUIs: TRtcInfo;
 
     function GetCurrentExplorerDirectory(var ADir: String; var AHandle: THandle): Boolean;
     procedure SetFilesToClipboard(var Message: TMessage); message WM_SET_FILES_TO_CLIPBOARD;
@@ -756,6 +758,8 @@ type
     procedure ChangePort(AClient: TRtcHttpClient);
     procedure ChangePortP(AClient: TAbsPortalClient);
 
+    procedure DesktopHostOnNewUI(Sender: TRtcPDesktopHost; const user: String);
+
     //procedure SetServiceMenuAttributes;
 
     property CurStatus: Integer read GetStatus write SetStatus;
@@ -804,8 +808,9 @@ var
 //  ConnectedToAllGateways: Boolean;
   DeviceDisplayName: String;
 //  FInputThread: TInputThread;
-  CS_GW, CS_Status, CS_Pending, CS_ActivateHost, CS_HostGateway: TCriticalSection; //CS_SetConnectedState
+  CS_GW, CS_Status, CS_Pending, CS_ActivateHost, CS_HostGateway, CS_HostUI: TCriticalSection; //CS_SetConnectedState
   DeviceId, ConsoleId: String;
+  LastActiveExplorerHandle: THandle;
 
   FProgressDialog: TProgressDialog;
   CB_Monitor: TClipbrdMonitor;
@@ -813,6 +818,24 @@ var
 implementation
 
 {$R *.dfm}
+
+procedure TMainForm.DesktopHostOnNewUI(Sender: TRtcPDesktopHost; const user: String);
+var
+  UI: TRtcPHostFileTransferUI;
+begin
+//  xLog('PFileTransExplorerNewUI');
+
+  UI := TRtcPHostFileTransferUI.Create(nil);
+  UI.OnRecv := OnDesktopHostFileRecv;
+  UI.OnRecvCancel := OnDesktopHostFileRecvCancel;
+  UI.OnRecvStart := OnDesktopHostFileRecvStart;
+  UI.OnRecvStop := OnDesktopHostFileRecvStop;
+  UI.UserName := user;
+  UI.UserDesc := GetUserDescription(user, 'file');
+  // Always set UI.Module *after* setting UI.UserName !!!
+  UI.Module := Sender;
+  UI.Tag := Sender.Tag; //ThreadID
+end;
 
 function TMainForm.GetCurrentExplorerDirectory(var ADir: String; var AHandle: THandle): Boolean;
 var
@@ -1003,7 +1026,7 @@ begin
   end;
 end;
 
-procedure TMainForm.OnDesktopHostFileRecv(Sender: TRtcPDesktopHost);
+procedure TMainForm.OnDesktopHostFileRecv(Sender: TRtcPHostFileTransferUI);
 begin
   FProgressDialog.TextLine1 := Sender.Recv_FileName;
 
@@ -1021,12 +1044,12 @@ begin
     FProgressDialog.TextFooter := FormatFloat('0.00', Sender.Recv_BytesComplete / 1024) + ' KB из ' + FormatFloat('0.00', Sender.Recv_BytesTotal / 1024) + ' KB';
 end;
 
-procedure TMainForm.OnDesktopHostFileRecvCancel(Sender: TRtcPDesktopHost);
+procedure TMainForm.OnDesktopHostFileRecvCancel(Sender: TRtcPHostFileTransferUI);
 begin
   FProgressDialog.Stop;
 end;
 
-procedure TMainForm.OnDesktopHostFileRecvStart(Sender: TRtcPDesktopHost);
+procedure TMainForm.OnDesktopHostFileRecvStart(Sender: TRtcPHostFileTransferUI);
 begin
   if Sender.Recv_FirstTime then
   begin
@@ -1042,12 +1065,12 @@ begin
     FProgressDialog.TextCancel := 'Прерывание...';
     FProgressDialog.OnCancel := OnProgressDialogCancel;
 //    FProgressDialog.AutoCalcFooter := True;
-    FProgressDialog.fHwndParent := Sender.FLastActiveExplorerHandle;
+    FProgressDialog.fHwndParent := LastActiveExplorerHandle;
     FProgressDialog.Execute;
   end;
 end;
 
-procedure TMainForm.OnDesktopHostFileRecvStop(Sender: TRtcPDesktopHost);
+procedure TMainForm.OnDesktopHostFileRecvStop(Sender: TRtcPHostFileTransferUI);
 begin
   FProgressDialog.Stop;
 end;
@@ -1203,10 +1226,7 @@ begin
   FDesktopHost.OnQueryAccess := MainForm.PDesktopHostQueryAccess;
   FDesktopHost.OnUserJoined := MainForm.PModuleUserJoined;
   FDesktopHost.OnUserLeft := MainForm.PModuleUserLeft;
-  FDesktopHost.OnRecv := MainForm.OnDesktopHostFileRecv;
-  FDesktopHost.OnRecvCancel := MainForm.OnDesktopHostFileRecvCancel;
-  FDesktopHost.OnRecvStart := MainForm.OnDesktopHostFileRecvStart;
-  FDesktopHost.OnRecvStop := MainForm.OnDesktopHostFileRecvStop;
+  FDesktopHost.OnNewUI := MainForm.DesktopHostOnNewUI;
   FDesktopHost.Tag := ThreadID;
 
   FGatewayClient.Active := True;
@@ -1268,7 +1288,7 @@ var
 begin
   FCS.Acquire;
   try
-    FDesktopHost.FLastActiveExplorerHandle := ACurExplorerHandle;
+    LastActiveExplorerHandle := ACurExplorerHandle;
     for i := 0 to CB_DataObject.FCount - 1 do
       FDesktopHost.Fetch(CB_DataObject.FUserName, CB_DataObject.FFiles[i].filePath, ACurExplorerDir);
   finally
@@ -3324,6 +3344,8 @@ var
 begin
   //XLog('FormCreate');
 
+  HostUIs := TRtcInfo.Create;
+
   FProgressDialog := TProgressDialog.Create(Self);
 
   HintWindowClass := TRmxHintWindow;
@@ -3497,11 +3519,26 @@ end;
 procedure TMainForm.FormDestroy(Sender: TObject);
 var
   i: Integer;
+  x: String;
 begin
   //XLog('FormDestroy');
 
-  FreeAndNil(CB_Monitor);
+  CS_HostUI.Acquire;
+  try
+    for i := 0 to HostUIs.Count - 1 do
+    begin
+      x := HostUIs.FieldName[i];
+      if HostUIs.asBoolean[x] and assigned(HostUIs.asPtr[x]) then
+        TRtcAbsPFileTransferUI(HostUIs.asPtr[x]).Module := nil;
+    end;
+    HostUIs.Clear;
+  finally
+    CS_HostUI.Release;
+  end;
 
+  HostUIs.Free;
+
+  FreeAndNil(CB_Monitor);
 
   FStatusUpdateThread.Terminate;
 
@@ -11206,6 +11243,7 @@ initialization
   CS_Pending := TCriticalSection.Create;
   CS_ActivateHost := TCriticalSection.Create;
   CS_HostGateway := TCriticalSection.Create;
+  CS_HostUI := TCriticalSection.Create;
   Randomize;
 
 finalization
@@ -11215,5 +11253,6 @@ finalization
   CS_GW.Free;
   CS_ActivateHost.Free;
   CS_HostGateway.Free;
+  CS_HostUI.Free;
 
 end.

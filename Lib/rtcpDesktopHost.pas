@@ -14,8 +14,8 @@ uses
 {$IFNDEF IDE_1}
   Variants,
 {$ENDIF}
-  rtcLog, SyncObjs, rtcpFileUtils, 
-  rtcInfo, rtcPortalMod, uProcess, 
+  rtcLog, SyncObjs, rtcpFileUtils,
+  rtcInfo, rtcPortalMod, uProcess,
 
   rtcScrCapture, rtcScrUtils,
   rtcWinLogon, rtcSystem,
@@ -57,6 +57,119 @@ type
     of object;
 
   TRtcPDesktopHostUIEvent = procedure(Sender: TRtcPDesktopHost)
+    of object;
+
+  TRtcAbsPHostFileTransferUI = class(TRtcPortalComponent)
+  private
+    FModule: TRtcPDesktopHost;
+    FUserName, FUserDesc: String;
+    FCleared: boolean;
+    FLocked: integer;
+
+    function GetModule: TRtcPDesktopHost;
+    procedure SetModule(const Value: TRtcPDesktopHost);
+
+    function GetUserName: String;
+    procedure SetUserName(const Value: String);
+
+  public
+    procedure Call_LogOut(Sender: TObject); virtual; abstract;
+    procedure Call_Error(Sender: TObject); virtual; abstract;
+
+    procedure Call_Init(Sender: TObject); virtual; abstract;
+    procedure Call_Open(Sender: TObject); virtual; abstract;
+    procedure Call_Close(Sender: TObject); virtual; abstract;
+
+    property Cleared: boolean read FCleared;
+    property Locked: integer read FLocked write FLocked;
+
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+
+    procedure Call_ReadStart(Sender: TObject; const fname, fromfolder: String;
+      size: int64); virtual; abstract;
+    procedure Call_Read(Sender: TObject; const fname, fromfolder: String;
+      size: int64); virtual; abstract;
+    procedure Call_ReadUpdate(Sender: TObject); virtual; abstract;
+    procedure Call_ReadStop(Sender: TObject; const fname, fromfolder: String;
+      size: int64); virtual; abstract;
+    procedure Call_ReadCancel(Sender: TObject; const fname, fromfolder: String;
+      size: int64); virtual; abstract;
+
+    procedure Call_WriteStart(Sender: TObject; const fname, tofolder: String;
+      size: int64); virtual; abstract;
+    procedure Call_Write(Sender: TObject; const fname, tofolder: String;
+      size: int64); virtual; abstract;
+    procedure Call_WriteStop(Sender: TObject; const fname, tofolder: String;
+      size: int64); virtual; abstract;
+    procedure Call_WriteCancel(Sender: TObject; const fname, tofolder: String;
+      size: int64); virtual; abstract;
+
+    procedure Call_CallReceived(Sender: TObject; const Data: TRtcFunctionInfo);
+      virtual; abstract;
+
+    procedure Call_FileList(Sender: TObject; const fname: String;
+      const Data: TRtcDataSet); virtual; abstract;
+
+    // Prepare File Transfer
+    procedure Open(Sender: TObject = nil); virtual;
+    // Terminate File Transfer
+    procedure Close(Sender: TObject = nil); virtual;
+
+    // Close File Transfer and clear the "Module" property. The component is about to be freed.
+    // Returns TRUE if the component may be destroyed now, FALSE if not.
+    // If FALSE was returned, OnLogOut event will be triggered when the component may be destroyed.
+    function CloseAndClear(Sender: TObject = nil): boolean; virtual;
+
+    { Send (upload) file "FileName" to folder "ToFolder" (will use INBOX folder if not speficied) at user "UserName".
+      If file transfer was not prepared by calling "Open", it will be after this call. }
+    procedure Send(const FileName: String; const tofolder: String = '';
+      Sender: TObject = nil); virtual;
+
+    { Fetch (download) File or Folder "FileName" (specify full path) to folder "ToFolder" (will use INBOX folder if not specified).
+      If file transfer was not prepared by calling "OpenFiles", it will be after this call. }
+    procedure Fetch(const FileName: String; const tofolder: String = '';
+      Sender: TObject = nil); virtual;
+
+    procedure Cancel_Send(const FileName: String; const tofolder: String = '';
+      Sender: TObject = nil); virtual;
+    procedure Cancel_Fetch(const FileName: String; const tofolder: String = '';
+      Sender: TObject = nil); virtual;
+
+    procedure Call(const Data: TRtcFunctionInfo;
+      Sender: TObject = nil); virtual;
+
+    procedure GetFileList(const FolderName, FileMask: String;
+      Sender: TObject = nil); virtual;
+
+    procedure Cmd_NewFolder(const FolderName: String;
+      Sender: TObject = nil); virtual;
+    procedure Cmd_FileRename(const FileName, NewName: String;
+      Sender: TObject = nil); virtual;
+    procedure Cmd_FileDelete(const FileName: String;
+      Sender: TObject = nil); virtual;
+    procedure Cmd_FileMove(const FileName, NewName: String;
+      Sender: TObject = nil); virtual;
+    procedure Cmd_Execute(const FileName: String; const Params: String = '';
+      Sender: TObject = nil); virtual;
+
+  published
+    { FileTransfer module used for sending and receiving data }
+    property Module: TRtcPDesktopHost read GetModule write SetModule;
+    { Name of the user we are communicating with }
+    property UserName: String read GetUserName write SetUserName;
+    property UserDesc: String read FUserDesc write FUserDesc;
+  end;
+
+  TRtcPHostFileTransUserEvent = procedure(Sender: TRtcPDesktopHost;
+    const user: String) of object;
+  TRtcPHostFileTransFolderEvent = procedure(Sender: TRtcPDesktopHost;
+    const user: String; const FileName, path: String; const size: int64)
+    of object;
+  TRtcPHostFileTransCallEvent = procedure(Sender: TRtcPDesktopHost;
+    const user: String; const Data: TRtcFunctionInfo) of object;
+  TRtcPHostFileTransListEvent = procedure(Sender: TRtcPDesktopHost;
+    const user: String; const FolderName: String; const Data: TRtcDataSet)
     of object;
 
   TRtcPDesktopHost = class(TRtcPModule)
@@ -116,8 +229,9 @@ type
     File_Sending: boolean;
     File_Senders: integer;
 
-    FMaxSendBlock: longint;
-    FMinSendBlock: longint;
+    FOnFileTransInit: TRtcPFileTransUserEvent;
+    FOnFileTransOpen: TRtcPFileTransUserEvent;
+    FOnFileTransClose: TRtcPFileTransUserEvent;
 
     FOnFileReadStart: TRtcPFileTransFolderEvent;
     FOnFileRead: TRtcPFileTransFolderEvent;
@@ -131,52 +245,31 @@ type
     FOnFileWriteCancel: TRtcPFileTransFolderEvent;
 
     FOnCallReceived: TRtcPFileTransCallEvent;
+    FOnFileList: TRtcPFileTransListEvent;
+
+    FOnNewUI: TRtcPHostFileTransUserEvent;
+
+    FMaxSendBlock: longint;
+    FMinSendBlock: longint;
 
     FHostMode: boolean;
+
+    CSUI: TCriticalSection;
+    UIs: TRtcInfo;
     //FileTrans-
-
-    //FileTransUI+
-    FSendFolders: TRtcRecord;
-    FSendFileName: String;
-    FSendFromFolder: String;
-    FSendStart: DWORD;
-    FSendFirst: boolean;
-    FSendCompleted, FSendPrepared, FSendSize, FSendNow, FSendMax: int64;
-    FSendFilesCnt: integer;
-
-    FRecvFolders: TRtcRecord;
-    FRecvFileName: String;
-    FRecvToFolder: String;
-    FRecvStart: DWORD;
-    FRecvFirst: boolean;
-    FRecvCompleted, FRecvSize, FRecvNow, FRecvMax: int64;
-    FRecvFilesCnt: integer;
-
-    FOnReadStart: TRtcPDesktopHostUIEvent;
-    FOnRead: TRtcPDesktopHostUIEvent;
-    FOnReadUpdate: TRtcPDesktopHostUIEvent;
-    FOnReadStop: TRtcPDesktopHostUIEvent;
-    FOnReadCancel: TRtcPDesktopHostUIEvent;
-
-    FOnWriteStart: TRtcPDesktopHostUIEvent;
-    FOnWrite: TRtcPDesktopHostUIEvent;
-    FOnWriteStop: TRtcPDesktopHostUIEvent;
-    FOnWriteCancel: TRtcPDesktopHostUIEvent;
-
-    procedure InitSend;
-    procedure InitRecv;
-
-    function GetSendETA: String;
-    function GetSendKBit: longint;
-    function GetSendTotalTime: String;
-
-    function GetRecvETA: String;
-    function GetRecvKBit: longint;
-    function GetRecvTotalTime: String;
-    //FileTransUI-
 
     //FileTrans+
     procedure InitData;
+
+    function LockUI(const UserName: String): TRtcAbsPHostFileTransferUI;
+    procedure UnlockUI(UI: TRtcAbsPHostFileTransferUI);
+
+    procedure Event_LogOut(Sender: TObject);
+    procedure Event_Error(Sender: TObject);
+
+    procedure Event_FileTransInit(Sender: TObject; const user: String);
+    procedure Event_FileTransOpen(Sender: TObject; const user: String);
+    procedure Event_FileTransClose(Sender: TObject; const user: String);
 
     function StartSendingFile(const UserName: String; const path: String;
       idx: integer): boolean;
@@ -204,6 +297,8 @@ type
 
     procedure Event_CallReceived(Sender: TObject; const user: String;
       const Data: TRtcFunctionInfo);
+    procedure Event_FileList(Sender: TObject; const user: String;
+      const FolderName: String; const Data: TRtcDataSet);
 
     procedure CallFileEvent(Sender: TObject; Event: TRtcCustomDataEvent;
       const user: String; const FileName, folder: String; size: int64);
@@ -282,12 +377,9 @@ type
     procedure SenderLoop_Prepare(Sender: TObject); override;
     procedure SenderLoop_Execute(Sender: TObject); override;
 
-    procedure Call_Init(Sender: TObject);
-    procedure Call_Open(Sender: TObject);
-    procedure Call_Close(Sender: TObject);
-    procedure Call_Error(Sender: TObject; Data: TRtcValue); override;
-    procedure Call_LogOut(Sender: TObject); override;
     procedure Call_LogIn(Sender: TObject); override;
+    procedure Call_LogOut(Sender: TObject); override;
+    procedure Call_Error(Sender: TObject; Data: TRtcValue); override;
     procedure Call_FatalError(Sender: TObject; data: TRtcValue); override;
 
     procedure Call_Start(Sender: TObject; data: TRtcValue); override;
@@ -309,11 +401,18 @@ type
     procedure Call_DataFromUser(Sender: TObject; const uname: String;
       data: TRtcFunctionInfo); override;
 
+    procedure AddUI(UI: TRtcAbsPHostFileTransferUI);
+    procedure RemUI(UI: TRtcAbsPHostFileTransferUI);
+
     procedure Call_AfterData(Sender: TObject); override;
 
     procedure Init; override;
 
     //FileTrans+
+    procedure xOnFileTransInit(Sender, Obj: TObject; Data: TRtcValue);
+    procedure xOnFileTransOpen(Sender, Obj: TObject; Data: TRtcValue);
+    procedure xOnFileTransClose(Sender, Obj: TObject; Data: TRtcValue);
+
     procedure xOnFileReadStart(Sender, Obj: TObject; Data: TRtcValue);
     procedure xOnFileRead(Sender, Obj: TObject; Data: TRtcValue);
     procedure xOnFileReadUpdate(Sender, Obj: TObject; Data: TRtcValue);
@@ -326,32 +425,13 @@ type
     procedure xOnFileWriteCancel(Sender, Obj: TObject; Data: TRtcValue);
 
     procedure xOnCallReceived(Sender, Obj: TObject; Data: TRtcValue);
+    procedure xOnFileList(Sender, Obj: TObject; Data: TRtcValue);
+
+    procedure xOnNewUI(Sender, Obj: TObject; Data: TRtcValue);
     //FileTrans-
-
-    //FileTransUI+
-    procedure Call_ReadStart(Sender: TObject; const fname, fromfolder: String;
-      size: int64);
-    procedure Call_Read(Sender: TObject; const fname, fromfolder: String;
-      size: int64);
-    procedure Call_ReadUpdate(Sender: TObject);
-    procedure Call_ReadStop(Sender: TObject; const fname, fromfolder: String;
-      size: int64);
-    procedure Call_ReadCancel(Sender: TObject; const fname, fromfolder: String;
-      size: int64);
-
-    procedure Call_WriteStart(Sender: TObject; const fname, tofolder: String;
-      size: int64);
-    procedure Call_Write(Sender: TObject; const fname, tofolder: String;
-      size: int64);
-    procedure Call_WriteStop(Sender: TObject; const fname, tofolder: String;
-      size: int64);
-    procedure Call_WriteCancel(Sender: TObject; const fname, tofolder: String;
-      size: int64);
-    //FileTransUI-
   public
     FHaveScreen: Boolean;
     FOnHaveScreeenChanged: TNotifyEvent;
-    FLastActiveExplorerHandle: THandle;
 
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -386,8 +466,22 @@ type
     procedure Cancel_Fetch(const UserName: String; const FileName: string;
       const tofolder: String = ''; Sender: TObject = nil);
 
+    procedure Cmd_NewFolder(const UserName: String; const FolderName: String;
+      Sender: TObject = nil);
+    procedure Cmd_FileRename(const UserName: String;
+      const FileName, NewName: String; Sender: TObject = nil);
+    procedure Cmd_FileDelete(const UserName: String; const FileName: String;
+      Sender: TObject = nil);
+    procedure Cmd_FileMove(const UserName: String;
+      const FileName, NewName: String; Sender: TObject = nil);
+    procedure Cmd_Execute(const UserName: String; const FileName: String;
+      const Params: String = ''; Sender: TObject = nil);
+
     procedure Call(const UserName: String; const Data: TRtcFunctionInfo;
       Sender: TObject = nil);
+
+    procedure GetFileList(const UserName: String;
+      const FolderName, FileMask: String; Sender: TObject);
     //FileTrans-
 
   published
@@ -535,108 +629,19 @@ type
     property MaxSendChunkSize: longint read FMaxSendBlock write FMaxSendBlock
       default RTCP_DEFAULT_MAXCHUNKSIZE;
 
-    //FileTransUI+
-    { Currently sending File/Folder name }
-    property Send_FileName: String read FSendFileName;
-    { Folder from where the file/folder will be read }
-    property Send_FromFolder: String read FSendFromFolder;
-    { Current file/folder bytes sent out }
-    property Send_FileOut: int64 read FSendNow;
-    { Current file/folder size in bytes }
-    property Send_FileSize: int64 read FSendMax;
+    //FileTrans+
+    { This event will be triggered when a FileTransferUI component is required, but still not assigned for this user.
+      You should create a new FileTransferUI component in this event and assign *this* component to it's Module property.
+      The FileTransferUI component will then take care of processing all events received from that user. }
+    property OnNewUI: TRtcPHostFileTransUserEvent read FOnNewUI write FOnNewUI;
 
-    { Number of files/folders left for sending, including current, in this round }
-    property Send_FileCount: integer read FSendFilesCnt;
-    { Is this the first file/folder we are sending in this round?
-      If yes, our sending timer and all total byte counts have been reset. }
-    property Send_FirstTime: boolean read FSendFirst;
-    { Time (GetTickCount) when we have started sending files/folders - this round }
-    property Send_StartTime: DWORD read FSendStart;
-    { Number of Bytes really sent (confirmed by the Gateway) - this round }
-    property Send_BytesComplete: int64 read FSendCompleted;
-    { Number of Bytes prepared for sending, now on their way to the Gateway - this round }
-    property Send_BytesPrepared: int64 read FSendPrepared;
-    { Number of Bytes we need to send in this round }
-    property Send_BytesTotal: int64 read FSendSize;
-    { Average sending speed in KBit (this round) }
-    property Send_KBit: longint read GetSendKBit;
-    { Estimated Time or Arrival (ETA) for all files sending in this round }
-    property Send_ETA: String read GetSendETA;
-    { Total time elapsed between NOW and Send_StartTime. }
-    property Send_TotalTime: String read GetSendTotalTime;
-
-    { Currently receiving File/Folder name }
-    property Recv_FileName: String read FRecvFileName;
-    { Folder where the file/folder will be written (INBOX folder if empty) }
-    property Recv_ToFolder: String read FRecvToFolder;
-    { Current file/folder bytes received }
-    property Recv_FileIn: int64 read FRecvNow;
-    { Current file/folder size in bytes }
-    property Recv_FileSize: int64 read FRecvMax;
-
-    { Number of files/folders left for receiving, including the current, in this round }
-    property Recv_FileCount: integer read FRecvFilesCnt;
-    { is this the first file/folder we are receiving in this round?
-      If yes, our receiving timer and all total byte counts have been reset. }
-    property Recv_FirstTime: boolean read FRecvFirst;
-    { Time (GetTickCount) when we have started receiving files/folders - this round }
-    property Recv_StartTime: DWORD read FRecvStart;
-    { Number of Bytes received in this round }
-    property Recv_BytesComplete: int64 read FRecvCompleted;
-    { Number of Bytes we need to receive in this round }
-    property Recv_BytesTotal: int64 read FRecvSize;
-    { Average receiving speed in KBit (this round) }
-    property Recv_KBit: longint read GetRecvKBit;
-    { Estimated Time or Arrival (ETA) for all files receiving in this round }
-    property Recv_ETA: String read GetRecvETA;
-    { Total time elapsed between NOW and Recv_StartTime. }
-    property Recv_TotalTime: String read GetRecvTotalTime;
-
-    { We have started sending a new file.
-      Obj = This TRtcPFileTransferUI component
-      TRtcPFileTransferUI(Obj).Send_... = Sending files info }
-    property OnSendStart: TRtcPDesktopHostUIEvent read FOnReadStart
-      write FOnReadStart;
-    { We are sending a file.
-      Obj = This TRtcPFileTransferUI component
-      TRtcPFileTransferUI(Obj).Send_... = Sending files info }
-    property OnSend: TRtcPDesktopHostUIEvent read FOnRead write FOnRead;
-    { We are sending a file, need to update send info.
-      Obj = This TRtcPFileTransferUI component
-      TRtcPFileTransferUI(Obj).Send_... = Sending files info }
-    property OnSendUpdate: TRtcPDesktopHostUIEvent read FOnReadUpdate
-      write FOnReadUpdate;
-    { We have stopped sending a file (file sent).
-      Obj = This TRtcPFileTransferUI component
-      TRtcPFileTransferUI(Obj).Send_... = Sending files info }
-    property OnSendStop: TRtcPDesktopHostUIEvent read FOnReadStop
-      write FOnReadStop;
-    { File sending was cancelled by user.
-      Obj = This TRtcPFileTransferUI component
-      TRtcPFileTransferUI(Obj).Send_... = Sending files info }
-    property OnSendCancel: TRtcPDesktopHostUIEvent read FOnReadCancel
-      write FOnReadCancel;
-
-    { We have started receiving a new file.
-      Obj = This TRtcPFileTransferUI component
-      TRtcPFileTransferUI(Obj).Recv_... = Receiving files info }
-    property OnRecvStart: TRtcPDesktopHostUIEvent read FOnWriteStart
-      write FOnWriteStart;
-    { We are receiving a file.
-      Obj = This TRtcPFileTransferUI component
-      TRtcPFileTransferUI(Obj).Recv_... = Receiving files info }
-    property OnRecv: TRtcPDesktopHostUIEvent read FOnWrite write FOnWrite;
-    { We have stopped receiving a file (file received).
-      Obj = This TRtcPFileTransferUI component
-      TRtcPFileTransferUI(Obj).Recv_... = Receiving files info }
-    property OnRecvStop: TRtcPDesktopHostUIEvent read FOnWriteStop
-      write FOnWriteStop;
-    { File receiving was cancelled by user.
-      Obj = This TRtcPFileTransferUI component
-      TRtcPFileTransferUI(Obj).Recv_... = Receiving files info }
-    property OnRecvCancel: TRtcPDesktopHostUIEvent read FOnWriteCancel
-      write FOnWriteCancel;
-    //FileTransUI-
+    { *Optional* Events - can be used for general monitoring. }
+    property On_FileTransInit: TRtcPFileTransUserEvent read FOnFileTransInit
+      write FOnFileTransInit;
+    property On_FileTransOpen: TRtcPFileTransUserEvent read FOnFileTransOpen
+      write FOnFileTransOpen;
+    property On_FileTransClose: TRtcPFileTransUserEvent read FOnFileTransClose
+      write FOnFileTransClose;
 
     property On_FileSendStart: TRtcPFileTransFolderEvent read FOnFileReadStart
       write FOnFileReadStart;
@@ -660,6 +665,8 @@ type
 
     property On_CallReceived: TRtcPFileTransCallEvent read FOnCallReceived
       write FOnCallReceived;
+    property On_FileList: TRtcPFileTransListEvent read FOnFileList
+      write FOnFileList;
     //FileTrans-
   end;
 
@@ -681,38 +688,6 @@ implementation
 
 uses Math, Types;
 
-//FileTransUI+
-procedure TRtcPDesktopHost.InitSend;
-begin
-  FSendFilesCnt := 0;
-  FSendFolders.Clear;
-  FSendFileName := '';
-  FSendFromFolder := '';
-
-  FSendStart := 0;
-  FSendFirst := False;
-  FSendCompleted := 0;
-  FSendPrepared := 0;
-  FSendSize := 0;
-  FSendNow := 0;
-  FSendMax := 0;
-end;
-
-procedure TRtcPDesktopHost.InitRecv;
-begin
-  FRecvFilesCnt := 0;
-  FRecvFolders.Clear;
-  FRecvFileName := '';
-
-  FRecvStart := 0;
-  FRecvFirst := False;
-  FRecvCompleted := 0;
-  FRecvSize := 0;
-  FRecvNow := 0;
-  FRecvMax := 0;
-end;
-//FileTransUI-
-
 function IsWinNT: boolean;
 var
   OS: TOSVersionInfo;
@@ -727,6 +702,7 @@ end;
 constructor TRtcPDesktopHost.Create(AOwner: TComponent);
 begin
   inherited;
+
   CS2 := TCriticalSection.Create;
   Clipboards := TRtcRecord.Create;
   FLastMouseUser := '';
@@ -758,6 +734,9 @@ begin
   FFrameRate := rdFramesMax;
 
   //FileTrans+
+  CSUI := TCriticalSection.Create;
+  UIs := TRtcInfo.Create;
+
   FHostMode := False;
 
   FMinSendBlock := RTCP_DEFAULT_MINCHUNKSIZE;
@@ -769,11 +748,6 @@ begin
   WantToSendFiles := TRtcRecord.Create;
   File_Senders := 0;
   File_Sending := False;
-
-  FSendFolders := TRtcRecord.Create;
-  FRecvFolders := TRtcRecord.Create;
-  InitSend;
-  InitRecv;
   //FileTrans-
 end;
 
@@ -796,13 +770,13 @@ begin
   CS2.Free;
 
   //FileTrans+
-  FSendFolders.Free;
-  FRecvFolders.Free;
-
   WantToSendFiles.Free;
   PrepareFiles.Free;
   SendingFiles.Free;
   UpdateFiles.Free;
+
+  UIs.Free;
+  CSUI.Free;
   //FileTrans-
 
   inherited;
@@ -842,6 +816,10 @@ begin
 end;
 
 procedure TRtcPDesktopHost.Call_LogIn(Sender: TObject);
+begin
+end;
+
+procedure TRtcPDesktopHost.Call_LogOut(Sender: TObject);
 begin
 end;
 
@@ -887,6 +865,10 @@ procedure TRtcPDesktopHost.Call_Start(Sender: TObject; data: TRtcValue);
 begin
   ScrStart;
   InitData;
+end;
+
+procedure TRtcPDesktopHost.Call_Error(Sender: TObject; data: TRtcValue);
+begin
 end;
 
 procedure TRtcPDesktopHost.Call_FatalError(Sender: TObject; data: TRtcValue);
@@ -2624,6 +2606,24 @@ begin
 end;
 
 //FileTrans+
+procedure TRtcPDesktopHost.xOnFileTransInit(Sender, Obj: TObject;
+  Data: TRtcValue);
+begin
+  FOnFileTransInit(self, Data.asText);
+end;
+
+procedure TRtcPDesktopHost.xOnFileTransOpen(Sender, Obj: TObject;
+  Data: TRtcValue);
+begin
+  FOnFileTransOpen(self, Data.asText);
+end;
+
+procedure TRtcPDesktopHost.xOnFileTransClose(Sender, Obj: TObject;
+  Data: TRtcValue);
+begin
+  FOnFileTransClose(self, Data.asText);
+end;
+
 procedure TRtcPDesktopHost.xOnFileReadStart(Sender, Obj: TObject;
   Data: TRtcValue);
 begin
@@ -2697,6 +2697,17 @@ procedure TRtcPDesktopHost.xOnCallReceived(Sender, Obj: TObject;
 begin
   FOnCallReceived(self, Data.asRecord.asText['user'],
     Data.asRecord.asFunction['data']);
+end;
+
+procedure TRtcPDesktopHost.xOnFileList(Sender, Obj: TObject; Data: TRtcValue);
+begin
+  FOnFileList(self, Data.asRecord.asText['user'],
+    Data.asRecord.asText['folder'], Data.asRecord.asDataSet['data']);
+end;
+
+procedure TRtcPDesktopHost.xOnNewUI(Sender, Obj: TObject; Data: TRtcValue);
+begin
+  FOnNewUI(self, Data.asText);
 end;
 
 function TRtcPDesktopHost.StartSendingFile(const UserName: String;
@@ -2814,90 +2825,189 @@ end;
 
 procedure TRtcPDesktopHost.Event_FileReadStart(Sender: TObject;
   const user: String; const fname, fromfolder: String; size: int64);
+var
+  UI: TRtcAbsPHostFileTransferUI;
 begin
   if assigned(FOnFileReadStart) then
     CallFileEvent(Sender, xOnFileReadStart, user, fname, fromfolder, size);
 
-  Call_ReadStart(Sender, fname, fromfolder, size);
+  UI := LockUI(user);
+  if assigned(UI) then
+    try
+      UI.Call_ReadStart(Sender, fname, fromfolder, size);
+    finally
+      UnlockUI(UI);
+    end;
 end;
 
 procedure TRtcPDesktopHost.Event_FileRead(Sender: TObject; const user: String;
   const fname, fromfolder: String; size: int64);
+var
+  UI: TRtcAbsPHostFileTransferUI;
 begin
   if assigned(FOnFileRead) then
     CallFileEvent(Sender, xOnFileRead, user, fname, fromfolder, size);
 
-  Call_Read(Sender, fname, fromfolder, size);
+  UI := LockUI(user);
+  if assigned(UI) then
+    try
+      UI.Call_Read(Sender, fname, fromfolder, size);
+    finally
+      UnlockUI(UI);
+    end;
 end;
 
 procedure TRtcPDesktopHost.Event_FileReadUpdate(Sender: TObject;
   const user: String);
+var
+  UI: TRtcAbsPHostFileTransferUI;
 begin
   if assigned(FOnFileReadUpdate) then
     CallFileEvent(Sender, xOnFileReadUpdate, user);
 
-  Call_ReadUpdate(Sender);
+  UI := LockUI(user);
+  if assigned(UI) then
+    try
+      UI.Call_ReadUpdate(Sender);
+    finally
+      UnlockUI(UI);
+    end;
 end;
 
 procedure TRtcPDesktopHost.Event_FileReadStop(Sender: TObject;
   const user: String; const fname, fromfolder: String; size: int64);
+var
+  UI: TRtcAbsPHostFileTransferUI;
 begin
   if assigned(FOnFileReadStop) then
     CallFileEvent(Sender, xOnFileReadStop, user, fname, fromfolder, size);
 
-  Call_ReadStop(Sender, fname, fromfolder, size);
+  UI := LockUI(user);
+  if assigned(UI) then
+    try
+      UI.Call_ReadStop(Sender, fname, fromfolder, size);
+    finally
+      UnlockUI(UI);
+    end;
 end;
 
 procedure TRtcPDesktopHost.Event_FileReadCancel(Sender: TObject;
   const user, fname, fromfolder: String; size: int64);
+var
+  UI: TRtcAbsPHostFileTransferUI;
 begin
   if assigned(FOnFileReadCancel) then
     CallFileEvent(Sender, xOnFileReadCancel, user, fname, fromfolder, size);
 
-  Call_ReadCancel(Sender, fname, fromfolder, size);
+  UI := LockUI(user);
+  if assigned(UI) then
+    try
+      UI.Call_ReadCancel(Sender, fname, fromfolder, size);
+    finally
+      UnlockUI(UI);
+    end;
 end;
 
 procedure TRtcPDesktopHost.Event_FileWriteStart(Sender: TObject;
   const user: String; const fname, tofolder: String; size: int64);
+var
+  UI: TRtcAbsPHostFileTransferUI;
 begin
   if assigned(FOnFileWriteStart) then
     CallFileEvent(Sender, xOnFileWriteStart, user, fname, tofolder, size);
 
-  Call_WriteStart(Sender, fname, tofolder, size);
+  UI := LockUI(user);
+  if assigned(UI) then
+    try
+      UI.Call_WriteStart(Sender, fname, tofolder, size);
+    finally
+      UnlockUI(UI);
+    end;
 end;
 
 procedure TRtcPDesktopHost.Event_FileWrite(Sender: TObject; const user: String;
   const fname, tofolder: String; size: int64);
+var
+  UI: TRtcAbsPHostFileTransferUI;
 begin
   if assigned(FOnFileWrite) then
     CallFileEvent(Sender, xOnFileWrite, user, fname, tofolder, size);
 
-  Call_Write(Sender, fname, tofolder, size);
+  UI := LockUI(user);
+  if assigned(UI) then
+    try
+      UI.Call_Write(Sender, fname, tofolder, size);
+    finally
+      UnlockUI(UI);
+    end;
 end;
 
 procedure TRtcPDesktopHost.Event_FileWriteStop(Sender: TObject;
   const user: String; const fname, tofolder: String; size: int64);
+var
+  UI: TRtcAbsPHostFileTransferUI;
 begin
   if assigned(FOnFileWriteStop) then
     CallFileEvent(Sender, xOnFileWriteStop, user, fname, tofolder, size);
 
-  Call_WriteStop(Sender, fname, tofolder, size);
+  UI := LockUI(user);
+  if assigned(UI) then
+    try
+      UI.Call_WriteStop(Sender, fname, tofolder, size);
+    finally
+      UnlockUI(UI);
+    end;
 end;
 
 procedure TRtcPDesktopHost.Event_FileWriteCancel(Sender: TObject;
   const user, fname, tofolder: String; size: int64);
+var
+  UI: TRtcAbsPHostFileTransferUI;
 begin
   if assigned(FOnFileWriteCancel) then
     CallFileEvent(Sender, xOnFileWriteCancel, user, fname, tofolder, size);
 
-  Call_WriteCancel(Sender, fname, tofolder, size);
+  UI := LockUI(user);
+  if assigned(UI) then
+    try
+      UI.Call_WriteCancel(Sender, fname, tofolder, size);
+    finally
+      UnlockUI(UI);
+    end;
 end;
 
 procedure TRtcPDesktopHost.Event_CallReceived(Sender: TObject;
   const user: String; const Data: TRtcFunctionInfo);
+var
+  UI: TRtcAbsPHostFileTransferUI;
 begin
   if assigned(FOnCallReceived) then
     CallFileEvent(Sender, xOnCallReceived, user, Data);
+
+  UI := LockUI(user);
+  if assigned(UI) then
+    try
+      UI.Call_CallReceived(Sender, Data);
+    finally
+      UnlockUI(UI);
+    end;
+end;
+
+procedure TRtcPDesktopHost.Event_FileList(Sender: TObject;
+  const user, FolderName: String; const Data: TRtcDataSet);
+var
+  UI: TRtcAbsPHostFileTransferUI;
+begin
+  if assigned(FOnFileList) then
+    CallFileEvent(Sender, xOnFileList, user, FolderName, Data);
+
+  UI := LockUI(user);
+  if assigned(UI) then
+    try
+      UI.Call_FileList(Sender, FolderName, Data);
+    finally
+      UnlockUI(UI);
+    end;
 end;
 
 procedure TRtcPDesktopHost.CallFileEvent(Sender: TObject;
@@ -2984,6 +3094,20 @@ begin
   fn.FunctionName := 'filecmd';
   fn.asString['c'] := 'call';
   fn.asObject['i'] := Data;
+  Client.SendToUser(Sender, UserName, fn);
+end;
+
+procedure TRtcPDesktopHost.GetFileList(const UserName: String;
+  const FolderName, FileMask: String; Sender: TObject);
+var
+  fn: TRtcFunctionInfo;
+begin
+  fn := TRtcFunctionInfo.Create;
+  fn.FunctionName := 'filecmd';
+  fn.asString['c'] := 'list';
+  fn.asText['file'] := FolderName;
+  if FileMask <> '' then
+    fn.asText['mask'] := FileMask;
   Client.SendToUser(Sender, UserName, fn);
 end;
 
@@ -3098,6 +3222,69 @@ begin
   Client.SendToUser(Sender, UserName, fn);
 end;
 
+procedure TRtcPDesktopHost.Cmd_Execute(const UserName, FileName,
+  Params: String; Sender: TObject);
+var
+  fn: TRtcFunctionInfo;
+begin
+  fn := TRtcFunctionInfo.Create;
+  fn.FunctionName := 'filecmd';
+  fn.asString['c'] := 'run';
+  fn.asText['file'] := FileName;
+  fn.asText['par'] := Params;
+  Client.SendToUser(Sender, UserName, fn);
+end;
+
+procedure TRtcPDesktopHost.Cmd_FileDelete(const UserName, FileName: String;
+  Sender: TObject);
+var
+  fn: TRtcFunctionInfo;
+begin
+  fn := TRtcFunctionInfo.Create;
+  fn.FunctionName := 'filecmd';
+  fn.asString['c'] := 'del';
+  fn.asText['file'] := FileName;
+  Client.SendToUser(Sender, UserName, fn);
+end;
+
+procedure TRtcPDesktopHost.Cmd_FileMove(const UserName, FileName,
+  NewName: String; Sender: TObject);
+var
+  fn: TRtcFunctionInfo;
+begin
+  fn := TRtcFunctionInfo.Create;
+  fn.FunctionName := 'filecmd';
+  fn.asString['c'] := 'mov';
+  fn.asText['file'] := FileName;
+  fn.asText['new'] := NewName;
+  Client.SendToUser(Sender, UserName, fn);
+end;
+
+procedure TRtcPDesktopHost.Cmd_FileRename(const UserName, FileName,
+  NewName: String; Sender: TObject);
+var
+  fn: TRtcFunctionInfo;
+begin
+  fn := TRtcFunctionInfo.Create;
+  fn.FunctionName := 'filecmd';
+  fn.asString['c'] := 'ren';
+  fn.asText['file'] := FileName;
+  fn.asText['new'] := NewName;
+  Client.SendToUser(Sender, UserName, fn);
+end;
+
+procedure TRtcPDesktopHost.Cmd_NewFolder(const UserName, FolderName: String;
+  Sender: TObject);
+var
+  fn: TRtcFunctionInfo;
+begin
+  fn := TRtcFunctionInfo.Create;
+  fn.FunctionName := 'filecmd';
+  fn.asString['c'] := 'md';
+  fn.asText['dir'] := FolderName;
+  Client.SendToUser(Sender, UserName, fn);
+end;
+
 procedure TRtcPDesktopHost.InitData;
 begin
   CS.Acquire;
@@ -3113,468 +3300,350 @@ begin
     CS.Release;
   end;
 end;
+
+function TRtcPDesktopHost.LockUI(const UserName: String)
+  : TRtcAbsPHostFileTransferUI;
+begin
+  CSUI.Acquire;
+  try
+    Result := TRtcAbsPHostFileTransferUI(UIs.asPtr[UserName]);
+    if assigned(Result) then
+      Result.Locked := Result.Locked + 1;
+  finally
+    CSUI.Release;
+  end;
+end;
+
+procedure TRtcPDesktopHost.UnlockUI(UI: TRtcAbsPHostFileTransferUI);
+var
+  toFree: boolean;
+begin
+  CSUI.Acquire;
+  try
+    UI.Locked := UI.Locked - 1;
+    toFree := UI.Cleared and (UI.Locked = 0);
+  finally
+    CSUI.Release;
+  end;
+  if toFree then
+    UI.Call_LogOut(nil);
+end;
+
+procedure TRtcPDesktopHost.Event_Error(Sender: TObject);
+var
+  UI: TRtcAbsPHostFileTransferUI;
+  i: integer;
+  user: String;
+begin
+  for i := 0 to UIs.Count - 1 do
+  begin
+    user := UIs.FieldName[i];
+    UI := LockUI(user);
+    if assigned(UI) then
+      try
+        UI.Call_Error(Sender);
+      finally
+        UnlockUI(UI);
+      end;
+  end;
+end;
+
+procedure TRtcPDesktopHost.Event_LogOut(Sender: TObject);
+var
+  UI: TRtcAbsPHostFileTransferUI;
+  i: integer;
+  user: String;
+begin
+  for i := 0 to UIs.Count - 1 do
+  begin
+    user := UIs.FieldName[i];
+    UI := LockUI(user);
+    if assigned(UI) then
+      try
+        UI.Call_LogOut(Sender);
+      finally
+        UnlockUI(UI);
+      end;
+  end;
+end;
+
+procedure TRtcPDesktopHost.Event_FileTransInit(Sender: TObject;
+  const user: String);
+var
+  UI: TRtcAbsPHostFileTransferUI;
+  Msg: TRtcValue;
+begin
+  if assigned(FOnFileTransInit) then
+    CallFileEvent(Sender, xOnFileTransInit, user);
+
+  UI := LockUI(user);
+  if assigned(UI) then
+  begin
+    try
+      UI.Call_Init(Sender);
+    finally
+      UnlockUI(UI);
+    end;
+  end
+  else if assigned(FOnNewUI) then
+  begin
+    Msg := TRtcValue.Create;
+    try
+      Msg.asText := user;
+      CallEvent(Sender, xOnNewUI, Msg);
+    finally
+      Msg.Free;
+    end;
+    UI := LockUI(user);
+    if assigned(UI) then
+      try
+        UI.Call_Init(Sender);
+      finally
+        UnlockUI(UI);
+      end;
+  end;
+end;
+
+procedure TRtcPDesktopHost.Event_FileTransOpen(Sender: TObject;
+  const user: String);
+var
+  UI: TRtcAbsPHostFileTransferUI;
+  Msg: TRtcValue;
+begin
+  if assigned(FOnFileTransOpen) then
+    CallFileEvent(Sender, xOnFileTransOpen, user);
+
+  UI := LockUI(user);
+  if assigned(UI) then
+  begin
+    try
+      UI.Call_Open(Sender);
+    finally
+      UnlockUI(UI);
+    end;
+  end
+  else if assigned(FOnNewUI) then
+  begin
+    Msg := TRtcValue.Create;
+    try
+      Msg.asText := user;
+      CallEvent(Sender, xOnNewUI, Msg);
+    finally
+      Msg.Free;
+    end;
+    UI := LockUI(user);
+    if assigned(UI) then
+      try
+        UI.Call_Open(Sender);
+      finally
+        UnlockUI(UI);
+      end;
+  end;
+end;
+
+procedure TRtcPDesktopHost.Event_FileTransClose(Sender: TObject;
+  const user: String);
+var
+  UI: TRtcAbsPHostFileTransferUI;
+begin
+  if assigned(FOnFileTransClose) then
+    CallFileEvent(Sender, xOnFileTransClose, user);
+
+  UI := LockUI(user);
+  if assigned(UI) then
+    try
+      UI.Call_Close(Sender);
+    finally
+      UnlockUI(UI);
+    end;
+end;
+
+procedure TRtcPDesktopHost.AddUI(UI: TRtcAbsPHostFileTransferUI);
+begin
+  CSUI.Acquire;
+  try
+    if UIs.asBoolean[UI.UserName] then
+      if assigned(UIs.asPtr[UI.UserName]) and (UIs.asPtr[UI.UserName] <> UI) then
+        TRtcAbsPHostFileTransferUI(UIs.asPtr[UI.UserName]).Module := nil;
+
+    UIs.asBoolean[UI.UserName] := True;
+    UIs.asPtr[UI.UserName] := UI;
+  finally
+    CSUI.Release;
+  end;
+end;
+
+procedure TRtcPDesktopHost.RemUI(UI: TRtcAbsPHostFileTransferUI);
+begin
+  CSUI.Acquire;
+  try
+    UIs.asBoolean[UI.UserName] := False;
+    UIs.asPtr[UI.UserName] := nil;
+  finally
+    CSUI.Release;
+  end;
+end;
+
+{ TRtcAbsPHostFileTransferUI }
+
+constructor TRtcAbsPHostFileTransferUI.Create(AOwner: TComponent);
+begin
+  inherited;
+  FModule := nil;
+  FUserName := '';
+end;
+
+destructor TRtcAbsPHostFileTransferUI.Destroy;
+begin
+  Module := nil;
+  inherited;
+end;
+
+procedure TRtcAbsPHostFileTransferUI.Open(Sender: TObject = nil);
+begin
+  if (UserName <> '') and assigned(FModule) then
+    FModule.Open(UserName, Sender);
+end;
+
+procedure TRtcAbsPHostFileTransferUI.Close(Sender: TObject = nil);
+begin
+  if (UserName <> '') and assigned(FModule) then
+    FModule.Close(UserName, Sender);
+end;
+
+function TRtcAbsPHostFileTransferUI.CloseAndClear(Sender: TObject = nil): boolean;
+begin
+  if (UserName <> '') and assigned(FModule) and not FCleared then
+  begin
+    Module.RemUI(self);
+    Result := Locked = 0;
+    FModule.Close(UserName, Sender);
+    if not Result then
+      FCleared := True
+    else
+      FModule := nil;
+  end
+  else
+    Result := True;
+end;
+
+procedure TRtcAbsPHostFileTransferUI.Send(const FileName: String;
+  const tofolder: String = ''; Sender: TObject = nil);
+begin
+  if (UserName <> '') and assigned(FModule) then
+    FModule.Send(UserName, FileName, tofolder, Sender);
+end;
+
+procedure TRtcAbsPHostFileTransferUI.Fetch(const FileName: String;
+  const tofolder: String = ''; Sender: TObject = nil);
+begin
+  if (UserName <> '') and assigned(FModule) then
+    FModule.Fetch(UserName, FileName, tofolder, Sender);
+end;
+
+procedure TRtcAbsPHostFileTransferUI.Cancel_Fetch(const FileName: String;
+  const tofolder: String = ''; Sender: TObject = nil);
+begin
+  if (UserName <> '') and assigned(FModule) then
+    FModule.Cancel_Fetch(UserName, FileName, tofolder, Sender);
+end;
+
+procedure TRtcAbsPHostFileTransferUI.Cancel_Send(const FileName: String;
+  const tofolder: String = ''; Sender: TObject = nil);
+begin
+  if (UserName <> '') and assigned(FModule) then
+    FModule.Cancel_Send(UserName, FileName, tofolder, Sender);
+end;
+
+procedure TRtcAbsPHostFileTransferUI.Call(const Data: TRtcFunctionInfo;
+  Sender: TObject);
+begin
+  if (UserName <> '') and assigned(FModule) then
+    FModule.Call(UserName, Data, Sender);
+end;
+
+procedure TRtcAbsPHostFileTransferUI.GetFileList(const FolderName, FileMask: String;
+  Sender: TObject);
+begin
+  if (UserName <> '') and assigned(FModule) then
+    FModule.GetFileList(UserName, FolderName, FileMask, Sender);
+end;
+
+procedure TRtcAbsPHostFileTransferUI.Cmd_Execute(const FileName, Params: String;
+  Sender: TObject);
+begin
+  if (UserName <> '') and assigned(FModule) then
+    FModule.Cmd_Execute(UserName, FileName, Params, Sender);
+end;
+
+procedure TRtcAbsPHostFileTransferUI.Cmd_FileDelete(const FileName: String;
+  Sender: TObject);
+begin
+  if (UserName <> '') and assigned(FModule) then
+    FModule.Cmd_FileDelete(UserName, FileName, Sender);
+end;
+
+procedure TRtcAbsPHostFileTransferUI.Cmd_FileMove(const FileName, NewName: String;
+  Sender: TObject);
+begin
+  if (UserName <> '') and assigned(FModule) then
+    FModule.Cmd_FileMove(UserName, FileName, NewName, Sender);
+end;
+
+procedure TRtcAbsPHostFileTransferUI.Cmd_FileRename(const FileName, NewName: String;
+  Sender: TObject);
+begin
+  if (UserName <> '') and assigned(FModule) then
+    FModule.Cmd_FileRename(UserName, FileName, NewName, Sender);
+end;
+
+procedure TRtcAbsPHostFileTransferUI.Cmd_NewFolder(const FolderName: String;
+  Sender: TObject);
+begin
+  if (UserName <> '') and assigned(FModule) then
+    FModule.Cmd_NewFolder(UserName, FolderName, Sender);
+end;
+
+function TRtcAbsPHostFileTransferUI.GetModule: TRtcPDesktopHost;
+begin
+  Result := FModule;
+end;
+
+procedure TRtcAbsPHostFileTransferUI.SetModule(const Value: TRtcPDesktopHost);
+begin
+  if assigned(Value) and (UserName = '') then
+    raise Exception.Create('Set "UserName" before linking to RtcPFileTransfer');
+  if Value <> FModule then
+  begin
+    if assigned(Module) and not FCleared then
+      Module.RemUI(self);
+    FCleared := False;
+    FModule := Value;
+    if assigned(Module) then
+      Module.AddUI(self);
+  end;
+end;
+
+function TRtcAbsPHostFileTransferUI.GetUserName: String;
+begin
+  Result := FUserName;
+end;
+
+procedure TRtcAbsPHostFileTransferUI.SetUserName(const Value: String);
+begin
+  if assigned(Module) and (Value = '') then
+    raise Exception.Create
+      ('Can not clear "UserName" while linked to RtcPFileTransfer');
+  if Value <> FUserName then
+  begin
+    if assigned(Module) then
+      Module.RemUI(self);
+    FUserName := Value;
+    if assigned(Module) then
+      Module.AddUI(self);
+  end;
+end;
 //FileTrans-
-
-//FileTransUI+
-procedure TRtcPDesktopHost.Call_ReadStart(Sender: TObject;
-  const fname, fromfolder: String; size: int64);
-begin
-  if fname = '' then
-    raise Exception.Create('Folder undefined');
-
-  if FSendStart = 0 then
-  begin
-    FSendStart := GetTickCount;
-    FSendFirst := True;
-  end
-  else
-    FSendFirst := False;
-
-  Inc(FSendFilesCnt);
-
-  if FSendFolders.isNull[fname] then
-    FSendFolders.NewRecord(fname);
-
-  FSendFolders.asRecord[fname].asInteger['cnt'] := FSendFolders.asRecord[fname]
-    .asInteger['cnt'] + 1;
-  FSendFolders.asRecord[fname].asLargeInt['size'] := FSendFolders.asRecord
-    [fname].asLargeInt['size'] + size;
-
-  FSendSize := FSendSize + size;
-
-  FSendNow := 0;
-  FSendMax := size;
-
-  FSendFileName := fname;
-  FSendFromFolder := fromfolder;
-
-  if assigned(FOnReadStart) then
-    FOnReadStart(Self);
-
-  FSendFirst := False;
-end;
-
-procedure TRtcPDesktopHost.Call_Read(Sender: TObject;
-  const fname, fromfolder: String; size: int64);
-begin
-  if fname = '' then
-    raise Exception.Create('Folder undefined');
-
-  FSendPrepared := FSendPrepared + size;
-  FSendFileName := fname;
-  FSendFromFolder := fromfolder;
-
-  with FSendFolders.asRecord[fname] do
-  begin
-    asLargeInt['sent'] := asLargeInt['sent'] + size;
-    FSendNow := asLargeInt['sent'];
-    FSendMax := asLargeInt['size'];
-  end;
-
-  if assigned(FOnRead) then
-    FOnRead(Self);
-end;
-
-procedure TRtcPDesktopHost.Call_ReadStop(Sender: TObject;
-  const fname, fromfolder: String; size: int64);
-begin
-  if fname = '' then
-    raise Exception.Create('Folder undefined');
-
-  Dec(FSendFilesCnt);
-
-  FSendPrepared := FSendPrepared + size;
-
-  FSendFileName := fname;
-  FSendFromFolder := fromfolder;
-
-  FSendFolders.asRecord[fname].asInteger['cnt'] := FSendFolders.asRecord[fname]
-    .asInteger['cnt'] - 1;
-
-  if FSendFolders.asRecord[fname].asInteger['cnt'] = 0 then
-  begin
-    with FSendFolders.asRecord[fname] do
-    begin
-      asLargeInt['sent'] := asLargeInt['sent'] + size;
-      FSendNow := asLargeInt['sent'];
-      FSendMax := asLargeInt['sent'];
-
-      FSendSize := FSendSize + asLargeInt['sent'] - asLargeInt['size'];
-    end;
-    FSendFolders.isNull[fname] := True;
-  end;
-
-  if assigned(FOnReadStop) then
-    FOnReadStop(Self);
-end;
-
-procedure TRtcPDesktopHost.Call_ReadCancel(Sender: TObject;
-  const fname, fromfolder: String; size: int64);
-begin
-  if fname = '' then
-    raise Exception.Create('Folder undefined');
-
-  Dec(FSendFilesCnt);
-
-  FSendPrepared := FSendPrepared + size;
-
-  FSendFileName := fname;
-  FSendFromFolder := fromfolder;
-
-  FSendFolders.asRecord[fname].asInteger['cnt'] := FSendFolders.asRecord[fname]
-    .asInteger['cnt'] - 1;
-
-  if FSendFolders.asRecord[fname].asInteger['cnt'] = 0 then
-  begin
-    with FSendFolders.asRecord[fname] do
-    begin
-      asLargeInt['sent'] := asLargeInt['sent'] + size;
-      FSendNow := asLargeInt['sent'];
-      FSendMax := asLargeInt['sent'];
-
-      FSendSize := FSendSize + asLargeInt['sent'] - asLargeInt['size'];
-    end;
-    FSendFolders.isNull[fname] := True;
-  end;
-
-  if assigned(FOnReadCancel) then
-    FOnReadCancel(Self);
-end;
-
-function SecondsToStr(LeftTime: Cardinal): String;
-var
-  i: Cardinal;
-begin
-  if LeftTime > 3600 then // Hours
-  begin
-    i := trunc(LeftTime / 3600);
-    LeftTime := LeftTime - i * 3600;
-    if i < 10 then
-      Result := '0' + IntToStr(i) + ':'
-    else
-      Result := IntToStr(i) + ':';
-  end
-  else
-    Result := '00:';
-
-  if LeftTime > 60 then // Minutes
-  begin
-    i := trunc(LeftTime / 60);
-    LeftTime := LeftTime - i * 60;
-    if i < 10 then
-      Result := Result + '0' + IntToStr(i) + ':'
-    else
-      Result := Result + IntToStr(i) + ':';
-  end
-  else
-    Result := Result + '00:';
-
-  i := LeftTime;
-  if i < 10 then // Seconds
-    Result := Result + '0' + IntToStr(i)
-  else
-    Result := Result + IntToStr(i);
-end;
-
-function TRtcPDesktopHost.GetSendETA: String;
-var
-  NowTime: Cardinal;
-  XSpeed: double;
-  LeftTime: Cardinal;
-begin
-  Result := '';
-  if FSendSize > 0 then
-  begin
-    NowTime := GetTickCount;
-    if NowTime > FSendStart then
-    begin
-      XSpeed := FSendCompleted / (NowTime - FSendStart) * 1000;
-      if XSpeed > 0 then
-      begin
-        LeftTime := round((FSendSize - FSendCompleted) / XSpeed);
-        Result := SecondsToStr(LeftTime);
-      end;
-    end;
-  end;
-end;
-
-function TRtcPDesktopHost.GetSendTotalTime: String;
-var
-  NowTime: Cardinal;
-  LeftTime: Cardinal;
-begin
-  if FSendSize > 0 then
-  begin
-    NowTime := GetTickCount;
-    if NowTime > FSendStart then
-      LeftTime := round((NowTime - FSendStart) / 1000)
-    else
-      LeftTime := 0;
-    Result := SecondsToStr(LeftTime);
-  end
-  else
-    Result := SecondsToStr(0);
-end;
-
-function TRtcPDesktopHost.GetSendKBit: longint;
-var
-  NowTime: Cardinal;
-begin
-  Result := 0;
-  if FSendSize > 0 then
-  begin
-    NowTime := GetTickCount;
-    if NowTime > FSendStart then
-      Result := round(FSendCompleted / (NowTime - FSendStart) * 8);
-  end;
-end;
-
-procedure TRtcPDesktopHost.Call_ReadUpdate(Sender: TObject);
-begin
-  FSendCompleted := FSendPrepared;
-
-  if assigned(FOnReadUpdate) then
-    FOnReadUpdate(Self);
-
-  if FSendFilesCnt = 0 then
-    InitSend;
-end;
-
-procedure TRtcPDesktopHost.Call_WriteStart(Sender: TObject;
-  const fname, tofolder: String; size: int64);
-begin
-  if fname = '' then
-    raise Exception.Create('Folder undefined');
-
-  if FRecvStart = 0 then
-  begin
-    FRecvFirst := True;
-    FRecvStart := GetTickCount;
-  end
-  else
-    FRecvFirst := False;
-
-  Inc(FRecvFilesCnt);
-
-  if FRecvFolders.isNull[fname] then
-    FRecvFolders.NewRecord(fname);
-
-  FRecvFolders.asRecord[fname].asInteger['cnt'] := FRecvFolders.asRecord[fname]
-    .asInteger['cnt'] + 1;
-  FRecvFolders.asRecord[fname].asLargeInt['size'] := FRecvFolders.asRecord
-    [fname].asLargeInt['size'] + size;
-
-  FRecvSize := FRecvSize + size;
-
-  FRecvFileName := fname;
-  FRecvToFolder := tofolder;
-
-  FRecvNow := 0;
-  FRecvMax := size;
-
-  if assigned(FOnWriteStart) then
-    FOnWriteStart(Self);
-
-  FRecvFirst := False;
-end;
-
-function TRtcPDesktopHost.GetRecvETA: String;
-var
-  NowTime: Cardinal;
-  XSpeed: double;
-  LeftTime: Cardinal;
-begin
-  Result := '';
-
-  NowTime := GetTickCount;
-  if FRecvSize > 0 then
-  begin
-    if NowTime > FRecvStart then
-    begin
-      XSpeed := FRecvCompleted / (NowTime - FRecvStart) * 1000;
-      if XSpeed > 0 then
-      begin
-        LeftTime := round((FRecvSize - FRecvCompleted) / XSpeed);
-        Result := SecondsToStr(LeftTime);
-      end;
-    end;
-  end;
-end;
-
-function TRtcPDesktopHost.GetRecvTotalTime: String;
-var
-  NowTime: Cardinal;
-  LeftTime: Cardinal;
-begin
-  if FRecvSize > 0 then
-  begin
-    NowTime := GetTickCount;
-    if NowTime > FRecvStart then
-      LeftTime := round((NowTime - FRecvStart) / 1000)
-    else
-      LeftTime := 0;
-    Result := SecondsToStr(LeftTime);
-  end
-  else
-    Result := SecondsToStr(0);
-end;
-
-function TRtcPDesktopHost.GetRecvKBit: longint;
-var
-  NowTime: DWORD;
-begin
-  Result := 0;
-  if FRecvSize > 0 then
-  begin
-    NowTime := GetTickCount;
-    if NowTime > FRecvStart then
-      Result := round(FRecvCompleted / (NowTime - FRecvStart) * 8);
-  end;
-end;
-
-procedure TRtcPDesktopHost.Call_Write(Sender: TObject;
-  const fname, tofolder: String; size: int64);
-begin
-  if fname = '' then
-    raise Exception.Create('Folder undefined');
-
-  if FRecvFolders.isType[fname] <> rtc_Record then
-    raise Exception.Create('File "' + fname + '" not initialized for upload.');
-
-  FRecvCompleted := FRecvCompleted + size;
-
-  FRecvFileName := fname;
-  FRecvToFolder := tofolder;
-
-  with FRecvFolders.asRecord[fname] do
-  begin
-    asLargeInt['sent'] := asLargeInt['sent'] + size;
-    FRecvNow := asLargeInt['sent'];
-    FRecvMax := asLargeInt['size'];
-  end;
-
-  if assigned(FOnWrite) then
-    FOnWrite(Self);
-end;
-
-procedure TRtcPDesktopHost.Call_WriteStop(Sender: TObject;
-  const fname, tofolder: String; size: int64);
-begin
-  if fname = '' then
-    raise Exception.Create('Folder undefined');
-
-  if FRecvFolders.isType[fname] <> rtc_Record then
-    raise Exception.Create('File "' + fname + '" not initialized for upload.');
-
-  Dec(FRecvFilesCnt);
-
-  FRecvCompleted := FRecvCompleted + size;
-
-  FRecvFileName := fname;
-  FRecvToFolder := tofolder;
-
-  FRecvFolders.asRecord[fname].asInteger['cnt'] := FRecvFolders.asRecord[fname]
-    .asInteger['cnt'] - 1;
-
-  if FRecvFolders.asRecord[fname].asInteger['cnt'] = 0 then
-  begin
-    with FRecvFolders.asRecord[fname] do
-    begin
-      asLargeInt['sent'] := asLargeInt['sent'] + size;
-      FRecvNow := asLargeInt['sent'];
-      FRecvMax := asLargeInt['sent'];
-      FRecvSize := FRecvSize + asLargeInt['sent'] - asLargeInt['size'];
-    end;
-    FRecvFolders.isNull[fname] := True;
-  end;
-
-  if assigned(FOnWriteStop) then
-    FOnWriteStop(Self);
-
-  if FRecvFilesCnt = 0 then
-    InitRecv;
-end;
-
-procedure TRtcPDesktopHost.Call_WriteCancel(Sender: TObject;
-  const fname, tofolder: String; size: int64);
-begin
-  if fname = '' then
-    raise Exception.Create('Folder undefined');
-
-  if FRecvFolders.isType[fname] <> rtc_Record then
-    raise Exception.Create('File "' + fname + '" not initialized for upload.');
-
-  Dec(FRecvFilesCnt);
-
-  FRecvCompleted := FRecvCompleted + size;
-
-  FRecvFileName := fname;
-  FRecvToFolder := tofolder;
-
-  FRecvFolders.asRecord[fname].asInteger['cnt'] := FRecvFolders.asRecord[fname]
-    .asInteger['cnt'] - 1;
-
-  if FRecvFolders.asRecord[fname].asInteger['cnt'] = 0 then
-  begin
-    with FRecvFolders.asRecord[fname] do
-    begin
-      asLargeInt['sent'] := asLargeInt['sent'] + size;
-      FRecvNow := asLargeInt['sent'];
-      FRecvMax := asLargeInt['sent'];
-      FRecvSize := FRecvSize + asLargeInt['sent'] - asLargeInt['size'];
-    end;
-    FRecvFolders.isNull[fname] := True;
-  end;
-
-  if assigned(FOnWriteCancel) then
-    FOnWriteCancel(Self);
-
-  if FRecvFilesCnt = 0 then
-    InitRecv;
-end;
-
-procedure TRtcPDesktopHost.Call_Init(Sender: TObject);
-begin
-  InitSend;
-  InitRecv;
-//  if assigned(FOnInit) then
-//    Module.CallEvent(Sender, xOnInit, self);
-end;
-
-procedure TRtcPDesktopHost.Call_Open(Sender: TObject);
-begin
-
-end;
-
-procedure TRtcPDesktopHost.Call_Close(Sender: TObject);
-begin
-  if getSubscriberCnt = 0 then
-  begin
-    InitSend;
-    InitRecv;
-//    if assigned(FOnClose) then
-//      Module.CallEvent(Sender, xOnClose, self);
-  end;
-end;
-
-procedure TRtcPDesktopHost.Call_Error(Sender: TObject; Data: TRtcValue);
-begin
-  InitSend;
-  InitRecv;
-
-//  if assigned(FOnError) then
-//    Module.CallEvent(Sender, xOnError, self);
-end;
-
-procedure TRtcPDesktopHost.Call_LogOut(Sender: TObject);
-begin
-  InitSend;
-  InitRecv;
-
-//  if assigned(FOnLogOut) then
-//    FOnLogOut(Sender, xOnLogOut, self);
-end;
-//FileTransUI-
 
 initialization
 

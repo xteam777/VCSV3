@@ -1,6 +1,6 @@
 { Copyright 2004-2017 (c) RealThinClient.com (http://www.realthinclient.com) }
 
-unit rtcpFileTransUI;
+unit rtcpHostFileTransUI;
 
 interface
 
@@ -18,14 +18,14 @@ uses
   rtcLog,
   rtcInfo,
 
-  rtcpFileTrans;
+  rtcpDesktopHost;
 
 type
-  TRtcPFileTransferUI = class;
+  TRtcPHostFileTransferUI = class;
 
-  TRtcPFileTransUIEvent = procedure(Sender: TRtcPFileTransferUI) of object;
+  TRtcPFileTransUIEvent = procedure(Sender: TRtcPHostFileTransferUI) of object;
 
-  TRtcPFileTransferUI = class(TRtcAbsPFileTransferUI)
+  TRtcPHostFileTransferUI = class(TRtcAbsPHostFileTransferUI)
   private
     FSendFolders: TRtcRecord;
     FSendFileName: String;
@@ -242,68 +242,68 @@ type
     property OnLogOut: TRtcPFileTransUIEvent read FOnLogOut write FOnLogOut;
 
     { We have started sending a new file.
-      Obj = This TRtcPFileTransferUI component
-      TRtcPFileTransferUI(Obj).Send_... = Sending files info }
+      Obj = This TRtcPHostFileTransferUI component
+      TRtcPHostFileTransferUI(Obj).Send_... = Sending files info }
     property OnSendStart: TRtcPFileTransUIEvent read FOnReadStart
       write FOnReadStart;
     { We are sending a file.
-      Obj = This TRtcPFileTransferUI component
-      TRtcPFileTransferUI(Obj).Send_... = Sending files info }
+      Obj = This TRtcPHostFileTransferUI component
+      TRtcPHostFileTransferUI(Obj).Send_... = Sending files info }
     property OnSend: TRtcPFileTransUIEvent read FOnRead write FOnRead;
     { We are sending a file, need to update send info.
-      Obj = This TRtcPFileTransferUI component
-      TRtcPFileTransferUI(Obj).Send_... = Sending files info }
+      Obj = This TRtcPHostFileTransferUI component
+      TRtcPHostFileTransferUI(Obj).Send_... = Sending files info }
     property OnSendUpdate: TRtcPFileTransUIEvent read FOnReadUpdate
       write FOnReadUpdate;
     { We have stopped sending a file (file sent).
-      Obj = This TRtcPFileTransferUI component
-      TRtcPFileTransferUI(Obj).Send_... = Sending files info }
+      Obj = This TRtcPHostFileTransferUI component
+      TRtcPHostFileTransferUI(Obj).Send_... = Sending files info }
     property OnSendStop: TRtcPFileTransUIEvent read FOnReadStop
       write FOnReadStop;
     { File sending was cancelled by user.
-      Obj = This TRtcPFileTransferUI component
-      TRtcPFileTransferUI(Obj).Send_... = Sending files info }
+      Obj = This TRtcPHostFileTransferUI component
+      TRtcPHostFileTransferUI(Obj).Send_... = Sending files info }
     property OnSendCancel: TRtcPFileTransUIEvent read FOnReadCancel
       write FOnReadCancel;
 
     { We have started receiving a new file.
-      Obj = This TRtcPFileTransferUI component
-      TRtcPFileTransferUI(Obj).Recv_... = Receiving files info }
+      Obj = This TRtcPHostFileTransferUI component
+      TRtcPHostFileTransferUI(Obj).Recv_... = Receiving files info }
     property OnRecvStart: TRtcPFileTransUIEvent read FOnWriteStart
       write FOnWriteStart;
     { We are receiving a file.
-      Obj = This TRtcPFileTransferUI component
-      TRtcPFileTransferUI(Obj).Recv_... = Receiving files info }
+      Obj = This TRtcPHostFileTransferUI component
+      TRtcPHostFileTransferUI(Obj).Recv_... = Receiving files info }
     property OnRecv: TRtcPFileTransUIEvent read FOnWrite write FOnWrite;
     { We have stopped receiving a file (file received).
-      Obj = This TRtcPFileTransferUI component
-      TRtcPFileTransferUI(Obj).Recv_... = Receiving files info }
+      Obj = This TRtcPHostFileTransferUI component
+      TRtcPHostFileTransferUI(Obj).Recv_... = Receiving files info }
     property OnRecvStop: TRtcPFileTransUIEvent read FOnWriteStop
       write FOnWriteStop;
     { File receiving was cancelled by user.
-      Obj = This TRtcPFileTransferUI component
-      TRtcPFileTransferUI(Obj).Recv_... = Receiving files info }
+      Obj = This TRtcPHostFileTransferUI component
+      TRtcPHostFileTransferUI(Obj).Recv_... = Receiving files info }
     property OnRecvCancel: TRtcPFileTransUIEvent read FOnWriteCancel
       write FOnWriteCancel;
 
     { Call received from "user".
-      Obj = This TRtcPFileTransferUI component
-      TRtcPFileTransferUI(Obj).Params = Data Received (RtcFunctionInfo object) }
+      Obj = This TRtcPHostFileTransferUI component
+      TRtcPHostFileTransferUI(Obj).Params = Data Received (RtcFunctionInfo object) }
     property OnCallReceived: TRtcPFileTransUIEvent read FOnCallReceived
       write FOnCallReceived;
 
     { File List received from "user".
-      Obj = This TRtcPFileTransferUI component
-      TRtcPFileTransferUI(Obj).Folder... = Folder Data Received }
+      Obj = This TRtcPHostFileTransferUI component
+      TRtcPHostFileTransferUI(Obj).Folder... = Folder Data Received }
     property OnFileList: TRtcPFileTransUIEvent read FOnFileList
       write FOnFileList;
   end;
 
 implementation
 
-{ TRtcPFileTransferUI }
+{ TRtcPHostFileTransferUI }
 
-constructor TRtcPFileTransferUI.Create(AOwner: TComponent);
+constructor TRtcPHostFileTransferUI.Create(AOwner: TComponent);
 begin
   inherited;
   FUserCnt := 0;
@@ -313,14 +313,14 @@ begin
   InitRecv;
 end;
 
-destructor TRtcPFileTransferUI.Destroy;
+destructor TRtcPHostFileTransferUI.Destroy;
 begin
   FSendFolders.Free;
   FRecvFolders.Free;
   inherited;
 end;
 
-procedure TRtcPFileTransferUI.InitSend;
+procedure TRtcPHostFileTransferUI.InitSend;
 begin
   FSendFilesCnt := 0;
   FSendFolders.Clear;
@@ -336,7 +336,7 @@ begin
   FSendMax := 0;
 end;
 
-procedure TRtcPFileTransferUI.InitRecv;
+procedure TRtcPHostFileTransferUI.InitRecv;
 begin
   FRecvFilesCnt := 0;
   FRecvFolders.Clear;
@@ -350,7 +350,7 @@ begin
   FRecvMax := 0;
 end;
 
-procedure TRtcPFileTransferUI.Call_Init(Sender: TObject);
+procedure TRtcPHostFileTransferUI.Call_Init(Sender: TObject);
 begin
   InitSend;
   InitRecv;
@@ -358,7 +358,7 @@ begin
     Module.CallEvent(Sender, xOnInit, self);
 end;
 
-procedure TRtcPFileTransferUI.Call_Open(Sender: TObject);
+procedure TRtcPHostFileTransferUI.Call_Open(Sender: TObject);
 begin
   Inc(FUserCnt);
   if FUserCnt = 1 then
@@ -366,7 +366,7 @@ begin
       Module.CallEvent(Sender, xOnOpen, self);
 end;
 
-procedure TRtcPFileTransferUI.Call_Close(Sender: TObject);
+procedure TRtcPHostFileTransferUI.Call_Close(Sender: TObject);
 begin
   if FUserCnt > 0 then
   begin
@@ -381,7 +381,7 @@ begin
   end;
 end;
 
-procedure TRtcPFileTransferUI.Call_Error(Sender: TObject);
+procedure TRtcPHostFileTransferUI.Call_Error(Sender: TObject);
 begin
   FUserCnt := 0;
   InitSend;
@@ -390,7 +390,7 @@ begin
     Module.CallEvent(Sender, xOnError, self);
 end;
 
-procedure TRtcPFileTransferUI.Call_LogOut(Sender: TObject);
+procedure TRtcPHostFileTransferUI.Call_LogOut(Sender: TObject);
 begin
   FUserCnt := 0;
   InitSend;
@@ -399,7 +399,7 @@ begin
     Module.CallEvent(Sender, xOnLogOut, self);
 end;
 
-procedure TRtcPFileTransferUI.Call_ReadStart(Sender: TObject;
+procedure TRtcPHostFileTransferUI.Call_ReadStart(Sender: TObject;
   const fname, fromfolder: String; size: int64);
 begin
   if fname = '' then
@@ -437,7 +437,7 @@ begin
   FSendFirst := False;
 end;
 
-procedure TRtcPFileTransferUI.Call_Read(Sender: TObject;
+procedure TRtcPHostFileTransferUI.Call_Read(Sender: TObject;
   const fname, fromfolder: String; size: int64);
 begin
   if fname = '' then
@@ -458,7 +458,7 @@ begin
     Module.CallEvent(Sender, xOnRead, self);
 end;
 
-procedure TRtcPFileTransferUI.Call_ReadStop(Sender: TObject;
+procedure TRtcPHostFileTransferUI.Call_ReadStop(Sender: TObject;
   const fname, fromfolder: String; size: int64);
 begin
   if fname = '' then
@@ -491,7 +491,7 @@ begin
     Module.CallEvent(Sender, xOnReadStop, self);
 end;
 
-procedure TRtcPFileTransferUI.Call_ReadCancel(Sender: TObject;
+procedure TRtcPHostFileTransferUI.Call_ReadCancel(Sender: TObject;
   const fname, fromfolder: String; size: int64);
 begin
   if fname = '' then
@@ -559,7 +559,7 @@ begin
     Result := Result + IntToStr(i);
 end;
 
-function TRtcPFileTransferUI.GetSendETA: String;
+function TRtcPHostFileTransferUI.GetSendETA: String;
 var
   NowTime: Cardinal;
   XSpeed: double;
@@ -581,7 +581,7 @@ begin
   end;
 end;
 
-function TRtcPFileTransferUI.GetSendTotalTime: String;
+function TRtcPHostFileTransferUI.GetSendTotalTime: String;
 var
   NowTime: Cardinal;
   LeftTime: Cardinal;
@@ -599,7 +599,7 @@ begin
     Result := SecondsToStr(0);
 end;
 
-function TRtcPFileTransferUI.GetSendKBit: longint;
+function TRtcPHostFileTransferUI.GetSendKBit: longint;
 var
   NowTime: Cardinal;
 begin
@@ -612,7 +612,7 @@ begin
   end;
 end;
 
-procedure TRtcPFileTransferUI.Call_ReadUpdate(Sender: TObject);
+procedure TRtcPHostFileTransferUI.Call_ReadUpdate(Sender: TObject);
 begin
   FSendCompleted := FSendPrepared;
 
@@ -623,7 +623,7 @@ begin
     InitSend;
 end;
 
-procedure TRtcPFileTransferUI.Call_WriteStart(Sender: TObject;
+procedure TRtcPHostFileTransferUI.Call_WriteStart(Sender: TObject;
   const fname, tofolder: String; size: int64);
 begin
   if fname = '' then
@@ -661,7 +661,7 @@ begin
   FRecvFirst := False;
 end;
 
-function TRtcPFileTransferUI.GetRecvETA: String;
+function TRtcPHostFileTransferUI.GetRecvETA: String;
 var
   NowTime: Cardinal;
   XSpeed: double;
@@ -684,7 +684,7 @@ begin
   end;
 end;
 
-function TRtcPFileTransferUI.GetRecvTotalTime: String;
+function TRtcPHostFileTransferUI.GetRecvTotalTime: String;
 var
   NowTime: Cardinal;
   LeftTime: Cardinal;
@@ -702,7 +702,7 @@ begin
     Result := SecondsToStr(0);
 end;
 
-function TRtcPFileTransferUI.GetRecvKBit: longint;
+function TRtcPHostFileTransferUI.GetRecvKBit: longint;
 var
   NowTime: DWORD;
 begin
@@ -715,7 +715,7 @@ begin
   end;
 end;
 
-procedure TRtcPFileTransferUI.Call_Write(Sender: TObject;
+procedure TRtcPHostFileTransferUI.Call_Write(Sender: TObject;
   const fname, tofolder: String; size: int64);
 begin
   if fname = '' then
@@ -740,7 +740,7 @@ begin
     Module.CallEvent(Sender, xOnWrite, self);
 end;
 
-procedure TRtcPFileTransferUI.Call_WriteStop(Sender: TObject;
+procedure TRtcPHostFileTransferUI.Call_WriteStop(Sender: TObject;
   const fname, tofolder: String; size: int64);
 begin
   if fname = '' then
@@ -778,7 +778,7 @@ begin
     InitRecv;
 end;
 
-procedure TRtcPFileTransferUI.Call_WriteCancel(Sender: TObject;
+procedure TRtcPHostFileTransferUI.Call_WriteCancel(Sender: TObject;
   const fname, tofolder: String; size: int64);
 begin
   if fname = '' then
@@ -816,7 +816,7 @@ begin
     InitRecv;
 end;
 
-procedure TRtcPFileTransferUI.Call_CallReceived(Sender: TObject;
+procedure TRtcPHostFileTransferUI.Call_CallReceived(Sender: TObject;
   const Data: TRtcFunctionInfo);
 begin
   if assigned(FOnCallReceived) then
@@ -830,7 +830,7 @@ begin
   end;
 end;
 
-procedure TRtcPFileTransferUI.Call_FileList(Sender: TObject;
+procedure TRtcPHostFileTransferUI.Call_FileList(Sender: TObject;
   const Folder: String; const Data: TRtcDataSet);
 begin
   if assigned(FOnFileList) then
@@ -846,92 +846,92 @@ begin
   end;
 end;
 
-procedure TRtcPFileTransferUI.xOnClose(Sender, Obj: TObject);
+procedure TRtcPHostFileTransferUI.xOnClose(Sender, Obj: TObject);
 begin
   FOnClose(self);
 end;
 
-procedure TRtcPFileTransferUI.xOnError(Sender, Obj: TObject);
+procedure TRtcPHostFileTransferUI.xOnError(Sender, Obj: TObject);
 begin
   FOnError(self);
 end;
 
-procedure TRtcPFileTransferUI.xOnInit(Sender, Obj: TObject);
+procedure TRtcPHostFileTransferUI.xOnInit(Sender, Obj: TObject);
 begin
   FOnInit(self);
 end;
 
-procedure TRtcPFileTransferUI.xOnLogOut(Sender, Obj: TObject);
+procedure TRtcPHostFileTransferUI.xOnLogOut(Sender, Obj: TObject);
 begin
   FOnLogOut(self);
 end;
 
-procedure TRtcPFileTransferUI.xOnOpen(Sender, Obj: TObject);
+procedure TRtcPHostFileTransferUI.xOnOpen(Sender, Obj: TObject);
 begin
   FOnOpen(self);
 end;
 
-procedure TRtcPFileTransferUI.xOnRead(Sender, Obj: TObject);
+procedure TRtcPHostFileTransferUI.xOnRead(Sender, Obj: TObject);
 begin
   FOnRead(self);
 end;
 
-procedure TRtcPFileTransferUI.xOnReadStart(Sender, Obj: TObject);
+procedure TRtcPHostFileTransferUI.xOnReadStart(Sender, Obj: TObject);
 begin
   FOnReadStart(self);
 end;
 
-procedure TRtcPFileTransferUI.xOnReadStop(Sender, Obj: TObject);
+procedure TRtcPHostFileTransferUI.xOnReadStop(Sender, Obj: TObject);
 begin
   FOnReadStop(self);
 end;
 
-procedure TRtcPFileTransferUI.xOnReadCancel(Sender, Obj: TObject);
+procedure TRtcPHostFileTransferUI.xOnReadCancel(Sender, Obj: TObject);
 begin
   FOnReadCancel(self);
 end;
 
-procedure TRtcPFileTransferUI.xOnReadUpdate(Sender, Obj: TObject);
+procedure TRtcPHostFileTransferUI.xOnReadUpdate(Sender, Obj: TObject);
 begin
   FOnReadUpdate(self);
 end;
 
-procedure TRtcPFileTransferUI.xOnWrite(Sender, Obj: TObject);
+procedure TRtcPHostFileTransferUI.xOnWrite(Sender, Obj: TObject);
 begin
   FOnWrite(self);
 end;
 
-procedure TRtcPFileTransferUI.xOnWriteStart(Sender, Obj: TObject);
+procedure TRtcPHostFileTransferUI.xOnWriteStart(Sender, Obj: TObject);
 begin
   FOnWriteStart(self);
 end;
 
-procedure TRtcPFileTransferUI.xOnWriteStop(Sender, Obj: TObject);
+procedure TRtcPHostFileTransferUI.xOnWriteStop(Sender, Obj: TObject);
 begin
   FOnWriteStop(self);
 end;
 
-procedure TRtcPFileTransferUI.xOnWriteCancel(Sender, Obj: TObject);
+procedure TRtcPHostFileTransferUI.xOnWriteCancel(Sender, Obj: TObject);
 begin
   FOnWriteCancel(self);
 end;
 
-procedure TRtcPFileTransferUI.xOnCallReceived(Sender, Obj: TObject);
+procedure TRtcPHostFileTransferUI.xOnCallReceived(Sender, Obj: TObject);
 begin
   FOnCallReceived(self);
 end;
 
-procedure TRtcPFileTransferUI.xOnFileList(Sender, Obj: TObject);
+procedure TRtcPHostFileTransferUI.xOnFileList(Sender, Obj: TObject);
 begin
   FOnFileList(self);
 end;
 
-function TRtcPFileTransferUI.GetActive: boolean;
+function TRtcPHostFileTransferUI.GetActive: boolean;
 begin
   Result := FUserCnt > 0;
 end;
 
-procedure TRtcPFileTransferUI.SetActive(const Value: boolean);
+procedure TRtcPHostFileTransferUI.SetActive(const Value: boolean);
 begin
   if Value then
     Open

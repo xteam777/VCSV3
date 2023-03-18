@@ -35,13 +35,19 @@ type
     function GetUserName: String;
     procedure SetUserName(const Value: String);
 
-  protected
+  public
     procedure Call_LogOut(Sender: TObject); virtual; abstract;
     procedure Call_Error(Sender: TObject); virtual; abstract;
 
     procedure Call_Init(Sender: TObject); virtual; abstract;
     procedure Call_Open(Sender: TObject); virtual; abstract;
     procedure Call_Close(Sender: TObject); virtual; abstract;
+
+    property Cleared: boolean read FCleared;
+    property Locked: integer read FLocked write FLocked;
+
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
 
     procedure Call_ReadStart(Sender: TObject; const fname, fromfolder: String;
       size: int64); virtual; abstract;
@@ -67,13 +73,6 @@ type
 
     procedure Call_FileList(Sender: TObject; const fname: String;
       const Data: TRtcDataSet); virtual; abstract;
-
-    property Cleared: boolean read FCleared;
-    property Locked: integer read FLocked write FLocked;
-
-  public
-    constructor Create(AOwner: TComponent); override;
-    destructor Destroy; override;
 
     // Prepare File Transfer
     procedure Open(Sender: TObject = nil); virtual;
