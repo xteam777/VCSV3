@@ -923,6 +923,9 @@ begin
     FProgressDialog.TextFooter := FormatFloat('0.00', myUI.Recv_BytesComplete / (1024 * 1024)) + ' MB из ' + FormatFloat('0.00', myUI.Recv_BytesTotal / (1024 * 1024)) + ' MB'
   else
     FProgressDialog.TextFooter := FormatFloat('0.00', myUI.Recv_BytesComplete / 1024) + ' KB из ' + FormatFloat('0.00', myUI.Recv_BytesTotal / 1024) + ' KB';
+
+  if myUI.Recv_BytesComplete = myUI.Recv_BytesTotal then
+    FProgressDialog.Stop;
 end;
 
 procedure TrdDesktopViewer.myUIRecvCancel(Sender: TRtcPDesktopControlUI);
@@ -944,10 +947,7 @@ begin
     FProgressDialog.TextLine1 := myUI.Recv_FileName;
     FProgressDialog.TextLine2 := myUI.Recv_ToFolder;
     FProgressDialog.Max := 100;
-    if myUI.Recv_BytesTotal > 0 then
-      FProgressDialog.Position := Round(myUI.Recv_BytesComplete * 100 / myUI.Recv_BytesTotal)
-    else
-       FProgressDialog.Position := 0;
+    FProgressDialog.Position := 0;
     FProgressDialog.TextCancel := 'Прерывание...';
     FProgressDialog.OnCancel := OnProgressDialogCancel;
 //    FProgressDialog.AutoCalcFooter := True;
@@ -958,7 +958,7 @@ end;
 
 procedure TrdDesktopViewer.myUIRecvStop(Sender: TRtcPDesktopControlUI);
 begin
-  FProgressDialog.Stop;
+//  FProgressDialog.Stop;
 end;
 
 procedure TrdDesktopViewer.myUIClose(Sender: TRtcPDesktopControlUI);
