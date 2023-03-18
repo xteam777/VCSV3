@@ -855,7 +855,7 @@ var
   //FileTrans-
 begin
   //FileTrans+
-  if Data.FunctionName = 'file' then // user is sending us a file
+  if Data.FunctionName = 'hfile' then // user is sending us a file
   begin
     if isSubscriber(uname) then
     begin
@@ -920,7 +920,7 @@ begin
           length(s));
     end;
   end
-  else if Data.FunctionName = 'putfile' then // user wants to send us a file
+  else if Data.FunctionName = 'hputfile' then // user wants to send us a file
   begin
     if isSubscriber(uname) then
     begin
@@ -935,13 +935,13 @@ begin
         Data.asLargeInt['size']);
     end;
   end
-  else if Data.FunctionName = 'pfile' then
+  else if Data.FunctionName = 'hpfile' then
   begin
     if isSubscriber(uname) then
     // user is letting us know that we may start sending the file
       StartSendingFile(uname, Data.asText['path'], Data.asInteger['id']);
   end
-  else if Data.FunctionName = 'getfile' then
+  else if Data.FunctionName = 'hgetfile' then
   begin
     if isSubscriber(uname) then
       Send(uname, Data.asText['file'], Data.asText['to'], Sender);
