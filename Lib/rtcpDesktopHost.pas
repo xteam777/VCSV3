@@ -740,7 +740,7 @@ begin
   CSUI := TCriticalSection.Create;
   UIs := TRtcInfo.Create;
 
-  FHostMode := False;
+  FHostMode := True;
 
   FMinSendBlock := RTCP_DEFAULT_MINCHUNKSIZE;
   FMaxSendBlock := RTCP_DEFAULT_MAXCHUNKSIZE;
