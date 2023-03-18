@@ -310,6 +310,9 @@ type
     procedure CallFileEvent(Sender: TObject; Event: TRtcCustomDataEvent;
       const user: String; const FolderName: String;
       const Data: TRtcDataSet); overload;
+
+    { Start sending all Files and Folder which have been waiting in our "WantToSend" buffer }
+    procedure SendWaiting(const UserName: String; Sender: TObject = nil);
     //FileTrans-
 
     procedure setClipboard(const username: String; const data: RtcString);
@@ -395,8 +398,8 @@ type
     procedure Call_UserLeftMyGroup(Sender: TObject; const group: String;
       const uname: String); override;
 
-    // procedure Call_JoinedUsersGroup(Sender: TObject; const group: String; const uname: String; uinfo:TRtcRecord); override;
-    // procedure Call_LeftUsersGroup(Sender: TObject; const group: String; const uname: String); override;
+    procedure Call_JoinedUsersGroup(Sender: TObject; const group: String; const uname: String; uinfo:TRtcRecord); override;
+    procedure Call_LeftUsersGroup(Sender: TObject; const group: String; const uname: String); override;
 
     procedure Call_DataFromUser(Sender: TObject; const uname: String;
       data: TRtcFunctionInfo); override;
@@ -861,6 +864,34 @@ begin
       end;
 end;
 
+procedure TRtcPDesktopHost.SendWaiting(const UserName: String;
+  Sender: TObject = nil);
+var
+  tosend: TRtcArray;
+  idx: integer;
+begin
+  CS.Acquire;
+  try
+    tosend := nil;
+    if WantToSendFiles.isType[UserName] = rtc_Array then
+    begin
+      tosend := WantToSendFiles.asArray[UserName];
+      WantToSendFiles.Extract(UserName);
+    end;
+  finally
+    CS.Release;
+  end;
+
+  if assigned(tosend) then
+    try
+      for idx := 0 to tosend.Count - 1 do
+        Send(UserName, tosend.asRecord[idx].asText['file'],
+          tosend.asRecord[idx].asText['to'], Sender);
+    finally
+      tosend.Free;
+    end;
+end;
+
 procedure TRtcPDesktopHost.Call_Start(Sender: TObject; data: TRtcValue);
 begin
   ScrStart;
@@ -916,6 +947,28 @@ begin
       begin
         // Event_NewUser(Sender, uname);
       end;
+
+      //FileTrans+
+      // New "File Transfer" subscriber ...
+      if BeTheHost then
+        // Allow subscriptions only if "CanUpload/DownloadFiles" is enabled.
+//        if MayUploadFiles(uname) or MayDownloadFiles(uname) then
+          if Event_QueryAccess(Sender, uname) then
+          begin
+            Client.AddUserToMyGroup(Sender, uname, 'desk');
+            Event_FileTransInit(Sender, uname);
+          end;
+
+//          if (group = 'file') then
+            if setSubscriber(uname, True) then
+            begin
+        //      AmHost.asBoolean[uname] := True;
+              Event_NewUser(Sender, uname, uinfo);
+              Event_FileTransOpen(Sender, uname);
+
+              SendWaiting(uname, Sender);
+            end;
+      //FileTrans-
     end;
   end;
 end;
@@ -932,6 +985,14 @@ begin
   begin
     if setDeskSubscriber(uname, False) then
       Event_OldUser(Sender, uname);
+
+    if setSubscriber(uname, False) then
+    begin
+//      AmHost.asBoolean[uname] := False;
+      StopFileSending(Sender, uname);
+      Event_FileTransClose(Sender, uname);
+      Event_OldUser(Sender, uname);
+    end;
   end;
 
   inherited;
@@ -1015,7 +1076,7 @@ var
   //FileTrans-
 begin
   //FileTrans+
-  if Data.FunctionName = 'file' then // user is sending us a file
+  if Data.FunctionName = 'hfile' then // user is sending us a file
   begin
     if isSubscriber(uname) then
     begin
@@ -1080,7 +1141,7 @@ begin
           length(s));
     end;
   end
-  else if Data.FunctionName = 'putfile' then // user wants to send us a file
+  else if Data.FunctionName = 'hputfile' then // user wants to send us a file
   begin
     if isSubscriber(uname) then
     begin
@@ -1095,13 +1156,13 @@ begin
         Data.asLargeInt['size']);
     end;
   end
-  else if Data.FunctionName = 'pfile' then
+  else if Data.FunctionName = 'hpfile' then
   begin
     if isSubscriber(uname) then
     // user is letting us know that we may start sending the file
       StartSendingFile(uname, Data.asText['path'], Data.asInteger['id']);
   end
-  else if Data.FunctionName = 'getfile' then
+  else if Data.FunctionName = 'hgetfile' then
   begin
     if isSubscriber(uname) then
       Send(uname, Data.asText['file'], Data.asText['to'], Sender);
@@ -3091,7 +3152,7 @@ var
   fn: TRtcFunctionInfo;
 begin
   fn := TRtcFunctionInfo.Create;
-  fn.FunctionName := 'filecmd';
+  fn.FunctionName := 'hfilecmd';
   fn.asString['c'] := 'call';
   fn.asObject['i'] := Data;
   Client.SendToUser(Sender, UserName, fn);
@@ -3103,7 +3164,7 @@ var
   fn: TRtcFunctionInfo;
 begin
   fn := TRtcFunctionInfo.Create;
-  fn.FunctionName := 'filecmd';
+  fn.FunctionName := 'hfilecmd';
   fn.asString['c'] := 'list';
   fn.asText['file'] := FolderName;
   if FileMask <> '' then
@@ -3160,7 +3221,7 @@ begin
       PrepareFiles.asArray[UserName].asObject[idx] := dts;
 
       fn := TRtcFunctionInfo.Create;
-      fn.FunctionName := 'putfile';
+      fn.FunctionName := 'hputfile';
       fn.asInteger['id'] := idx;
       fn.asText['path'] := ExtractFileName(FileName);
       fn.asText['to'] := tofolder;
@@ -3180,7 +3241,7 @@ var
   fn: TRtcFunctionInfo;
 begin
   fn := TRtcFunctionInfo.Create;
-  fn.FunctionName := 'getfile';
+  fn.FunctionName := 'hgetfile';
   fn.asText['file'] := FileName;
   fn.asText['to'] := tofolder;
   Client.SendToUser(Sender, UserName, fn);
@@ -3201,7 +3262,7 @@ begin
   fsize := CancelFileSending(Sender, UserName, fname, ffolder);
 
   fn := TRtcFunctionInfo.Create;
-  fn.FunctionName := 'filecmd';
+  fn.FunctionName := 'hfilecmd';
   fn.asString['c'] := 'abort';
   fn.asText['file'] := fname;
   fn.asText['to'] := tofolder;
@@ -3215,7 +3276,7 @@ var
   fn: TRtcFunctionInfo;
 begin
   fn := TRtcFunctionInfo.Create;
-  fn.FunctionName := 'filecmd';
+  fn.FunctionName := 'hfilecmd';
   fn.asString['c'] := 'cancel';
   fn.asText['file'] := FileName;
   fn.asText['to'] := tofolder;
@@ -3228,7 +3289,7 @@ var
   fn: TRtcFunctionInfo;
 begin
   fn := TRtcFunctionInfo.Create;
-  fn.FunctionName := 'filecmd';
+  fn.FunctionName := 'hfilecmd';
   fn.asString['c'] := 'run';
   fn.asText['file'] := FileName;
   fn.asText['par'] := Params;
@@ -3241,7 +3302,7 @@ var
   fn: TRtcFunctionInfo;
 begin
   fn := TRtcFunctionInfo.Create;
-  fn.FunctionName := 'filecmd';
+  fn.FunctionName := 'hfilecmd';
   fn.asString['c'] := 'del';
   fn.asText['file'] := FileName;
   Client.SendToUser(Sender, UserName, fn);
@@ -3253,7 +3314,7 @@ var
   fn: TRtcFunctionInfo;
 begin
   fn := TRtcFunctionInfo.Create;
-  fn.FunctionName := 'filecmd';
+  fn.FunctionName := 'hfilecmd';
   fn.asString['c'] := 'mov';
   fn.asText['file'] := FileName;
   fn.asText['new'] := NewName;
@@ -3266,7 +3327,7 @@ var
   fn: TRtcFunctionInfo;
 begin
   fn := TRtcFunctionInfo.Create;
-  fn.FunctionName := 'filecmd';
+  fn.FunctionName := 'hfilecmd';
   fn.asString['c'] := 'ren';
   fn.asText['file'] := FileName;
   fn.asText['new'] := NewName;
@@ -3279,7 +3340,7 @@ var
   fn: TRtcFunctionInfo;
 begin
   fn := TRtcFunctionInfo.Create;
-  fn.FunctionName := 'filecmd';
+  fn.FunctionName := 'hfilecmd';
   fn.asString['c'] := 'md';
   fn.asText['dir'] := FolderName;
   Client.SendToUser(Sender, UserName, fn);
@@ -3482,6 +3543,42 @@ begin
   finally
     CSUI.Release;
   end;
+end;
+
+procedure TRtcPDesktopHost.Call_JoinedUsersGroup(Sender: TObject;
+  const group, uname: String; uinfo:TRtcRecord);
+begin
+  inherited;
+
+  if (group = 'desk') then
+    if not isSubscriber(uname) then
+//      if (MayUploadFiles(uname) or MayDownloadFiles(uname)) and
+      if  Event_QueryAccess(Sender, uname) then
+      begin
+        if setSubscriber(uname, True) then
+        begin
+          Event_NewUser(Sender, uname, uinfo);
+          Event_FileTransOpen(Sender, uname);
+
+          SendWaiting(uname, Sender);
+        end;
+      end
+      else
+        Close(uname, Sender);
+end;
+
+procedure TRtcPDesktopHost.Call_LeftUsersGroup(Sender: TObject;
+  const group, uname: String);
+begin
+  if (group = 'desk') then
+    if setSubscriber(uname, False) then
+    begin
+      StopFileSending(Sender, uname);
+      Event_FileTransClose(Sender, uname);
+      Event_OldUser(Sender, uname);
+    end;
+
+  inherited;
 end;
 
 { TRtcAbsPHostFileTransferUI }
