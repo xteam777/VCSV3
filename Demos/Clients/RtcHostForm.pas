@@ -670,8 +670,6 @@ type
 
     OpenedModalForm: TForm;
 
-    HostUIs: TRtcInfo;
-
     function GetCurrentExplorerDirectory(var ADir: String; var AHandle: THandle): Boolean;
     procedure SetFilesToClipboard(var Message: TMessage); message WM_SET_FILES_TO_CLIPBOARD;
     procedure OnGetCbrdFilesData(Sender: TDataObject; AUserName: String);
@@ -808,7 +806,7 @@ var
 //  ConnectedToAllGateways: Boolean;
   DeviceDisplayName: String;
 //  FInputThread: TInputThread;
-  CS_GW, CS_Status, CS_Pending, CS_ActivateHost, CS_HostGateway, CS_HostUI: TCriticalSection; //CS_SetConnectedState
+  CS_GW, CS_Status, CS_Pending, CS_ActivateHost, CS_HostGateway: TCriticalSection; //CS_SetConnectedState
   DeviceId, ConsoleId: String;
   LastActiveExplorerHandle: THandle;
 
@@ -3344,8 +3342,6 @@ var
 begin
   //XLog('FormCreate');
 
-  HostUIs := TRtcInfo.Create;
-
   FProgressDialog := TProgressDialog.Create(Self);
 
   HintWindowClass := TRmxHintWindow;
@@ -3522,21 +3518,6 @@ var
   x: String;
 begin
   //XLog('FormDestroy');
-
-  CS_HostUI.Acquire;
-  try
-    for i := 0 to HostUIs.Count - 1 do
-    begin
-      x := HostUIs.FieldName[i];
-      if HostUIs.asBoolean[x] and assigned(HostUIs.asPtr[x]) then
-        TRtcAbsPFileTransferUI(HostUIs.asPtr[x]).Module := nil;
-    end;
-    HostUIs.Clear;
-  finally
-    CS_HostUI.Release;
-  end;
-
-  HostUIs.Free;
 
   FreeAndNil(CB_Monitor);
 
@@ -11243,7 +11224,6 @@ initialization
   CS_Pending := TCriticalSection.Create;
   CS_ActivateHost := TCriticalSection.Create;
   CS_HostGateway := TCriticalSection.Create;
-  CS_HostUI := TCriticalSection.Create;
   Randomize;
 
 finalization
@@ -11253,6 +11233,5 @@ finalization
   CS_GW.Free;
   CS_ActivateHost.Free;
   CS_HostGateway.Free;
-  CS_HostUI.Free;
 
 end.
