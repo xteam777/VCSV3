@@ -144,7 +144,7 @@ begin
   finally
     FindClose(sr);
   end;
-end
+end;
 
 function Folder_Content(const FolderName, SubFolderName: String;
   Folder: TRtcDataSet): int64;
