@@ -3108,7 +3108,6 @@ object rdDesktopViewer: TrdDesktopViewer
           Top = 1
           Width = 343
           Height = 34
-          UseSystemFont = False
           ActionManager = ActionManagerTop
           Align = alNone
           Color = clMenuBar
@@ -3118,7 +3117,7 @@ object rdDesktopViewer: TrdDesktopViewer
           ColorMap.SelectedFontColor = clWhite
           ColorMap.UnusedColor = clWhite
           Font.Charset = DEFAULT_CHARSET
-          Font.Color = clBlack
+          Font.Color = clWindowText
           Font.Height = -12
           Font.Name = 'Segoe UI'
           Font.Style = []

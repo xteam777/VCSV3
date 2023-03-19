@@ -934,7 +934,7 @@ end;
 
 procedure TrdDesktopViewer.OnProgressDialogCancel(Sender: TObject);
 begin
-  FProgressDialog.Stop;
+  TProgressDialog(Sender).Stop;
 end;
 
 procedure TrdDesktopViewer.myUIRecvStart(Sender: TRtcPDesktopControlUI);
