@@ -1629,6 +1629,7 @@ var
     fstart: TRtcArray;
     frec: TRtcRecord;
   begin
+  xLog('SendNextFile: ');
     myStop := False;
     myRead := False;
     fn := nil;
