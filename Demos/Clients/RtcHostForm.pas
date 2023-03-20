@@ -1134,7 +1134,7 @@ begin
   FGatewayClient.GwStoreParams := True;
   FGatewayClient.MultiThreaded := True;
   FGatewayClient.RetryFirstLogin := 0;
-  FGatewayClient.RetryOtherCalls := 1;
+  FGatewayClient.RetryOtherCalls := 5;
   FGatewayClient.UserNotify := True;
   FGatewayClient.UserVisible := True;
   FGatewayClient.OnError := MainForm.PClientError;
