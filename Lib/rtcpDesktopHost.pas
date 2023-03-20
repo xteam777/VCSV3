@@ -950,25 +950,25 @@ begin
 
       //FileTrans+
       // New "File Transfer" subscriber ...
-      if BeTheHost then
-        // Allow subscriptions only if "CanUpload/DownloadFiles" is enabled.
-//        if MayUploadFiles(uname) or MayDownloadFiles(uname) then
-          if Event_QueryAccess(Sender, uname) then
-          begin
-            Client.AddUserToMyGroup(Sender, uname, 'desk');
-            Event_FileTransInit(Sender, uname);
-          end;
-
-//          if (group = 'file') then
-            if setSubscriber(uname, True) then
-            begin
-        //      AmHost.asBoolean[uname] := True;
-              Event_NewUser(Sender, uname, uinfo);
-              Event_FileTransOpen(Sender, uname);
-
-              SendWaiting(uname, Sender);
-            end;
-      //FileTrans-
+//      if BeTheHost then
+//        // Allow subscriptions only if "CanUpload/DownloadFiles" is enabled.
+////        if MayUploadFiles(uname) or MayDownloadFiles(uname) then
+//          if Event_QueryAccess(Sender, uname) then
+//          begin
+//            Client.AddUserToMyGroup(Sender, uname, 'desk');
+//            Event_FileTransInit(Sender, uname);
+//          end;
+//
+////          if (group = 'file') then
+//            if setSubscriber(uname, True) then
+//            begin
+//        //      AmHost.asBoolean[uname] := True;
+//              Event_NewUser(Sender, uname, uinfo);
+//              Event_FileTransOpen(Sender, uname);
+//
+//              SendWaiting(uname, Sender);
+//            end;
+//      //FileTrans-
     end;
   end;
 end;
@@ -1726,33 +1726,33 @@ begin
   end;
 
 //FileTrans+
-  CS.Acquire;
-  try
-    if File_Sending then
-    begin
-      if UpdateFiles.Count > 0 then
-      begin
-        loop_update := TRtcArray.Create;
-        for a := 0 to UpdateFiles.Count - 1 do
-        begin
-          uname := UpdateFiles.FieldName[a];
-          if UpdateFiles.asBoolean[uname] then
-          begin
-            UpdateFiles.asBoolean[uname] := False;
-            loop_update.asText[loop_update.Count] := uname;
-          end;
-        end;
-        UpdateFiles.Clear;
-      end;
-
-      if File_Senders > 0 then
-        loop_tosendfile := True
-      else
-        File_Sending := False;
-    end;
-  finally
-    CS.Release;
-  end;
+//  CS.Acquire;
+//  try
+//    if File_Sending then
+//    begin
+//      if UpdateFiles.Count > 0 then
+//      begin
+//        loop_update := TRtcArray.Create;
+//        for a := 0 to UpdateFiles.Count - 1 do
+//        begin
+//          uname := UpdateFiles.FieldName[a];
+//          if UpdateFiles.asBoolean[uname] then
+//          begin
+//            UpdateFiles.asBoolean[uname] := False;
+//            loop_update.asText[loop_update.Count] := uname;
+//          end;
+//        end;
+//        UpdateFiles.Clear;
+//      end;
+//
+//      if File_Senders > 0 then
+//        loop_tosendfile := True
+//      else
+//        File_Sending := False;
+//    end;
+//  finally
+//    CS.Release;
+//  end;
 //FileTrans-
 end;
 
@@ -2009,23 +2009,23 @@ begin
   end;
 
 //FileTrans+
-  if assigned(loop_update) then
-    try
-      for a := 0 to loop_update.Count - 1 do
-        Event_FileReadUpdate(Sender, loop_update.asText[a]);
-    finally
-      loop_update.Free;
-    end;
-
-  if loop_tosendfile then
-  begin
-    maxRead := FMaxSendBlock; // read max 100 KB of data at once
-    maxSend := FMaxSendBlock div 2; // send max 50 KB of compressed data at once
-    repeat
-      if not SendNextFile then
-        Break;
-    until (maxRead < FMinSendBlock) or (maxSend < FMinSendBlock);
-  end;
+//  if assigned(loop_update) then
+//    try
+//      for a := 0 to loop_update.Count - 1 do
+//        Event_FileReadUpdate(Sender, loop_update.asText[a]);
+//    finally
+//      loop_update.Free;
+//    end;
+//
+//  if loop_tosendfile then
+//  begin
+//    maxRead := FMaxSendBlock; // read max 100 KB of data at once
+//    maxSend := FMaxSendBlock div 2; // send max 50 KB of compressed data at once
+//    repeat
+//      if not SendNextFile then
+//        Break;
+//    until (maxRead < FMinSendBlock) or (maxSend < FMinSendBlock);
+//  end;
 //FileTrans-
 end;
 
