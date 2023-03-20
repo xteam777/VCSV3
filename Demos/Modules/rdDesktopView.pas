@@ -910,21 +910,21 @@ end;
 
 procedure TrdDesktopViewer.myUIRecv(Sender: TRtcPDesktopControlUI);
 begin
-  Memo1.Lines.Add(IntToStr(Sender.Recv_FileCount) + ' - ' + Sender.Recv_FileName + ' - ' + IntToStr(Sender.Recv_BytesComplete) + ' - '+ IntToStr(Sender.Recv_BytesTotal));
-  FProgressDialog.TextLine1 := myUI.Recv_FileName;
-
-  if myUI.Recv_BytesTotal > 0 then
-    FProgressDialog.Position := Round(myUI.Recv_BytesComplete * 100 / myUI.Recv_BytesTotal)
-  else
-    FProgressDialog.Position := 0;
-
-  if myUI.Recv_BytesTotal > 1024 * 1024 * 1024 then
-    FProgressDialog.TextFooter := FormatFloat('0.00', myUI.Recv_BytesComplete / (1024 * 1024 * 1024)) + ' GB из ' + FormatFloat('0.00', myUI.Recv_BytesTotal / (1024 * 1024 * 1024)) + ' GB'
-  else
-  if myUI.Recv_BytesTotal > 1024 * 1024 then
-    FProgressDialog.TextFooter := FormatFloat('0.00', myUI.Recv_BytesComplete / (1024 * 1024)) + ' MB из ' + FormatFloat('0.00', myUI.Recv_BytesTotal / (1024 * 1024)) + ' MB'
-  else
-    FProgressDialog.TextFooter := FormatFloat('0.00', myUI.Recv_BytesComplete / 1024) + ' KB из ' + FormatFloat('0.00', myUI.Recv_BytesTotal / 1024) + ' KB';
+//  Memo1.Lines.Add(IntToStr(Sender.Recv_FileCount) + ' - ' + Sender.Recv_FileName + ' - ' + IntToStr(Sender.Recv_BytesComplete) + ' - '+ IntToStr(Sender.Recv_BytesTotal));
+//  FProgressDialog.TextLine1 := myUI.Recv_FileName;
+//
+//  if myUI.Recv_BytesTotal > 0 then
+//    FProgressDialog.Position := Round(myUI.Recv_BytesComplete * 100 / myUI.Recv_BytesTotal)
+//  else
+//    FProgressDialog.Position := 0;
+//
+//  if myUI.Recv_BytesTotal > 1024 * 1024 * 1024 then
+//    FProgressDialog.TextFooter := FormatFloat('0.00', myUI.Recv_BytesComplete / (1024 * 1024 * 1024)) + ' GB из ' + FormatFloat('0.00', myUI.Recv_BytesTotal / (1024 * 1024 * 1024)) + ' GB'
+//  else
+//  if myUI.Recv_BytesTotal > 1024 * 1024 then
+//    FProgressDialog.TextFooter := FormatFloat('0.00', myUI.Recv_BytesComplete / (1024 * 1024)) + ' MB из ' + FormatFloat('0.00', myUI.Recv_BytesTotal / (1024 * 1024)) + ' MB'
+//  else
+//    FProgressDialog.TextFooter := FormatFloat('0.00', myUI.Recv_BytesComplete / 1024) + ' KB из ' + FormatFloat('0.00', myUI.Recv_BytesTotal / 1024) + ' KB';
 end;
 
 procedure TrdDesktopViewer.myUIRecvCancel(Sender: TRtcPDesktopControlUI);
@@ -939,20 +939,20 @@ end;
 
 procedure TrdDesktopViewer.myUIRecvStart(Sender: TRtcPDesktopControlUI);
 begin
-  if myUI.Recv_FirstTime then
-  begin
-    FProgressDialog.Title := 'Копирование';
-    FProgressDialog.CommonAVI := TCommonAVI.aviCopyFiles;
-    FProgressDialog.TextLine1 := myUI.Recv_FileName;
-    FProgressDialog.TextLine2 := myUI.Recv_ToFolder;
-    FProgressDialog.Max := 100;
-    FProgressDialog.Position := 0;
-    FProgressDialog.TextCancel := 'Прерывание...';
-    FProgressDialog.OnCancel := OnProgressDialogCancel;
-//    FProgressDialog.AutoCalcFooter := True;
-    FProgressDialog.fHwndParent := FLastActiveExplorerHandle;
-    FProgressDialog.Execute;
-  end;
+//  if myUI.Recv_FirstTime then
+//  begin
+//    FProgressDialog.Title := 'Копирование';
+//    FProgressDialog.CommonAVI := TCommonAVI.aviCopyFiles;
+//    FProgressDialog.TextLine1 := myUI.Recv_FileName;
+//    FProgressDialog.TextLine2 := myUI.Recv_ToFolder;
+//    FProgressDialog.Max := 100;
+//    FProgressDialog.Position := 0;
+//    FProgressDialog.TextCancel := 'Прерывание...';
+//    FProgressDialog.OnCancel := OnProgressDialogCancel;
+////    FProgressDialog.AutoCalcFooter := True;
+//    FProgressDialog.fHwndParent := FLastActiveExplorerHandle;
+//    FProgressDialog.Execute;
+//  end;
 end;
 
 procedure TrdDesktopViewer.myUIRecvStop(Sender: TRtcPDesktopControlUI);
@@ -1464,9 +1464,9 @@ procedure TrdDesktopViewer.GetFilesFromHostClipboard(var Message: TMessage);
 var
   i: Integer;
 begin
-  FLastActiveExplorerHandle := THandle(Message.WParam);
-  for i := 0 to CB_DataObject.FCount - 1 do
-    myUI.Fetch(CB_DataObject.FFiles[i].filePath, String(Message.LParam));
+//  FLastActiveExplorerHandle := THandle(Message.WParam);
+//  for i := 0 to CB_DataObject.FCount - 1 do
+//    myUI.Fetch(CB_DataObject.FFiles[i].filePath, String(Message.LParam));
 end;
 
 procedure TrdDesktopViewer.SetFormState;

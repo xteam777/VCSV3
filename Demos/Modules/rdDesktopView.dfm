@@ -6,8 +6,8 @@ object rdDesktopViewer: TrdDesktopViewer
   VertScrollBar.Tracking = True
   VertScrollBar.Visible = False
   Caption = #1059#1087#1088#1072#1074#1083#1077#1085#1080#1077
-  ClientHeight = 664
-  ClientWidth = 1070
+  ClientHeight = 663
+  ClientWidth = 1066
   Color = 1381653
   DoubleBuffered = True
   Font.Charset = DEFAULT_CHARSET
@@ -35,8 +35,8 @@ object rdDesktopViewer: TrdDesktopViewer
   object pMain: TPanel
     Left = 0
     Top = 0
-    Width = 1070
-    Height = 664
+    Width = 1066
+    Height = 663
     Align = alClient
     BevelOuter = bvNone
     Color = 10720035
@@ -49,13 +49,11 @@ object rdDesktopViewer: TrdDesktopViewer
     ParentFont = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
-    ExplicitWidth = 1066
-    ExplicitHeight = 663
     object iScreenLocked: TImage
       Left = 0
       Top = 0
-      Width = 1070
-      Height = 664
+      Width = 1066
+      Height = 663
       Align = alClient
       Center = True
       Picture.Data = {
@@ -1993,8 +1991,8 @@ object rdDesktopViewer: TrdDesktopViewer
     object iPrepare: TImage
       Left = 0
       Top = 0
-      Width = 1070
-      Height = 664
+      Width = 1066
+      Height = 663
       Align = alClient
       Center = True
       Picture.Data = {
@@ -2972,8 +2970,8 @@ object rdDesktopViewer: TrdDesktopViewer
     object Scroll: TScrollBox
       Left = 0
       Top = 0
-      Width = 1070
-      Height = 664
+      Width = 1066
+      Height = 663
       HorzScrollBar.Tracking = True
       HorzScrollBar.Visible = False
       VertScrollBar.Tracking = True
@@ -2985,13 +2983,11 @@ object rdDesktopViewer: TrdDesktopViewer
       TabOrder = 0
       StyleElements = [seFont, seBorder]
       OnMouseMove = ScrollMouseMove
-      ExplicitWidth = 1066
-      ExplicitHeight = 663
       object pImage: TRtcPDesktopViewer
         Left = 0
         Top = 0
-        Width = 1070
-        Height = 664
+        Width = 1066
+        Height = 663
         Align = alClient
         Color = 1381653
         ParentColor = False
@@ -3001,6 +2997,8 @@ object rdDesktopViewer: TrdDesktopViewer
         OnMouseUp = pImageMouseUp
         ExplicitLeft = 3
         ExplicitTop = -3
+        ExplicitWidth = 1070
+        ExplicitHeight = 664
       end
       object iMiniPanelHide: TImage
         Left = 10
@@ -3108,6 +3106,7 @@ object rdDesktopViewer: TrdDesktopViewer
           Top = 1
           Width = 343
           Height = 34
+          UseSystemFont = False
           ActionManager = ActionManagerTop
           Align = alNone
           Color = clMenuBar
@@ -3117,7 +3116,7 @@ object rdDesktopViewer: TrdDesktopViewer
           ColorMap.SelectedFontColor = clWhite
           ColorMap.UnusedColor = clWhite
           Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
+          Font.Color = clBlack
           Font.Height = -12
           Font.Name = 'Segoe UI'
           Font.Style = []
