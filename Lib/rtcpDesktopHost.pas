@@ -1076,98 +1076,98 @@ var
   //FileTrans-
 begin
   //FileTrans+
-  if Data.FunctionName = 'hfile' then // user is sending us a file
-  begin
-    if isSubscriber(uname) then
-    begin
-      s := Data.asString['data'];
-
-      tofolder := Data.asText['to'];
-      tofile := tofolder;
-      if Copy(tofile, length(tofile), 1) <> '\' then
-        tofile := tofile + '\';
-      tofile := tofile + Data.asText['file'];
-
-      if not DirectoryExists(ExtractFilePath(tofile)) then
-        ForceDirectories(ExtractFilePath(tofile));
-
-      if (length(s)>0) or // content received, or ...
-         (Copy(tofile, length(tofile), 1) <> '\') then // NOT a folder
-        begin
-        if allZeroes then
-          Log('"'+tofile+'" - ZERO DATA @'+Data.asString['at']+' ('+IntToStr(length(s))+')','FILES');
-        // write file content
-        if Data.asLargeInt['at'] = 0 then
-          // overwrite old file on first write access
-          begin
-          WriteNow(tofile);
-          if not (WriteOK and ReadOK) then
-            WriteNow(tofile+'.{ACCESS_DENIED}');
-          end
-        else
-          // append to the end later
-          begin
-          if (File_Size(tofile)<>Data.asLargeInt['at']) then
-            begin
-            if File_Size(tofile+'.{ACCESS_DENIED}')=Data.asLargeInt['at'] then
-              WriteNowAt(tofile+'.{ACCESS_DENIED}')
-            else if (File_Size(tofile)>Data.asLargeInt['at']) then
-              Log('"'+tofile+'" - DOUBLE DATA @'+Data.asString['at']+' /'+IntToStr(File_Size(tofile))+' ('+IntToStr(length(s))+')','FILES')
-            else
-              Log('"'+tofile+'" - MISSING DATA @'+Data.asString['at']+' /'+IntToStr(File_Size(tofile))+' ('+IntToStr(length(s))+')','FILES');
-            end
-          else
-            begin
-            WriteNowAt(tofile);
-            if not (WriteOK and ReadOK) then
-              WriteNowAt(tofile+'.{ACCESS_DENIED}');
-            end;
-          end;
-        end;
-
-      // set file attributes
-      if not Data.isNull['fattr'] then
-        FileSetAttr(tofile, Data.asInteger['fattr']);
-
-      // set file age
-      if not Data.isNull['fage'] then
-        FileSetDate(tofile, DateTimeToFileDate(Data.asDateTime['fage']));
-
-      if Data.asBoolean['stop'] then
-        Event_FileWriteStop(Sender, uname, Data.asText['path'], tofolder,
-          length(s))
-      else
-        Event_FileWrite(Sender, uname, Data.asText['path'], tofolder,
-          length(s));
-    end;
-  end
-  else if Data.FunctionName = 'hputfile' then // user wants to send us a file
-  begin
-    if isSubscriber(uname) then
-    begin
-      // tell user we are ready to accept his file
-      r := TRtcFunctionInfo.Create;
-      r.FunctionName := 'hpfile';
-      r.asInteger['id'] := Data.asInteger['id'];
-      r.asText['path'] := Data.asText['path'];
-      Client.SendToUser(Sender, uname, r);
-      tofolder := Data.asText['to'];
-      Event_FileWriteStart(Sender, uname, Data.asText['path'], tofolder,
-        Data.asLargeInt['size']);
-    end;
-  end
-  else if Data.FunctionName = 'hpfile' then
-  begin
-    if isSubscriber(uname) then
-    // user is letting us know that we may start sending the file
-      StartSendingFile(uname, Data.asText['path'], Data.asInteger['id']);
-  end
-  else if Data.FunctionName = 'hgetfile' then
-  begin
-    if isSubscriber(uname) then
-      Send(uname, Data.asText['file'], Data.asText['to'], Sender);
-  end
-  else
+//  if Data.FunctionName = 'hfile' then // user is sending us a file
+//  begin
+//    if isSubscriber(uname) then
+//    begin
+//      s := Data.asString['data'];
+//
+//      tofolder := Data.asText['to'];
+//      tofile := tofolder;
+//      if Copy(tofile, length(tofile), 1) <> '\' then
+//        tofile := tofile + '\';
+//      tofile := tofile + Data.asText['file'];
+//
+//      if not DirectoryExists(ExtractFilePath(tofile)) then
+//        ForceDirectories(ExtractFilePath(tofile));
+//
+//      if (length(s)>0) or // content received, or ...
+//         (Copy(tofile, length(tofile), 1) <> '\') then // NOT a folder
+//        begin
+//        if allZeroes then
+//          Log('"'+tofile+'" - ZERO DATA @'+Data.asString['at']+' ('+IntToStr(length(s))+')','FILES');
+//        // write file content
+//        if Data.asLargeInt['at'] = 0 then
+//          // overwrite old file on first write access
+//          begin
+//          WriteNow(tofile);
+//          if not (WriteOK and ReadOK) then
+//            WriteNow(tofile+'.{ACCESS_DENIED}');
+//          end
+//        else
+//          // append to the end later
+//          begin
+//          if (File_Size(tofile)<>Data.asLargeInt['at']) then
+//            begin
+//            if File_Size(tofile+'.{ACCESS_DENIED}')=Data.asLargeInt['at'] then
+//              WriteNowAt(tofile+'.{ACCESS_DENIED}')
+//            else if (File_Size(tofile)>Data.asLargeInt['at']) then
+//              Log('"'+tofile+'" - DOUBLE DATA @'+Data.asString['at']+' /'+IntToStr(File_Size(tofile))+' ('+IntToStr(length(s))+')','FILES')
+//            else
+//              Log('"'+tofile+'" - MISSING DATA @'+Data.asString['at']+' /'+IntToStr(File_Size(tofile))+' ('+IntToStr(length(s))+')','FILES');
+//            end
+//          else
+//            begin
+//            WriteNowAt(tofile);
+//            if not (WriteOK and ReadOK) then
+//              WriteNowAt(tofile+'.{ACCESS_DENIED}');
+//            end;
+//          end;
+//        end;
+//
+//      // set file attributes
+//      if not Data.isNull['fattr'] then
+//        FileSetAttr(tofile, Data.asInteger['fattr']);
+//
+//      // set file age
+//      if not Data.isNull['fage'] then
+//        FileSetDate(tofile, DateTimeToFileDate(Data.asDateTime['fage']));
+//
+//      if Data.asBoolean['stop'] then
+//        Event_FileWriteStop(Sender, uname, Data.asText['path'], tofolder,
+//          length(s))
+//      else
+//        Event_FileWrite(Sender, uname, Data.asText['path'], tofolder,
+//          length(s));
+//    end;
+//  end
+//  else if Data.FunctionName = 'hputfile' then // user wants to send us a file
+//  begin
+//    if isSubscriber(uname) then
+//    begin
+//      // tell user we are ready to accept his file
+//      r := TRtcFunctionInfo.Create;
+//      r.FunctionName := 'hpfile';
+//      r.asInteger['id'] := Data.asInteger['id'];
+//      r.asText['path'] := Data.asText['path'];
+//      Client.SendToUser(Sender, uname, r);
+//      tofolder := Data.asText['to'];
+//      Event_FileWriteStart(Sender, uname, Data.asText['path'], tofolder,
+//        Data.asLargeInt['size']);
+//    end;
+//  end
+//  else if Data.FunctionName = 'hpfile' then
+//  begin
+//    if isSubscriber(uname) then
+//    // user is letting us know that we may start sending the file
+//      StartSendingFile(uname, Data.asText['path'], Data.asInteger['id']);
+//  end
+//  else if Data.FunctionName = 'hgetfile' then
+//  begin
+//    if isSubscriber(uname) then
+//      Send(uname, Data.asText['file'], Data.asText['to'], Sender);
+//  end
+//  else
   //FileTrans-
   if data.FunctionName = 'mouse' then
   begin

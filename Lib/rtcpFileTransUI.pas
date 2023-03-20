@@ -116,9 +116,6 @@ type
     procedure Call_Open(Sender: TObject); override;
     procedure Call_Close(Sender: TObject); override;
 
-    constructor Create(AOwner: TComponent); override;
-    destructor Destroy; override;
-
     procedure Call_ReadStart(Sender: TObject; const fname, fromfolder: String;
       size: int64); override;
     procedure Call_Read(Sender: TObject; const fname, fromfolder: String;
@@ -142,6 +139,10 @@ type
       const Data: TRtcFunctionInfo); override;
     procedure Call_FileList(Sender: TObject; const Folder: String;
       const Data: TRtcDataSet); override;
+
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
 
     { Data received with the "OnCallReceived" event.
       This property is set ONLY for the "OnCallReceived" event. }
