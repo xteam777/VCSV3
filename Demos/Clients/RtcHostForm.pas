@@ -8660,7 +8660,6 @@ begin
 //        SetStatusString('Подключение к серверу...', True);
 
 //        SetConnectedState(True);
-        tPHostThread.Restart;
         SetStatus(STATUS_CONNECTING_TO_GATE);
   //      LoggedIn := True;
 
