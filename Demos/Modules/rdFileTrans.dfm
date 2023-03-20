@@ -266,6 +266,7 @@ object rdFileTransfer: TrdFileTransfer
           0000000000000000000005050534050505330000000000000000000000000000
           00000000000000000000}
         ParentFont = False
+        OnClick = b_upClick
       end
       object eDirectory: TComboBoxEx
         Left = 60
@@ -2588,7 +2589,7 @@ object rdFileTransfer: TrdFileTransfer
     Top = 420
     Width = 1212
     Height = 137
-    ActivePage = TabSheet1
+    ActivePage = TabSheet2
     Align = alBottom
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText

@@ -108,7 +108,7 @@ type
     procedure xOnCallReceived(Sender, Obj: TObject);
     procedure xOnFileList(Sender, Obj: TObject);
 
-  public
+  protected
     procedure Call_LogOut(Sender: TObject); override;
     procedure Call_Error(Sender: TObject); override;
 

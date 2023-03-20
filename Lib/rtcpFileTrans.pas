@@ -35,7 +35,7 @@ type
     function GetUserName: String;
     procedure SetUserName(const Value: String);
 
-  public
+  protected
     procedure Call_LogOut(Sender: TObject); virtual; abstract;
     procedure Call_Error(Sender: TObject); virtual; abstract;
 
@@ -1219,6 +1219,7 @@ var
 begin
   if Data.FunctionName = 'file' then // user is sending us a file
   begin
+    xLog('Call_DataFromUser file:' + Data.asText['file']);
     if isSubscriber(uname) and MayUploadFiles(uname) then
     begin
       s := Data.asString['data'];
@@ -1290,6 +1291,7 @@ begin
   end
   else if Data.FunctionName = 'putfile' then // user wants to send us a file
   begin
+    xLog('Call_DataFromUser putfile:' + Data.asText['path']);
     if isSubscriber(uname) and MayUploadFiles(uname) then
     begin
       // tell user we are ready to accept his file
@@ -1308,12 +1310,14 @@ begin
   end
   else if Data.FunctionName = 'pfile' then
   begin
+    xLog('Call_DataFromUser pfile:' + Data.asText['path']);
     if isSubscriber(uname) then
     // user is letting us know that we may start sending the file
       StartSendingFile(uname, Data.asText['path'], Data.asInteger['id']);
   end
   else if Data.FunctionName = 'getfile' then
   begin
+    xLog('Call_DataFromUser getfile:' + Data.asText['file']);
     if isSubscriber(uname) then
       Send(uname, Data.asText['file'], Data.asText['to'], Sender);
   end
@@ -2245,6 +2249,7 @@ procedure TRtcPFileTransfer.Event_FileWriteStart(Sender: TObject;
 var
   UI: TRtcAbsPFileTransferUI;
 begin
+  xLog('Event_FileWriteStart:' + fname);
   if assigned(FOnFileWriteStart) then
     CallFileEvent(Sender, xOnFileWriteStart, user, fname, tofolder, size);
 
@@ -2262,6 +2267,7 @@ procedure TRtcPFileTransfer.Event_FileWrite(Sender: TObject; const user: String;
 var
   UI: TRtcAbsPFileTransferUI;
 begin
+  xLog('Event_FileWrite:' + fname);
   if assigned(FOnFileWrite) then
     CallFileEvent(Sender, xOnFileWrite, user, fname, tofolder, size);
 
@@ -2279,6 +2285,7 @@ procedure TRtcPFileTransfer.Event_FileWriteStop(Sender: TObject;
 var
   UI: TRtcAbsPFileTransferUI;
 begin
+  xLog('Event_FileWriteStop:' + fname);
   if assigned(FOnFileWriteStop) then
     CallFileEvent(Sender, xOnFileWriteStop, user, fname, tofolder, size);
 
@@ -2296,6 +2303,7 @@ procedure TRtcPFileTransfer.Event_FileWriteCancel(Sender: TObject;
 var
   UI: TRtcAbsPFileTransferUI;
 begin
+  xLog('Event_FileWriteCancel:' + fname);
   if assigned(FOnFileWriteCancel) then
     CallFileEvent(Sender, xOnFileWriteCancel, user, fname, tofolder, size);
 

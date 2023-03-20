@@ -1300,35 +1300,29 @@ var
 begin
   while (not Terminated) do
   begin
-    while GetMessage(msg, 0, 0, 0) do
+    FCS.Acquire;
+    try
+      lNeedRestartThread := FNeedRestartThread;
+    finally
+      FCS.Release;
+    end;
+
+    if lNeedRestartThread then
     begin
-      TranslateMessage(msg);
-      DispatchMessage(msg);
+      FGatewayClient.Disconnect;
+      FGatewayClient.Active := False;
+      FGatewayClient.GateAddr := Gateway;
+      FGatewayClient.Gate_Proxy := ProxyEnabled;
+      FGatewayClient.Gate_ProxyAddr := ProxyAddr;
+      FGatewayClient.Gate_ProxyUserName := ProxyUserName;
+      FGatewayClient.Gate_ProxyPassword := ProxyPassword;
+      FGatewayClient.Active := True;
 
       FCS.Acquire;
       try
-        lNeedRestartThread := FNeedRestartThread;
+        FNeedRestartThread := False;
       finally
         FCS.Release;
-      end;
-
-      if lNeedRestartThread then
-      begin
-        FGatewayClient.Disconnect;
-        FGatewayClient.Active := False;
-        FGatewayClient.GateAddr := Gateway;
-        FGatewayClient.Gate_Proxy := ProxyEnabled;
-        FGatewayClient.Gate_ProxyAddr := ProxyAddr;
-        FGatewayClient.Gate_ProxyUserName := ProxyUserName;
-        FGatewayClient.Gate_ProxyPassword := ProxyPassword;
-        FGatewayClient.Active := True;
-
-        FCS.Acquire;
-        try
-          FNeedRestartThread := False;
-        finally
-          FCS.Release;
-        end;
       end;
     end;
 
@@ -6085,7 +6079,10 @@ begin
   if (DeviceId <> '') then
   begin
     if (GetStatus = STATUS_READY) then
+    begin
+      tPHostThread.Restart;
       SetStatus(STATUS_CONNECTING_TO_GATE);
+    end;
 
     AccountLogOut(nil);
 
@@ -8663,6 +8660,7 @@ begin
 //        SetStatusString('Подключение к серверу...', True);
 
 //        SetConnectedState(True);
+        tPHostThread.Restart;
         SetStatus(STATUS_CONNECTING_TO_GATE);
   //      LoggedIn := True;
 
