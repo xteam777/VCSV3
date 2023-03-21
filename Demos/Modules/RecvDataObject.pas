@@ -204,7 +204,10 @@ begin
 
 	  	medium.hGlobal := data;
 	  	medium.tymed := TYMED_HGLOBAL;
-	  	exit(S_OK);}
+	  	exit(S_OK);
+
+      FillChar(medium, SizeOf(medium), 0);
+      exit(S_OK);}
 
       FillChar(medium, SizeOf(medium), 0);
       var local_stream: TMemoryStream;

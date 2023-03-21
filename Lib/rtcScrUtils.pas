@@ -49,8 +49,8 @@ function Get_Clipboard: RtcString;
 procedure Put_Clipboard(const uname, s: RtcString);
 procedure Empty_Clipboard;
 
-function GetFileDescriptor(const FileName: String): TFileDescriptor;
-function GetFileDescriptorByParams(const FileName: String; dwFileAttributes, dwFlags: Cardinal; ftCreationTime_Low, ftCreationTime_High, ftLastAccessTime_Low, ftLastAccessTime_High, ftLastWriteTime_Low, ftLastWriteTime_High, nFileSizeLow, nFileSizeHigh: DWORD): TFileDescriptor;
+function GetFileDescriptor(const FileName: WideString): TFileDescriptor;
+function GetFileDescriptorByParams(const FileName: WideString; dwFileAttributes, dwFlags: Cardinal; ftCreationTime_Low, ftCreationTime_High, ftLastAccessTime_Low, ftLastAccessTime_High, ftLastWriteTime_Low, ftLastWriteTime_High, nFileSizeLow, nFileSizeHigh: DWORD): TFileDescriptor;
 
 //function Get_ClipboardFiles: TRtcArray;
 
@@ -185,7 +185,7 @@ begin
     Result := RtcString('');
 end;
 
-function GetFileDescriptor(const FileName: String): TFileDescriptor;
+function GetFileDescriptor(const FileName: WideString): TFileDescriptor;
 var
   hFile: THandle;
   s: string;
@@ -264,7 +264,7 @@ begin
                 FilesDS.Append;
                 SetLength(s, 1024);
                 SetLength(s, DragQueryFile(Data, i, PChar(s), 1024));
-                FilesDS.asString['p'] := s;
+                FilesDS.asWideString['p'] := s;
                 fDesc := GetFileDescriptor(s);
                 FilesDS.asLargeInt['a'] := fDesc.dwFileAttributes;
                 FilesDS.asLargeInt['f'] := fDesc.dwFlags;
@@ -318,7 +318,7 @@ begin
   end;
 end;
 
-function GetFileDescriptorByParams(const FileName: String; dwFileAttributes, dwFlags: Cardinal; ftCreationTime_Low, ftCreationTime_High, ftLastAccessTime_Low, ftLastAccessTime_High, ftLastWriteTime_Low, ftLastWriteTime_High, nFileSizeLow, nFileSizeHigh: DWORD): TFileDescriptor;
+function GetFileDescriptorByParams(const FileName: WideString; dwFileAttributes, dwFlags: Cardinal; ftCreationTime_Low, ftCreationTime_High, ftLastAccessTime_Low, ftLastAccessTime_High, ftLastWriteTime_Low, ftLastWriteTime_High, nFileSizeLow, nFileSizeHigh: DWORD): TFileDescriptor;
 var
   s: string;
 begin
@@ -394,7 +394,7 @@ begin
               i := 0;
               while not FilesDS.EOF do
               begin
-                CB_FileData.FFilePaths[i] := FilesDS.asString['p'];
+                CB_FileData.FFilePaths[i] := FilesDS.asWideString['p'];
                 CB_FileData.files[I] := GetFileDescriptorByParams(FilesDS.asString['p'], FilesDS.asLargeInt['a'], FilesDS.asLargeInt['f'],
                   FilesDS.asLargeInt['cl'], FilesDS.asLargeInt['ch'], FilesDS.asLargeInt['ll'], FilesDS.asLargeInt['lh'], FilesDS.asLargeInt['wl'],
                   FilesDS.asLargeInt['wh'], FilesDS.asLargeInt['sl'], FilesDS.asLargeInt['sh']);

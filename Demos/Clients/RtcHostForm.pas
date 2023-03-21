@@ -892,7 +892,7 @@ begin
       SendMessage(pPc^.UIHandle, WM_GET_FILES_FROM_CLIPBOARD, WPARAM(CurExplorerHandle), LPARAM(CurExplorerDir));
   end
   else
-  if tPHostThread.FDesktopHost.isSubscriber(AUserName) then  //Если мы хост, то с контроля-овнера-клибоарда тянем файлы
+  if tPHostThread.FDesktopHost.FileTransfer.isSubscriber(AUserName) then  //Если мы хост, то с контроля-овнера-клибоарда тянем файлы
     if GetCurrentExplorerDirectory(CurExplorerDir, CurExplorerHandle) then
       tPHostThread.GetFilesFromClipboard(CurExplorerHandle, CurExplorerDir);
 end;
@@ -1285,14 +1285,14 @@ procedure TPortalHostThread.GetFilesFromClipboard(ACurExplorerHandle: THandle; A
 var
   i: Integer;
 begin
-//  FCS.Acquire;
-//  try
-//    LastActiveExplorerHandle := ACurExplorerHandle;
-//    for i := 0 to CB_DataObject.FCount - 1 do
-//      FDesktopHost.Fetch(CB_DataObject.FUserName, CB_DataObject.FFiles[i].filePath, ACurExplorerDir);
-//  finally
-//    FCS.Release;
-//  end;
+  FCS.Acquire;
+  try
+    LastActiveExplorerHandle := ACurExplorerHandle;
+    for i := 0 to CB_DataObject.FCount - 1 do
+      FDesktopHost.FileTransfer.Fetch(CB_DataObject.FUserName, CB_DataObject.FFiles[i].filePath, ACurExplorerDir);
+  finally
+    FCS.Release;
+  end;
 end;
 
 procedure TPortalHostThread.Execute;

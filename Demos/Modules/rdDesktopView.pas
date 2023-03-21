@@ -1478,9 +1478,9 @@ procedure TrdDesktopViewer.GetFilesFromHostClipboard(var Message: TMessage);
 var
   i: Integer;
 begin
-//  FLastActiveExplorerHandle := THandle(Message.WParam);
-//  for i := 0 to CB_DataObject.FCount - 1 do
-//    myUI.Fetch(CB_DataObject.FFiles[i].filePath, String(Message.LParam));
+  FLastActiveExplorerHandle := THandle(Message.WParam);
+  for i := 0 to CB_DataObject.FCount - 1 do
+    FT_UI.Fetch(CB_DataObject.FFiles[i].filePath, String(Message.LParam));
 end;
 
 procedure TrdDesktopViewer.SetFormState;
