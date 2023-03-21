@@ -1155,28 +1155,29 @@ begin
   FFileTransfer.AccessControl := False;
   FFileTransfer.BeTheHost := True;
   FFileTransfer.FileInboxPath := '';
-//  FFileTransfer.GAllowBrowse := MainForm.PFileTrans.GAllowBrowse;
+  FFileTransfer.AccessControl := False;
+{  FFileTransfer.GAllowBrowse := True; //MainForm.PFileTrans.GAllowBrowse;
 //  FFileTransfer.GAllowBrowse_Super := MainForm.PFileTrans.GAllowBrowse_Super;
-//  FFileTransfer.GAllowDownload := MainForm.PFileTrans.GAllowDownload;
+  FFileTransfer.GAllowDownload := True; //MainForm.PFileTrans.GAllowDownload;
 //  FFileTransfer.GAllowDownload_Super := MainForm.PFileTrans.GAllowDownload_Super;
-//  FFileTransfer.GAllowFileDelete := MainForm.PFileTrans.GAllowFileDelete;
+  FFileTransfer.GAllowFileDelete := True; //MainForm.PFileTrans.GAllowFileDelete;
 //  FFileTransfer.GAllowFileDelete_Super := MainForm.PFileTrans.GAllowFileDelete_Super;
-//  FFileTransfer.GAllowFileMove := MainForm.PFileTrans.GAllowFileMove;
+  FFileTransfer.GAllowFileMove := True; //MainForm.PFileTrans.GAllowFileMove;
 //  FFileTransfer.GAllowFileMove_Super := MainForm.PFileTrans.GAllowFileMove_Super;
-//  FFileTransfer.GAllowFileRename := MainForm.PFileTrans.GAllowFileRename;
-//  FFileTransfer.GAllowFolderCreate := MainForm.PFileTrans.GAllowFolderCreate;
+  FFileTransfer.GAllowFileRename := True; //MainForm.PFileTrans.GAllowFileRename;
+  FFileTransfer.GAllowFolderCreate := True; //MainForm.PFileTrans.GAllowFolderCreate;
 //  FFileTransfer.GAllowFolderCreate_Super := MainForm.PFileTrans.GAllowFolderCreate_Super;
-//  FFileTransfer.GAllowFolderDelete := MainForm.PFileTrans.GAllowFolderDelete;
+  FFileTransfer.GAllowFolderDelete := True; //MainForm.PFileTrans.GAllowFolderDelete;
 //  FFileTransfer.GAllowFolderDelete_Super := MainForm.PFileTrans.GAllowFolderDelete_Super;
-//  FFileTransfer.GAllowFolderMove := MainForm.PFileTrans.GAllowFolderMove;
+  FFileTransfer.GAllowFolderMove := True; //MainForm.PFileTrans.GAllowFolderMove;
 //  FFileTransfer.GAllowFolderMove_Super := MainForm.PFileTrans.GAllowFolderMove_Super;
-//  FFileTransfer.GAllowFolderRename := MainForm.PFileTrans.GAllowFolderRename;
+  FFileTransfer.GAllowFolderRename := True; //MainForm.PFileTrans.GAllowFolderRename;
 //  FFileTransfer.GAllowShellExecute := MainForm.PFileTrans.GAllowShellExecute;
 //  FFileTransfer.GAllowShellExecute_Super := MainForm.PFileTrans.GAllowShellExecute_Super;
-//  FFileTransfer.GAllowUpload := MainForm.PFileTrans.GAllowUpload;
+  FFileTransfer.GAllowUpload := True; //MainForm.PFileTrans.GAllowUpload;
 //  FFileTransfer.GAllowUpload_Super := MainForm.PFileTrans.GAllowUpload_Super;
-//  FFileTransfer.GUploadAnywhere := MainForm.PFileTrans.GUploadAnywhere;
-//  FFileTransfer.GUploadAnywhere_Super := MainForm.PFileTrans.GUploadAnywhere_Super;
+  FFileTransfer.GUploadAnywhere := True; //MainForm.PFileTrans.GUploadAnywhere;
+//  FFileTransfer.GUploadAnywhere_Super := MainForm.PFileTrans.GUploadAnywhere_Super;}
   FFileTransfer.GwStoreParams := True;
   FFileTransfer.MaxSendChunkSize := 102400;
   FFileTransfer.MinSendChunkSize := 4096;
@@ -1226,7 +1227,31 @@ begin
   FDesktopHost.OnUserLeft := MainForm.PModuleUserLeft;
   FDesktopHost.Tag := ThreadID;
   FDesktopHost.FileTransfer := TRtcPFileTransfer.Create(nil);
+  FDesktopHost.FileTransfer.BeTheHost := False;
   FDesktopHost.FileTransfer.OnNewUI := MainForm.DesktopHostFileTransferOnNewUI;
+  FDesktopHost.FileTransfer.AccessControl := False;
+{  FDesktopHost.FileTransfer.GAllowBrowse := True; //MainForm.PFileTrans.GAllowBrowse;
+//  FDesktopHost.FileTransfer.GAllowBrowse_Super := MainForm.PFileTrans.GAllowBrowse_Super;
+  FDesktopHost.FileTransfer.GAllowDownload := True; //MainForm.PFileTrans.GAllowDownload;
+//  FDesktopHost.FileTransfer.GAllowDownload_Super := MainForm.PFileTrans.GAllowDownload_Super;
+  FDesktopHost.FileTransfer.GAllowFileDelete := True; //MainForm.PFileTrans.GAllowFileDelete;
+//  FDesktopHost.FileTransfer.GAllowFileDelete_Super := MainForm.PFileTrans.GAllowFileDelete_Super;
+  FDesktopHost.FileTransfer.GAllowFileMove := True; //MainForm.PFileTrans.GAllowFileMove;
+//  FDesktopHost.FileTransfer.GAllowFileMove_Super := MainForm.PFileTrans.GAllowFileMove_Super;
+  FDesktopHost.FileTransfer.GAllowFileRename := True; //MainForm.PFileTrans.GAllowFileRename;
+  FDesktopHost.FileTransfer.GAllowFolderCreate := True; //MainForm.PFileTrans.GAllowFolderCreate;
+//  FDesktopHost.FileTransfer.GAllowFolderCreate_Super := MainForm.PFileTrans.GAllowFolderCreate_Super;
+  FDesktopHost.FileTransfer.GAllowFolderDelete := True; //MainForm.PFileTrans.GAllowFolderDelete;
+//  FDesktopHost.FileTransfer.GAllowFolderDelete_Super := MainForm.PFileTrans.GAllowFolderDelete_Super;
+  FDesktopHost.FileTransfer.GAllowFolderMove := True; //MainForm.PFileTrans.GAllowFolderMove;
+//  FDesktopHost.FileTransfer.GAllowFolderMove_Super := MainForm.PFileTrans.GAllowFolderMove_Super;
+  FDesktopHost.FileTransfer.GAllowFolderRename := True; //MainForm.PFileTrans.GAllowFolderRename;
+//  FDesktopHost.FileTransfer.GAllowShellExecute := MainForm.PFileTrans.GAllowShellExecute;
+//  FDesktopHost.FileTransfer.GAllowShellExecute_Super := MainForm.PFileTrans.GAllowShellExecute_Super;
+  FDesktopHost.FileTransfer.GAllowUpload := True; //MainForm.PFileTrans.GAllowUpload;
+//  FDesktopHost.FileTransfer.GAllowUpload_Super := MainForm.PFileTrans.GAllowUpload_Super;
+  FDesktopHost.FileTransfer.GUploadAnywhere := True; //MainForm.PFileTrans.GUploadAnywhere;
+//  FDesktopHost.FileTransfer.GUploadAnywhere_Super := MainForm.PFileTrans.GUploadAnywhere_Super;}
 
   FGatewayClient.Active := True;
 end;
@@ -6081,10 +6106,7 @@ begin
   if (DeviceId <> '') then
   begin
     if (GetStatus = STATUS_READY) then
-    begin
-      tPHostThread.Restart;
       SetStatus(STATUS_CONNECTING_TO_GATE);
-    end;
 
     AccountLogOut(nil);
 
@@ -6092,7 +6114,7 @@ begin
 //    PClient.Active := False;
 //    PClient.Active := True;
 
-      tPHostThread.Restart;
+    tPHostThread.Restart;
 
     tPClientReconnect.Enabled := False;
   end

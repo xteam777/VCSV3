@@ -2098,6 +2098,7 @@ begin
   FT_UI.UserDesc := UI.UserDesc;
   // Always set UI.Module *after* setting UI.UserName !!!
   FT_UI.Module := Sender;
+  FT_UI.Module.AccessControl := False;
 end;
 
 

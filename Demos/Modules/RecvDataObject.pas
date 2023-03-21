@@ -204,12 +204,12 @@ begin
 
 	  	medium.hGlobal := data;
 	  	medium.tymed := TYMED_HGLOBAL;
-	  	exit(S_OK);
+	  	exit(S_OK);}
 
       FillChar(medium, SizeOf(medium), 0);
-      exit(S_OK);}
+      exit(S_OK);
 
-      FillChar(medium, SizeOf(medium), 0);
+      {FillChar(medium, SizeOf(medium), 0);
       var local_stream: TMemoryStream;
 		  local_stream := TMemoryStream.Create;
 		  local_stream.Position := 0;
@@ -217,7 +217,7 @@ begin
       pIStream._AddRef;
 		  medium.stm := pIStream;
 	  	medium.tymed := TYMED_NULL;
-	  	exit(S_OK);
+	  	exit(S_OK);}
     end
 	else if (formatetcIn.tymed and TYMED_HGLOBAL <> 0) and
 			    (formatetcIn.cfFormat = TClipbrdMonitor.CF_FILEDESCRIPTOR) then
