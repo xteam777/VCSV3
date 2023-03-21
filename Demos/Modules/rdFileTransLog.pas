@@ -59,17 +59,17 @@ implementation
 {$R *.dfm}
 
 procedure TrdFileTransferLog.CreateParams(Var params: TCreateParams);
-  begin
+begin
   inherited CreateParams( params );
-  params.ExStyle := params.ExStyle or WS_EX_APPWINDOW;
+  params.ExStyle := params.ExStyle   or WS_EX_APPWINDOW;
   params.WndParent := GetDeskTopWindow;
-  end;
+end;
 
 procedure TrdFileTransferLog.SetCaption;
 begin
-  if myUI.UserDesc <> '' then
-    Caption := myUI.UserDesc + ' - Лог передачи файлов'
-  else
+//  if myUI.UserDesc <> '' then
+//    Caption := myUI.UserDesc + ' - Лог передачи файлов'
+//  else
     Caption := RemoveUserPrefix(myUI.UserName) + ' - Лог передачи файлов';
 end;
 
@@ -86,12 +86,12 @@ begin
 end;
 
 procedure TrdFileTransferLog.Form_Close(const mode: string);
-  begin
+begin
 //  cUserName.Caption:=myUI.UserName;
 //  cTitleBar.Caption:='('+mode+')';
 
   FReady:=False;
-  end;
+end;
 
 procedure TrdFileTransferLog.bOKClick(Sender: TObject);
 begin
@@ -114,8 +114,11 @@ begin
 end;
 
 procedure TrdFileTransferLog.myUIClose(Sender: TRtcPFileTransferUI);
+var
+  sDate: String;
 begin
-  mLog.Lines.Add('Передача файлов завершена');
+  DateTimeToString(sDate, 'dd.mm.yyyy hh:nn:ss', Now);
+  mLog.Lines.Add(sDate + ': 'Передача файлов завершена');
 
   Form_Close('Closed');
   Close;
@@ -130,10 +133,13 @@ begin
 end;
 
 procedure TrdFileTransferLog.myUIInit(Sender: TRtcPFileTransferUI);
+var
+  sDate: String;
 begin
   if not FReady then Form_Open('(Init) ');
 
-  mLog.Lines.Add('Инициализация передачи файлов...');
+  DateTimeToString(sDate, 'dd.mm.yyyy hh:nn:ss', Now);
+  mLog.Lines.Add(sDate + ': Инициализация передачи файлов...');
 end;
 
 procedure TrdFileTransferLog.myUILogOut(Sender: TRtcPFileTransferUI);
@@ -229,22 +235,28 @@ begin
 end;
 
 procedure TrdFileTransferLog.myUIRecvCancel(Sender: TRtcPFileTransferUI);
+var
+  sDate: String;
 begin
+  DateTimeToString(sDate, 'dd.mm.yyyy hh:nn:ss', Now);
   if myUI.Recv_FileCount>1 then
-    mLog.Lines.Add('Получение отменено: ' + myUI.Recv_ToFolder + '\' + '[' + IntToStr(myUI.Recv_FileCount) + '] ' + myUI.Recv_FileName)
+    mLog.Lines.Add(sDate + ': Получение отменено ' + myUI.Recv_ToFolder + '\' + '[' + IntToStr(myUI.Recv_FileCount) + '] ' + myUI.Recv_FileName)
   else
-    mLog.Lines.Add('Получение отменено: ' + myUI.Recv_ToFolder + '\' + myUI.Recv_FileName);
+    mLog.Lines.Add(sDate + ': Получение отменено ' + myUI.Recv_ToFolder + '\' + myUI.Recv_FileName);
 //  lRecvFileName.Caption:='Cancelled';
 end;
 
 procedure TrdFileTransferLog.myUIRecvStart(Sender: TRtcPFileTransferUI);
+var
+  sDate: String;
 begin
+  DateTimeToString(sDate, 'dd.mm.yyyy hh:nn:ss', Now);
  if myUI.Recv_FirstTime then
   begin
     if myUI.Recv_FileCount > 1 then
-      mLog.Lines.Add('Получение: ' + myUI.Recv_ToFolder + '\' + '[' + IntToStr(myUI.Recv_FileCount) + '] ' + myUI.Recv_FileName)
+      mLog.Lines.Add(sDate + ': Получение ' + myUI.Recv_ToFolder + '\' + '[' + IntToStr(myUI.Recv_FileCount) + '] ' + myUI.Recv_FileName)
     else
-      mLog.Lines.Add('Получение: ' + myUI.Recv_ToFolder + '\' + myUI.Recv_FileName);
+      mLog.Lines.Add(sDate + ': Получение ' + myUI.Recv_ToFolder + '\' + myUI.Recv_FileName);
   end;
 
 //  if myUI.Recv_FirstTime then
@@ -364,29 +376,35 @@ begin
 end;
 
 procedure TrdFileTransferLog.myUISendCancel(Sender: TRtcPFileTransferUI);
+var
+  sDate: String;
 begin
+  DateTimeToString(sDate, 'dd.mm.yyyy hh:nn:ss', Now);
   if myUI.Send_FileCount > 1 then
-    mLog.Lines.Add('Отправка отменена: ' + myUI.Send_FromFolder + ' [' + IntToStr(myUI.Send_FileCount) + '] '+ myUI.Send_FileName)
+    mLog.Lines.Add(sDate + ': Отправка отменена ' + myUI.Send_FromFolder + ' [' + IntToStr(myUI.Send_FileCount) + '] '+ myUI.Send_FileName)
   else
-    mLog.Lines.Add('Отправка отменена: ' + myUI.Send_FromFolder + myUI.Send_FileName);
+    mLog.Lines.Add(sDate + ': Отправка отменена ' + myUI.Send_FromFolder + myUI.Send_FileName);
 
 //  lSendFileName.Caption:='Cancelled';
 end;
 
 procedure TrdFileTransferLog.myUISendStart(Sender: TRtcPFileTransferUI);
+var
+  sDate: String;
 begin
-    if myUI.Send_FirstTime then
-    begin
-      if myUI.Send_FileCount > 1 then
-        mLog.Lines.Add('Отправка: ' + myUI.Send_FromFolder + ' [' + IntToStr(myUI.Send_FileCount) + '] '+ myUI.Send_FileName)
-      else
-        mLog.Lines.Add('Отправка: ' + myUI.Send_FromFolder + myUI.Send_FileName);
-    end;
+  DateTimeToString(sDate, 'dd.mm.yyyy hh:nn:ss', Now);
+  if myUI.Send_FirstTime then
+  begin
+    if myUI.Send_FileCount > 1 then
+      mLog.Lines.Add(sDate + ': Отправка ' + myUI.Send_FromFolder + ' [' + IntToStr(myUI.Send_FileCount) + '] '+ myUI.Send_FileName)
+    else
+      mLog.Lines.Add(sDate + ': Отправка ' + myUI.Send_FromFolder + myUI.Send_FileName);
+  end;
 end;
 
 procedure TrdFileTransferLog.MyOnFileList(Sender: TRtcPFileTransferUI);
-  begin
+begin
 //  eLocalDirectory.Text := '';
-  end;
+end;
 
 end.

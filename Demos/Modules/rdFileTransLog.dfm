@@ -5,6 +5,7 @@ object rdFileTransferLog: TrdFileTransferLog
   ClientHeight = 290
   ClientWidth = 411
   Color = clBtnFace
+  CustomTitleBar.CaptionAlignment = taCenter
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
@@ -22,8 +23,8 @@ object rdFileTransferLog: TrdFileTransferLog
     Align = alClient
     ReadOnly = True
     TabOrder = 0
-    ExplicitWidth = 419
-    ExplicitHeight = 251
+    ExplicitWidth = 407
+    ExplicitHeight = 248
   end
   object pBottom: TPanel
     Left = 0
@@ -33,14 +34,14 @@ object rdFileTransferLog: TrdFileTransferLog
     Align = alBottom
     BevelOuter = bvNone
     TabOrder = 1
-    ExplicitTop = 251
-    ExplicitWidth = 419
+    ExplicitTop = 248
+    ExplicitWidth = 407
     object bOK: TButton
       Left = 156
       Top = 6
       Width = 107
       Height = 29
-      Caption = 'OK'
+      Caption = 'Close'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -13
