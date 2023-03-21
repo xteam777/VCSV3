@@ -167,10 +167,11 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure panOptionsMouseLeave(Sender: TObject);
     procedure Button1Click(Sender: TObject);
-    procedure myUIRecv(Sender: TRtcPDesktopControlUI);
-    procedure myUIRecvCancel(Sender: TRtcPDesktopControlUI);
-    procedure myUIRecvStart(Sender: TRtcPDesktopControlUI);
     procedure myUIRecvStop(Sender: TRtcPDesktopControlUI);
+    procedure FT_UIRecvStart(Sender: TRtcPFileTransferUI);
+    procedure FT_UIRecv(Sender: TRtcPFileTransferUI);
+    procedure FT_UIRecvCancel(Sender: TRtcPFileTransferUI);
+    procedure FT_UIRecvStop(Sender: TRtcPFileTransferUI);
 
   protected
     LMouseX,LMouseY:integer;
@@ -753,6 +754,53 @@ begin
   UpdateQuality;
 end;
 
+procedure TrdDesktopViewer.FT_UIRecv(Sender: TRtcPFileTransferUI);
+begin
+//  Memo1.Lines.Add(IntToStr(Sender.Recv_FileCount) + ' - ' + Sender.Recv_FileName + ' - ' + IntToStr(Sender.Recv_BytesComplete) + ' - '+ IntToStr(Sender.Recv_BytesTotal));
+  FProgressDialog.TextLine1 := FT_UI.Recv_FileName;
+
+  if FT_UI.Recv_BytesTotal > 0 then
+    FProgressDialog.Position := Round(FT_UI.Recv_BytesComplete * 100 / FT_UI.Recv_BytesTotal)
+  else
+    FProgressDialog.Position := 0;
+
+  if FT_UI.Recv_BytesTotal > 1024 * 1024 * 1024 then
+    FProgressDialog.TextFooter := FormatFloat('0.00', FT_UI.Recv_BytesComplete / (1024 * 1024 * 1024)) + ' GB из ' + FormatFloat('0.00', FT_UI.Recv_BytesTotal / (1024 * 1024 * 1024)) + ' GB'
+  else
+  if FT_UI.Recv_BytesTotal > 1024 * 1024 then
+    FProgressDialog.TextFooter := FormatFloat('0.00', FT_UI.Recv_BytesComplete / (1024 * 1024)) + ' MB из ' + FormatFloat('0.00', FT_UI.Recv_BytesTotal / (1024 * 1024)) + ' MB'
+  else
+    FProgressDialog.TextFooter := FormatFloat('0.00', FT_UI.Recv_BytesComplete / 1024) + ' KB из ' + FormatFloat('0.00', FT_UI.Recv_BytesTotal / 1024) + ' KB';
+end;
+
+procedure TrdDesktopViewer.FT_UIRecvCancel(Sender: TRtcPFileTransferUI);
+begin
+  FProgressDialog.Stop;
+end;
+
+procedure TrdDesktopViewer.FT_UIRecvStart(Sender: TRtcPFileTransferUI);
+begin
+  if FT_UI.Recv_FirstTime then
+  begin
+    FProgressDialog.Title := 'Копирование';
+    FProgressDialog.CommonAVI := TCommonAVI.aviCopyFiles;
+    FProgressDialog.TextLine1 := FT_UI.Recv_FileName;
+    FProgressDialog.TextLine2 := FT_UI.Recv_ToFolder;
+    FProgressDialog.Max := 100;
+    FProgressDialog.Position := 0;
+    FProgressDialog.TextCancel := 'Прерывание...';
+    FProgressDialog.OnCancel := OnProgressDialogCancel;
+//    FProgressDialog.AutoCalcFooter := True;
+    FProgressDialog.fHwndParent := FLastActiveExplorerHandle;
+    FProgressDialog.Execute;
+  end;
+end;
+
+procedure TrdDesktopViewer.FT_UIRecvStop(Sender: TRtcPFileTransferUI);
+begin
+  FProgressDialog.Stop
+end;
+
 procedure TrdDesktopViewer.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   begin
   case Key of
@@ -916,56 +964,14 @@ begin
   PFileTrans.Open(UI.UserName, False, Sender);
 end;
 
-procedure TrdDesktopViewer.myUIRecv(Sender: TRtcPDesktopControlUI);
-begin
-//  Memo1.Lines.Add(IntToStr(Sender.Recv_FileCount) + ' - ' + Sender.Recv_FileName + ' - ' + IntToStr(Sender.Recv_BytesComplete) + ' - '+ IntToStr(Sender.Recv_BytesTotal));
-//  FProgressDialog.TextLine1 := myUI.Recv_FileName;
-//
-//  if myUI.Recv_BytesTotal > 0 then
-//    FProgressDialog.Position := Round(myUI.Recv_BytesComplete * 100 / myUI.Recv_BytesTotal)
-//  else
-//    FProgressDialog.Position := 0;
-//
-//  if myUI.Recv_BytesTotal > 1024 * 1024 * 1024 then
-//    FProgressDialog.TextFooter := FormatFloat('0.00', myUI.Recv_BytesComplete / (1024 * 1024 * 1024)) + ' GB из ' + FormatFloat('0.00', myUI.Recv_BytesTotal / (1024 * 1024 * 1024)) + ' GB'
-//  else
-//  if myUI.Recv_BytesTotal > 1024 * 1024 then
-//    FProgressDialog.TextFooter := FormatFloat('0.00', myUI.Recv_BytesComplete / (1024 * 1024)) + ' MB из ' + FormatFloat('0.00', myUI.Recv_BytesTotal / (1024 * 1024)) + ' MB'
-//  else
-//    FProgressDialog.TextFooter := FormatFloat('0.00', myUI.Recv_BytesComplete / 1024) + ' KB из ' + FormatFloat('0.00', myUI.Recv_BytesTotal / 1024) + ' KB';
-end;
-
-procedure TrdDesktopViewer.myUIRecvCancel(Sender: TRtcPDesktopControlUI);
-begin
-  FProgressDialog.Stop;
-end;
-
 procedure TrdDesktopViewer.OnProgressDialogCancel(Sender: TObject);
 begin
   TProgressDialog(Sender).Stop;
 end;
 
-procedure TrdDesktopViewer.myUIRecvStart(Sender: TRtcPDesktopControlUI);
-begin
-//  if myUI.Recv_FirstTime then
-//  begin
-//    FProgressDialog.Title := 'Копирование';
-//    FProgressDialog.CommonAVI := TCommonAVI.aviCopyFiles;
-//    FProgressDialog.TextLine1 := myUI.Recv_FileName;
-//    FProgressDialog.TextLine2 := myUI.Recv_ToFolder;
-//    FProgressDialog.Max := 100;
-//    FProgressDialog.Position := 0;
-//    FProgressDialog.TextCancel := 'Прерывание...';
-//    FProgressDialog.OnCancel := OnProgressDialogCancel;
-////    FProgressDialog.AutoCalcFooter := True;
-//    FProgressDialog.fHwndParent := FLastActiveExplorerHandle;
-//    FProgressDialog.Execute;
-//  end;
-end;
-
 procedure TrdDesktopViewer.myUIRecvStop(Sender: TRtcPDesktopControlUI);
 begin
-  FProgressDialog.Stop;
+;
 end;
 
 procedure TrdDesktopViewer.myUIClose(Sender: TRtcPDesktopControlUI);
