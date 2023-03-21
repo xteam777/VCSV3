@@ -49,6 +49,8 @@ object rdDesktopViewer: TrdDesktopViewer
     ParentFont = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
+    ExplicitWidth = 1062
+    ExplicitHeight = 662
     object iScreenLocked: TImage
       Left = 0
       Top = 0
@@ -2983,6 +2985,8 @@ object rdDesktopViewer: TrdDesktopViewer
       TabOrder = 0
       StyleElements = [seFont, seBorder]
       OnMouseMove = ScrollMouseMove
+      ExplicitWidth = 1062
+      ExplicitHeight = 662
       object pImage: TRtcPDesktopViewer
         Left = 0
         Top = 0
@@ -4039,10 +4043,6 @@ object rdDesktopViewer: TrdDesktopViewer
     OnError = myUIError
     OnLogOut = myUILogOut
     OnData = myUIData
-    OnRecvStart = myUIRecvStart
-    OnRecv = myUIRecv
-    OnRecvStop = myUIRecvStop
-    OnRecvCancel = myUIRecvCancel
     Left = 6
     Top = 264
   end

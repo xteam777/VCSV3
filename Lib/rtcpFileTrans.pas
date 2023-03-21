@@ -1822,6 +1822,8 @@ var
   end;
 
 begin
+  Client.SendPing(Sender);
+
   if assigned(loop_update) then
     try
       for a := 0 to loop_update.Count - 1 do

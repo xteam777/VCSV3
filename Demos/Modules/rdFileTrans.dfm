@@ -3388,4 +3388,10 @@ object rdFileTransfer: TrdFileTransfer
     Left = 6
     Top = 130
   end
+  object Timer2: TTimer
+    Enabled = False
+    OnTimer = Timer2Timer
+    Left = 46
+    Top = 158
+  end
 end
