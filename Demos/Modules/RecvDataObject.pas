@@ -11,7 +11,7 @@ type
   TOnGetData = procedure (Sender: TDataObject; AUserName: String) of Object;
   TFileInfo = record
     desc: TFileDescriptor;
-    filePath: String;
+    filePath: WideString;
     ownership: TDataOwnership;
   end;
 
