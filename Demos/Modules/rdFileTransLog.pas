@@ -118,7 +118,7 @@ var
   sDate: String;
 begin
   DateTimeToString(sDate, 'dd.mm.yyyy hh:nn:ss', Now);
-  mLog.Lines.Add(sDate + ': 'Передача файлов завершена');
+  mLog.Lines.Add(sDate + ': Передача файлов завершена');
 
   Form_Close('Closed');
   Close;
