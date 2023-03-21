@@ -5158,4 +5158,12 @@ object rdDesktopViewer: TrdDesktopViewer
       0000000000000000000000000000000000000000000000000000000000000000
       000000000000000000000000000000000000}
   end
+  object FT_UI: TRtcPFileTransferUI
+    OnRecvStart = FT_UIRecvStart
+    OnRecv = FT_UIRecv
+    OnRecvStop = FT_UIRecvStop
+    OnRecvCancel = FT_UIRecvCancel
+    Left = 12
+    Top = 396
+  end
 end

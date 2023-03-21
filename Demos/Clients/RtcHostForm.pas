@@ -13,7 +13,7 @@ interface
 uses
   Windows, Messages, SysUtils, CommonData, System.Types, uProcess, ServiceMgr, //BlackLayered,
   Classes, Graphics, Controls, Forms, DateUtils, CommonUtils, WtsApi, uSysAccount, ClipbrdMonitor,
-  Dialogs, StdCtrls, ExtCtrls, ShellApi, rdFileTransLog, VirtualTrees.Types, SHDocVw,
+  Dialogs, StdCtrls, ExtCtrls, ShellApi, rdFileTransLog, VirtualTrees.Types, SHDocVw, rtcpFileTransUI,
   ComCtrls, Registry, Math, RtcIdentification, SyncObjs, System.Net.HTTPClient, System.Net.URLClient, ActiveX, ComObj,
   rtcSystem, rtcInfo, uMessageBox, rtcScrUtils, IOUtils, uAcceptEula, ProgressDialog, ShlObj, RecvDataObject,
 
@@ -630,10 +630,10 @@ type
     procedure CheckUpdates;
 
     procedure OnProgressDialogCancel(Sender: TObject);
-//    procedure OnDesktopHostFileRecv(Sender: TRtcPHostFileTransferUI);
-//    procedure OnDesktopHostFileRecvCancel(Sender: TRtcPHostFileTransferUI);
-//    procedure OnDesktopHostFileRecvStart(Sender: TRtcPHostFileTransferUI);
-//    procedure OnDesktopHostFileRecvStop(Sender: TRtcPHostFileTransferUI);
+    procedure OnDesktopHostFileRecv(Sender: TRtcPFileTransferUI);
+    procedure OnDesktopHostFileRecvCancel(Sender: TRtcPFileTransferUI);
+    procedure OnDesktopHostFileRecvStart(Sender: TRtcPFileTransferUI);
+    procedure OnDesktopHostFileRecvStop(Sender: TRtcPFileTransferUI);
   public
     { Public declarations }
 //    SilentMode: Boolean;
@@ -757,7 +757,7 @@ type
     procedure ChangePort(AClient: TRtcHttpClient);
     procedure ChangePortP(AClient: TAbsPortalClient);
 
-    procedure DesktopHostOnNewUI(Sender: TRtcPDesktopHost; const user: String);
+    procedure DesktopHostFileTransferOnNewUI(Sender: TRtcPFileTransfer; const user: String);
 
     //procedure SetServiceMenuAttributes;
 
@@ -818,22 +818,22 @@ implementation
 
 {$R *.dfm}
 
-procedure TMainForm.DesktopHostOnNewUI(Sender: TRtcPDesktopHost; const user: String);
-//var
-//  UI: TRtcPHostFileTransferUI;
+procedure TMainForm.DesktopHostFileTransferOnNewUI(Sender: TRtcPFileTransfer; const user: String);
+var
+  UI: TRtcPFileTransferUI;
 begin
 //  xLog('PFileTransExplorerNewUI');
 
-//  UI := TRtcPHostFileTransferUI.Create(nil);
-//  UI.OnRecv := OnDesktopHostFileRecv;
-//  UI.OnRecvCancel := OnDesktopHostFileRecvCancel;
-//  UI.OnRecvStart := OnDesktopHostFileRecvStart;
-//  UI.OnRecvStop := OnDesktopHostFileRecvStop;
-//  UI.UserName := user;
-//  UI.UserDesc := GetUserDescription(user, 'file');
-//  // Always set UI.Module *after* setting UI.UserName !!!
-//  UI.Module := Sender;
-//  UI.Tag := Sender.Tag; //ThreadID
+  UI := TRtcPFileTransferUI.Create(nil);
+  UI.OnRecv := OnDesktopHostFileRecv;
+  UI.OnRecvCancel := OnDesktopHostFileRecvCancel;
+  UI.OnRecvStart := OnDesktopHostFileRecvStart;
+  UI.OnRecvStop := OnDesktopHostFileRecvStop;
+  UI.UserName := user;
+  UI.UserDesc := GetUserDescription(user, 'file');
+  // Always set UI.Module *after* setting UI.UserName !!!
+  UI.Module := Sender;
+  UI.Tag := Sender.Tag; //ThreadID
 end;
 
 function TMainForm.GetCurrentExplorerDirectory(var ADir: String; var AHandle: THandle): Boolean;
@@ -1025,9 +1025,9 @@ begin
   end;
 end;
 
-{procedure TMainForm.OnDesktopHostFileRecv(Sender: TRtcPHostFileTransferUI);
+procedure TMainForm.OnDesktopHostFileRecv(Sender: TRtcPFileTransferUI);
 begin
-  Memo1.Lines.Add(IntToStr(Sender.Recv_FileCount) + ' - ' + Sender.Recv_FileName + ' - ' + IntToStr(Sender.Recv_BytesComplete) + ' - '+ IntToStr(Sender.Recv_BytesTotal));
+//  Memo1.Lines.Add(IntToStr(Sender.Recv_FileCount) + ' - ' + Sender.Recv_FileName + ' - ' + IntToStr(Sender.Recv_BytesComplete) + ' - '+ IntToStr(Sender.Recv_BytesTotal));
 
   FProgressDialog.TextLine1 := Sender.Recv_FileName;
 
@@ -1048,12 +1048,12 @@ begin
     FProgressDialog.Stop;
 end;
 
-procedure TMainForm.OnDesktopHostFileRecvCancel(Sender: TRtcPHostFileTransferUI);
+procedure TMainForm.OnDesktopHostFileRecvCancel(Sender: TRtcPFileTransferUI);
 begin
   FProgressDialog.Stop;
 end;
 
-procedure TMainForm.OnDesktopHostFileRecvStart(Sender: TRtcPHostFileTransferUI);
+procedure TMainForm.OnDesktopHostFileRecvStart(Sender: TRtcPFileTransferUI);
 begin
   if Sender.Recv_FirstTime then
   begin
@@ -1071,10 +1071,10 @@ begin
   end;
 end;
 
-procedure TMainForm.OnDesktopHostFileRecvStop(Sender: TRtcPHostFileTransferUI);
+procedure TMainForm.OnDesktopHostFileRecvStop(Sender: TRtcPFileTransferUI);
 begin
 //  FProgressDialog.Stop;
-end;}
+end;
 
 procedure TMainForm.OnProgressDialogCancel(Sender: TObject);
 begin
@@ -1225,6 +1225,8 @@ begin
   FDesktopHost.OnUserJoined := MainForm.PModuleUserJoined;
   FDesktopHost.OnUserLeft := MainForm.PModuleUserLeft;
   FDesktopHost.Tag := ThreadID;
+  FDesktopHost.FileTransfer := TRtcPFileTransfer.Create(nil);
+  FDesktopHost.FileTransfer.OnNewUI := MainForm.DesktopHostFileTransferOnNewUI;
 
   FGatewayClient.Active := True;
 end;
