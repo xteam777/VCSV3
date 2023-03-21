@@ -99,6 +99,7 @@ type
     iMove: TImage;
     Button1: TButton;
     Memo1: TMemo;
+    FT_UI: TRtcPFileTransferUI;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -115,7 +116,6 @@ type
     procedure btnSettingsClick(Sender: TObject);
     procedure btnCancelClick(Sender: TObject);
     procedure btnAcceptClick(Sender: TObject);
-    procedure btnGetSelectedClick(Sender: TObject);
     procedure ScrollMouseMove(Sender: TObject; Shift: TShiftState; X,
       Y: Integer);
     procedure pImageMouseDown(Sender: TObject; Button: TMouseButton;
@@ -232,6 +232,8 @@ type
 //    MappedFiles: array of TMappedFileRec;
 
     function SetShortcuts_Hook(fBlockInput: Boolean): Boolean;
+
+    procedure PFileTransExplorerNewUI(Sender: TRtcPFileTransfer; const user: String);
 
     procedure InitScreen;
     procedure FullScreen;
@@ -651,6 +653,8 @@ begin
 
 //  if not aRecordStart.Enabled then
 //    Avi.Free;
+
+  FT_UI.CloseAndClear();
 end;
 
 procedure TrdDesktopViewer.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -717,9 +721,6 @@ begin
   SetShortcuts_Hook(True); //Доделать
 
   Visible := False; //позже ставим True если не отменено в пендинге
-
-  //PFileTrans.RemoteUserInfo[UI.UserName].asBoolean['ShowDialog'] := False;
-//  PFileTrans.Open(UI.UserName, Sender);
 end;
 
 procedure TrdDesktopViewer.myUILogOut(Sender: TRtcPDesktopControlUI);
@@ -837,6 +838,8 @@ begin
   FreeAndNil(FProgressDialog);
 
   SetShortcuts_Hook(False); //Доделать
+
+  FreeAndNil(PFileTrans);
 end;
 
 procedure TrdDesktopViewer.SetCaption;
@@ -906,6 +909,11 @@ begin
   if Assigned(PFileTrans) then
     DragAcceptFiles( Handle, True );
   {$ENDIF}
+
+  PFileTrans := TRtcPFileTransfer.Create(Self);
+  PFileTrans.Client := UI.Module.Client;
+  PFileTrans.OnNewUI := PFileTransExplorerNewUI;
+  PFileTrans.Open(UI.UserName, False, Sender);
 end;
 
 procedure TrdDesktopViewer.myUIRecv(Sender: TRtcPDesktopControlUI);
@@ -1732,12 +1740,6 @@ procedure TrdDesktopViewer.btnAcceptClick(Sender: TObject);
     end;
   end;
 
-procedure TrdDesktopViewer.btnGetSelectedClick(Sender: TObject);
-begin
-  //Доделать
-  UI.Send_FileCopy;
-end;
-
 procedure TrdDesktopViewer.pImageMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
 //  if MyUI.ControlMode = rtcpNoControl then
@@ -2082,6 +2084,14 @@ begin
     if err <> 0 then
       xLog(Format('SetShortcuts. Error: %s', [SysErrorMessage(err)]));
   end;
+end;
+
+procedure TrdDesktopViewer.PFileTransExplorerNewUI(Sender: TRtcPFileTransfer; const user: String);
+begin
+  FT_UI.UserName := UI.UserName;
+  FT_UI.UserDesc := UI.UserDesc;
+  // Always set UI.Module *after* setting UI.UserName !!!
+  FT_UI.Module := Sender;
 end;
 
 

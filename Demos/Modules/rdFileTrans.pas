@@ -113,7 +113,6 @@ type
     tr_dy: TTimer;
     al_b: TLabel;
     myUI: TRtcPFileTransferUI;
-    Timer2: TTimer;
     procedure FormCreate(Sender: TObject);
     procedure eFilesListDirectoryChange(Sender: TObject; const FileName: String);
     procedure btnReloadClick(Sender: TObject);
@@ -198,7 +197,6 @@ type
     procedure myUISendCancel(Sender: TRtcPFileTransferUI);
     procedure myUIRecvCancel(Sender: TRtcPFileTransferUI);
     procedure b_upClick(Sender: TObject);
-    procedure Timer2Timer(Sender: TObject);
 
   private
     FReady: Boolean;
@@ -910,11 +908,6 @@ begin
   end;
 end;
 
-procedure TrdFileTransfer.Timer2Timer(Sender: TObject);
-begin
-  myUI.GetFileList(eDirectory.Text, extractfilename(eDirectory.Text));
-end;
-
 function TrdFileTransfer.next_rec(p:integer):integer;
 var i: integer;
 begin
@@ -1359,7 +1352,7 @@ var
   s, to_: String;
   cn, i: Integer;
 begin
-lg.Lines.Add('Send: Передано: ' + str_size(myUI.Recv_BytesComplete, False, False) + ' Итого: ' + str_size(myUI.Recv_BytesTotal, False, False) + ' - ' + IntToStr(myUI.Recv_FileCount) + ' - ' + ExtractFileName(myUI.Recv_FileName));
+//lg.Lines.Add('Send: Передано: ' + str_size(myUI.Recv_BytesComplete, False, False) + ' Итого: ' + str_size(myUI.Recv_BytesTotal, False, False) + ' - ' + IntToStr(myUI.Recv_FileCount) + ' - ' + ExtractFileName(myUI.Recv_FileName));
 
   set_info(True, myUI.Send_BytesComplete);
 
@@ -1395,7 +1388,7 @@ end;
 
 procedure TrdFileTransfer.myUISendCancel(Sender: TRtcPFileTransferUI);
 begin
-lg.Lines.Add('SendCancel: Передано: ' + str_size(myUI.Recv_BytesComplete, False, False) + ' Итого: ' + str_size(myUI.Recv_BytesTotal, False, False) + ' - ' + IntToStr(myUI.Recv_FileCount) + ' - ' + ExtractFileName(myUI.Recv_FileName));
+//lg.Lines.Add('SendCancel: Передано: ' + str_size(myUI.Recv_BytesComplete, False, False) + ' Итого: ' + str_size(myUI.Recv_BytesTotal, False, False) + ' - ' + IntToStr(myUI.Recv_FileCount) + ' - ' + ExtractFileName(myUI.Recv_FileName));
 
   Exit;
 end;
@@ -1434,8 +1427,6 @@ begin
       next_task(TPanel(curr_g.Parent));
   except
   end;
-
-  Timer2Timer(nil);
 end;
 
 function TrdFileTransfer.wrong_caption(s: string): Integer;

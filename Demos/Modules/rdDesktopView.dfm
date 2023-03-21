@@ -5158,4 +5158,8 @@ object rdDesktopViewer: TrdDesktopViewer
       0000000000000000000000000000000000000000000000000000000000000000
       000000000000000000000000000000000000}
   end
+  object FT_UI: TRtcPFileTransferUI
+    Left = 12
+    Top = 396
+  end
 end
