@@ -82,7 +82,7 @@ function UniqueApp(const Title: AnsiString): Boolean;
 var
   hMutex: THandle;
 begin
-   hMutex := 0 ;
+   hMutex := 0;
    hMutex := CreateMutex(nil, False, PWideChar(WideString(Title)));
    Result := (GetLastError <> ERROR_ALREADY_EXISTS);
 end;
