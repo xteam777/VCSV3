@@ -977,25 +977,31 @@ begin
 
 // // InfoChanged := true;
 
-  IniF := TIniFile.Create(ExtractFilePath(Application.ExeName) + 'debug.ini');
-//
- with IniF do
-  begin
-    CodecId := ReadInteger('ScreenCapture', 'CodecId', 1);
-  {if ScreenCapture.CodecId < 0 then
-  begin
-   // ShowMessage('Unable to open "' + IniF.FileName + '"');
-    Application.Terminate;
-    CodecId := 0;
-  end;  }
+  CodecId := 5;
+  Codec2Param1 := 0;
+  Codec3Param1 := 1;
+  Codec4Param1 := 0;
+  Codec4Param2 := 0;
 
-    Codec2Param1 := ReadInteger('ScreenCapture', 'Codec2Param1', 0);
-    Codec3Param1 := ReadInteger('ScreenCapture', 'Codec3Param1', 0);
-    Codec4Param1 := ReadInteger('ScreenCapture', 'Codec4Param1', 0);
-    Codec4Param2 := ReadInteger('ScreenCapture', 'Codec4Param2', 0);
-  end;
+//  IniF := TIniFile.Create(ExtractFilePath(Application.ExeName) + 'debug.ini');
+////
+// with IniF do
+//  begin
+//    CodecId := ReadInteger('ScreenCapture', 'CodecId', 1);
+//  {if ScreenCapture.CodecId < 0 then
+//  begin
+//   // ShowMessage('Unable to open "' + IniF.FileName + '"');
+//    Application.Terminate;
+//    CodecId := 0;
+//  end;  }
 //
-  IniF.Free;
+//    Codec2Param1 := ReadInteger('ScreenCapture', 'Codec2Param1', 0);
+//    Codec3Param1 := ReadInteger('ScreenCapture', 'Codec3Param1', 0);
+//    Codec4Param1 := ReadInteger('ScreenCapture', 'Codec4Param1', 0);
+//    Codec4Param2 := ReadInteger('ScreenCapture', 'Codec4Param2', 0);
+//  end;
+////
+//  IniF.Free;
 
   if InfoChanged or Assigned(ScrFull) then
   begin
