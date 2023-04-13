@@ -132,7 +132,7 @@ type
     property Tasks[const Index: Integer]: TBatchTask read GetTaskByIndex;
   end;
 
-  TModeBatchSend = (mbsFileStart, mbsFileData, mbsFileStop, mbsTaskStart, mbsTaskFinished, mbsTaskError);
+  TModeBatchSend = (mbsFileStart, mbsFileData, mbsFileStop, mbsTaskStart, mbsTaskFinished, mbsTaskError, mbNone);
 
   TNotifyBatchInfo = record
     taskID: Integer;
@@ -197,6 +197,7 @@ type
 
     //MFT+
     property NotifyFileBatchSend: TNotifyFileBatchSend read FNotifyFileBatchSend write FNotifyFileBatchSend;
+    procedure Call_NotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend); virtual; abstract;
     //MFT-
 
   public
@@ -3425,7 +3426,7 @@ begin
   UI := LockUI(task.FUser);
   if assigned(UI) then
     try
-      UI.NotifyFileBatchSend(Sender, task, mode);
+      UI.Call_NotifyFileBatchSend(Sender, task, mode);
     finally
       UnlockUI(UI);
     end;

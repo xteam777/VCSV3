@@ -72,6 +72,8 @@ type
     FFolderData: TRtcDataSet;
 
     //MFT+
+    FCurrentTask: TBatchTask;
+    FCurrentMode: TModeBatchSend;
     FNotifyFileBatchSend: TNotifyFileBatchSend;
     //MFT-
 
@@ -112,6 +114,9 @@ type
     procedure xOnCallReceived(Sender, Obj: TObject);
     procedure xOnFileList(Sender, Obj: TObject);
 
+    //MFT+
+    procedure xNotifyFileBatchSend(Sender, Obj: TObject);
+    //MFT-
   protected
     procedure Call_LogOut(Sender: TObject); override;
     procedure Call_Error(Sender: TObject); override;
@@ -144,6 +149,10 @@ type
     procedure Call_FileList(Sender: TObject; const Folder: String;
       const Data: TRtcDataSet); override;
 
+
+    //MFT+
+    procedure Call_NotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);
+    //MFT-
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -320,6 +329,11 @@ begin
   FRecvFolders := TRtcRecord.Create;
   InitSend;
   InitRecv;
+
+  //MFT+
+  FCurrentTask := nil;
+  FCurrentMode := mbNone;
+  //MFT-
 end;
 
 destructor TRtcPFileTransferUI.Destroy;
@@ -955,5 +969,23 @@ begin
   else
     Close;
 end;
+
+//MFT+
+procedure TRtcPFileTransferUI.Call_NotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);
+begin
+  FCurrentTask := task;
+  FCurrentMode := mode;
+
+  if assigned(FNotifyFileBatchSend) then
+  begin
+    Module.CallEvent(Sender, xNotifyFileBatchSend, self);
+  end;
+end;
+
+procedure TRtcPFileTransferUI.xNotifyFileBatchSend(Sender, Obj: TObject);
+begin
+  FNotifyFileBatchSend(self, FCurrentTask, FCurrentMode);
+end;
+//MFT-
 
 end.
