@@ -32,8 +32,8 @@ uses
   dmSetRegion, rdSetClient, rdSetHost,
   rdDesktopView, rtcpDesktopControlUI, rtcpDesktopControl,
 
-  rtcpDesktopConst,
-  rtcpDesktopHost, rtcpChat, rtcpFileTrans,
+  rtcpDesktopConst, rtcpFileTrans,
+  rtcpDesktopHost, rtcpChat,
   rtcPortalHttpCli, rtcPortalMod, rtcPortalCli, Buttons,
   Vcl.Imaging.pngimage, Vcl.Menus, System.ImageList, Vcl.ImgList,
   rtcConn, rtcDataCli, rtcHttpCli, rtcCliModule, rtcFunction, uHardware,
@@ -1607,7 +1607,7 @@ begin
   FGatewayClient.GwStoreParams := True;
   FGatewayClient.MultiThreaded := True;
   FGatewayClient.RetryFirstLogin := 0;
-  FGatewayClient.RetryOtherCalls := 1;
+  FGatewayClient.RetryOtherCalls := 5;
   FGatewayClient.UserNotify := True;
   FGatewayClient.UserVisible := True;
   FGatewayClient.OnError := MainForm.PClientError;
@@ -9189,7 +9189,7 @@ var
 begin
 //  xLog('PFileTransExplorerNewUI');
 
-  FWin := TrdFileTransfer.Create(nil);
+  FWin := TrdFileTransfer.Create(Application);
   FWin.UIVisible := True;
   FWin.OnUIOpen := OnUIOpen;
   FWin.OnUIClose := OnUIClose;

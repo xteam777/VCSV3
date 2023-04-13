@@ -63,7 +63,11 @@ uses
   rdFileTransLog in '..\Modules\rdFileTransLog.pas' {rdFileTransferLog},
   rtcBlankOutForm in '..\Modules\rtcBlankOutForm.pas' {fmBlankoutForm},
   uSetup in 'uSetup.pas',
-  uAcceptEula in '..\Modules\uAcceptEula.pas' {fAcceptEULA};
+  uAcceptEula in '..\Modules\uAcceptEula.pas' {fAcceptEULA},
+  NTImport in 'NTImport.pas',
+  rtcpFileTrans in 'rtcpFileTrans.pas',
+  MultiFileTrans in 'MultiFileTrans.pas',
+  FixFileExplorer in 'FixFileExplorer.pas';
 
 {$R rtcportaluac.res rtcportaluac.rc}
 {$R *.res}

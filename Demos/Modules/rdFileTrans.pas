@@ -18,7 +18,7 @@ uses
   rtcPortalMod, rtcpFileTrans, uVircessTypes, CommonUtils, rtcScrUtils, CommonData,
 
 
-  rtcpFileTransEx, FixFileExplorer;
+  FixFileExplorer;
 
 const
   WM_SAFE_DELETE_OBJECT  = WM_USER + 1;
@@ -795,7 +795,7 @@ var
 
       if sender = nil then goto 1;
 
-      if MessageDlg(s,mtWarning,[mbYes,mbNo],0)=mrYes then
+      if MessageDlg(s, mtWarning, [mbYes, mbNo], 0, mbYes) = mrYes then
         begin
         1:
         for a:=0 to myFiles.Count-1 do
@@ -2656,7 +2656,7 @@ begin
   if TaskMessageDlg(
     'Удаление',
     'Подтвердите удаление для выбранного ('+FilesRemote.SelectedFiles.Count.ToString+'):'+s,
-    mtInformation, [mbCancel, mbOK], 0, mbCancel) <> mrOK then exit;
+    mtInformation, [mbCancel, mbOK], 0, mbOK) <> mrOK then exit;
 
      mnDeleteClick(nil);
 end;
@@ -2671,7 +2671,7 @@ begin
   if TaskMessageDlg(
     'Удаление',
     'Подтвердите удаление для выбранного ('+FilesLocal.SelectedFiles.Count.ToString+'):'+s,
-    mtInformation, [mbCancel, mbOK], 0, mbCancel) <> mrOK then exit;
+    mtInformation, [mbCancel, mbOK], 0, mbOK) <> mrOK then exit;
 
 
     myFiles:= FilesLocal.SelectedFiles;
