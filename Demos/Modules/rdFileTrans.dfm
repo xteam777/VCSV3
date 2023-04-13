@@ -2464,7 +2464,7 @@ object rdFileTransfer: TrdFileTransfer
         ExplicitHeight = 28
       end
       object SpeedButton2: TSpeedButton
-        Left = 692
+        Left = 688
         Top = 0
         Width = 27
         Height = 22
@@ -3497,7 +3497,7 @@ object rdFileTransfer: TrdFileTransfer
     OnRecvStop = myUIRecvStop
     OnRecvCancel = myUIRecvCancel
     OnFileList = myUIFileList
-    NotifyFileBatchSend = OnSendBatch
+    NotifyFileBatchSend = myUINotifyFileBatchSend
     Left = 6
     Top = 130
   end
