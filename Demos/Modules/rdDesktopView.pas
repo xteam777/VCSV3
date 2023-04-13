@@ -1529,22 +1529,26 @@ var
   FileList: TStringList;
   temp_id: TTaskID;
 begin
-  FLastActiveExplorerHandle := THandle(Message.WParam);
-
-  FileList := TStringList.Create;
-  for i := 0 to CB_DataObject.FCount - 1 do
-    FileList.Add(CB_DataObject.FFiles[i].filePath);
-
-//  TRtcPFileTransfer(myUI.Module).NotifyFileBatchSend :=FT_UINotifyFileBatchSend;
   try
-    temp_id := TRtcPFileTransfer(myUI.Module).FetchBatch(myUI.UserName,
-                        FileList, ExtractFilePath(CB_DataObject.FFiles[0].filePath), String(Message.LParam), nil);
-  except
-//  on E: Exception do
-//    begin
-//      add_lg(TimeToStr(now) + ':  [ERROR] '+E.Message );
-//      raise;
-//    end;
+    FLastActiveExplorerHandle := THandle(Message.WParam);
+
+    FileList := TStringList.Create;
+    for i := 0 to CB_DataObject.FCount - 1 do
+      FileList.Add(CB_DataObject.FFiles[i].filePath);
+
+  //  TRtcPFileTransfer(myUI.Module).NotifyFileBatchSend :=FT_UINotifyFileBatchSend;
+    try
+      temp_id := TRtcPFileTransfer(myUI.Module).FetchBatch(myUI.UserName,
+                          FileList, ExtractFilePath(CB_DataObject.FFiles[0].filePath), String(Message.LParam), nil);
+    except
+  //  on E: Exception do
+  //    begin
+  //      add_lg(TimeToStr(now) + ':  [ERROR] '+E.Message );
+  //      raise;
+  //    end;
+    end;
+  finally
+    FileList.Free;
   end;
 
 //  for i := 0 to CB_DataObject.FCount - 1 do

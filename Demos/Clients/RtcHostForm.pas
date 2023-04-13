@@ -1386,6 +1386,7 @@ begin
 //    for i := 0 to CB_DataObject.FCount - 1 do
 //      FDesktopHost.FileTransfer.Fetch(CB_DataObject.FUserName, CB_DataObject.FFiles[i].filePath, ACurExplorerDir);
   finally
+    FileList.Free;
     FCS.Release;
   end;
 end;
