@@ -1359,12 +1359,32 @@ end;
 procedure TPortalHostThread.GetFilesFromClipboard(ACurExplorerHandle: THandle; ACurExplorerDir: String);
 var
   i: Integer;
+  FileList: TStringList;
+  temp_id: TTaskID;
 begin
   FCS.Acquire;
   try
     LastActiveExplorerHandle := ACurExplorerHandle;
+
+    FileList := TStringList.Create;
     for i := 0 to CB_DataObject.FCount - 1 do
-      FDesktopHost.FileTransfer.Fetch(CB_DataObject.FUserName, CB_DataObject.FFiles[i].filePath, ACurExplorerDir);
+      FileList.Add(CB_DataObject.FFiles[i].filePath);
+
+  //  TRtcPFileTransfer(myUI.Module).NotifyFileBatchSend :=FT_UINotifyFileBatchSend;
+    try
+      temp_id := TRtcPFileTransfer(FDesktopHost.FileTransfer).FetchBatch(CB_DataObject.FUserName,
+                          FileList, ExtractFilePath(CB_DataObject.FFiles[0].filePath), ACurExplorerDir, nil);
+    except
+  //  on E: Exception do
+  //    begin
+  //      add_lg(TimeToStr(now) + ':  [ERROR] '+E.Message );
+  //      raise;
+  //    end;
+    end;
+
+//    LastActiveExplorerHandle := ACurExplorerHandle;
+//    for i := 0 to CB_DataObject.FCount - 1 do
+//      FDesktopHost.FileTransfer.Fetch(CB_DataObject.FUserName, CB_DataObject.FFiles[i].filePath, ACurExplorerDir);
   finally
     FCS.Release;
   end;
