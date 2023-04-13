@@ -323,7 +323,7 @@ begin
       reload := btnLocalReload else
       reload := btnRemoteReload;
     rr[i].taskID := TGUID.Empty;
-    TRtcPFileTransfer(myUI.Module).CancelBatch(task.Id);
+    TRtcPFileTransfer(myUI.Module).CancelBatch(Sender, task.Id);
     FTotalBytesTransfer := FTotalBytesTransfer - task.Size;
     FCurrentBytesTransfer := FCurrentBytesTransfer - task.SentSize;
   finally

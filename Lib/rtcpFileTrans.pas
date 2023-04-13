@@ -325,12 +325,12 @@ type
     FNotifyFileBatchSend: TNotifyFileBatchSend;
     procedure WriteIncomingFile(Sender: TObject;
       const UserName: String; const fn: TRtcFunctionInfo);
-    procedure FinishWriteTask(const fn: TRtcFunctionInfo);
-    procedure CancelWriteTask(const fn: TRtcFunctionInfo);
-    procedure FinishTask(const task: TBatchTask; status: TStatusBatchTask);
+    procedure FinishWriteTask(Sender: TObject; const fn: TRtcFunctionInfo);
+    procedure CancelWriteTask(Sender: TObject; const fn: TRtcFunctionInfo);
+    procedure FinishTask(Sender: TObject; const task: TBatchTask; status: TStatusBatchTask);
     procedure SendBatchTasks(Sender: TObject);
     procedure SendTaskError(Sender: TObject; const UserName, Msg: string; TaskID: TTaskID);
-    procedure CancelTaskByUser(const UserName: string);
+    procedure CancelTaskByUser(Sender: TObject; const UserName: string);
     procedure RequestBatchFetch(Sender: TObject; const UserName: String; const fn: TRtcFunctionInfo);
     //-MFT
 
@@ -465,7 +465,7 @@ type
 
   protected
     //+MFT
-    procedure InternalNotifyFileBatchSend(const task: TBatchTask; mode: TModeBatchSend); virtual;
+    procedure InternalNotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend); virtual;
     function SendBatch(const UserName: String; FileList: TStrings;
       const Root, RemoteFolder: String; WithID: TTaskID; Sender: TObject = nil): TTaskID; overload;
     //-MFT
@@ -526,7 +526,7 @@ type
     destructor Destroy; override;
 
     //+MFT
-    procedure CancelBatch(TaskID: TTaskID);
+    procedure CancelBatch(Sender: TObject; TaskID: TTaskID);
     function SendBatch(const UserName: String; FileList: TStrings;
       const Root, RemoteFolder: String; Sender: TObject = nil): TTaskID; overload;
     function FetchBatch(const UserName: String; FileList: TStrings;
@@ -1347,7 +1347,7 @@ begin
 
   //+MFT
   if (group = 'file') then
-    CancelTaskByUser(uname);
+    CancelTaskByUser(Sender, uname);
   //-MFT
 end;
 
@@ -1366,7 +1366,7 @@ begin
 
   //+MFT
   if (group = 'file') then
-    CancelTaskByUser(uname);
+    CancelTaskByUser(Sender, uname);
   //-MFT
 end;
 
@@ -1701,7 +1701,7 @@ begin
           fn.asInteger['file_index']  := Data.asInteger['file_index'];
           fn.asLargeInt['file_pos']   := 0 ;
           task.Status                 := sbtReceiving;
-          InternalNotifyFileBatchSend(task, mbsTaskStart);
+          InternalNotifyFileBatchSend(Sender, task, mbsTaskStart);
         except
           fn.Free;
           raise
@@ -1713,7 +1713,7 @@ begin
       begin
         if not FTaskList.FindTaskByName(Data.asText['task_id'], task) then exit;
         task.Status := sbtSending;
-        InternalNotifyFileBatchSend(task, mbsTaskStart);
+        InternalNotifyFileBatchSend(Sender, task, mbsTaskStart);
       end;
 
     BATCH_FUNC_TYPE_DATA:
@@ -1723,14 +1723,14 @@ begin
 
     BATCH_FUNC_TYPE_FINISH:
       begin
-        FinishWriteTask(Data);
+        FinishWriteTask(Sender, Data);
       end;
 
     BATCH_FUNC_TYPE_ERROR:
       begin
         if not FTaskList.FindTaskByName(Data.asText['task_id'], task) then exit;
         if task.Status = sbtReceiving then
-          CancelWriteTask(Data)
+          CancelWriteTask(Sender, Data)
         else if task.Status = sbtSending  then
           begin
               fn := TRtcFunctionInfo.Create;
@@ -1743,14 +1743,14 @@ begin
                 raise;
               end;
               task.ErrorString := Data.asText['message'];
-              InternalNotifyFileBatchSend(task, mbsTaskError);
-              FinishTask(task, sbtCanceled);
+              InternalNotifyFileBatchSend(Sender, task, mbsTaskError);
+              FinishTask(Sender, task, sbtCanceled);
           end;
       end;
 
     BATCH_FUNC_TYPE_CANCEL:
       begin
-        CancelWriteTask(Data);
+        CancelWriteTask(Sender, Data);
       end;
 
     BATCH_FUNC_TYPE_FETCH:
@@ -3302,7 +3302,7 @@ begin
 end;
 
 //+MFT
-procedure TRtcPFileTransfer.CancelBatch(TaskID: TTaskID);
+procedure TRtcPFileTransfer.CancelBatch(Sender: TObject; TaskID: TTaskID);
 var
   i: Integer;
   task: TBatchTask;
@@ -3316,7 +3316,7 @@ begin
       fn.FunctionName := BATCH_FUNC_NAME_CANCEL;
       fn.asText['task_id']         := task.Id.ToString;
       Client.SendToUser(Self, task.User, fn);
-      FinishTask(task, sbtCanceled);
+      FinishTask(Sender, task, sbtCanceled);
     except
       fn.Free;
       raise;
@@ -3324,7 +3324,7 @@ begin
 
 end;
 
-procedure TRtcPFileTransfer.CancelTaskByUser(const UserName: string);
+procedure TRtcPFileTransfer.CancelTaskByUser(Sender: TObject; const UserName: string);
 var
   i: Integer;
 begin
@@ -3333,7 +3333,7 @@ begin
     for i := FTaskList.Count-1 downto 0 do
       begin
         if FTaskList.Tasks[i].User = UserName then
-          FinishTask(FTaskList.Tasks[i], sbtCanceled);
+          FinishTask(Sender, FTaskList.Tasks[i], sbtCanceled);
       end;
   finally
     FTaskList.Unlock
@@ -3341,14 +3341,14 @@ begin
   FTaskList.Garbage
 end;
 
-procedure TRtcPFileTransfer.CancelWriteTask(const fn: TRtcFunctionInfo);
+procedure TRtcPFileTransfer.CancelWriteTask(Sender: TObject; const fn: TRtcFunctionInfo);
 var
   task: TBatchTask;
 begin
   if FTaskList.FindTaskByName(fn.asText['task_id'], task) then
     begin
-      FinishTask(task, sbtCanceled);
-      InternalNotifyFileBatchSend(task, mbsTaskFinished);
+      FinishTask(Sender, task, sbtCanceled);
+      InternalNotifyFileBatchSend(Sender, task, mbsTaskFinished);
       FTaskList.Garbage;
     end;
 end;
@@ -3388,7 +3388,7 @@ begin
 
 end;
 
-procedure TRtcPFileTransfer.FinishTask(const task: TBatchTask; status: TStatusBatchTask);
+procedure TRtcPFileTransfer.FinishTask(Sender: TObject; const task: TBatchTask; status: TStatusBatchTask);
 var
   i: Integer;
 begin
@@ -3404,19 +3404,19 @@ begin
 
 end;
 
-procedure TRtcPFileTransfer.FinishWriteTask(const fn: TRtcFunctionInfo);
+procedure TRtcPFileTransfer.FinishWriteTask(Sender: TObject; const fn: TRtcFunctionInfo);
 var
   task: TBatchTask;
 begin
   if FTaskList.FindTaskByName(fn.asText['task_id'], task) then
     begin
-      FinishTask(task, sbtFinished);
-      InternalNotifyFileBatchSend(task, mbsTaskFinished);
+      FinishTask(Sender, task, sbtFinished);
+      InternalNotifyFileBatchSend(Sender, task, mbsTaskFinished);
       FTaskList.Garbage;
     end;
 end;
 
-procedure TRtcPFileTransfer.InternalNotifyFileBatchSend(const task: TBatchTask;
+procedure TRtcPFileTransfer.InternalNotifyFileBatchSend(Sender: TObject; const task: TBatchTask;
   mode: TModeBatchSend);
 var
   UI: TRtcAbsPFileTransferUI;
@@ -3425,7 +3425,7 @@ begin
   UI := LockUI(task.FUser);
   if assigned(UI) then
     try
-      UI.NotifyFileBatchSend(Self, task, mode);
+      UI.NotifyFileBatchSend(Sender, task, mode);
     finally
       UnlockUI(UI);
     end;
@@ -3437,7 +3437,7 @@ begin
     begin
       task._AddRef;
       try
-        FNotifyFileBatchSend(Self, task, mode)
+        FNotifyFileBatchSend(Sender, task, mode)
       finally
         task._Relase;
       end;
@@ -3588,7 +3588,7 @@ begin
                   fn.asLargeInt['last_write_time']  := f.LastWriteTime;
                   fn.asInteger['attributes']        := f.attributes;
                   if not f.IsDirectory then
-                    InternalNotifyFileBatchSend(task, mbsFileStart);
+                    InternalNotifyFileBatchSend(Sender, task, mbsFileStart);
 
                 end;
             end;
@@ -3626,9 +3626,9 @@ begin
 
               f.file_pos := f.file_pos + dwRead;
               f.finished := f.file_pos = f.file_size;
-              InternalNotifyFileBatchSend(task, mbsFileData);
+              InternalNotifyFileBatchSend(Sender, task, mbsFileData);
               if f.finished then
-                InternalNotifyFileBatchSend(task, mbsFileStop);
+                InternalNotifyFileBatchSend(Sender, task, mbsFileStop);
             end;
 
           // send packet
@@ -3644,7 +3644,7 @@ begin
               if task.Current  = task.FileCount-1 then
                 begin
                   task.Status := sbtFinished;
-                  InternalNotifyFileBatchSend(task, mbsTaskFinished);
+                  InternalNotifyFileBatchSend(Sender, task, mbsTaskFinished);
                 end;
               task.Current := task.Current + 1;
             end;
@@ -3677,7 +3677,7 @@ begin
         try
           SendTaskError(Sender, task.User, E.Message, task.Id);
           task.ErrorString := E.Message;
-          InternalNotifyFileBatchSend(task, mbsTaskError);
+          InternalNotifyFileBatchSend(Sender, task, mbsTaskError);
         finally
           task._Relase;
         end;
@@ -3736,7 +3736,7 @@ begin
         begin
           //Event_FileWriteStart(Sender, UserName, f.file_path, task.LocalFolder, f.file_size);
           f.handle := FileCreate(f.file_path);
-          InternalNotifyFileBatchSend(task, mbsFileStart);
+          InternalNotifyFileBatchSend(Sender, task, mbsFileStart);
         end
       else
         begin
@@ -3781,7 +3781,7 @@ begin
       task.FSentSize := task.SentSize + dwWrite;
       if task.Size > 0 then
         task.FProgress := task.SentSize / task.Size ;
-      InternalNotifyFileBatchSend(task, mbsFileData);
+      InternalNotifyFileBatchSend(Sender, task, mbsFileData);
     end;
 
   if f.finished then
@@ -3795,7 +3795,7 @@ begin
       f.handle := 0;
       SetFileAttributes(PChar(f.file_path), f.attributes);
       if not f.IsDirectory then
-        InternalNotifyFileBatchSend(task, mbsFileStop);
+        InternalNotifyFileBatchSend(Sender, task, mbsFileStop);
     end;
   finally
     task.Unlock;
