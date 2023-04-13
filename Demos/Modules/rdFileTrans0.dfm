@@ -20,7 +20,7 @@ object rdFileTransfer: TrdFileTransfer
   PrintScale = poNone
   Scaled = False
   ShowHint = True
-  Visible = True
+  StyleElements = []
   OnActivate = FormActivate
   OnClose = FormClose
   OnCloseQuery = FormCloseQuery
@@ -29,7 +29,6 @@ object rdFileTransfer: TrdFileTransfer
   OnKeyDown = FormKeyDown
   OnResize = FormResize
   OnShow = FormShow
-  PixelsPerInch = 120
   TextHeight = 13
   object Splitter1: TSplitter
     Left = 0
@@ -60,7 +59,6 @@ object rdFileTransfer: TrdFileTransfer
     ParentFont = False
     TabOrder = 0
     StyleElements = []
-    ExplicitHeight = 419
     object Panel3: TPanel
       Left = 0
       Top = 52
@@ -82,13 +80,13 @@ object rdFileTransfer: TrdFileTransfer
       DesignSize = (
         520
         32)
-      object btnRemoteReload: TSpeedButton
-        Left = 492
+      object btnReload: TSpeedButton
+        Left = 489
         Top = 0
         Width = 28
-        Height = 32
+        Height = 28
         Hint = #1054#1073#1085#1086#1074#1080#1090#1100#13#10'Esc'
-        Align = alRight
+        Anchors = [akTop, akRight]
         Flat = True
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -124,9 +122,7 @@ object rdFileTransfer: TrdFileTransfer
           0397030303CA0404044200000000000000000000000000000015000000060000
           00000000000000000000}
         ParentFont = False
-        OnClick = btnRemoteReloadClick
-        ExplicitLeft = 489
-        ExplicitHeight = 28
+        OnClick = btnReloadClick
       end
       object btnViewStyle: TSpeedButton
         Left = 522
@@ -180,12 +176,11 @@ object rdFileTransfer: TrdFileTransfer
         OnClick = btnViewStyleClick
       end
       object b_hm: TSpeedButton
-        Left = 0
+        Left = 2
         Top = 0
         Width = 28
-        Height = 32
+        Height = 28
         Hint = #1053#1072' '#1074#1099#1073#1086#1088' '#1076#1080#1089#1082#1086#1074#13#10'Shift+Esc'
-        Align = alLeft
         Flat = True
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -229,16 +224,13 @@ object rdFileTransfer: TrdFileTransfer
           0000000000000000000000000000000000000000000000000000}
         ParentFont = False
         OnClick = b_hmClick
-        ExplicitLeft = 2
-        ExplicitHeight = 28
       end
-      object sbtnRemoteLevelUp: TSpeedButton
-        Left = 56
+      object b_up: TSpeedButton
+        Left = 29
         Top = 0
         Width = 28
-        Height = 32
+        Height = 28
         Hint = #1053#1072' '#1091#1088#1086#1074#1077#1085#1100' '#1074#1074#1077#1088#1093#13#10'BackSp'
-        Align = alLeft
         Flat = True
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -274,61 +266,15 @@ object rdFileTransfer: TrdFileTransfer
           0000000000000000000005050534050505330000000000000000000000000000
           00000000000000000000}
         ParentFont = False
-        OnClick = sbtnRemoteLevelUpClick
-        ExplicitLeft = 28
-        ExplicitTop = 2
+        OnClick = b_upClick
       end
-      object btnRemoteBack: TSpeedButton
-        Left = 28
-        Top = 0
-        Width = 28
-        Height = 32
-        Hint = #1053#1072' '#1091#1088#1086#1074#1077#1085#1100' '#1074#1074#1077#1088#1093#13#10'BackSp'
-        Align = alLeft
-        Flat = True
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Verdana'
-        Font.Style = []
-        Glyph.Data = {
-          9E020000424D9E0200000000000036000000280000000E0000000E0000000100
-          1800000000006802000000000000000000000000000000000000000000000000
-          0000000000000000000000000000000000000000000000000000000000000000
-          0000000000000000000000000000000000000000000404040303030606060000
-          0000000000000000000000000000000000000000000000000000000000000404
-          0403030304040400000000000000000000000000000000000000000000000000
-          0000000000000004040403030302020200000000000000000000000000000000
-          0000000000000000000000000000000005050503030302020200000000000000
-          0000000000000000000000000000000000000000000000000005050503030302
-          0202000000000000000000000000000000000000000000000000000000000000
-          0000050505030303030303030303030303030303030303030303030303030303
-          0303030303030303030303030000050505030303030303030303030303030303
-          0303030303030303030303030303030303030303030303030000000000050505
-          0303030202020000000000000000000000000000000000000000000000000000
-          0000000000000000000000000505050303030202020000000000000000000000
-          0000000000000000000000000000000000000000000000000000000404040303
-          0302020200000000000000000000000000000000000000000000000000000000
-          0000000000000000000004040403030304040400000000000000000000000000
-          0000000000000000000000000000000000000000000000000004040403030306
-          0606000000000000000000000000000000000000000000000000000000000000
-          0000000000000000000000000000000000000000000000000000000000000000
-          0000}
-        ParentFont = False
-        OnClick = btnRemoteBackClick
-        ExplicitLeft = 32
-      end
-      object edRemoteDir: TComboBoxEx
-        AlignWithMargins = True
-        Left = 84
-        Top = 4
-        Width = 408
+      object eDirectory: TComboBoxEx
+        Left = 60
+        Top = 3
+        Width = 429
         Height = 22
-        Margins.Left = 0
-        Margins.Top = 4
-        Margins.Right = 0
-        Align = alClient
         ItemsEx = <>
+        Anchors = [akLeft, akTop, akRight]
         Color = clWhite
         Constraints.MinHeight = 21
         Font.Charset = DEFAULT_CHARSET
@@ -340,12 +286,12 @@ object rdFileTransfer: TrdFileTransfer
         TabOrder = 0
         TabStop = False
         Text = 'C:\'
-        OnKeyPress = edRemoteDirKeyPress
-        OnSelect = edRemoteDirSelect
+        OnKeyPress = eDirectoryKeyPress
+        OnSelect = eDirectorySelect
         Images = ImageList2
       end
     end
-    object FilesRemote: TRtcPFileExplorer
+    object eFilesList: TRtcPFileExplorer
       Left = 0
       Top = 116
       Width = 520
@@ -359,29 +305,27 @@ object rdFileTransfer: TrdFileTransfer
       FlatScrollBars = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clBlack
-      Font.Height = -12
+      Font.Height = -9
       Font.Name = 'Verdana'
       Font.Style = []
       HideSelection = False
       MultiSelect = True
       ParentShowHint = False
-      ReadOnly = False
+      ReadOnly = True
       RowSelect = True
       ShowHint = True
       TabOrder = 3
       TabStop = True
       ViewStyle = vsReport
-      OnClick = FilesRemoteClick
-      OnDragDrop = FilesRemoteDragDrop
-      OnDragOver = FilesRemoteDragOver
-      OnEdited = FilesEdited
-      OnEditing = FilesEditing
-      OnEnter = FilesRemoteEnter
-      OnKeyDown = FilesRemoteKeyDown
-      OnKeyUp = FilesRemoteKeyUp
-      OnSelectItem = FilesRemoteSelectItem
-      OnDirectoryChange = FilesRemoteDirectoryChange
-      ExplicitHeight = 234
+      OnClick = eFilesListClick
+      OnDragDrop = eFilesListDragDrop
+      OnDragOver = eFilesListDragOver
+      OnEditing = eFilesListEditing
+      OnEnter = eFilesListEnter
+      OnKeyDown = eFilesListKeyDown
+      OnKeyUp = eFilesListKeyUp
+      OnSelectItem = eFilesListSelectItem
+      OnDirectoryChange = eFilesListDirectoryChange
     end
     object Panel5: TPanel
       Left = 0
@@ -405,7 +349,6 @@ object rdFileTransfer: TrdFileTransfer
       StyleElements = [seFont]
       OnDragDrop = DownLabelDragDrop
       OnDragOver = DownLabelDragOver
-      ExplicitTop = 350
       object pn: TPanel
         Left = 0
         Top = 0
@@ -480,7 +423,7 @@ object rdFileTransfer: TrdFileTransfer
       ParentFont = False
       TabOrder = 2
       StyleElements = []
-      object sbtnReceive: TSpeedButton
+      object b_rv: TSpeedButton
         Left = 437
         Top = 0
         Width = 83
@@ -545,7 +488,7 @@ object rdFileTransfer: TrdFileTransfer
         Layout = blGlyphRight
         ParentFont = False
         StyleElements = []
-        OnClick = sbtnReceiveClick
+        OnClick = b_rvClick
         ExplicitLeft = 434
         ExplicitTop = 2
         ExplicitHeight = 24
@@ -1081,6 +1024,22 @@ object rdFileTransfer: TrdFileTransfer
         Visible = False
         OnClick = b_ppClick
       end
+      object i_r: TImage
+        Left = 262
+        Top = 8
+        Width = 18
+        Height = 18
+        AutoSize = True
+        Visible = False
+      end
+      object i_l: TImage
+        Left = 240
+        Top = 8
+        Width = 18
+        Height = 18
+        AutoSize = True
+        Visible = False
+      end
       object Image_0: TImage
         Left = 466
         Top = 2
@@ -1414,14 +1373,11 @@ object rdFileTransfer: TrdFileTransfer
     ParentFont = False
     TabOrder = 1
     StyleElements = []
-    ExplicitWidth = 686
-    ExplicitHeight = 419
-    object FilesLocal: TRtcPFileExplorer
+    object eFilesList_: TRtcPFileExplorer
       Left = 0
       Top = 116
       Width = 690
       Height = 235
-      Margins.Top = 4
       SortColumn = 0
       SortDirection = sdAscending
       Local = True
@@ -1432,10 +1388,11 @@ object rdFileTransfer: TrdFileTransfer
       FlatScrollBars = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clBlack
-      Font.Height = -12
+      Font.Height = -9
       Font.Name = 'Verdana'
       Font.Style = []
       HideSelection = False
+      MultiSelect = True
       ParentShowHint = False
       ReadOnly = False
       RowSelect = True
@@ -1443,19 +1400,14 @@ object rdFileTransfer: TrdFileTransfer
       TabOrder = 3
       TabStop = True
       ViewStyle = vsReport
-      OnClick = FilesLocalClick
-      OnDragDrop = FilesLocalDragDrop
-      OnDragOver = FilesLocalDragOver
-      OnEdited = FilesEdited
-      OnEditing = FilesEditing
-      OnEnter = FilesLocalEnter
-      OnKeyDown = FilesLocalKeyDown
-      OnKeyUp = FilesLocalKeyUp
-      OnSelectItem = FilesLocalSelectItem
-      OnDirectoryChange = FilesLocalDirectoryChange
-      OnFileOpen = FilesLocalFileOpen
-      ExplicitWidth = 686
-      ExplicitHeight = 234
+      OnClick = eFilesList_Click
+      OnDragDrop = eFilesList_DragDrop
+      OnDragOver = eFilesList_DragOver
+      OnEnter = eFilesList_Enter
+      OnKeyDown = eFilesList_KeyDown
+      OnKeyUp = eFilesList_KeyUp
+      OnSelectItem = eFilesList_SelectItem
+      OnDirectoryChange = eFilesList_DirectoryChange
     end
     object Panel7: TPanel
       Left = 0
@@ -1479,8 +1431,6 @@ object rdFileTransfer: TrdFileTransfer
       StyleElements = [seFont]
       OnDragDrop = DownLabelDragDrop
       OnDragOver = DownLabelDragOver
-      ExplicitTop = 350
-      ExplicitWidth = 686
       object pn_: TPanel
         Left = 0
         Top = 0
@@ -1498,7 +1448,6 @@ object rdFileTransfer: TrdFileTransfer
         ParentFont = False
         TabOrder = 0
         StyleElements = [seFont]
-        ExplicitWidth = 684
         object Shape3: TShape
           Left = 0
           Top = 0
@@ -1530,8 +1479,7 @@ object rdFileTransfer: TrdFileTransfer
       ParentFont = False
       TabOrder = 2
       StyleElements = []
-      ExplicitWidth = 686
-      object sbtnSend: TSpeedButton
+      object b_rv2: TSpeedButton
         Left = 0
         Top = 0
         Width = 83
@@ -1595,7 +1543,7 @@ object rdFileTransfer: TrdFileTransfer
           00000000000000000000}
         ParentFont = False
         StyleElements = []
-        OnClick = sbtnSendClick
+        OnClick = b_rv2Click
         ExplicitLeft = 3
         ExplicitTop = 1
         ExplicitHeight = 24
@@ -1724,7 +1672,6 @@ object rdFileTransfer: TrdFileTransfer
       ParentFont = False
       TabOrder = 0
       StyleElements = []
-      ExplicitWidth = 686
       object Image2: TImage
         AlignWithMargins = True
         Left = 3
@@ -2413,17 +2360,16 @@ object rdFileTransfer: TrdFileTransfer
       ParentFont = False
       TabOrder = 1
       StyleElements = []
-      ExplicitWidth = 686
       DesignSize = (
         690
         32)
-      object btnLocalReload: TSpeedButton
-        Left = 662
+      object btnReload_: TSpeedButton
+        Left = 661
         Top = 0
         Width = 28
-        Height = 32
+        Height = 28
         Hint = #1054#1073#1085#1086#1074#1080#1090#1100#13#10'Esc'
-        Align = alRight
+        Anchors = [akTop, akRight]
         Flat = True
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -2459,12 +2405,10 @@ object rdFileTransfer: TrdFileTransfer
           0397030303CA0404044200000000000000000000000000000015000000060000
           00000000000000000000}
         ParentFont = False
-        OnClick = btnLocalReloadClick
-        ExplicitLeft = 661
-        ExplicitHeight = 28
+        OnClick = btnReload_Click
       end
       object SpeedButton2: TSpeedButton
-        Left = 696
+        Left = 700
         Top = 0
         Width = 27
         Height = 22
@@ -2519,9 +2463,8 @@ object rdFileTransfer: TrdFileTransfer
         Left = 0
         Top = 0
         Width = 28
-        Height = 32
+        Height = 28
         Hint = #1053#1072' '#1074#1099#1073#1086#1088' '#1076#1080#1089#1082#1086#1074#13#10'Shift+Esc'
-        Align = alLeft
         Flat = True
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -2565,15 +2508,13 @@ object rdFileTransfer: TrdFileTransfer
           0000000000000000000000000000000000000000000000000000}
         ParentFont = False
         OnClick = b_hm_Click
-        ExplicitHeight = 28
       end
-      object sbtnLocalLevelUp: TSpeedButton
-        Left = 56
+      object b_up_: TSpeedButton
+        Left = 28
         Top = 0
         Width = 28
-        Height = 32
+        Height = 28
         Hint = #1053#1072' '#1091#1088#1086#1074#1077#1085#1100' '#1074#1074#1077#1088#1093#13#10'BackSp'
-        Align = alLeft
         Flat = True
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -2609,61 +2550,15 @@ object rdFileTransfer: TrdFileTransfer
           0000000000000000000005050534050505330000000000000000000000000000
           00000000000000000000}
         ParentFont = False
-        OnClick = sbtnLocalLevelUpClick
-        ExplicitLeft = 28
-        ExplicitHeight = 28
+        OnClick = b_up_Click
       end
-      object btnLocalBack: TSpeedButton
-        Left = 28
-        Top = 0
-        Width = 28
-        Height = 32
-        Hint = #1053#1072' '#1091#1088#1086#1074#1077#1085#1100' '#1074#1074#1077#1088#1093#13#10'BackSp'
-        Align = alLeft
-        Flat = True
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Verdana'
-        Font.Style = []
-        Glyph.Data = {
-          9E020000424D9E0200000000000036000000280000000E0000000E0000000100
-          1800000000006802000000000000000000000000000000000000000000000000
-          0000000000000000000000000000000000000000000000000000000000000000
-          0000000000000000000000000000000000000000000404040303030606060000
-          0000000000000000000000000000000000000000000000000000000000000404
-          0403030304040400000000000000000000000000000000000000000000000000
-          0000000000000004040403030302020200000000000000000000000000000000
-          0000000000000000000000000000000005050503030302020200000000000000
-          0000000000000000000000000000000000000000000000000005050503030302
-          0202000000000000000000000000000000000000000000000000000000000000
-          0000050505030303030303030303030303030303030303030303030303030303
-          0303030303030303030303030000050505030303030303030303030303030303
-          0303030303030303030303030303030303030303030303030000000000050505
-          0303030202020000000000000000000000000000000000000000000000000000
-          0000000000000000000000000505050303030202020000000000000000000000
-          0000000000000000000000000000000000000000000000000000000404040303
-          0302020200000000000000000000000000000000000000000000000000000000
-          0000000000000000000004040403030304040400000000000000000000000000
-          0000000000000000000000000000000000000000000000000004040403030306
-          0606000000000000000000000000000000000000000000000000000000000000
-          0000000000000000000000000000000000000000000000000000000000000000
-          0000}
-        ParentFont = False
-        OnClick = btnRemoteBackClick
-        ExplicitLeft = 32
-      end
-      object edLocalDir: TComboBoxEx
-        AlignWithMargins = True
-        Left = 84
-        Top = 4
-        Width = 578
+      object eDirectory_: TComboBoxEx
+        Left = 60
+        Top = 3
+        Width = 599
         Height = 22
-        Margins.Left = 0
-        Margins.Top = 4
-        Margins.Right = 0
-        Align = alClient
         ItemsEx = <>
+        Anchors = [akLeft, akTop, akRight]
         Color = clWhite
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clBlack
@@ -2674,8 +2569,8 @@ object rdFileTransfer: TrdFileTransfer
         TabOrder = 0
         TabStop = False
         Text = 'C:\'
-        OnKeyPress = edLocalDirKeyPress
-        OnSelect = edLocalDirSelect
+        OnKeyPress = eDirectory_KeyPress
+        OnSelect = eDirectory_Select
         Images = ImageList2
       end
     end
@@ -2688,15 +2583,13 @@ object rdFileTransfer: TrdFileTransfer
     Panels = <>
     SimplePanel = True
     StyleElements = []
-    ExplicitTop = 581
-    ExplicitWidth = 1208
   end
-  object PageControlTasks: TPageControl
+  object pg: TPageControl
     Left = 0
     Top = 420
     Width = 1212
     Height = 137
-    ActivePage = tbFileTask
+    ActivePage = TabSheet2
     Align = alBottom
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -2708,9 +2601,7 @@ object rdFileTransfer: TrdFileTransfer
     TabOrder = 3
     TabStop = False
     StyleElements = [seFont]
-    ExplicitTop = 419
-    ExplicitWidth = 1208
-    object tbFileTask: TTabSheet
+    object TabSheet1: TTabSheet
       Caption = ' '#1054#1095#1077#1088#1077#1076#1100' '#1079#1072#1076#1072#1085#1080#1081' '
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -2739,7 +2630,6 @@ object rdFileTransfer: TrdFileTransfer
         ParentFont = False
         TabOrder = 0
         StyleElements = []
-        ExplicitWidth = 1200
         object Shape1: TShape
           Left = 0
           Top = 0
@@ -2749,7 +2639,7 @@ object rdFileTransfer: TrdFileTransfer
           Brush.Color = clBlack
           ExplicitWidth = 1060
         end
-        object lblNoTask: TLabel
+        object lb_no: TLabel
           Left = 478
           Top = 40
           Width = 252
@@ -2859,7 +2749,7 @@ object rdFileTransfer: TrdFileTransfer
         end
       end
     end
-    object tbFileLog: TTabSheet
+    object TabSheet2: TTabSheet
       Caption = ' '#1055#1088#1086#1089#1084#1086#1090#1088' '#1089#1086#1073#1099#1090#1080#1081' '
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -2902,8 +2792,6 @@ object rdFileTransfer: TrdFileTransfer
     Font.Style = []
     ParentFont = False
     TabOrder = 4
-    ExplicitTop = 556
-    ExplicitWidth = 1208
     object Label7: TLabel
       AlignWithMargins = True
       Left = 1019
@@ -3434,7 +3322,7 @@ object rdFileTransfer: TrdFileTransfer
     object MenuItem1: TMenuItem
       Caption = #1054#1073#1085#1086#1074#1080#1090#1100
       ShortCut = 116
-      OnClick = btnLocalReloadClick
+      OnClick = btnReload_Click
     end
     object MenuItem2: TMenuItem
       Caption = '-'

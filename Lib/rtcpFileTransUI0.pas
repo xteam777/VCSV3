@@ -440,8 +440,6 @@ end;
 
 procedure TRtcPFileTransferUI.Call_Read(Sender: TObject;
   const fname, fromfolder: String; size: int64);
-var
-  rec: TRtcAbsRecord;
 begin
   if fname = '' then
     raise Exception.Create('Folder undefined');
@@ -450,10 +448,7 @@ begin
   FSendFileName := fname;
   FSendFromFolder := fromfolder;
 
-  rec := FSendFolders.asRecord[fname];
-  if not Assigned(rec) then exit;
-
-  with rec  do
+  with FSendFolders.asRecord[fname] do
   begin
     asLargeInt['sent'] := asLargeInt['sent'] + size;
     FSendNow := asLargeInt['sent'];
@@ -466,14 +461,9 @@ end;
 
 procedure TRtcPFileTransferUI.Call_ReadStop(Sender: TObject;
   const fname, fromfolder: String; size: int64);
-var
-  rec: TRtcAbsRecord;
 begin
   if fname = '' then
     raise Exception.Create('Folder undefined');
-
-  rec := FSendFolders.asRecord[fname];
-  if not Assigned(rec) then exit;
 
   Dec(FSendFilesCnt);
 
@@ -482,18 +472,20 @@ begin
   FSendFileName := fname;
   FSendFromFolder := fromfolder;
 
+  FSendFolders.asRecord[fname].asInteger['cnt'] := FSendFolders.asRecord[fname]
+    .asInteger['cnt'] - 1;
 
-
-
-  rec.asInteger['cnt'] := rec.asInteger['cnt'] - 1;
-
-  if rec.asInteger['cnt'] = 0 then
+  if FSendFolders.asRecord[fname].asInteger['cnt'] = 0 then
   begin
-      rec.asLargeInt['sent'] := rec.asLargeInt['sent'] + size;
-      FSendNow := rec.asLargeInt['sent'];
-      FSendMax := rec.asLargeInt['sent'];
-      FSendSize := FSendSize + rec.asLargeInt['sent'] - rec.asLargeInt['size'];
-      FSendFolders.isNull[fname] := True;
+    with FSendFolders.asRecord[fname] do
+    begin
+      asLargeInt['sent'] := asLargeInt['sent'] + size;
+      FSendNow := asLargeInt['sent'];
+      FSendMax := asLargeInt['sent'];
+
+      FSendSize := FSendSize + asLargeInt['sent'] - asLargeInt['size'];
+    end;
+    FSendFolders.isNull[fname] := True;
   end;
 
   if assigned(FOnReadStop) then

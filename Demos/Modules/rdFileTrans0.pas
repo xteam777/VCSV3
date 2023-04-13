@@ -15,37 +15,14 @@ uses
 {$ENDIF}
 
   rtcSystem, rtcpFileExplore, rtcpFileTransUI, ShellAPI, Menus, AppEvnts, ImgList, Vcl.Samples.Gauges, System.ImageList,
-  rtcPortalMod, rtcpFileTrans, uVircessTypes, CommonUtils, rtcScrUtils, CommonData,
-
-
-  rtcpFileTransEx, FixFileExplorer;
-
-const
-  WM_SAFE_DELETE_OBJECT  = WM_USER + 1;
-  DELAY_CLICK_SEND_FETCH = 500;
+  rtcPortalMod, rtcpFileTrans, uVircessTypes, CommonUtils, rtcScrUtils, CommonData, SyncObjs;
 
 type
-
-  TListViewInfo = record
-    cnt: Integer;
-    index: Integer;
-    vert_scroll_pos: Integer;
-  end;
-
-  TRecentPathList = class (TStringList)
-  private
-    FDoubleRet: Boolean;
-  public
-    procedure Push(const s: string);
-    function Pop(): string; overload; inline;
-    function Pop(out s: string): Boolean; overload;
-  end;
-
   TrdFileTransfer = class(TForm)
     Panel: TPanel;
     Panel3: TPanel;
-    FilesRemote: TRtcPFileExplorer;
-    btnRemoteReload: TSpeedButton;
+    eFilesList: TRtcPFileExplorer;
+    btnReload: TSpeedButton;
     Panel5: TPanel;
     btnViewStyle: TSpeedButton;
     pmFiles: TPopupMenu;
@@ -61,15 +38,15 @@ type
     tr: TTimer;
     ImageList1: TImageList;
     Panel_: TPanel;
-    FilesLocal: TRtcPFileExplorer;
+    eFilesList_: TRtcPFileExplorer;
     Panel7: TPanel;
     pn_: TPanel;
     sb: TStatusBar;
     Splitter1: TSplitter;
     Panel_0: TPanel;
     Panel_1: TPanel;
-    sbtnReceive: TSpeedButton;
-    sbtnSend: TSpeedButton;
+    b_rv: TSpeedButton;
+    b_rv2: TSpeedButton;
     Panel11: TPanel;
     Image1: TImage;
     lRemoteName: TLabel;
@@ -79,18 +56,18 @@ type
     lLocalName: TLabel;
     Label4: TLabel;
     b_hm: TSpeedButton;
-    sbtnRemoteLevelUp: TSpeedButton;
+    b_up: TSpeedButton;
     Panel6: TPanel;
-    btnLocalReload: TSpeedButton;
+    btnReload_: TSpeedButton;
     SpeedButton2: TSpeedButton;
     b_hm_: TSpeedButton;
-    sbtnLocalLevelUp: TSpeedButton;
+    b_up_: TSpeedButton;
     Shape2: TShape;
     Shape3: TShape;
     Timer1: TTimer;
     ImageList2: TImageList;
-    edRemoteDir: TComboBoxEx;
-    edLocalDir: TComboBoxEx;
+    eDirectory: TComboBoxEx;
+    eDirectory_: TComboBoxEx;
     Shape4: TShape;
     Shape5: TShape;
     N3: TMenuItem;
@@ -100,6 +77,8 @@ type
     b_pp: TSpeedButton;
     b_dr_: TSpeedButton;
     b_dl2: TSpeedButton;
+    i_r: TImage;
+    i_l: TImage;
     pop: TPopupMenu;
     J1: TMenuItem;
     N4: TMenuItem;
@@ -116,12 +95,12 @@ type
     MenuItem10: TMenuItem;
     Image_0: TImage;
     Image_1: TImage;
-    PageControlTasks: TPageControl;
-    tbFileTask: TTabSheet;
-    tbFileLog: TTabSheet;
+    pg: TPageControl;
+    TabSheet1: TTabSheet;
+    TabSheet2: TTabSheet;
     pp: TScrollBox;
     Shape1: TShape;
-    lblNoTask: TLabel;
+    lb_no: TLabel;
     p_0: TPanel;
     gTotal: TGauge;
     Label5: TLabel;
@@ -134,11 +113,9 @@ type
     tr_dy: TTimer;
     al_b: TLabel;
     myUI: TRtcPFileTransferUI;
-    btnRemoteBack: TSpeedButton;
-    btnLocalBack: TSpeedButton;
     procedure FormCreate(Sender: TObject);
-    procedure FilesRemoteDirectoryChange(Sender: TObject; const FileName: String);
-    procedure btnRemoteReloadClick(Sender: TObject);
+    procedure eFilesListDirectoryChange(Sender: TObject; const FileName: String);
+    procedure btnReloadClick(Sender: TObject);
     procedure btnViewStyleClick(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -146,61 +123,61 @@ type
     procedure DownLabelDragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
     procedure DownLabelDragDrop(Sender, Source: TObject; X, Y: Integer);
-    procedure FilesRemoteDragOver(Sender, Source: TObject; X, Y: Integer;
+    procedure eFilesListDragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
     procedure mnRefreshClick(Sender: TObject);
     procedure mnNewFolderClick(Sender: TObject);
-    procedure FilesEditing(Sender: TObject; Item: TListItem;
+    procedure eFilesListEditing(Sender: TObject; Item: TListItem;
       var AllowEdit: Boolean);
     procedure mnDeleteClick(Sender: TObject);
-    procedure FilesRemoteSelectItem(Sender: TObject; Item: TListItem;
+    procedure eFilesListSelectItem(Sender: TObject; Item: TListItem;
       Selected: Boolean);
-    procedure FilesRemoteDragDrop(Sender, Source: TObject; X, Y: Integer);
+    procedure eFilesListDragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure P1Click(Sender: TObject);
-    procedure FilesRemoteKeyDown(Sender: TObject; var Key: Word;
+    procedure eFilesListKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
     procedure tiClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormResize(Sender: TObject);
-    procedure sbtnReceiveClick(Sender: TObject);
-    procedure sbtnSendClick(Sender: TObject);
+    procedure b_rvClick(Sender: TObject);
+    procedure b_rv2Click(Sender: TObject);
     procedure SpeedButton10Click(Sender: TObject);
-    procedure btnLocalReloadClick(Sender: TObject);
-    procedure FilesLocalDirectoryChange(Sender: TObject;
+    procedure btnReload_Click(Sender: TObject);
+    procedure eFilesList_DirectoryChange(Sender: TObject;
       const FileName: string);
     procedure Label6MouseEnter(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
     procedure FormActivate(Sender: TObject);
-    procedure edRemoteDirSelect(Sender: TObject);
-    procedure edRemoteDirKeyPress(Sender: TObject; var Key: Char);
-    procedure edLocalDirKeyPress(Sender: TObject; var Key: Char);
-    procedure edLocalDirSelect(Sender: TObject);
-    procedure FilesLocalSelectItem(Sender: TObject; Item: TListItem;
+    procedure eDirectorySelect(Sender: TObject);
+    procedure eDirectoryKeyPress(Sender: TObject; var Key: Char);
+    procedure eDirectory_KeyPress(Sender: TObject; var Key: Char);
+    procedure eDirectory_Select(Sender: TObject);
+    procedure eFilesList_SelectItem(Sender: TObject; Item: TListItem;
       Selected: Boolean);
-    procedure sbtnLocalLevelUpClick(Sender: TObject);
+    procedure b_up_Click(Sender: TObject);
     procedure b_hmClick(Sender: TObject);
     procedure b_hm_Click(Sender: TObject);
-    procedure FilesLocalKeyDown(Sender: TObject; var Key: Word;
+    procedure eFilesList_KeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
     procedure b_dlClick(Sender: TObject);
-    procedure FilesRemoteEnter(Sender: TObject);
-    procedure FilesLocalEnter(Sender: TObject);
+    procedure eFilesListEnter(Sender: TObject);
+    procedure eFilesList_Enter(Sender: TObject);
     procedure b_dl2Click(Sender: TObject);
     procedure N3Click(Sender: TObject);
     procedure P2Click(Sender: TObject);
     procedure Label4Click(Sender: TObject);
     procedure b_ppClick(Sender: TObject);
     procedure Image1Click(Sender: TObject);
-    procedure FilesRemoteClick(Sender: TObject);
-    procedure FilesRemoteKeyUp(Sender: TObject; var Key: Word;
+    procedure eFilesListClick(Sender: TObject);
+    procedure eFilesListKeyUp(Sender: TObject; var Key: Word;
       Shift: TShiftState);
-    procedure FilesLocalKeyUp(Sender: TObject; var Key: Word;
+    procedure eFilesList_KeyUp(Sender: TObject; var Key: Word;
       Shift: TShiftState);
-    procedure FilesLocalClick(Sender: TObject);
+    procedure eFilesList_Click(Sender: TObject);
     procedure b_dr_Click(Sender: TObject);
-    procedure FilesLocalDragOver(Sender, Source: TObject; X, Y: Integer;
+    procedure eFilesList_DragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
-    procedure FilesLocalDragDrop(Sender, Source: TObject; X, Y: Integer);
+    procedure eFilesList_DragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure Splitter1Moved(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure Label7Click(Sender: TObject);
@@ -219,21 +196,14 @@ type
     procedure myUIFileList(Sender: TRtcPFileTransferUI);
     procedure myUISendCancel(Sender: TRtcPFileTransferUI);
     procedure myUIRecvCancel(Sender: TRtcPFileTransferUI);
-    procedure sbtnRemoteLevelUpClick(Sender: TObject);
-    procedure FilesLocalFileOpen(Sender: TObject; const FileName: string);
-    procedure FilesEdited(Sender: TObject; Item: TListItem;
-      var S: string);
-    procedure btnRemoteBackClick(Sender: TObject);
+    procedure b_upClick(Sender: TObject);
+
   private
     FReady: Boolean;
     FOnUIOpen: TUIOpenEvent;
     FOnUIClose: TUICloseEvent;
-    FBmpL, FBmpR: TBitmap;
-    FTotalBytesTransfer, FCurrentBytesTransfer: Int64;
-    FDelayClickSendFetch: Integer;
 
     FBeforeClose: TNotifyEvent;
-    FRemoteRecent, FLocalRecent: TRecentPathList;
 //    function GetUI: TRtcPFileTransferUI;
 //    procedure SetUI(const Value: TRtcPFileTransferUI);
     function send_f(myFile,d: string): Integer;
@@ -242,6 +212,7 @@ type
       g: TGauge): Integer;
     function fnd_rec(pn_: TPanel; all:boolean=False): integer;
     function next_rec(p: integer): integer;
+    function rename_file(item: TListItem; new_name: string): Boolean;
     function wrong_caption(s: string): Integer;
     function info2pn(lv: TRtcPFileExplorer): Int64;
     procedure check_task;
@@ -263,39 +234,23 @@ type
     procedure Form_Close(const mode:string);
     procedure SetCaption;
 
-
   protected
 
     procedure AcceptFiles(var msg : TMessage); message WM_DROPFILES;
     procedure CreateParams(var params: TCreateParams); override;
     procedure ChangeLockedState(var Message: TMessage); message WM_CHANGE_LOCKED_STATUS;
 
-    // new methods
-    // private
-    procedure WmSafeDeleteObject(var Message: TMessage); message WM_SAFE_DELETE_OBJECT;
-    procedure SafeDeleteObject(const [ref] Obj: TObject);
-    procedure RenameFileExplorer(Files: TRtcPFileExplorer; Item: TListItem; const NewName: string);
-
-    // published
-    procedure sbtnSendBatchClick(Sender: TObject);
-    procedure sbtnFetchBatchClick(Sender: TObject);
-    procedure CancelBatchClick(Sender: TObject);
-    procedure OnSendBatch(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend) ;
-    procedure FilesReload(Sender: TObject;  Files: TRtcPFileExplorer);
-
-    function SaveScroolListView(lv: TRtcPFileExplorer): TListViewInfo;
-    procedure RestoreScroolListView(lv: TRtcPFileExplorer; const info: TListViewInfo);
   public
     UIVisible: Boolean;
     PartnerLockedState: Integer;
     PartnerServiceStarted: Boolean;
 
-    property UI:TRtcPFileTransferUI read myUI;
-
     procedure SetFormState;
 
     property OnUIOpen: TUIOpenEvent read FOnUIOpen write FOnUIOpen;
     property OnUIClose: TUICloseEvent read FOnUIClose write FOnUIClose;
+
+    property UI:TRtcPFileTransferUI read MyUI;
     property BeforeClose:TNotifyEvent read FBeforeClose write FBeforeClose;
   end;
 
@@ -307,14 +262,10 @@ type
     pn:TPanel;
     g_:TGauge;
     lb:TLabel;
-
-    taskID: TTaskID;
-    direction: TStatusBatchTask;
   end;
-  TArrayOfTRec = array of TRec;
 
 var
-  curr_g: TGauge = nil;  cur_files:TStringList; rr: TArrayOfTRec;
+  curr_g: TGauge = nil;  cur_files:TStringList; rr: array of TRec;
   stopped: boolean = True; KEY_BACK: boolean = False;
   Timer1_cn: integer = 0;
   foc_: string;
@@ -325,43 +276,8 @@ var
   send_bytes:int64=0;
 
 implementation
-uses
-  Winapi.ShlObj, ComObj, MultiFileTrans;
-
-
 
 {$R *.dfm}
-
-procedure TrdFileTransfer.CancelBatchClick(Sender: TObject);
-var
-  i: Integer;
-  p:TPanel;
-  task: TBatchTask;
-  reload: TSpeedButton;
-begin
-
-  p := TPanel(TSpeedButton(Sender).Parent);
-  i := rec_finished(p, true);
-  if i = -1 then exit;
-  task := TRtcPFileTransfer(myUI.Module).TaskList.GetTaskByName(rr[i].taskID.ToString);
-  task._AddRef;
-  try
-    if rr[i].direction = sbtReceiving then
-      reload := btnLocalReload else
-      reload := btnRemoteReload;
-    rr[i].taskID := TGUID.Empty;
-
-    TRtcPFileTransfer(myUI.Module).CancelBatch(task.Id);
-    FTotalBytesTransfer := FTotalBytesTransfer - task.Size;
-    FCurrentBytesTransfer := FCurrentBytesTransfer - task.SentSize;
-  finally
-    task._Relase
-  end;
-  reload.Click;
-  clear_deleted;
-  lblNoTask.Visible := Length(rr) = 0;
-
-end;
 
 procedure TrdFileTransfer.ChangeLockedState(var Message: TMessage);
 begin
@@ -445,7 +361,7 @@ procedure TrdFileTransfer.AcceptFiles( var msg : TMessage );
       if assigned(myUI.Module) then
         begin
         myFileName:=acFileName;
-        myUI.Send(myFileName, edRemoteDir.Text);
+        myUI.Send(myFileName,eDirectory.Text);
         end;
       end;
   finally
@@ -454,25 +370,14 @@ procedure TrdFileTransfer.AcceptFiles( var msg : TMessage );
     end;
   end;
 
-
 procedure TrdFileTransfer.FormCreate(Sender: TObject);
 begin
-
   Application.HintHidePause := 10000;
   cur_files := TStringList.Create;
-
-  FBmpL := TBitmap.Create;
-  FBmpR := TBitmap.Create;
-  FBmpL.Assign(sbtnSend.Glyph);
-  FBmpR.Assign(sbtnReceive.Glyph);
-  FRemoteRecent := TRecentPathList.Create;
-  FLocalRecent  := TRecentPathList.Create;
 
   b_ppClick(nil);
 
   DragAcceptFiles(Handle, True);
-
-
 end;
 
 {function TrdFileTransfer.GetUI: TRtcPFileTransferUI;
@@ -540,48 +445,41 @@ end;
 
 procedure TrdFileTransfer.myUIFileList(Sender: TRtcPFileTransferUI);
 var
-  tempItem: TListItem;
+  l: TListItem;
   s: string;
   i: integer;
   r: TRTChugestring;
-  Index, Count: Integer;
-  info: TListViewInfo;
 begin
-  info := SaveScroolListView(FilesRemote);
-//  if FilesRemote.SelectedCount = 1 then
-//    begin
-//      Index := FilesRemote.ItemIndex;
-//      Count := FilesRemote.Items.Count;
-//    end
-//  else
-//    Count := -1;
-
    b_dl.Enabled:= False;
-   sbtnReceive.Enabled:= False;
+   b_rv.Enabled:= False;
 
-   edRemoteDir.Text:=Sender.FolderName;
-   FilesRemote.UpdateFileList(Sender.FolderName,Sender.FolderData);
+   eDirectory.Text:=Sender.FolderName;
+   eFilesList.UpdateFileList(Sender.FolderName,Sender.FolderData);
 
-   FilesRemote.ClearSelection;
+   eFilesList.ClearSelection;
 
-   tempItem := nil;
    if KEY_BACK and (foc_<>'') then
-    tempItem := FilesRemote.FindCaption(0, foc_, False, False, False);
-   if tempItem <> nil then
-     FilesRemote.ItemIndex := tempItem.Index
-     else
-     RestoreScroolListView(FilesRemote, Info);
-//   else if FilesRemote.Items.Count = Count  then
-//     FilesRemote.ItemIndex := Index
-//   else if FilesRemote.Items.Count > 0 then
-//     FilesRemote.ItemIndex := 0;
+   try
+   l:= eFilesList.FindCaption(0,foc_,False,False,False);
+   if l<>nil then
+   begin
+    if eFilesList.Items.Count > 0 then
+      eFilesList.Selected := l;
+   end
+   except
+   end
+   else
+   begin
+    if eFilesList.Items.Count > 0 then
+      eFilesList.Selected := eFilesList.Items[0];
+   end;
 
-
-   if FilesRemote.ItemFocused <> nil then
-    FilesRemote.ItemFocused.MakeVisible(False);
+   eFilesList.ItemFocused := eFilesList.Selected;
+   if eFilesList.ItemFocused <> nil then
+    eFilesList.ItemFocused.MakeVisible(False);
 
    KEY_BACK:= False; foc_:='';
-   FilesRemoteClick(nil);
+   eFilesListClick(nil);
 end;
 
 procedure TrdFileTransfer.myUIInit(Sender: TRtcPFileTransferUI);
@@ -598,9 +496,6 @@ procedure TrdFileTransfer.myUIOpen(Sender: TRtcPFileTransferUI);
   var
     fIsPending: Boolean;
 begin
-
-  fIsPending := true;
-
   if Assigned(FOnUIOpen) then
     FOnUIOpen(myUI.UserName, 'file', fIsPending);
 
@@ -626,69 +521,48 @@ begin
   myUI.GetFileList('',''); // load remote drives list to initialize
 end;
 
-procedure TrdFileTransfer.FilesLocalDirectoryChange(Sender: TObject;
+procedure TrdFileTransfer.eFilesList_DirectoryChange(Sender: TObject;
   const FileName: string);
 begin
-  FLocalRecent.Push(FileName);
-  edLocalDir.Text:= FileName;
+  eDirectory_.Text:= FileName;
   if not load_first then
-     FilesLocalClick(nil);
+     eFilesList_Click(nil);
 end;
 
-procedure TrdFileTransfer.FilesRemoteDirectoryChange(Sender: TObject; const FileName: String);
-begin
-  FRemoteRecent.Push(FileName);
+procedure TrdFileTransfer.eFilesListDirectoryChange(Sender: TObject; const FileName: String);
+  begin
   if assigned(myUI) then
     myUI.GetFileList(FileName,'');
 
   if not load_first then
-    FilesRemoteClick(nil);
+     eFilesListClick(nil);
 
-end;
+  end;
 
-procedure TrdFileTransfer.btnRemoteBackClick(Sender: TObject);
-begin
-  if Sender = btnRemoteBack then
-    begin
-      edRemoteDir.Text := FRemoteRecent.Pop;
-      btnRemoteReloadClick(nil);
-    end
-  else
-    begin
-      edLocalDir.Text := FLocalRecent.Pop;
-      btnLocalReloadClick(nil);
-    end;
-end;
-
-procedure TrdFileTransfer.btnRemoteReloadClick(Sender: TObject);
-begin
-  FilesReload(Sender, FilesRemote);
-  exit;
-
+procedure TrdFileTransfer.btnReloadClick(Sender: TObject);
+  begin
   try
 
   if assigned(myUI) then
-    myUI.GetFileList(edRemoteDir.Text, extractfilename(edRemoteDir.Text));
+    myUI.GetFileList(eDirectory.Text, extractfilename(eDirectory.Text));
 
-    FilesRemote.ItemFocused:=  FilesRemote.Items[0];
-    FilesRemote.Selected:=     FilesRemote.Items[0];
-    FilesRemote.SetFocus;
-    SetCaption;
+    eFilesList.ItemFocused:=  eFilesList.Items[0];
+    eFilesList.Selected:=     eFilesList.Items[0];
+    eFilesList.SetFocus;
     except
     end;
-
-end;
+  end;
 
 procedure TrdFileTransfer.btnViewStyleClick(Sender: TObject);
   begin
-  FilesRemote.RefreshColumns;
-  case FilesRemote.ViewStyle of
-    vsIcon: FilesRemote.ViewStyle:=vsSmallIcon;
-    vsSmallIcon: FilesRemote.ViewStyle:=vsList;
-    vsList: FilesRemote.ViewStyle:=vsReport;
-    else FilesRemote.ViewStyle:=vsIcon;
+  eFilesList.RefreshColumns;
+  case eFilesList.ViewStyle of
+    vsIcon: eFilesList.ViewStyle:=vsSmallIcon;
+    vsSmallIcon: eFilesList.ViewStyle:=vsList;
+    vsList: eFilesList.ViewStyle:=vsReport;
+    else eFilesList.ViewStyle:=vsIcon;
     end;
-  FilesRemote.RefreshColumns;
+  eFilesList.RefreshColumns;
   end;
 
 procedure TrdFileTransfer.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -699,23 +573,13 @@ procedure TrdFileTransfer.FormCloseQuery(Sender: TObject; var CanClose: Boolean)
   end;
 
 procedure TrdFileTransfer.FormDestroy(Sender: TObject);
-var
-  I: Integer;
-begin
+  begin
   DragAcceptFiles(Handle, False);
-  cur_files.Free;
-  cur_files := nil;
-  FBmpR.Free;
-  FBmpL.Free;
-  for I := 0 to Length(rr)-1 do
-    rr[i].sel_files.Free;
-  FRemoteRecent.Free;
-  FLocalRecent.Free;
-end;
+  end;
 
 procedure TrdFileTransfer.DownLabelDragOver(Sender, Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
   begin
-  Accept:=(Source=FilesRemote) and (FilesRemote.Directory<>'');
+  Accept:=(Source=eFilesList) and (eFilesList.Directory<>'');
   end;
 
 procedure TrdFileTransfer.DownLabelDragDrop(Sender, Source: TObject; X, Y: Integer);
@@ -725,7 +589,7 @@ procedure TrdFileTransfer.DownLabelDragDrop(Sender, Source: TObject; X, Y: Integ
   begin
   if assigned(myUI) then
     begin
-    myFiles:=FilesRemote.SelectedFiles;
+    myFiles:=eFilesList.SelectedFiles;
     if myFiles.Count>0 then
       for a:=0 to myFiles.Count-1 do
         myUI.Fetch(myFiles.Strings[a]);
@@ -734,48 +598,31 @@ procedure TrdFileTransfer.DownLabelDragDrop(Sender, Source: TObject; X, Y: Integ
 
 procedure TrdFileTransfer.mnRefreshClick(Sender: TObject);
   begin
-  btnRemoteReloadClick(Sender);
+  btnReloadClick(Sender);
   end;
 
-procedure TrdFileTransfer.SafeDeleteObject(const [ref] Obj: TObject);
-begin
-  PostMessage(Handle, WM_SAFE_DELETE_OBJECT, 0, LPARAM(Obj));
-  TObject(Pointer(@Obj)^) := nil;
-end;
-
-function TrdFileTransfer.SaveScroolListView(
-  lv: TRtcPFileExplorer): TListViewInfo;
+function TrdFileTransfer.rename_file(item:TListItem; new_name:string): Boolean;
 var
-  scroll_info: TScrollInfo;
-begin
-  scroll_info.cbSize := SizeOf(scroll_info);
-  scroll_info.fMask := SIF_ALL;
-  GetScrollInfo(lv.Handle, SB_VERT, scroll_info);
+    dir, newS:String;
+  begin
+  if assigned(myUI) then
+    begin
 
+    dir:=eFilesList.GetFileName(Item);
+    if (dir<>'') and (dir<>'..') then
+      begin
+      eFilesList.SetFileName(Item,new_name);
+      newS:=ExtractFilePath(dir)+new_name;
+      myUI.Cmd_FileRename(dir, newS);
 
-  Result.index := lv.ItemIndex;
-  Result.cnt   := lv.Items.Count;
-  Result.vert_scroll_pos := scroll_info.nPos;
+      end;
+    end;
+  end;
 
-end;
-
-procedure TrdFileTransfer.WmSafeDeleteObject(var Message: TMessage);
-begin
-  TObject(Message.LParam).Free;
-end;
-
-procedure TrdFileTransfer.FilesEdited(Sender: TObject; Item: TListItem;
-  var S: string);
-begin
-  RenameFileExplorer(TRtcPFileExplorer(Sender), Item, S);
-end;
-
-procedure TrdFileTransfer.FilesEditing(Sender: TObject; Item: TListItem; var AllowEdit: Boolean);
-begin
-  AllowEdit := Assigned(myUI) and
-               (TRtcPFileExplorer(Sender).Directory<>'') and
-               (Item.Caption<>'..');
-end;
+procedure TrdFileTransfer.eFilesListEditing(Sender: TObject; Item: TListItem; var AllowEdit: Boolean);
+  begin
+  AllowEdit:=assigned(myUI) and (eFilesList.Directory<>'') and (Item.Caption<>'..');
+  end;
 
 procedure TrdFileTransfer.mnDeleteClick(Sender: TObject);
 label 1;
@@ -786,7 +633,7 @@ var
   begin
   if assigned(myUI) then
     begin
-    myFiles:=FilesRemote.SelectedFiles;
+    myFiles:=eFilesList.SelectedFiles;
     if myFiles.Count>0 then
       begin
       s:='Подтвердите удаление выделенный файлов / каталогов.';
@@ -802,7 +649,7 @@ var
         begin
           myUI.Cmd_FileDelete(myFiles.Strings[a]);
         end;
-        myUI.GetFileList(FilesRemote.Directory,'');
+        myUI.GetFileList(eFilesList.Directory,'');
         end;
       end;
     end;
@@ -843,14 +690,14 @@ begin
        begin
          buffer[0] := #0;
          DragQueryFile( f, i, buffer, sizeof(buffer)) ;
-         send_f(strpas(buffer), edRemoteDir.Text);
+         send_f(strpas(buffer), eDirectory.Text);
        end;
      end;
    finally
      Clipboard.close;
    end;
 
-   if numfiles>0 then begin delay(1000); btnRemoteReloadClick(Sender) end;
+   if numfiles>0 then begin delay(1000); btnReloadClick(Sender) end;
 
 end;
 
@@ -887,18 +734,18 @@ begin
  if key = 27 then
  if shift=[ssshift] then
    begin
-     if (activecontrol=FilesRemote )and(b_hm. Enabled)   then b_hm. click else
-     if (activecontrol=FilesLocal)and(b_hm_.Enabled)   then b_hm_.click
+     if (activecontrol=eFilesList )and(b_hm. Enabled)   then b_hm. click else
+     if (activecontrol=eFilesList_)and(b_hm_.Enabled)   then b_hm_.click
    end else
    begin
-     if (activecontrol=FilesRemote) and(btnRemoteReload.Enabled)  then btnRemoteReload.click else
-     if (activecontrol=FilesLocal)and(btnLocalReload.Enabled) then btnLocalReload.click
+     if (activecontrol=eFilesList) and(btnReload.Enabled)  then btnReload.click else
+     if (activecontrol=eFilesList_)and(btnReload_.Enabled) then btnReload_.click
    end;
 
  if key = VK_F1 then
    begin
-     if (activecontrol=FilesRemote )and(sbtnReceive.Enabled)   then sbtnReceive.click else
-     if (activecontrol=FilesLocal)and(sbtnSend.Enabled)  then sbtnSend.click
+     if (activecontrol=eFilesList )and(b_rv.Enabled)   then b_rv.click else
+     if (activecontrol=eFilesList_)and(b_rv2.Enabled)  then b_rv2.click
    end;
 
 // if (key=ord('Q')) and (shift=[ssCtrl]) then
@@ -1040,25 +887,25 @@ begin
    end;
  end;
 
- sendmessage(pp.Handle, WM_HSCROLL, SB_RIGHT, 0);
-
+  SendMessage(pp.Handle, WM_HSCROLL, SB_RIGHT, 0);
 end;
 
 procedure TrdFileTransfer.Timer1Timer(Sender: TObject);
-var pn:TPanel;
+var
+  pn: TPanel;
 begin
-try
-  pn:= TPanel(longint(Timer1.Tag));
-  inc(Timer1_cn);
-  if Timer1_cn > 10 then
-  begin
-     pn.AlignWithMargins:= True;
-     Timer1.Enabled:=      False
-  end else
-          pn.AlignWithMargins:= not pn.AlignWithMargins;
-except
-
-end;
+  try
+    pn := TPanel(LongInt(Timer1.Tag));
+    Inc(Timer1_cn);
+    if Timer1_cn > 10 then
+    begin
+      pn.AlignWithMargins := True;
+      Timer1.Enabled := False
+    end
+    else
+      pn.AlignWithMargins := not pn.AlignWithMargins;
+  except
+  end;
 end;
 
 function TrdFileTransfer.next_rec(p:integer):integer;
@@ -1105,14 +952,14 @@ begin
       str_size(send_bytes,False,False)+' ['+str_size(send_bytes)+']';
 end;
 
-procedure TrdFileTransfer.sbtnRemoteLevelUpClick(Sender: TObject);
+procedure TrdFileTransfer.b_upClick(Sender: TObject);
 begin
-  FilesRemote.OneLevelUp;
+  eFilesList.OneLevelUp;
 end;
 
-procedure TrdFileTransfer.sbtnLocalLevelUpClick(Sender: TObject);
+procedure TrdFileTransfer.b_up_Click(Sender: TObject);
 begin
-  FilesLocal.OneLevelUp;
+  eFilesList_.OneLevelUp;
 end;
 
 function TrdFileTransfer.add_rc(send:boolean; to_dir:string; ff:TStringList; g:TGauge): Integer;
@@ -1142,7 +989,6 @@ begin
 
   end;
 end;
-
 
 function not_finished(): integer;
 var i: integer;
@@ -1175,12 +1021,12 @@ begin
     n_s:= extractfilename(src);
     if not sd then
     begin
-      l_1:= FilesRemote. FindCaption(0,n_s,False,False,False);
-      l_2:= FilesLocal.FindCaption(0,n_s,False,False,False);
+      l_1:= eFilesList. FindCaption(0,n_s,False,False,False);
+      l_2:= eFilesList_.FindCaption(0,n_s,False,False,False);
     end else
     begin
-      l_1:= FilesLocal.FindCaption(0,n_s,False,False,False);
-      l_2:= FilesRemote. FindCaption(0,n_s,False,False,False);
+      l_1:= eFilesList_.FindCaption(0,n_s,False,False,False);
+      l_2:= eFilesList. FindCaption(0,n_s,False,False,False);
     end;
 
     if (l_1<>nil)and(l_2<>nil)and(l_1.caption + l_1.subitems[0] = l_2.caption + l_2.subitems[0]) then
@@ -1213,7 +1059,7 @@ begin
    for i:=0 to pp.ControlCount-1 do
    if pp.Controls[i] is TPanel then
    with pp.Controls[i] as TPanel do if visible then EXIT;
-   lblNoTask.show;
+   lb_no.show;
    setlength(rr,0);
 
 end;
@@ -1223,7 +1069,7 @@ var i: integer;
 begin
      result:= -1;
 
-     i:= fnd_rec(pn, true);
+     i:= fnd_rec(pn);
      if i >-1 then
      begin
           rr[i].finished:= True;
@@ -1233,41 +1079,21 @@ begin
      end;
 end;
 
-procedure TrdFileTransfer.RenameFileExplorer(Files: TRtcPFileExplorer;
-  Item: TListItem; const NewName: string);
-var
-  OldPath: string;
-begin
-  OldPath := Files.GetFileName(Item);
-  if (OldPath = '') or (OldPath = '..') then
-    raise EAbort.Create('Can not rename sys_name');
-  if Files.Local then
-      Win32Check(RenameFile(OldPath, ExtractFilePath(OldPath) + NewName)) else
-      myUI.Cmd_FileRename(OldPath, ExtractFilePath(OldPath) + NewName);
-  Files.SetFileName(Item, NewName);
-end;
-
 procedure TrdFileTransfer.clear_deleted;
-var
-  rr_: TArrayOfTRec;
-  i, c: integer;
+var rr_:array of TRec; i: integer;
 begin
-  SetLength(rr_, Length(rr));
-  c := 0;
-  for I := 0 to Length(rr)-1 do
-    if not rr[i].deleted then
-      begin
-        rr_[c] := rr[i];
-        Inc(c);
-      end
-    else
-      begin
-        rr[i].sel_files.Free;
-        SafeDeleteObject(rr[i].pn);
-        rr[i].g_ := nil;
-      end;
-  SetLength(rr_, c);
-  rr := rr_;
+  for i:=0 to high(rr) do if not rr[i].deleted then
+  begin
+    setlength(rr_,length(rr_)+1);
+    rr_[high(rr_)]:= rr[i];
+  end;
+
+  setlength(rr,length(rr_));
+
+  for i:=0 to high(rr_) do
+  begin
+    rr[i]:= rr_[i];
+  end;
 
 end;
 
@@ -1297,30 +1123,6 @@ begin
 
 end;
 
-procedure TrdFileTransfer.RestoreScroolListView(lv: TRtcPFileExplorer;
-  const info: TListViewInfo);
-var
-  scroll_info: TScrollInfo;
-  R: TRect;
-  i: Integer;
-begin
-  SendMessage(lv.Handle, WM_SETREDRAW, 0, 0);
-  try
-    if (lv.Items.Count = info.cnt) and (info.index >= 0) then
-      begin
-        R := lv.Items[0].DisplayRect(drBounds);
-        lv.Scroll(0, info.vert_scroll_pos * (R.Bottom - R.Top));
-//        for i := 0 to info.vert_scroll_pos-1 do
-//          SendMessage(lv.Handle, WM_VSCROLL, SB_LINEDOWN, 0);
-        lv.ItemIndex := info.index
-      end
-    else if lv.Items.Count > 0 then
-      lv.ItemIndex := 0;
-  finally
-    SendMessage(lv.Handle, WM_SETREDRAW, 1, 0);
-  end;
-end;
-
 procedure TrdFileTransfer.SpeedButton10Click(Sender: TObject);
 label
   0, 1;
@@ -1331,9 +1133,6 @@ var
   p:TPanel;
   ff: TStringList;
 begin
-  CancelBatchClick(Sender);
-  exit;
-
   p := TPanel(TSpeedButton(Sender).Parent);
   copying := False;
   g_ := TGauge(LongInt(p.HelpContext));
@@ -1398,7 +1197,7 @@ begin
         else
         begin
          i := rec_finished(p, True);
-         SafeDeleteObject(p);
+         p.Free;
         end;
     end;
 
@@ -1426,7 +1225,7 @@ begin
   end;
 end;
 
-procedure TrdFileTransfer.FilesRemoteEnter(Sender: TObject);
+procedure TrdFileTransfer.eFilesListEnter(Sender: TObject);
 begin
   Panel11.Color := $00FFF9F2;
   Panel12.Color := clwhite;
@@ -1437,14 +1236,14 @@ begin
   pn_.Color := Panel12.Color;
   Panel7.Color := Panel12.Color;
 
-  with FilesRemote do
+  with eFilesList do
     if selCount = 0 then
       selected := ItemFocused;
 
-  FilesRemoteSelectItem(nil, FilesRemote.ItemFocused, True);
+  eFilesListSelectItem(nil, eFilesList.ItemFocused, True);
 end;
 
-procedure TrdFileTransfer.FilesLocalEnter(Sender: TObject);
+procedure TrdFileTransfer.eFilesList_Enter(Sender: TObject);
 begin
   Panel12.Color := $00FFF9F2;
   Panel11.Color := clWhite;
@@ -1455,39 +1254,18 @@ begin
   pn.Color := Panel11.Color;
   Panel5.Color := Panel11.Color;
 
-  with FilesLocal do
+  with eFilesList_ do
     if selCount = 0 then
       selected := ItemFocused;
 
-  FilesLocalSelectItem(nil, FilesLocal.ItemFocused, True);
-end;
-
-
-
-procedure TrdFileTransfer.FilesLocalFileOpen(Sender: TObject;
-  const FileName: string);
-var
-  oai: TOpenAsInfo;
-  status: HRESULT;
-begin
-  oai.pcszFile    := PChar(FileName);
-  oai.pcszClass   := nil;
-  oai.oaifInFlags := OAIF_EXEC;
-  status := SHOpenWithDialog(Handle, oai);
-  if  Succeeded(status) or
-      (status and HRESULT($80070000) = $80070000) and  // The sytem code
-      (status and HRESULT($0000FFFF) = $4C7) then   // 1223 операция отменена пользователем
-        begin
-          exit;
-        end;
-  raise EOleSysError.Create('', status, 0);
-
+  eFilesList_SelectItem(nil, eFilesList_.ItemFocused, True);
 end;
 
 procedure TrdFileTransfer.myUIRecv(Sender: TRtcPFileTransferUI);
 var
   cn,i: int64; from_,s: String;
 begin
+//lg.Lines.Add('Recv: Передано: ' + str_size(myUI.Recv_BytesComplete, False, False) + ' Итого: ' + str_size(myUI.Recv_BytesTotal, False, False) + ' - ' + IntToStr(cn - myUI.Recv_FileCount) + ' - ' + ExtractFileName(myUI.Recv_FileName));
 
   set_info(False, myUI.Recv_BytesComplete);
 
@@ -1524,11 +1302,14 @@ end;
 
 procedure TrdFileTransfer.myUIRecvCancel(Sender: TRtcPFileTransferUI);
 begin
+//lg.Lines.Add('RecvCancel: Передано: ' + str_size(myUI.Recv_BytesComplete, False, False) + ' Итого: ' + str_size(myUI.Recv_BytesTotal, False, False) + ' - ' + IntToStr(myUI.Recv_FileCount) + ' - ' + ExtractFileName(myUI.Recv_FileName));
   Exit;
 end;
 
 procedure TrdFileTransfer.myUIRecvStart(Sender: TRtcPFileTransferUI);
 begin
+//lg.Lines.Add('RecvStart: Передано: ' + str_size(myUI.Recv_BytesComplete, False, False) + ' Итого: ' + str_size(myUI.Recv_BytesTotal, False, False) + ' - ' + IntToStr(myUI.Recv_FileCount) + ' - ' + ExtractFileName(myUI.Recv_FileName));
+
   stopped := False;
   myUIRecv(Sender);
 end;
@@ -1537,6 +1318,8 @@ procedure TrdFileTransfer.myUIRecvStop(Sender: TRtcPFileTransferUI);
 var
   a,n,i: integer;
 begin
+//lg.Lines.Add('RecvStop: Передано: ' + str_size(myUI.Recv_BytesComplete, False, False) + ' Итого: ' + str_size(myUI.Recv_BytesTotal, False, False) + ' - ' + IntToStr(myUI.Recv_FileCount) + ' - ' + ExtractFileName(myUI.Recv_FileName));
+
   if resv_stop then
     Exit;
 
@@ -1551,16 +1334,17 @@ begin
    curr_g.Progress := curr_g.MaxValue;
    curr_g.ForeColor := $00FFD9FF;
 
-   btnLocalReload.Click;
+   btnReload_.Click;
    Timer1_cn := 0;
    Timer1.Tag := LongInt(TPanel(curr_g.Parent));
    Timer1.Enabled := True;
-
 
     if assigned(curr_g) then
       next_task(TPanel(curr_g.Parent));
   except
   end;
+
+//  Timer2Timer(nil);
 end;
 
 procedure TrdFileTransfer.myUISend(Sender: TRtcPFileTransferUI);
@@ -1568,6 +1352,8 @@ var
   s, to_: String;
   cn, i: Integer;
 begin
+//lg.Lines.Add('Send: Передано: ' + str_size(myUI.Recv_BytesComplete, False, False) + ' Итого: ' + str_size(myUI.Recv_BytesTotal, False, False) + ' - ' + IntToStr(myUI.Recv_FileCount) + ' - ' + ExtractFileName(myUI.Recv_FileName));
+
   set_info(True, myUI.Send_BytesComplete);
 
   if send_stop then
@@ -1600,22 +1386,26 @@ begin
   end;
 end;
 
-
 procedure TrdFileTransfer.myUISendCancel(Sender: TRtcPFileTransferUI);
 begin
+//lg.Lines.Add('SendCancel: Передано: ' + str_size(myUI.Recv_BytesComplete, False, False) + ' Итого: ' + str_size(myUI.Recv_BytesTotal, False, False) + ' - ' + IntToStr(myUI.Recv_FileCount) + ' - ' + ExtractFileName(myUI.Recv_FileName));
+
   Exit;
 end;
 
 procedure TrdFileTransfer.myUISendStart(Sender: TRtcPFileTransferUI);
 begin
+//lg.Lines.Add('SendStart: Передано: ' + str_size(myUI.Recv_BytesComplete, False, False) + ' Итого: ' + str_size(myUI.Recv_BytesTotal, False, False) + ' - ' + IntToStr(myUI.Recv_FileCount) + ' - ' + ExtractFileName(myUI.Recv_FileName));
+
   stopped := False;
   MyUISend(Sender);
 end;
 
 procedure TrdFileTransfer.myUISendStop(Sender: TRtcPFileTransferUI);
 var
-  a, n, i, index: integer;
+  a, n, i: integer;
 begin
+//lg.Lines.Add('SendStop: Передано: ' + str_size(myUI.Recv_BytesComplete, False, False) + ' Итого: ' + str_size(myUI.Recv_BytesTotal, False, False) + ' - ' + IntToStr(myUI.Recv_FileCount) + ' - ' + ExtractFileName(myUI.Recv_FileName));
 
   MyUISend(sender);
   if (myUI.Send_FileCount = 0) then
@@ -1628,7 +1418,7 @@ begin
     curr_g.Progress := curr_g.MaxValue;
     curr_g.ForeColor := $00FFD9FF;
 
-    btnRemoteReload.Click;
+    btnReload.Click;
     Timer1_cn := 0;
     Timer1.Tag := LongInt(TPanel(curr_g.Parent));
     Timer1.Enabled := True;
@@ -1658,19 +1448,19 @@ label
 var
   s: String;
 begin
-  if FilesRemote.ItemFocused = nil then
+  if eFilesList.ItemFocused = nil then
     Exit;
-  s := FilesRemote.ItemFocused.Caption;
+  s := eFilesList.ItemFocused.Caption;
   1:
     if InputQuery('Переименование', 'Введите новое имя файла', s) then
     begin
       if s= '' then
         Exit;
-      if s = FilesRemote.ItemFocused.Caption then
+      if s = eFilesList.ItemFocused.Caption then
         Exit;
       if wrong_caption(s) > -1 then
         goto 1;
-      RenameFileExplorer(FilesRemote, FilesRemote.ItemFocused, s);
+      rename_file(eFilesList.ItemFocused, s);
     end;
 end;
 
@@ -1723,94 +1513,6 @@ begin
   end;
 end;
 
-procedure TrdFileTransfer.OnSendBatch(Sender: TObject; const task: TBatchTask;
-  mode: TModeBatchSend);
-
-  function GetTaskPanelIndex(): Integer;
-  var
-    i: Integer;
-  begin
-    Result := -1;
-    for I := 0 to Length(rr)-1 do
-      if rr[i].taskID = task.Id then
-        exit(i);
-  end;
-
-var
-  s, to_: String;
-  cn, i, index: Integer;
-  g: TGauge;
-  reload: TSpeedButton;
-begin
-  Index := GetTaskPanelIndex();
-  if Index = -1 then exit;
-
-//  set_info(True, task.SentSize);
-
-    to_:= rr[index].to_path;
-    cn := rr[index].sel_files.Count;
-    g := rr[index].g_;
-    if rr[i].direction = sbtReceiving then
-      reload := btnLocalReload else
-      reload := btnRemoteReload;
-
-
-
-  case mode of
-
-    mbsFileStart:
-      begin
-        TLabel(TPanel(g.Parent).Tag).Caption:= ExtractFileName(task.Files[task.Current].file_path);
-        TLabel(g.Tag).Caption := IntToStr(task.Current+1) + '/' + task.FileCount.ToString;
-      end;
-
-    mbsFileData:
-      begin
-        g.Progress := Round(task.Progress * 10000);
-        FCurrentBytesTransfer := FCurrentBytesTransfer + task.LastChunkSize;
-        Caption:= 'Передано: ' + str_size(FCurrentBytesTransfer, False, False) + ' Итого: ' + str_size(FTotalBytesTransfer, False, False);
-      end;
-
-    mbsFileStop:
-      begin
-        TLabel(TPanel(g.Parent).Tag).Caption:= Format('%.0n / %.0n KB', [task.SentSize / 1024, task.Size / 1024]);
-        add_lg(TimeToStr(now) + ':  Выгрузка из "' + task.Files[task.Current].file_path + '" в "' + ExtractFileName(task.Files[task.Current].file_path) + '" (' + str_size(task.Files[task.Current].file_size) + ')');
-        reload.Click;
-      end;
-
-    mbsTaskStart:
-      begin
-        FTotalBytesTransfer := FTotalBytesTransfer + task.Size;
-      end;
-
-    mbsTaskFinished:
-      begin
-        rr[index].taskID := TGUID.Empty;
-        rr[index].finished := true;
-        rr[index].deleted := true;
-        g.Progress := g.MaxValue;
-        g.ForeColor := $00FFD9FF;
-        reload.Click;
-      end;
-
-    mbsTaskError:
-      begin
-        rr[index].taskID := TGUID.Empty;
-        rr[index].finished := true;
-        rr[index].deleted := true;
-        reload.Click;
-        add_lg(TimeToStr(now) + ':  [ERROR] Выгрузка из "' + task.Files[task.Current].file_path + '" в "' + ExtractFileName(task.Files[task.Current].file_path) + '" (' + str_size(myUI.Send_FileSize) + ') - '+task.ErrorString );
-        TaskMessageDlg('Error', task.ErrorString, mtError, [mbOK], 0, mbOK);
-
-      end;
-  end;
-
-
-  clear_deleted;
-  lblNoTask.Visible := Length(rr) = 0;
-
-end;
-
 procedure TrdFileTransfer.comp_border(cp:twincontrol; pix:byte);
 var formrgn : hrgn;
 begin
@@ -1822,16 +1524,16 @@ procedure TrdFileTransfer.FormShow(Sender: TObject);
 var
   i: Integer;
 begin
+  eFilesList_.Local := False;
+  eFilesList_.Local := True;
 
-  FilesLocal.Local := False;
-  FilesLocal.Local := True;
-
-  FilesRemote.StyleElements := [];
-  FilesLocal.StyleElements := [];
+  eFilesList.StyleElements := [];
+  eFilesList_.StyleElements := [];
   Splitter1.StyleElements := [];
-  FilesRemote.GridLines := True;
-  FilesLocal.GridLines := True;
-
+  eFilesList.GridLines := True;
+  eFilesList_.GridLines := True;
+  eFilesList_.ReadOnly := True;
+  eFilesList.ReadOnly := True;
 
 //  Label1.caption:= host_nn;
 //  Label3.caption:= serv_nn;
@@ -1845,133 +1547,114 @@ begin
   begin
     application.ProcessMessages;
     load_first:= False;
-    FilesRemote.setfocus;
+    eFilesList.setfocus;
 
-    with FilesRemote do
+    with eFilesList do
     for i:=0 to Items.count-1 do
-    with edRemoteDir.ItemsEx.Add do
+    with eDirectory.ItemsEx.Add do
     begin
-      caption:= FilesRemote.Items[i].caption;
+      caption:= eFilesList.Items[i].caption;
       ImageIndex:=0;
     end;
 
-    FilesLocal.setfocus;
-    with FilesLocal do
+    eFilesList_.setfocus;
+    with eFilesList_ do
     for i:=0 to Items.count-1 do
-    with edLocalDir.ItemsEx.Add do
+    with eDirectory_.ItemsEx.Add do
     begin
-      caption:= FilesLocal.Items[i].caption;
+      caption:= eFilesList_.Items[i].caption;
       ImageIndex:=1;
     end;
 
-    if FilesRemote.items.count>0 then add_lg(timetostr(now)+':  Соединение успешно установлено.');
+    if eFilesList.items.count>0 then add_lg(timetostr(now)+':  Соединение успешно установлено.');
 
-  edRemoteDir. Text:= 'C:\';  btnRemoteReloadClick(nil);
-  edLocalDir.Text:= 'C:\';  btnLocalReloadClick(nil);
+  eDirectory. Text:= 'C:\';  btnReloadClick(nil);
+  eDirectory_.Text:= 'C:\';  btnReload_Click(nil);
 
   end;
 end;
 
-procedure TrdFileTransfer.edRemoteDirKeyPress(Sender: TObject; var Key: Char);
+procedure TrdFileTransfer.eDirectoryKeyPress(Sender: TObject; var Key: Char);
 var s: string;
 begin
   if Key=#13 then
     begin
     Key:=#0;
-     s:= edRemoteDir.Text;
+     s:= eDirectory.Text;
      if ExtractFileExt(s)='' then
-        edRemoteDir.Text:= IncludeTrailingPathDelimiter(s);
+        eDirectory.Text:= IncludeTrailingPathDelimiter(s);
 
-     btnRemoteReloadClick(nil);
+     btnReloadClick(nil);
     end;
 end;
 
-procedure TrdFileTransfer.edRemoteDirSelect(Sender: TObject);
+procedure TrdFileTransfer.eDirectorySelect(Sender: TObject);
 var s: string;
 begin
- s:= edRemoteDir.Items[edRemoteDir.Itemindex];
+ s:= eDirectory.Items[eDirectory.Itemindex];
  delete(s,1,pos('(',s));
 
- edRemoteDir.Text:= copy(s,1,2)+'\';
- btnRemoteReloadClick(nil);
+ eDirectory.Text:= copy(s,1,2)+'\';
+ btnReloadClick(nil);
 end;
 
-procedure TrdFileTransfer.edLocalDirKeyPress(Sender: TObject; var Key: Char);
+procedure TrdFileTransfer.eDirectory_KeyPress(Sender: TObject; var Key: Char);
 var s: string;
 begin
   if Key=#13 then
     begin
     Key:=#0;
-     s:= edLocalDir.Text;
+     s:= eDirectory_.Text;
      if ExtractFileExt(s)='' then
-        edLocalDir.Text:= IncludeTrailingPathDelimiter(s);
+        eDirectory_.Text:= IncludeTrailingPathDelimiter(s);
 
-     btnLocalReloadClick(nil);
+     btnReload_Click(nil);
     end;
 end;
 
-procedure TrdFileTransfer.edLocalDirSelect(Sender: TObject);
+procedure TrdFileTransfer.eDirectory_Select(Sender: TObject);
 var s: string;
 begin
-   s:= edLocalDir.Items[edLocalDir.Itemindex];
+   s:= eDirectory_.Items[eDirectory_.Itemindex];
    delete(s,1,pos('(',s));
-   edLocalDir.Text:= copy(s,1,2)+'\';
-   FilesLocal.onPath(edLocalDir.Text);
+   eDirectory_.Text:= copy(s,1,2)+'\';
+   eFilesList_.onPath(eDirectory_.Text);
 
     try
-     FilesLocal.Selected:=    FilesLocal.Items[0];
-     FilesLocal.ItemFocused:= FilesLocal.Selected;
+     eFilesList_.Selected:=    eFilesList_.Items[0];
+     eFilesList_.ItemFocused:= eFilesList_.Selected;
     except
     end;
-    FilesLocal.SetFocus;
+    eFilesList_.SetFocus;
 end;
 
-type
-  TListViewX = class(TListView);
-
-procedure TrdFileTransfer.FilesRemoteKeyDown(Sender: TObject; var Key: Word;
+procedure TrdFileTransfer.eFilesListKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 label 1;
 var
   s: string;
 begin
- if FilesRemote.IsEditing then exit;
-
  if key in [VK_UP,VK_DOWN,VK_END,VK_HOME,VK_PRIOR,VK_NEXT] then VK_UPDOWN:= True;
-
- if key = VK_F2 then
-  begin
-    if FilesRemote.ItemFocused <> nil then
-      FilesRemote.ItemFocused.EditCaption;
-    exit;
-  end;
-
- if key = VK_F5 then
-  begin
-    if sbtnReceive.Enabled then
-      sbtnReceiveClick(sbtnSend);
-    exit;
-  end;
 
  if key=VK_UP then
  if shift = [ssAlt] then
  begin
-    edRemoteDir.setfocus;
+    eDirectory.setfocus;
     EXIT;
  end;
 
  if key=ord('A') then
  if shift = [ssctrl] then
  begin
-    FilesRemote.SelectAll;
+    eFilesList.SelectAll;
     EXIT;
  end;
 
  if key = VK_RETURN then
  if shift = [ssctrl] then
- if sbtnReceive.Enabled then
+ if b_rv.Enabled then
  begin
-    sbtnReceive.click;
+    b_rv.click;
     EXIT;
  end;
 
@@ -1989,75 +1672,54 @@ begin
     EXIT;
  end;
 
- if key = VK_BACK then
-  btnRemoteBackClick(btnRemoteBack);
+ if key in [VK_BACK] then
+ try
 
+   s:= ExcludeTrailingPathDelimiter(eDirectory.Text);
+   KEY_BACK:= True;
+   foc_:= extractfilename(s);
+   eFilesList.OneLevelUp(True);
 
-
-// клавиша backspace переназначена на функцию "назад"
-// if key in [VK_BACK] then
-// try
-//   s:= ExcludeTrailingPathDelimiter(edRemoteDir.Text);
-//   KEY_BACK:= True;
-//   foc_:= extractfilename(s);
-//   FilesRemote.OneLevelUp(True);
-//
-//   FilesRemote.SetFocus;
-// except
-// end;
+   eFilesList.SetFocus;
+ except
+ end;
 
  if key in [VK_RETURN] then
  try
-  FilesRemote.DblClick;
-  FilesRemote.ItemFocused:= FilesRemote.Items[0];
-  FilesRemote.Selected:=    FilesRemote.ItemFocused;
+  eFilesList.DblClick;
+  eFilesList.ItemFocused:= eFilesList.Items[0];
+  eFilesList.Selected:=    eFilesList.ItemFocused;
   except
   end;
 end;
 
-procedure TrdFileTransfer.FilesLocalKeyDown(Sender: TObject; var Key: Word;
+procedure TrdFileTransfer.eFilesList_KeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 label 1;
 var
   l: TListItem; s: string;
 begin
- if FilesLocal.IsEditing then exit;
  if key in [VK_UP,VK_DOWN,VK_END,VK_HOME,VK_PRIOR,VK_NEXT] then VK_UPDOWN:= True;
-
- if key = VK_F2 then
-  begin
-    if FilesLocal.ItemFocused <> nil then
-      FilesLocal.ItemFocused.EditCaption;
-    exit;
-  end;
-
- if key = VK_F5 then
-  begin
-    if sbtnSend.Enabled then
-      sbtnSendClick(sbtnSend);
-    exit;
-  end;
-
 
  if key=VK_UP then
  if shift = [ssAlt] then
  begin
-    edLocalDir.setfocus;
+    eDirectory_.setfocus;
     EXIT;
  end;
 
  if key=ord('A') then
  if shift = [ssctrl] then
  begin
-    FilesLocal.SelectAll;
+    eFilesList_.SelectAll;
     EXIT;
  end;
 
  if key = VK_RETURN then
  if shift = [ssctrl] then
- if sbtnSend.Enabled then
+ if b_rv2.Enabled then
  begin
-    sbtnSend.click;
+    b_rv2.click;
     EXIT;
  end;
 
@@ -2075,45 +1737,42 @@ begin
     EXIT;
  end;
 
-  if key = VK_BACK then
-    btnRemoteBackClick(btnLocalBack);
+ if key in [VK_BACK] then
+ try
 
+   s:= ExcludeTrailingPathDelimiter(eDirectory_.Text);
+   eFilesList_.OneLevelUp(True);
 
-// if key in [VK_BACK] then
-// try
-//   s:= ExcludeTrailingPathDelimiter(edLocalDir.Text);
-//   FilesLocal.OneLevelUp(True);
-//
-//   l:= FilesLocal.FindCaption(0,extractfilename(s),False,False,False);
-//   if l<>nil then
-//   begin
-//       1:
-//       FilesRemote.ClearSelection;
-//       FilesLocal.ItemFocused:= l;
-//       FilesLocal.Selected:=    l;
-//   end else
-//   begin
-//     l:= FilesLocal.items[0];
-//     goto 1;
-//   end;
-//
-//   FilesLocal.SetFocus;
-// except
-// end;
+   l:= eFilesList_.FindCaption(0,extractfilename(s),False,False,False);
+   if l<>nil then
+   begin
+       1:
+       eFilesList.ClearSelection;
+       eFilesList_.ItemFocused:= l;
+       eFilesList_.Selected:=    l;
+   end else
+   begin
+     l:= eFilesList_.items[0];
+     goto 1;
+   end;
+
+   eFilesList_.SetFocus;
+ except
+ end;
 
  if key in [VK_RETURN] then
  try
-  FilesLocal.DblClick;
-  FilesLocal.ItemFocused:= FilesLocal.Items[0];
-  FilesLocal.Selected:=    FilesLocal.ItemFocused;
+  eFilesList_.DblClick;
+  eFilesList_.ItemFocused:= eFilesList_.Items[0];
+  eFilesList_.Selected:=    eFilesList_.ItemFocused;
   except
   end;
 end;
 
 procedure TrdFileTransfer.b_hmClick(Sender: TObject);
 begin
-  edRemoteDir.Text:= '';
-  btnRemoteReloadClick(nil);
+  eDirectory.Text:= '';
+  btnReloadClick(nil);
 end;
 
 function get_size(s: string): int64;
@@ -2252,7 +1911,7 @@ try
  s:= str_size(sz); s2:= str_size(sz,False,False);
  if s<>s2 then s:= s2+' ['+s+']';
 
- if lv = FilesRemote then
+ if lv = eFilesList then
     pn. caption:= 'Выбрано '+p.tostring+' объектов '+s else
     pn_.caption:= 'Выбрано '+p.tostring+' объектов '+s
 except
@@ -2260,69 +1919,69 @@ except
 end;
 end;
 
-procedure TrdFileTransfer.FilesRemoteSelectItem(Sender: TObject; Item: TListItem; Selected: Boolean);
+procedure TrdFileTransfer.eFilesListSelectItem(Sender: TObject; Item: TListItem; Selected: Boolean);
 label 0,1,2;
 var lev0,root: Boolean; ind: integer;
 begin
-  root:= FilesRemote.Directory='';
+  root:= eFilesList.Directory='';
 
   if root then goto 2;
 
-  lev0:= (FilesRemote.selcount=1)and(item.Caption='..');
-  ind:= FilesRemote.ItemIndex;
+  lev0:= (eFilesList.selcount=1)and(item.Caption='..');
+  ind:= eFilesList.ItemIndex;
   2:
   b_dl.Enabled:= (not root)and(Ind<>-1)and(not lev0);
-  sbtnReceive.Enabled:= (not root)and(Ind<>-1)and(not lev0)and(FilesLocal.Directory<>'');
+  b_rv.Enabled:= (not root)and(Ind<>-1)and(not lev0)and(eFilesList_.Directory<>'');
   1:
   b_hm.Enabled:= not root;
-  sbtnRemoteLevelUp.Enabled:= not root;
+  b_up.Enabled:= not root;
   b_dr.Enabled:= not root;
 
   0:
   if sender<>nil then
-        FilesLocalSelectItem(nil, FilesLocal.ItemFocused, True);
+        eFilesList_SelectItem(nil, eFilesList_.ItemFocused, True);
 
-  if activecontrol=FilesLocal then
+  if activecontrol=eFilesList_ then
   begin
-     if (FilesLocal.Selected<>nil)and(FilesLocal.GetFileName(Item)<>'..') then
-         sb.SimpleText:= FilesLocal.GetFileName(Item)
+     if (eFilesList_.Selected<>nil)and(eFilesList_.GetFileName(Item)<>'..') then
+         sb.SimpleText:= eFilesList_.GetFileName(Item)
   end else
-     if (FilesRemote.Selected<>nil)and(FilesRemote.GetFileName(Item)<>'..') then
-         sb.SimpleText:= FilesRemote.GetFileName(Item);
+     if (eFilesList.Selected<>nil)and(eFilesList.GetFileName(Item)<>'..') then
+         sb.SimpleText:= eFilesList.GetFileName(Item);
 
 end;
 
-procedure TrdFileTransfer.FilesLocalSelectItem(Sender: TObject; Item: TListItem;
+procedure TrdFileTransfer.eFilesList_SelectItem(Sender: TObject; Item: TListItem;
   Selected: Boolean);
 label 0,1,2;
 var lev0,root: Boolean; ind: integer;
 begin
-  root:= FilesLocal.Directory='';
+  root:= eFilesList_.Directory='';
 
   if root then goto 2;
 
-  lev0:= (FilesLocal.selcount=1)and(item.Caption='..');
-  ind:= FilesLocal.ItemIndex;
+  lev0:= (eFilesList_.selcount=1)and(item.Caption='..');
+  ind:= eFilesList_.ItemIndex;
 
   2:
   b_dl2.Enabled:= (not root)and(Ind<>-1)and(not lev0);
-  sbtnSend.Enabled:= (not root)and(Ind<>-1)and(not lev0)and(FilesRemote.Directory<>'');
+  b_rv2.Enabled:= (not root)and(Ind<>-1)and(not lev0)and(eFilesList.Directory<>'');
   1:
   b_hm_.Enabled:= not root;
-  sbtnLocalLevelUp.Enabled:= not root;
+  b_up_.Enabled:= not root;
   b_dr_.Enabled:= not root;
 
   0:
   if sender<>nil then
-       FilesRemoteSelectItem(nil, FilesRemote.ItemFocused, True);
+       eFilesListSelectItem(nil, eFilesList.ItemFocused, True);
 
-  if activecontrol=FilesLocal then
+  if activecontrol=eFilesList_ then
   begin
-     if (FilesLocal.Selected<>nil)and(FilesLocal.GetFileName(Item)<>'..') then
-         sb.SimpleText:= FilesLocal.GetFileName(Item)
+     if (eFilesList_.Selected<>nil)and(eFilesList_.GetFileName(Item)<>'..') then
+         sb.SimpleText:= eFilesList_.GetFileName(Item)
   end else
-     if (FilesRemote.Selected<>nil)and(FilesRemote.GetFileName(Item)<>'..') then
-         sb.SimpleText:= FilesRemote.GetFileName(Item);
+     if (eFilesList.Selected<>nil)and(eFilesList.GetFileName(Item)<>'..') then
+         sb.SimpleText:= eFilesList.GetFileName(Item);
 
 end;
 
@@ -2331,18 +1990,19 @@ label 1;
 var s: string;
 begin
   if not assigned(myUI) then EXIT;
-  if FilesRemote.ItemFocused=nil then EXIT;
-  s:=FilesRemote.ItemFocused.caption;
+  if eFilesList.ItemFocused=nil then EXIT;
+  s:=eFilesList.ItemFocused.caption;
   1:
   if inputquery('Переименование', 'Введите новое имя файла', s) then
   begin
      if s='' then EXIT;
 
-     RenameFileExplorer(FilesRemote, FilesRemote.ItemFocused, s);
+     rename_file(eFilesList.ItemFocused,s);
   end;
 end;
 
 procedure TrdFileTransfer.b_ppClick(Sender: TObject);
+var b:TBitmap;
 begin
  lockwindowupdate(Handle);
  try
@@ -2357,23 +2017,19 @@ begin
     b_pp.Parent:= panel;
     b_pp.show;
 
+    b_rv2.Align:= alRight;
+    b_rv2.Layout:= blGlyphRight;
+    b_rv2.Glyph:= i_r.Picture.Bitmap;
+    b_dr_.Align:= alLeft;
+    b_dl2.Align:= alLeft;
+    Panel_1.Padding.Right:= 0; Panel_1.Padding.Left:= 13;
 
-
-      sbtnSend.Align:= alRight;
-      sbtnSend.Layout:= blGlyphRight;
-      sbtnSend.Glyph:= FBmpR;
-      b_dr_.Align:= alLeft;
-      b_dl2.Align:= alLeft;
-      Panel_1.Padding.Right:= 0; Panel_1.Padding.Left:= 13;
-
-      sbtnReceive.Align:= alLeft;
-      sbtnReceive.Layout:= blGlyphLeft;
-
-      sbtnReceive.Glyph:= FBmpL;
-      b_dl.Align:= alRight;
-      b_dr.Align:= alRight;
-      Panel_0.Padding.Right:= 13; Panel_0.Padding.Left:= 0;
-
+    b_rv.Align:= alLeft;
+    b_rv.Layout:= blGlyphLeft;
+    b_rv.Glyph:= i_l.Picture.Bitmap;
+    b_dl.Align:= alRight;
+    b_dr.Align:= alRight;
+    Panel_0.Padding.Right:= 13; Panel_0.Padding.Left:= 0;
 
  end else
  begin
@@ -2388,16 +2044,16 @@ begin
 
     b_pp.Left:= panel.width-b_pp.width-10;
 
-    sbtnSend.Align:= alLeft;
-    sbtnSend.Layout:= blGlyphLeft;
-    sbtnSend.Glyph:= FBmpL;
+    b_rv2.Align:= alLeft;
+    b_rv2.Layout:= blGlyphLeft;
+    b_rv2.Glyph:= i_l.Picture.Bitmap;
     b_dl2.Align:= alRight;
     b_dr_.Align:= alRight;
     Panel_1.Padding.Right:= 13; Panel_1.Padding.Left:= 0;
 
-    sbtnReceive.Align:= alRight;
-    sbtnReceive.Layout:= blGlyphRight;
-    sbtnReceive.Glyph:= FBmpR;
+    b_rv.Align:= alRight;
+    b_rv.Layout:= blGlyphRight;
+    b_rv.Glyph:= i_r.Picture.Bitmap;
     b_dr.Align:= alLeft;
     b_dl.Align:= alLeft;
     Panel_0.Padding.Right:= 0; Panel_0.Padding.Left:= 13;
@@ -2410,92 +2066,50 @@ end;
 
 procedure TrdFileTransfer.FormResize(Sender: TObject);
 begin
-  if panel. Align=alLeft then
+ if panel. Align=alLeft then
     panel. width:= clientwidth div 2 else
     panel_.width:= clientwidth div 2;
-    comp_border(edRemoteDir,1);
-    comp_border(edLocalDir,1);
-
-   SendMessage(FilesRemote.Handle, WM_SETREDRAW, 0, 0);
-   SendMessage(FilesLocal.Handle, WM_SETREDRAW, 0, 0);
-   try
-     AutoFitColumns(FilesRemote);
-     AutoFitColumns(FilesLocal);
-   finally
-     SendMessage(FilesLocal.Handle, WM_SETREDRAW, 1, 0);
-     SendMessage(FilesRemote.Handle, WM_SETREDRAW, 1, 0);
-   end;
+    comp_border(eDirectory,1);
+    comp_border(eDirectory_,1);
 end;
 
-procedure TrdFileTransfer.FilesReload(Sender: TObject; Files: TRtcPFileExplorer);
-var
-  Index, Cnt: Integer;
-  info: TListViewInfo;
+procedure TrdFileTransfer.eFilesListClick(Sender: TObject);
 begin
-  info := SaveScroolListView(Files);
-//  if Files.ItemFocused <> nil then
-//    begin
-//      Index := Files.ItemFocused.Index;
-//      Cnt   := Files.Items.Count;
-//    end else
-//  Cnt := -1;
+ info2pn(eFilesList);
+end;
 
-  if Files.Local = false then
-    myUI.GetFileList(edRemoteDir.Text, ExtractFileName(edRemoteDir.Text))
+procedure TrdFileTransfer.eFilesList_Click(Sender: TObject);
+begin
+  info2pn(eFilesList_);
+end;
+
+procedure TrdFileTransfer.eFilesListKeyUp(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  VK_UPDOWN:= False;
+  if key in [VK_UP,VK_DOWN,VK_END,VK_HOME,VK_PRIOR,VK_NEXT] then
+    eFilesListClick(Sender)
   else
-    begin
-      if not Assigned(Sender)  then
-        Files.onPath(edLocalDir.Text, ExtractFileName(edLocalDir.Text)) else
-      if (Files.Directory <> '') then
-        Files.onPath(Files.Directory) else
-        b_hm_Click(nil);
-    end;
-
-//  if Files.Items.Count <> Cnt then
-//    Index := 0;
-//
-//
-//    if Files.Items.Count > 0 then
-//      Files.ItemIndex := Index;
-  RestoreScroolListView(Files, info);
-    Files.SetFocus;
-    SetCaption;
-
+  if key = VK_BACK then
+    eFilesList.OneLevelUp;
 end;
 
-procedure TrdFileTransfer.FilesRemoteClick(Sender: TObject);
-begin
- info2pn(FilesRemote);
-end;
-
-procedure TrdFileTransfer.FilesLocalClick(Sender: TObject);
-begin
-  info2pn(FilesLocal);
-end;
-
-procedure TrdFileTransfer.FilesRemoteKeyUp(Sender: TObject; var Key: Word;
+procedure TrdFileTransfer.eFilesList_KeyUp(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
   VK_UPDOWN:= False;
   if key in [VK_UP,VK_DOWN,VK_END,VK_HOME,VK_PRIOR,VK_NEXT] then
-    FilesRemoteClick(Sender)
-
-end;
-
-procedure TrdFileTransfer.FilesLocalKeyUp(Sender: TObject; var Key: Word;
-  Shift: TShiftState);
-begin
-  VK_UPDOWN:= False;
-  if key in [VK_UP,VK_DOWN,VK_END,VK_HOME,VK_PRIOR,VK_NEXT] then
-    FilesLocalClick(Sender)
-
+    eFilesList_Click(Sender)
+  else
+  if key = VK_BACK then
+    eFilesList_.OneLevelUp;
 end;
 
 procedure TrdFileTransfer.Label4Click(Sender: TObject);
 begin
   Label4.Tag:=1;
   if assigned(myUI) then
-    myUI.GetFileList(edLocalDir.Text, '');
+    myUI.GetFileList(eDirectory_.Text, '');
 
 end;
 
@@ -2503,13 +2117,13 @@ procedure TrdFileTransfer.mnNewFolderClick(Sender: TObject);
 label 1;
 var s: string; p: integer;
 begin
-  if assigned(myUI) and (FilesRemote.Directory<>'') then
+  if assigned(myUI) and (eFilesList.Directory<>'') then
   begin
 
         s:= 'Новая папка'; p:=1;
-        if FilesRemote.FindCaption(0,s,False,False,False)<>nil then
+        if eFilesList.FindCaption(0,s,False,False,False)<>nil then
         begin
-           while FilesRemote.FindCaption(0,s+' '+inttostr(p),False,False,False)<>nil do inc(p);
+           while eFilesList.FindCaption(0,s+' '+inttostr(p),False,False,False)<>nil do inc(p);
            s:= 'Новая папка '+p.tostring;
         end;
 
@@ -2519,10 +2133,10 @@ begin
      if s='' then EXIT;
      if wrong_caption(s)>-1 then goto 1;
 
-     myUI.Cmd_NewFolder(IncludeTrailingBackslash(FilesRemote.Directory)+s);
+     myUI.Cmd_NewFolder(IncludeTrailingBackslash(eFilesList.Directory)+s);
      KEY_BACK:= True;
      foc_:= s;
-     myUI.GetFileList(FilesRemote.Directory,'');
+     myUI.GetFileList(eFilesList.Directory,'');
   end;
 
 end;
@@ -2533,12 +2147,12 @@ label 1;
 var s: string; p: integer;
   l: TListItem;
 begin
-  if FilesLocal.Directory<>'' then
+  if eFilesList_.Directory<>'' then
   begin
         s:= 'Новая папка'; p:=1;
-        if FilesLocal.FindCaption(0,s,False,False,False)<>nil then
+        if eFilesList_.FindCaption(0,s,False,False,False)<>nil then
         begin
-           while FilesLocal.FindCaption(0,s+' '+inttostr(p),False,False,False)<>nil do inc(p);
+           while eFilesList_.FindCaption(0,s+' '+inttostr(p),False,False,False)<>nil do inc(p);
            s:= 'Новая папка '+p.tostring;
         end;
 
@@ -2548,14 +2162,14 @@ begin
      if s='' then EXIT;
      if wrong_caption(s)>-1 then goto 1;
 
-     if CreateDir(IncludeTrailingBackslash(FilesLocal.Directory)+s) then
+     if CreateDir(IncludeTrailingBackslash(eFilesList_.Directory)+s) then
      begin
-       FilesLocal.onPath(FilesLocal.Directory);
-       l:= FilesLocal.FindCaption(0,s,False,False,False);
+       eFilesList_.onPath(eFilesList_.Directory);
+       l:= eFilesList_.FindCaption(0,s,False,False,False);
        if l<>nil then
        begin
-           FilesLocal.Selected:=    l;
-           FilesLocal.ItemFocused:= l;
+           eFilesList_.Selected:=    l;
+           eFilesList_.ItemFocused:= l;
            l.MakeVisible(False);
        end;
      end;
@@ -2565,59 +2179,76 @@ end;
 
 procedure TrdFileTransfer.b_hm_Click(Sender: TObject);
 begin
-  edLocalDir.Text:= '';
-  FilesLocal.Local:= False;
-  FilesLocal.Local:= True;
+  eDirectory_.Text:= '';
+  eFilesList_.Local:= False;
+  eFilesList_.Local:= True;
 end;
 
-procedure TrdFileTransfer.btnLocalReloadClick(Sender: TObject);
+procedure TrdFileTransfer.btnReload_Click(Sender: TObject);
+label 1;
 begin
-  FilesReload(Sender, FilesLocal);
+    if sender=nil then goto 1;
+    if eFilesList_.Directory = '' then b_hm_Click(nil) else
+    begin
+    1:
+       if sender=nil then
+       begin
+          eFilesList_.onPath(eDirectory_.Text, Extractfilename(eDirectory_.Text))
+       end else
+          eFilesList_.onPath(eFilesList_.Directory);
+    end;
+
+    try
+     eFilesList_.Selected:=    eFilesList_.Items[0];
+     eFilesList_.ItemFocused:= eFilesList_.Selected;
+    except
+    end;
+    eFilesList_.SetFocus;
 end;
 
-procedure TrdFileTransfer.FilesRemoteDragOver(Sender, Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
+procedure TrdFileTransfer.eFilesListDragOver(Sender, Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
 begin
-    Accept:= (sbtnSend.Enabled) and (FilesRemote.Directory<>'') and (source = FilesLocal);
+    Accept:= (b_rv2.Enabled) and (eFilesList.Directory<>'') and (source = eFilesList_);
 
 end;
 
-procedure TrdFileTransfer.FilesLocalDragOver(Sender, Source: TObject; X,
+procedure TrdFileTransfer.eFilesList_DragOver(Sender, Source: TObject; X,
   Y: Integer; State: TDragState; var Accept: Boolean);
 begin
 
-    Accept:= (sbtnReceive.Enabled) and (FilesLocal.Directory<>'') and (source = FilesRemote);
+    Accept:= (b_rv.Enabled) and (eFilesList_.Directory<>'') and (source = eFilesList);
 
 end;
 
-procedure TrdFileTransfer.FilesLocalDragDrop(Sender, Source: TObject; X,
+procedure TrdFileTransfer.eFilesList_DragDrop(Sender, Source: TObject; X,
   Y: Integer);
 begin
-  if sbtnReceive.Enabled then sbtnReceive.click;
+  if b_rv.Enabled then b_rv.click;
 end;
 
-procedure TrdFileTransfer.FilesRemoteDragDrop(Sender, Source: TObject; X, Y: Integer);
+procedure TrdFileTransfer.eFilesListDragDrop(Sender, Source: TObject; X, Y: Integer);
   var
     myFiles:TStringList;
     newDir:String;
     a:integer;
   begin
-  if sbtnSend.Enabled then sbtnSend.click; EXIT;
+  if b_rv2.Enabled then b_rv2.click; EXIT;
 
   if assigned(myUI) then
     begin
-    newDir:=FilesRemote.GetFileName(FilesRemote.GetItemAt(X,Y));
+    newDir:=eFilesList.GetFileName(eFilesList.GetItemAt(X,Y));
     if newDir<>'' then
       begin
       if newDir='..' then
-        newDir:=IncludeTrailingBackslash(FilesRemote.Directory)+'..\'
+        newDir:=IncludeTrailingBackslash(eFilesList.Directory)+'..\'
       else
         newDir:=IncludeTrailingBackslash(newDir);
-      myFiles:=FilesRemote.SelectedFiles;
+      myFiles:=eFilesList.SelectedFiles;
       if myFiles.Count>0 then
         begin
         for a:=0 to myFiles.Count-1 do
           myUI.Cmd_FileMove(myFiles.Strings[a],newDir+ExtractFileName(myFiles.Strings[a]));
-        myUI.GetFileList(FilesRemote.Directory,'');
+        myUI.GetFileList(eFilesList.Directory,'');
         end;
       end;
     end;
@@ -2631,7 +2262,7 @@ end;
 
 procedure TrdFileTransfer.Splitter1Moved(Sender: TObject);
 begin
- comp_border(edRemoteDir,1); comp_border(edLocalDir,1);
+ comp_border(eDirectory,1); comp_border(eDirectory_,1);
 end;
 
 function TrdFileTransfer.get_TF(ss: TStrings): string;
@@ -2652,11 +2283,9 @@ end;
 procedure TrdFileTransfer.b_dlClick(Sender: TObject);
 var s: string;
 begin
-  s:= get_TF(FilesRemote.SelectedFiles_('Каталог:  ','Файл:     '));
-  if TaskMessageDlg(
-    'Удаление',
-    'Подтвердите удаление для выбранного ('+FilesRemote.SelectedFiles.Count.ToString+'):'+s,
-    mtInformation, [mbCancel, mbOK], 0, mbCancel) <> mrOK then exit;
+  s:= get_TF(eFilesList.SelectedFiles_('Каталог:  ','Файл:     '));
+  if messageBox(handle, pchar('Подтвердите удаление для выбранного ('+eFilesList.SelectedFiles.Count.ToString+'):'+s),
+     pchar('Удаление'),MB_ICONINFORMATION + MB_OKCANCEL) <> IDOK then EXIT;
 
      mnDeleteClick(nil);
 end;
@@ -2666,15 +2295,11 @@ var myFiles:TStringList;
     a: Integer;
     s: string;
 begin
-  s:= get_TF(FilesLocal.SelectedFiles_('Каталог:  ','Файл:     '));
+  s:= get_TF(eFilesList_.SelectedFiles_('Каталог:  ','Файл:     '));
+  if messageBox(handle, pchar('Подтвердите удаление для выбранного ('+eFilesList_.SelectedFiles.Count.ToString+'):'+s),
+     pchar('Удаление'),MB_ICONINFORMATION + MB_OKCANCEL) <> IDOK then EXIT;
 
-  if TaskMessageDlg(
-    'Удаление',
-    'Подтвердите удаление для выбранного ('+FilesLocal.SelectedFiles.Count.ToString+'):'+s,
-    mtInformation, [mbCancel, mbOK], 0, mbCancel) <> mrOK then exit;
-
-
-    myFiles:= FilesLocal.SelectedFiles;
+    myFiles:= eFilesList_.SelectedFiles;
 
     if myFiles.Count>0 then
       for a:=myFiles.Count-1 downto 0 do
@@ -2682,98 +2307,38 @@ begin
         if DirectoryExists(myFiles[a]) then TDirectory.Delete(myFiles[a], True) else
         if FileExists(myFiles[a]) then TFile.Delete(myFiles[a]);
       end;
-      FilesLocal.onPath(FilesLocal.Directory);
+      eFilesList_.onPath(eFilesList_.Directory);
 end;
 
-procedure TrdFileTransfer.sbtnSendBatchClick(Sender: TObject);
-var
-  SelectedFiles, FileList: TStringList;
-  i: Integer;
-  y_all, n_all:boolean;
-  g: TGauge;
-  temp_id: TTaskID;
-begin
-  i := GetTickCount;
-  if i - FDelayClickSendFetch < DELAY_CLICK_SEND_FETCH  then exit;
-  FDelayClickSendFetch := i;
-
-  SelectedFiles := FilesLocal.SelectedFiles;
-  if SelectedFiles.Count = 0 then exit;
-
-  FileList := TStringList.Create;
-  try
-    Y_all:= False; N_all:= False;
-    I := 0;
-    for I := 0 to SelectedFiles.Count-1 do
-      begin
-        case file_exists(True, Y_all, N_all, SelectedFiles[i],
-          FilesRemote.Directory + ExtractFileName(SelectedFiles[i])) of
-          mrNone, mrYes:
-            FileList.Add(SelectedFiles[i]);
-          mrYesToAll:
-            begin
-              FileList.Add(SelectedFiles[i]);
-              Y_all := true;
-            end;
-          mrNoToAll:
-            N_all := true;
-          mrNo,
-          mrIgnore: ;
-          mrCancel, mrClose:
-            exit;
-        end;
-      end;
-
-
-    if FileList.Count > 0 then
-      begin
-        TRtcPFileTransfer(myUI.Module).NotifyFileBatchSend := OnSendBatch;
-        try
-          temp_id := TRtcPFileTransfer(myUI.Module).SendBatch(myUI.UserName,
-                              FileList, FilesLocal.Directory, FilesRemote.Directory, nil);
-        except
-          on E: Exception do
-            begin
-              add_lg(TimeToStr(now) + ':  [ERROR] '+E.Message );
-              PageControlTasks.ActivePage := tbFileLog;
-              raise;
-            end;
-        end;
-        g := add_pn(ExtractFileName(FilesRemote.Directory), True);
-        i := add_rc(True, FilesRemote.Directory, SelectedFiles, g);
-        rr[i].taskID      := temp_id;
-        rr[i].direction   := sbtSending;
-        lblNoTask.Visible := false;
-      end
-    else
-      PageControlTasks.ActivePage := tbFileLog;
-
-  finally
-    FileList.Free;
-  end;
-
-end;
-
-procedure TrdFileTransfer.sbtnSendClick(Sender: TObject);
+procedure TrdFileTransfer.b_rv2Click(Sender: TObject);
 label 0;
   var
     send_f,myFiles:TStringList;
     f,i,p,a:integer; s: string; y_all,n_all:boolean;
     g:TGauge;
   begin
-    sbtnSendBatchClick(Sender);
-    exit;
+
+//  if assigned(myUI) then
+//    begin
+//    myFiles:=eFilesList_.SelectedFiles;
+//    if myFiles.Count>0 then
+//      for a:=0 to myFiles.Count-1 do
+//      begin
+//        myUI.Send(myFiles.Strings[a], eFilesList.Directory);
+//        Application.ProcessMessages;
+//      end;
+//    end;
 
     if assigned(myUI) then
     begin
 
-      g:= add_pn(extractfilename(FilesRemote.Directory), True);
-      myFiles:= FilesLocal.SelectedFiles;
-      i:= add_rc(True, FilesRemote.Directory, myFiles, g);
+      g:= add_pn(extractfilename(eFilesList.Directory), True);
+      myFiles:= eFilesList_.SelectedFiles;
+      i:= add_rc(True, eFilesList.Directory, myFiles, g);
 
       if not stopped then begin sb.SimpleText:= sb.SimpleText+'*'; EXIT; end;
 
-      lblNoTask.Hide;
+      lb_no.Hide;
       curr_g:= g;
       cur_files.Assign(myFiles); send_stop:= False; Y_all:= False; N_all:= False;
 
@@ -2785,7 +2350,7 @@ label 0;
         begin
         0:
           s:= myFiles.Strings[a];
-          case file_exists(True,Y_all,N_all, s, FilesRemote.Directory+extractfilename(s)) of
+          case file_exists(True,Y_all,N_all, s, eFilesList.Directory+extractfilename(s)) of
 
           mrNone,mrYes:
           begin
@@ -2822,10 +2387,9 @@ label 0;
 
         end;
 
-
         for i:=0 to send_f.count-1 do
         begin
-         myUI.Send (send_f[i], FilesRemote.Directory);
+         myUI.Send (send_f[i], eFilesList.Directory);
         end;
 
         if send_f.count=0 then
@@ -2838,97 +2402,35 @@ label 0;
       end;
 end;
 
-procedure TrdFileTransfer.sbtnFetchBatchClick(Sender: TObject);
-var
-  SelectedFiles, FileList: TStringList;
-  i: Integer;
-  y_all, n_all:boolean;
-  g: TGauge;
-  temp_id: TTaskID;
-begin
-  i := GetTickCount;
-  if i - FDelayClickSendFetch < DELAY_CLICK_SEND_FETCH  then exit;
-  FDelayClickSendFetch := i;
-
-  SelectedFiles := FilesRemote.SelectedFiles;
-  if SelectedFiles.Count = 0 then exit;
-
-  FileList := TStringList.Create;
-  try
-    Y_all:= False; N_all:= False;
-    I := 0;
-    for I := 0 to SelectedFiles.Count-1 do
-      begin
-        case file_exists(True, Y_all, N_all, SelectedFiles[i],
-          FilesLocal.Directory + ExtractFileName(SelectedFiles[i])) of
-          mrNone, mrYes:
-            FileList.Add(SelectedFiles[i]);
-          mrYesToAll:
-            begin
-              FileList.Add(SelectedFiles[i]);
-              Y_all := true;
-            end;
-          mrNoToAll:
-            N_all := true;
-          mrNo,
-          mrIgnore: ;
-          mrCancel, mrClose:
-            exit;
-        end;
-      end;
-
-
-
-
-    if FileList.Count > 0 then
-      begin
-        TRtcPFileTransfer(myUI.Module).NotifyFileBatchSend := OnSendBatch;
-        try
-          temp_id := TRtcPFileTransfer(myUI.Module).FetchBatch(myUI.UserName,
-                              FileList, FilesRemote.Directory, FilesLocal.Directory, nil);
-        except
-          on E: Exception do
-            begin
-              add_lg(TimeToStr(now) + ':  [ERROR] '+E.Message );
-              PageControlTasks.ActivePage := tbFileLog;
-              raise;
-            end;
-        end;
-        g := add_pn(ExtractFileName(FilesLocal.Directory), True);
-        i := add_rc(True, FilesLocal.Directory, SelectedFiles, g);
-        rr[i].direction   := sbtReceiving;
-        rr[i].taskID      := temp_id;
-        lblNoTask.Visible := false;
-      end
-    else
-      PageControlTasks.ActivePage := tbFileLog;
-
-  finally
-    FileList.Free;
-  end;
-
-end;
-
-procedure TrdFileTransfer.sbtnReceiveClick(Sender: TObject);
+procedure TrdFileTransfer.b_rvClick(Sender: TObject);
 label 0;
   var
     send_f,myFiles:TStringList;
     f,i,p,a:integer; s: string; y_all,n_all:boolean;
     g:TGauge;
   begin
-    sbtnFetchBatchClick(Sender);
-    exit;
+
+//  if assigned(myUI) then
+//    begin
+//    myFiles:=eFilesList.SelectedFiles;
+//    if myFiles.Count>0 then
+//      for a:=0 to myFiles.Count-1 do
+//      begin
+//        myUI.Fetch(myFiles.Strings[a], eFilesList_.Directory);
+//        Application.ProcessMessages;
+//      end;
+//    end;
 
     if assigned(myUI) then
     begin
 
-      g:= add_pn(extractfilename(FilesLocal.Directory), False);
-      myFiles:= FilesRemote.SelectedFiles;
-      i:= add_rc(False, FilesLocal.Directory, myFiles, g);
+      g:= add_pn(extractfilename(eFilesList_.Directory), False);
+      myFiles:= eFilesList.SelectedFiles;
+      i:= add_rc(False, eFilesList_.Directory, myFiles, g);
 
       if not stopped then begin sb.SimpleText:= sb.SimpleText+'*'; EXIT; end;
 
-      lblNoTask.Hide;
+      lb_no.Hide;
       curr_g:= g;
       cur_files.Assign(myFiles); resv_stop:= False; Y_all:= False; N_all:= False;
 
@@ -2940,7 +2442,7 @@ label 0;
         begin
           0:
           s:= myFiles.Strings[a];
-          case file_exists(False,Y_all,N_all, s, FilesLocal.Directory+extractfilename(s)) of
+          case file_exists(False,Y_all,N_all, s, eFilesList_.Directory+extractfilename(s)) of
 
           mrNone,mrYes:
           begin
@@ -2978,7 +2480,7 @@ label 0;
 
         for i:=0 to send_f.count-1 do
         begin
-         myUI.Fetch(send_f[i], FilesLocal.Directory);
+         myUI.Fetch(send_f[i], eFilesList_.Directory);
         end;
 
         if send_f.count=0 then
@@ -3015,36 +2517,6 @@ begin
  finally
    lockwindowupdate(0);
  end;
-end;
-
-
-{ **************************************************************************** }
-{                               TRecentPathList                                }
-{ **************************************************************************** }
-
-function TRecentPathList.Pop: string;
-begin
-  Pop(Result);
-end;
-
-function TRecentPathList.Pop(out s: string): Boolean;
-begin
-  if FDoubleRet then
-    Delete(Count-1);
-  FDoubleRet := false;
-  Result := Count > 0;
-  s := '';
-  if Result then
-    begin
-      s := Strings[Count-1];
-      Delete(Count-1);
-    end
-end;
-
-procedure TRecentPathList.Push(const s: string);
-begin
-  Add(s);
-  FDoubleRet := true;
 end;
 
 end.
