@@ -149,9 +149,8 @@ type
     procedure Call_FileList(Sender: TObject; const Folder: String;
       const Data: TRtcDataSet); override;
 
-
     //MFT+
-    procedure Call_NotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);
+    procedure Call_NotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);  override;
     //MFT-
   public
     constructor Create(AOwner: TComponent); override;

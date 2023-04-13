@@ -265,10 +265,10 @@ type
     procedure sbtnSendBatchClick(Sender: TObject);
     procedure sbtnFetchBatchClick(Sender: TObject);
     procedure CancelBatchClick(Sender: TObject);
-    procedure OnSendBatch(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend) ;
     procedure FilesReload(Sender: TObject;  Files: TRtcPFileExplorer);
     function SaveScroolListView(lv: TRtcPFileExplorer): TListViewInfo;
     procedure RestoreScroolListView(lv: TRtcPFileExplorer; const info: TListViewInfo);
+    procedure OnSendBatch(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);
   public
     UIVisible: Boolean;
     PartnerLockedState: Integer;

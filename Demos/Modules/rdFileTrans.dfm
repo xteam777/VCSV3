@@ -2464,7 +2464,7 @@ object rdFileTransfer: TrdFileTransfer
         ExplicitHeight = 28
       end
       object SpeedButton2: TSpeedButton
-        Left = 676
+        Left = 672
         Top = 0
         Width = 27
         Height = 22
@@ -2871,7 +2871,7 @@ object rdFileTransfer: TrdFileTransfer
       object lg: TMemo
         Left = 0
         Top = 0
-        Width = 1204
+        Width = 1200
         Height = 100
         TabStop = False
         Align = alClient
@@ -2920,7 +2920,6 @@ object rdFileTransfer: TrdFileTransfer
       Font.Style = [fsBold, fsUnderline]
       ParentFont = False
       OnClick = Label7Click
-      ExplicitLeft = 1019
       ExplicitHeight = 12
     end
     object al_b: TLabel
