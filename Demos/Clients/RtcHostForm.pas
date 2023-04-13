@@ -630,10 +630,11 @@ type
     procedure CheckUpdates;
 
     procedure OnProgressDialogCancel(Sender: TObject);
-    procedure OnDesktopHostFileRecv(Sender: TRtcPFileTransferUI);
-    procedure OnDesktopHostFileRecvCancel(Sender: TRtcPFileTransferUI);
-    procedure OnDesktopHostFileRecvStart(Sender: TRtcPFileTransferUI);
-    procedure OnDesktopHostFileRecvStop(Sender: TRtcPFileTransferUI);
+//    procedure OnDesktopHostFileRecv(Sender: TRtcPFileTransferUI);
+//    procedure OnDesktopHostFileRecvCancel(Sender: TRtcPFileTransferUI);
+//    procedure OnDesktopHostFileRecvStart(Sender: TRtcPFileTransferUI);
+//    procedure OnDesktopHostFileRecvStop(Sender: TRtcPFileTransferUI);
+    procedure OnDesktopHostNotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);
   public
     { Public declarations }
 //    SilentMode: Boolean;
@@ -825,10 +826,11 @@ begin
 //  xLog('PFileTransExplorerNewUI');
 
   UI := TRtcPFileTransferUI.Create(nil);
-  UI.OnRecv := OnDesktopHostFileRecv;
-  UI.OnRecvCancel := OnDesktopHostFileRecvCancel;
-  UI.OnRecvStart := OnDesktopHostFileRecvStart;
-  UI.OnRecvStop := OnDesktopHostFileRecvStop;
+  UI.NotifyFileBatchSend := OnDesktopHostNotifyFileBatchSend;
+//  UI.OnRecv := OnDesktopHostFileRecv;
+//  UI.OnRecvCancel := OnDesktopHostFileRecvCancel;
+//  UI.OnRecvStart := OnDesktopHostFileRecvStart;
+//  UI.OnRecvStop := OnDesktopHostFileRecvStop;
   UI.UserName := user;
   UI.UserDesc := GetUserDescription(user, 'file');
   // Always set UI.Module *after* setting UI.UserName !!!
@@ -1025,7 +1027,55 @@ begin
   end;
 end;
 
-procedure TMainForm.OnDesktopHostFileRecv(Sender: TRtcPFileTransferUI);
+procedure TMainForm.OnDesktopHostNotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);
+begin
+//  Memo1.Lines.Add(IntToStr(Sender.Recv_FileCount) + ' - ' + Sender.Recv_FileName + ' - ' + IntToStr(Sender.Recv_BytesComplete) + ' - '+ IntToStr(Sender.Recv_BytesTotal));
+
+  case mode of
+    mbsFileStart, mbsFileData, mbsFileStop:
+    begin
+      FProgressDialog.TextLine1 := task.Files[task.Current].file_path;
+
+      FProgressDialog.Position := Round(task.Progress);
+
+//      if task.size > 1024 * 1024 * 1024 then
+//        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / (1024 * 1024 * 1024)) + ' GB из ' + FormatFloat('0.00', task.size / (1024 * 1024 * 1024)) + ' GB'
+//      else
+//      if Sender.Recv_BytesTotal > 1024 * 1024 then
+//        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / (1024 * 1024)) + ' MB из ' + FormatFloat('0.00', task.size / (1024 * 1024)) + ' MB'
+//      else
+//        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / 1024) + ' KB из ' + FormatFloat('0.00', task.size / 1024) + ' KB';
+    end;
+    mbsTaskStart:
+    begin
+      FProgressDialog.Title := 'Копирование';
+      FProgressDialog.CommonAVI := TCommonAVI.aviCopyFiles;
+      FProgressDialog.TextLine1 := task.Files[task.Current].file_path;
+      FProgressDialog.TextLine2 := task.LocalFolder;
+      FProgressDialog.Max := 100;
+      FProgressDialog.Position := 0;
+      FProgressDialog.TextCancel := 'Прерывание...';
+      FProgressDialog.OnCancel := OnProgressDialogCancel;
+      FProgressDialog.AutoCalcFooter := True;
+      FProgressDialog.fHwndParent := LastActiveExplorerHandle;
+      FProgressDialog.Execute;
+    end;
+    mbsTaskFinished:
+    begin
+      FProgressDialog.Stop;
+    end;
+    mbsTaskError:
+    begin
+      FProgressDialog.Stop;
+    end;
+  end;
+
+
+//  if Sender.Recv_BytesTotal = Sender.Recv_BytesComplete then
+//    FProgressDialog.Stop;
+end;
+
+{procedure TMainForm.OnDesktopHostFileRecv(Sender: TRtcPFileTransferUI);
 begin
 //  Memo1.Lines.Add(IntToStr(Sender.Recv_FileCount) + ' - ' + Sender.Recv_FileName + ' - ' + IntToStr(Sender.Recv_BytesComplete) + ' - '+ IntToStr(Sender.Recv_BytesTotal));
 
@@ -1074,7 +1124,7 @@ end;
 procedure TMainForm.OnDesktopHostFileRecvStop(Sender: TRtcPFileTransferUI);
 begin
 //  FProgressDialog.Stop;
-end;
+end;}
 
 procedure TMainForm.OnProgressDialogCancel(Sender: TObject);
 begin

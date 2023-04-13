@@ -151,6 +151,7 @@ type
     FUserName, FUserDesc: String;
     FCleared: boolean;
     FLocked: integer;
+    FNotifyFileBatchSend: TNotifyFileBatchSend;
 
     function GetModule: TRtcPFileTransfer;
     procedure SetModule(const Value: TRtcPFileTransfer);
@@ -193,6 +194,10 @@ type
 
     property Cleared: boolean read FCleared;
     property Locked: integer read FLocked write FLocked;
+
+    //MFT+
+    property NotifyFileBatchSend: TNotifyFileBatchSend read FNotifyFileBatchSend write FNotifyFileBatchSend;
+    //MFT-
 
   public
     constructor Create(AOwner: TComponent); override;
@@ -3413,7 +3418,18 @@ end;
 
 procedure TRtcPFileTransfer.InternalNotifyFileBatchSend(const task: TBatchTask;
   mode: TModeBatchSend);
+var
+  UI: TRtcAbsPFileTransferUI;
+  i: integer;
 begin
+  UI := LockUI(task.FUser);
+  if assigned(UI) then
+    try
+      UI.NotifyFileBatchSend(Self, task, mode);
+    finally
+      UnlockUI(UI);
+    end;
+
   if not Assigned(FNotifyFileBatchSend) then exit;
 
   TThread.Synchronize(TThread.CurrentThread,

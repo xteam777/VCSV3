@@ -71,6 +71,10 @@ type
     FFolderName: String;
     FFolderData: TRtcDataSet;
 
+    //MFT+
+    FNotifyFileBatchSend: TNotifyFileBatchSend;
+    //MFT-
+
     procedure InitSend;
     procedure InitRecv;
 
@@ -298,6 +302,10 @@ type
       TRtcPFileTransferUI(Obj).Folder... = Folder Data Received }
     property OnFileList: TRtcPFileTransUIEvent read FOnFileList
       write FOnFileList;
+
+    //MFT+
+    property NotifyFileBatchSend: TNotifyFileBatchSend read FNotifyFileBatchSend write FNotifyFileBatchSend;
+    //MFT-
   end;
 
 implementation

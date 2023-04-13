@@ -6,8 +6,8 @@ object rdDesktopViewer: TrdDesktopViewer
   VertScrollBar.Tracking = True
   VertScrollBar.Visible = False
   Caption = #1059#1087#1088#1072#1074#1083#1077#1085#1080#1077
-  ClientHeight = 663
-  ClientWidth = 1066
+  ClientHeight = 662
+  ClientWidth = 1062
   Color = 1381653
   DoubleBuffered = True
   Font.Charset = DEFAULT_CHARSET
@@ -35,8 +35,8 @@ object rdDesktopViewer: TrdDesktopViewer
   object pMain: TPanel
     Left = 0
     Top = 0
-    Width = 1066
-    Height = 663
+    Width = 1062
+    Height = 662
     Align = alClient
     BevelOuter = bvNone
     Color = 10720035
@@ -49,13 +49,13 @@ object rdDesktopViewer: TrdDesktopViewer
     ParentFont = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
-    ExplicitWidth = 1062
-    ExplicitHeight = 662
+    ExplicitWidth = 1058
+    ExplicitHeight = 661
     object iScreenLocked: TImage
       Left = 0
       Top = 0
-      Width = 1066
-      Height = 663
+      Width = 1062
+      Height = 662
       Align = alClient
       Center = True
       Picture.Data = {
@@ -1993,8 +1993,8 @@ object rdDesktopViewer: TrdDesktopViewer
     object iPrepare: TImage
       Left = 0
       Top = 0
-      Width = 1066
-      Height = 663
+      Width = 1062
+      Height = 662
       Align = alClient
       Center = True
       Picture.Data = {
@@ -2972,8 +2972,8 @@ object rdDesktopViewer: TrdDesktopViewer
     object Scroll: TScrollBox
       Left = 0
       Top = 0
-      Width = 1066
-      Height = 663
+      Width = 1062
+      Height = 662
       HorzScrollBar.Tracking = True
       HorzScrollBar.Visible = False
       VertScrollBar.Tracking = True
@@ -2985,13 +2985,13 @@ object rdDesktopViewer: TrdDesktopViewer
       TabOrder = 0
       StyleElements = [seFont, seBorder]
       OnMouseMove = ScrollMouseMove
-      ExplicitWidth = 1062
-      ExplicitHeight = 662
+      ExplicitWidth = 1058
+      ExplicitHeight = 661
       object pImage: TRtcPDesktopViewer
         Left = 0
         Top = 0
-        Width = 1066
-        Height = 663
+        Width = 1062
+        Height = 662
         Align = alClient
         Color = 1381653
         ParentColor = False
@@ -4135,7 +4135,6 @@ object rdDesktopViewer: TrdDesktopViewer
           item
             Action = aCtrlAltDel
             ImageIndex = 5
-            ShowCaption = False
           end
           item
             Items = <
@@ -5141,10 +5140,7 @@ object rdDesktopViewer: TrdDesktopViewer
       000000000000000000000000000000000000}
   end
   object FT_UI: TRtcPFileTransferUI
-    OnRecvStart = FT_UIRecvStart
-    OnRecv = FT_UIRecv
-    OnRecvStop = FT_UIRecvStop
-    OnRecvCancel = FT_UIRecvCancel
+    NotifyFileBatchSend = FT_UINotifyFileBatchSend
     Left = 12
     Top = 396
   end

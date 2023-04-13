@@ -168,10 +168,11 @@ type
     procedure panOptionsMouseLeave(Sender: TObject);
     procedure Button1Click(Sender: TObject);
     procedure myUIRecvStop(Sender: TRtcPDesktopControlUI);
-    procedure FT_UIRecvStart(Sender: TRtcPFileTransferUI);
-    procedure FT_UIRecv(Sender: TRtcPFileTransferUI);
-    procedure FT_UIRecvCancel(Sender: TRtcPFileTransferUI);
-    procedure FT_UIRecvStop(Sender: TRtcPFileTransferUI);
+//    procedure FT_UIRecvStart(Sender: TRtcPFileTransferUI);
+//    procedure FT_UIRecv(Sender: TRtcPFileTransferUI);
+//    procedure FT_UIRecvCancel(Sender: TRtcPFileTransferUI);
+//    procedure FT_UIRecvStop(Sender: TRtcPFileTransferUI);
+    procedure FT_UINotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);
 
   protected
     LMouseX,LMouseY:integer;
@@ -754,7 +755,55 @@ begin
   UpdateQuality;
 end;
 
-procedure TrdDesktopViewer.FT_UIRecv(Sender: TRtcPFileTransferUI);
+procedure TrdDesktopViewer.FT_UINotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);
+begin
+//  Memo1.Lines.Add(IntToStr(Sender.Recv_FileCount) + ' - ' + Sender.Recv_FileName + ' - ' + IntToStr(Sender.Recv_BytesComplete) + ' - '+ IntToStr(Sender.Recv_BytesTotal));
+
+  case mode of
+    mbsFileStart, mbsFileData, mbsFileStop:
+    begin
+      FProgressDialog.TextLine1 := task.Files[task.Current].file_path;
+
+      FProgressDialog.Position := Round(task.Progress);
+
+//      if task.size > 1024 * 1024 * 1024 then
+//        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / (1024 * 1024 * 1024)) + ' GB из ' + FormatFloat('0.00', task.size / (1024 * 1024 * 1024)) + ' GB'
+//      else
+//      if Sender.Recv_BytesTotal > 1024 * 1024 then
+//        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / (1024 * 1024)) + ' MB из ' + FormatFloat('0.00', task.size / (1024 * 1024)) + ' MB'
+//      else
+//        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / 1024) + ' KB из ' + FormatFloat('0.00', task.size / 1024) + ' KB';
+    end;
+    mbsTaskStart:
+    begin
+      FProgressDialog.Title := 'Копирование';
+      FProgressDialog.CommonAVI := TCommonAVI.aviCopyFiles;
+      FProgressDialog.TextLine1 := task.Files[task.Current].file_path;
+      FProgressDialog.TextLine2 := task.LocalFolder;
+      FProgressDialog.Max := 100;
+      FProgressDialog.Position := 0;
+      FProgressDialog.TextCancel := 'Прерывание...';
+      FProgressDialog.OnCancel := OnProgressDialogCancel;
+      FProgressDialog.AutoCalcFooter := True;
+      FProgressDialog.fHwndParent := FLastActiveExplorerHandle;
+      FProgressDialog.Execute;
+    end;
+    mbsTaskFinished:
+    begin
+      FProgressDialog.Stop;
+    end;
+    mbsTaskError:
+    begin
+      FProgressDialog.Stop;
+    end;
+  end;
+
+
+//  if Sender.Recv_BytesTotal = Sender.Recv_BytesComplete then
+//    FProgressDialog.Stop;
+end;
+
+{procedure TrdDesktopViewer.FT_UIRecv(Sender: TRtcPFileTransferUI);
 begin
 //  Memo1.Lines.Add(IntToStr(Sender.Recv_FileCount) + ' - ' + Sender.Recv_FileName + ' - ' + IntToStr(Sender.Recv_BytesComplete) + ' - '+ IntToStr(Sender.Recv_BytesTotal));
   FProgressDialog.TextLine1 := FT_UI.Recv_FileName;
@@ -799,7 +848,7 @@ end;
 procedure TrdDesktopViewer.FT_UIRecvStop(Sender: TRtcPFileTransferUI);
 begin
   FProgressDialog.Stop
-end;
+end;}
 
 procedure TrdDesktopViewer.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   begin
@@ -1477,10 +1526,29 @@ end;
 procedure TrdDesktopViewer.GetFilesFromHostClipboard(var Message: TMessage);
 var
   i: Integer;
+  FileList: TStringList;
+  temp_id: TTaskID;
 begin
   FLastActiveExplorerHandle := THandle(Message.WParam);
+
+  FileList := TStringList.Create;
   for i := 0 to CB_DataObject.FCount - 1 do
-    FT_UI.Fetch(CB_DataObject.FFiles[i].filePath, String(Message.LParam));
+    FileList.Add(CB_DataObject.FFiles[i].filePath);
+
+//  TRtcPFileTransfer(myUI.Module).NotifyFileBatchSend :=FT_UINotifyFileBatchSend;
+  try
+    temp_id := TRtcPFileTransfer(myUI.Module).FetchBatch(myUI.UserName,
+                        FileList, ExtractFilePath(CB_DataObject.FFiles[0].filePath), String(Message.LParam), nil);
+  except
+//  on E: Exception do
+//    begin
+//      add_lg(TimeToStr(now) + ':  [ERROR] '+E.Message );
+//      raise;
+//    end;
+  end;
+
+//  for i := 0 to CB_DataObject.FCount - 1 do
+//    FT_UI.Fetch(CB_DataObject.FFiles[i].filePath, String(Message.LParam));
 end;
 
 procedure TrdDesktopViewer.SetFormState;
