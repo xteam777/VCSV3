@@ -2882,7 +2882,7 @@ begin
 
     if FileList.Count > 0 then
       begin
-        TRtcPFileTransfer(myUI.Module).NotifyFileBatchSend := OnSendBatch;
+//        TRtcPFileTransfer(myUI.Module).NotifyFileBatchSend := OnSendBatch;
         try
           temp_id := TRtcPFileTransfer(myUI.Module).FetchBatch(myUI.UserName,
                               FileList, FilesRemote.Directory, FilesLocal.Directory, nil);
