@@ -60,6 +60,7 @@ type
   end;           }
 
 type
+  PProgressDialog = ^TProgressDialog;
   TProgressDialog = class(TComponent)
   private
     ShellModule: HModule;
