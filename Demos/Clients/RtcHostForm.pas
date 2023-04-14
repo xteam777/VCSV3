@@ -862,7 +862,7 @@ begin
     spDisp.QueryInterface(iWebBrowser2, WB);
     if WB = nil then    
       Continue;
-      
+
     {Если очередное окно пребывает сейчас в фокусе}
     if GetForegroundWindow = WB.HWND then
     begin
@@ -1372,7 +1372,7 @@ begin
 
   //  TRtcPFileTransfer(myUI.Module).NotifyFileBatchSend :=FT_UINotifyFileBatchSend;
     try
-      temp_id := TRtcPFileTransfer(FDesktopHost.FileTransfer).FetchBatch(CB_DataObject.FUserName,
+      temp_id := FDesktopHost.FileTransfer.FetchBatch(CB_DataObject.FUserName,
                           FileList, ExtractFilePath(CB_DataObject.FFiles[0].filePath), ACurExplorerDir, nil);
     except
   //  on E: Exception do

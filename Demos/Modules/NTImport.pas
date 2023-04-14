@@ -1,5 +1,5 @@
 unit NTImport;
-
+{$WARN SYMBOL_PLATFORM OFF}
 interface
 uses
   Winapi.Windows;

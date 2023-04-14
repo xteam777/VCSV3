@@ -3305,10 +3305,8 @@ end;
 //+MFT
 procedure TRtcPFileTransfer.CancelBatch(Sender: TObject; TaskID: TTaskID);
 var
-  i: Integer;
   task: TBatchTask;
   fn: TRtcFunctionInfo;
-  f: PFileInfo;
 begin
   if not FTaskList.FindTaskByName(TaskID.ToString, task) then exit;
 
@@ -3390,8 +3388,6 @@ begin
 end;
 
 procedure TRtcPFileTransfer.FinishTask(Sender: TObject; const task: TBatchTask; status: TStatusBatchTask);
-var
-  i: Integer;
 begin
 
   task.Lock;
@@ -3595,7 +3591,6 @@ begin
             end;
 
           // read and send
-          dwRead := 0;
           if not f.IsDirectory then
             begin
               SendBytes := f.file_size - f.file_pos;
@@ -3693,18 +3688,16 @@ procedure TRtcPFileTransfer.SendTaskError(Sender: TObject; const UserName, Msg: 
 var
   fn: TRtcFunctionInfo;
 begin
-  fn := nil;
-      fn := TRtcFunctionInfo.Create;
-      try
-        fn.FunctionName := BATCH_FUNC_NAME_ERROR;
-        fn.asText['task_id']  := TaskID.ToString;
-        fn.asText['message']  := Msg;
-        Client.SendToUser(Sender, UserName, fn);
-      except
-        fn.Free;
-        raise;
-      end;
-
+  fn := TRtcFunctionInfo.Create;
+  try
+    fn.FunctionName := BATCH_FUNC_NAME_ERROR;
+    fn.asText['task_id']  := TaskID.ToString;
+    fn.asText['message']  := Msg;
+    Client.SendToUser(Sender, UserName, fn);
+  except
+    fn.Free;
+    raise;
+  end;
 end;
 
 procedure TRtcPFileTransfer.WriteIncomingFile(Sender: TObject;
@@ -4048,7 +4041,6 @@ const
   RECURSIVE  = true;
 var
   SearchRec: TSearchRec;
-  ret: Boolean;
 begin
   Result := 0;
   if FindFirst(TPath.Combine(FilePath, '*'), faAnyFile, SearchRec) = 0 then // DO NOT LOCALIZE
