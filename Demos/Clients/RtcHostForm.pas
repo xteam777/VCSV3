@@ -1257,7 +1257,7 @@ begin
   FDesktopHost := TRtcPDesktopHost.Create(nil);
   FDesktopHost.Name := 'PDesktopHost_' + FUID;
   FDesktopHost.Client := FGatewayClient;
-  FDesktopHost.FileTransfer := FFileTransfer;
+//  FDesktopHost.FileTransfer := FFileTransfer;
   FDesktopHost.AccessControl := False;
   FDesktopHost.GCaptureAllMonitors := False;
 //  FDesktopHost.GCaptureLayeredWindows := False;
@@ -1319,6 +1319,10 @@ begin
   finally
   end;
 
+  try
+    FDesktopHost.FileTransfer.Free;
+  finally
+  end;
   try
     if FDesktopHost <> nil then
       FDesktopHost.Free;
