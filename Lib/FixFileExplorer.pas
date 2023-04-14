@@ -11,6 +11,7 @@ type
   protected
   public
     constructor Create(AOwner: TComponent); override;
+    procedure onPath(NewDir: string; mask: string = '');
   end;
 
 procedure FixIcon(ListView: TRtcPFileExplorer);
@@ -19,7 +20,7 @@ procedure AutoFitColumns(ListView: TRtcPFileExplorer);
 implementation
 
 uses
-  Vcl.Graphics, System.Math;
+  Vcl.Graphics, System.Math, rtcInfo, rtcpFileUtils;
 
 resourcestring
   SErrorExtractIcon = 'Failed to get an icon';
@@ -45,9 +46,6 @@ const
 begin
   Result := IncludeTrailingBackslash(GetWindowsSystemFolder) + shell32dll;
 end;
-
-
-
 
 procedure FixIcon(ListView: TRtcPFileExplorer);
 const
@@ -197,6 +195,25 @@ constructor TRtcPFileExplorer.Create(AOwner: TComponent);
 begin
   inherited;
   FixIcon(Self);
+end;
+
+procedure TRtcPFileExplorer.onPath(NewDir, mask: string);
+var
+  data: TRtcDataSet;
+begin
+  if not Local then exit;
+
+  data := TRtcDataSet.Create;
+  try
+    GetFilesList(NewDir, mask, data);
+    UpdateFileList(NewDir, data);
+  finally
+    data.Free;
+  end;
+
+  if Assigned(OnDirectoryChange) then
+    OnDirectoryChange(Self, NewDir);
+
 end;
 
 
