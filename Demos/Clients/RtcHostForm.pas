@@ -1081,6 +1081,8 @@ begin
 
         FProgressDialog^.Stop;
         FreeAndNil(FProgressDialog^);
+
+        FProgressDialogs.isNull[GUIDToString(task.Id)] := True;
       end;
       mbsTaskError:
       begin
@@ -1090,6 +1092,8 @@ begin
 
         FProgressDialog^.Stop;
         FreeAndNil(FProgressDialog^);
+
+        FProgressDialogs.isNull[GUIDToString(task.Id)] := True;
       end;
     end;
 
