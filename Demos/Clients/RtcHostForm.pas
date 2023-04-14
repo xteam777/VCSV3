@@ -1037,7 +1037,7 @@ begin
       begin
         FProgressDialog.TextLine1 := task.Files[task.Current].file_path;
 
-        FProgressDialog.Position := Round(task.Progress);
+        FProgressDialog.Position := Round(task.Progress * 100);
 
   //      if task.size > 1024 * 1024 * 1024 then
   //        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / (1024 * 1024 * 1024)) + ' GB из ' + FormatFloat('0.00', task.size / (1024 * 1024 * 1024)) + ' GB'
