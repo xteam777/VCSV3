@@ -16,10 +16,7 @@ uses
 
   rtcSystem, rtcpFileExplore, rtcpFileTransUI, ShellAPI, Menus, AppEvnts,
   ImgList, Vcl.Samples.Gauges, System.ImageList,
-  rtcPortalMod, rtcpFileTrans, uVircessTypes, CommonUtils, rtcScrUtils, CommonData,
-
-
-  FixFileExplorer;
+  rtcPortalMod, rtcpFileTrans, uVircessTypes, CommonUtils, rtcScrUtils, CommonData;
 
 const
   WM_SAFE_DELETE_OBJECT  = WM_USER + 1;

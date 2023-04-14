@@ -66,8 +66,7 @@ uses
   uAcceptEula in '..\Modules\uAcceptEula.pas' {fAcceptEULA},
   NTImport in 'NTImport.pas',
   rtcpFileTrans in 'rtcpFileTrans.pas',
-  MultiFileTrans in 'MultiFileTrans.pas',
-  FixFileExplorer in 'FixFileExplorer.pas';
+  MultiFileTrans in 'MultiFileTrans.pas';
 
 {$R rtcportaluac.res rtcportaluac.rc}
 {$R *.res}
