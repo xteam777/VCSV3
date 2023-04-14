@@ -473,7 +473,7 @@ begin
   FLocalRecent  := TRecentPathList.Create;
   FTaskPanelList := TTaskPanelList.Create;
   FTaskPanelList.OnChange := OnTaskPanelChange;
-  FTaskPanelList.TaskRemoveLogic := trlManual;
+  FTaskPanelList.TaskRemoveLogic := trlDemandError;
 
   b_ppClick(nil);
 
@@ -605,15 +605,15 @@ end;
 procedure TrdFileTransfer.btnRemoteBackClick(Sender: TObject);
 begin
   if Sender = btnRemoteBack then
-    begin
-      edRemoteDir.Text := FRemoteRecent.Pop;
-      btnRemoteReloadClick(nil);
-    end
+  begin
+    edRemoteDir.Text := IncludeTrailingBackslash(FRemoteRecent.Pop);
+    btnRemoteReloadClick(nil);
+  end
   else
-    begin
-      edLocalDir.Text := FLocalRecent.Pop;
-      btnLocalReloadClick(nil);
-    end;
+  begin
+    edLocalDir.Text := IncludeTrailingBackslash(FLocalRecent.Pop);
+    btnLocalReloadClick(nil);
+  end;
 end;
 
 procedure TrdFileTransfer.btnRemoteReloadClick(Sender: TObject);
