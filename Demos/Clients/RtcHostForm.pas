@@ -47,6 +47,12 @@ uses
 type
   TSetHostGatewayClientActiveProc = procedure(AValue: Boolean);
 
+  PProgressDialogData = ^TProgressDialogData;
+  TProgressDialogData = record
+    taskId: TTaskID;
+    ProgressDialog: PProgressDialog;
+  end;
+
   PPortalHostThread = ^TPortalHostThread;
   TPortalHostThread = class(TThread)
   private
@@ -560,7 +566,7 @@ type
     FStatusUpdateThread: TStatusUpdateThread;
     tPHostThread: TPortalHostThread;
     FUpdateAvailable: Boolean;
-    FProgressDialogs: TRtcRecord;
+    FProgressDialogsList: TList;
 
 //    GatewayClientsList: TList;
 
@@ -778,6 +784,10 @@ type
   //  procedure TransStretchDraw(ACanvas: TCanvas; const Rect: TRect; SRC: TBitmap; TransParentColor: TColor);
   //  function ExecAndWait(const FileName, Params: ShortString; const WinState: Word): boolean;
     property HostGatewayClientActive: Boolean read FHostGatewayClientActive write SetHostGatewayClientActive;
+
+    procedure AddProgressDialogToList(taskId: TTaskId; ProgressDialog: PProgressDialog);
+    function GetProgressDialog(taskId: TTaskId): PProgressDialog;
+    procedure RemoveProgressDialog(taskId: TTaskId);
   end;
 
 //type
@@ -818,6 +828,47 @@ var
 implementation
 
 {$R *.dfm}
+
+procedure TMainForm.AddProgressDialogToList(taskId: TTaskId; ProgressDialog: PProgressDialog);
+var
+  pPDData: PProgressDialogData;
+begin
+  New(pPDData);
+  pPDData^.taskId := taskId;
+  pPDData^.ProgressDialog := ProgressDialog;
+
+  FProgressDialogsList.Add(pPDData);
+end;
+
+function TMainForm.GetProgressDialog(taskId: TTaskId): PProgressDialog;
+var
+  i: Integer;
+begin
+  Result := nil;
+
+  for i := 0 to FProgressDialogsList.Count - 1 do
+    if PProgressDialogData(FProgressDialogsList[i])^.taskId = taskId then
+    begin
+      Result := PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog;
+      Exit;
+    end;
+end;
+
+procedure TMainForm.RemoveProgressDialog(taskId: TTaskId);
+var
+  i: Integer;
+begin
+  i := FProgressDialogsList.Count - 1;
+  while i >= 0 do
+    if PProgressDialogData(FProgressDialogsList[i])^.taskId = taskId then
+    begin
+      FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
+      Dispose(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog);
+      Dispose(FProgressDialogsList[i]);
+      FProgressDialogsList.Delete(i);
+      Break;
+    end;
+end;
 
 procedure TMainForm.DesktopHostFileTransferOnNewUI(Sender: TRtcPFileTransfer; const user: String);
 var
@@ -1033,70 +1084,65 @@ var
 begin
 //  Memo1.Lines.Add(IntToStr(Sender.Recv_FileCount) + ' - ' + Sender.Recv_FileName + ' - ' + IntToStr(Sender.Recv_BytesComplete) + ' - '+ IntToStr(Sender.Recv_BytesTotal));
 
-  if task.Direction = dbtFetch then
-    case mode of
-      mbsFileStart, mbsFileData, mbsFileStop:
-      begin
-        if FProgressDialogs.isType[GUIDToString(task.Id)] = rtc_Null then
-          Exit;
-        FProgressDialog := PProgressDialog(FProgressDialogs.asObject[GUIDToString(task.Id)]);
+  if task.Direction <> dbtFetch then
+    Exit;
 
-        FProgressDialog^.TextLine1 := task.Files[task.Current].file_path;
+  case mode of
+    mbsFileStart, mbsFileData, mbsFileStop:
+    begin
+      FProgressDialog := GetProgressDialog(task.Id);
+      if FProgressDialog = nil then
+        Exit;
 
-        FProgressDialog^.Position := Round(task.Progress * 100);
+      FProgressDialog^.TextLine1 := task.Files[task.Current].file_path;
 
-  //      if task.size > 1024 * 1024 * 1024 then
-  //        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / (1024 * 1024 * 1024)) + ' GB из ' + FormatFloat('0.00', task.size / (1024 * 1024 * 1024)) + ' GB'
-  //      else
-  //      if Sender.Recv_BytesTotal > 1024 * 1024 then
-  //        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / (1024 * 1024)) + ' MB из ' + FormatFloat('0.00', task.size / (1024 * 1024)) + ' MB'
-  //      else
-  //        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / 1024) + ' KB из ' + FormatFloat('0.00', task.size / 1024) + ' KB';
-      end;
-      mbsTaskStart:
-      begin
-        if FProgressDialogs.isType[GUIDToString(task.Id)] = rtc_Null then
-        begin
-          FProgressDialog^ := TProgressDialog.Create(Self);
-          FProgressDialogs.asObject[GUIDToString(task.Id)] := @FProgressDialog;
+      FProgressDialog^.Position := Round(task.Progress * 100);
 
-          FProgressDialog^.Title := 'Копирование';
-          FProgressDialog^.CommonAVI := TCommonAVI.aviCopyFiles;
-          FProgressDialog^.TextLine1 := task.Files[task.Current].file_path;
-          FProgressDialog^.TextLine2 := task.LocalFolder;
-          FProgressDialog^.Max := 100;
-          FProgressDialog^.Position := 0;
-          FProgressDialog^.TextCancel := 'Прерывание...';
-          FProgressDialog^.OnCancel := OnProgressDialogCancel;
-          FProgressDialog^.AutoCalcFooter := True;
-          FProgressDialog^.fHwndParent := LastActiveExplorerHandle;
-          FProgressDialog^.Execute;
-        end;
-      end;
-      mbsTaskFinished:
-      begin
-        if FProgressDialogs.isType[GUIDToString(task.Id)] = rtc_Null then
-          Exit;
-        FProgressDialog := PProgressDialog(FProgressDialogs.asObject[GUIDToString(task.Id)]);
-
-        FProgressDialog^.Stop;
-        FreeAndNil(FProgressDialog^);
-
-        FProgressDialogs.isNull[GUIDToString(task.Id)] := True;
-      end;
-      mbsTaskError:
-      begin
-        if FProgressDialogs.isType[GUIDToString(task.Id)] = rtc_Null then
-          Exit;
-        FProgressDialog := PProgressDialog(FProgressDialogs.asObject[GUIDToString(task.Id)]);
-
-        FProgressDialog^.Stop;
-        FreeAndNil(FProgressDialog^);
-
-        FProgressDialogs.isNull[GUIDToString(task.Id)] := True;
-      end;
+//      if task.size > 1024 * 1024 * 1024 then
+//        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / (1024 * 1024 * 1024)) + ' GB из ' + FormatFloat('0.00', task.size / (1024 * 1024 * 1024)) + ' GB'
+//      else
+//      if Sender.Recv_BytesTotal > 1024 * 1024 then
+//        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / (1024 * 1024)) + ' MB из ' + FormatFloat('0.00', task.size / (1024 * 1024)) + ' MB'
+//      else
+//        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / 1024) + ' KB из ' + FormatFloat('0.00', task.size / 1024) + ' KB';
     end;
+    mbsTaskStart:
+    begin
+      New(FProgressDialog);
+      FProgressDialog^ := TProgressDialog.Create(Self);
+      AddProgressDialogToList(task.Id, @FProgressDialog);
 
+      FProgressDialog^.Title := 'Копирование';
+      FProgressDialog^.CommonAVI := TCommonAVI.aviCopyFiles;
+      FProgressDialog^.TextLine1 := task.Files[task.Current].file_path;
+      FProgressDialog^.TextLine2 := task.LocalFolder;
+      FProgressDialog^.Max := 100;
+      FProgressDialog^.Position := 0;
+      FProgressDialog^.TextCancel := 'Прерывание...';
+      FProgressDialog^.OnCancel := OnProgressDialogCancel;
+      FProgressDialog^.AutoCalcFooter := True;
+      FProgressDialog^.fHwndParent := LastActiveExplorerHandle;
+      FProgressDialog^.Execute;
+    end;
+    mbsTaskFinished:
+    begin
+      FProgressDialog := GetProgressDialog(task.Id);
+      if FProgressDialog = nil then
+        Exit;
+
+      FProgressDialog^.Stop;
+      RemoveProgressDialog(task.Id);
+    end;
+    mbsTaskError:
+    begin
+      FProgressDialog := GetProgressDialog(task.Id);
+      if FProgressDialog = nil then
+        Exit;
+
+      FProgressDialog^.Stop;
+      RemoveProgressDialog(task.Id);
+    end;
+  end;
 
 //  if Sender.Recv_BytesTotal = Sender.Recv_BytesComplete then
 //    FProgressDialog.Stop;
@@ -3465,8 +3511,7 @@ var
 begin
   //XLog('FormCreate');
 
-  FProgressDialogs := TRtcRecord.Create;
-  FProgressDialogs.AutoCreate := True;
+  FProgressDialogsList := TList.Create;
 
   HintWindowClass := TRmxHintWindow;
 
@@ -3718,7 +3763,13 @@ begin
     i := i - 1;
   end;
 
-  FreeAndNil(FProgressDialogs);
+  for i := 0 to FProgressDialogsList.Count - 1 do
+  begin
+    FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
+    Dispose(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog);
+    Dispose(FProgressDialogsList[i]);
+  end;
+  FreeAndNil(FProgressDialogsList);
 end;
 
 procedure TMainForm.FormHide(Sender: TObject);
