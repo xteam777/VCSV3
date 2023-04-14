@@ -1238,6 +1238,7 @@ begin
 //    FFileTransfer.OnNewUI := MainForm.PFileTransExplorerNewUI_HideMode; //Для контроля указываем невидимый эксплорер
   FFileTransfer.OnUserJoined := MainForm.PModuleUserJoined;
   FFileTransfer.OnUserLeft := MainForm.PModuleUserLeft;
+  FFileTransfer.NotifyFileBatchSend := MainForm.OnDesktopHostNotifyFileBatchSend;
   FFileTransfer.Tag := ThreadID;
 
   FChat := TRtcPChat.Create(nil);
