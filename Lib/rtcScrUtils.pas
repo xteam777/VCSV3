@@ -211,6 +211,8 @@ begin
   Result.nFileSizeLow := GetFileSize(hFile, @Result.nFileSizeHigh);
   if Result.nFileSizeLow <> INVALID_FILE_SIZE then
     Result.dwFlags := Result.dwFlags or FD_FILESIZE;
+
+  CloseHandle(hFile);
 end;
 
 function Get_Clipboard: RtcString;
