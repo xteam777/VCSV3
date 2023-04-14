@@ -894,7 +894,7 @@ begin
       SendMessage(pPc^.UIHandle, WM_GET_FILES_FROM_CLIPBOARD, WPARAM(CurExplorerHandle), LPARAM(CurExplorerDir));
   end
   else
-  if tPHostThread.FDesktopHost.FileTransfer.isSubscriber(AUserName) then  //Если мы хост, то с контроля-овнера-клибоарда тянем файлы
+  if tPHostThread.FFileTransfer.isSubscriber(AUserName) then  //Если мы хост, то с контроля-овнера-клибоарда тянем файлы
     if GetCurrentExplorerDirectory(CurExplorerDir, CurExplorerHandle) then
       tPHostThread.GetFilesFromClipboard(CurExplorerHandle, CurExplorerDir);
 end;
@@ -1372,8 +1372,8 @@ begin
 
   //  TRtcPFileTransfer(myUI.Module).NotifyFileBatchSend :=FT_UINotifyFileBatchSend;
     try
-      temp_id := FDesktopHost.FileTransfer.FetchBatch(CB_DataObject.FUserName,
-                          FileList, ExtractFilePath(CB_DataObject.FFiles[0].filePath), ACurExplorerDir, nil);
+      temp_id := FFileTransfer.FetchBatch(CB_DataObject.FUserName,
+                          FileList, ExtractFilePath(CB_DataObject.FFiles[0].filePath), ACurExplorerDir, FFileTransfer);
     except
   //  on E: Exception do
   //    begin

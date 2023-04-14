@@ -204,7 +204,7 @@ begin
 
 	  	medium.hGlobal := data;
 	  	medium.tymed := TYMED_HGLOBAL;
-	  	exit(S_OK); }
+	  	exit(S_OK);}
 
 //      FillChar(medium, SizeOf(medium), 0);
 //      exit(S_OK);
@@ -214,7 +214,7 @@ begin
       var pIStream: IStream := TStreamAdapter.Create(TMemoryStream.Create) as IStream;
       pIStream._AddRef;
       medium.stm := pIStream;
-      medium.unkForRelease := nil;
+      medium.unkForRelease := pIStream;
       exit(S_OK);
 
 //      FillChar(medium, SizeOf(medium), 0);
