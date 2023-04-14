@@ -560,6 +560,7 @@ type
     FStatusUpdateThread: TStatusUpdateThread;
     tPHostThread: TPortalHostThread;
     FUpdateAvailable: Boolean;
+    FProgressDialogs: TRtcRecord;
 
 //    GatewayClientsList: TList;
 
@@ -812,7 +813,6 @@ var
   DeviceId, ConsoleId: String;
   LastActiveExplorerHandle: THandle;
 
-  FProgressDialog: TProgressDialog;
   CB_Monitor: TClipbrdMonitor;
 
 implementation
@@ -1028,6 +1028,8 @@ begin
 end;
 
 procedure TMainForm.OnDesktopHostNotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);
+var
+  FProgressDialog: PProgressDialog;
 begin
 //  Memo1.Lines.Add(IntToStr(Sender.Recv_FileCount) + ' - ' + Sender.Recv_FileName + ' - ' + IntToStr(Sender.Recv_BytesComplete) + ' - '+ IntToStr(Sender.Recv_BytesTotal));
 
@@ -1035,9 +1037,13 @@ begin
     case mode of
       mbsFileStart, mbsFileData, mbsFileStop:
       begin
-        FProgressDialog.TextLine1 := task.Files[task.Current].file_path;
+        if FProgressDialogs.isType[GUIDToString(task.Id)] = rtc_Null then
+          Exit;
+        FProgressDialog := PProgressDialog(FProgressDialogs.asObject[GUIDToString(task.Id)]);
 
-        FProgressDialog.Position := Round(task.Progress * 100);
+        FProgressDialog^.TextLine1 := task.Files[task.Current].file_path;
+
+        FProgressDialog^.Position := Round(task.Progress * 100);
 
   //      if task.size > 1024 * 1024 * 1024 then
   //        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / (1024 * 1024 * 1024)) + ' GB из ' + FormatFloat('0.00', task.size / (1024 * 1024 * 1024)) + ' GB'
@@ -1049,25 +1055,41 @@ begin
       end;
       mbsTaskStart:
       begin
-        FProgressDialog.Title := 'Копирование';
-        FProgressDialog.CommonAVI := TCommonAVI.aviCopyFiles;
-        FProgressDialog.TextLine1 := task.Files[task.Current].file_path;
-        FProgressDialog.TextLine2 := task.LocalFolder;
-        FProgressDialog.Max := 100;
-        FProgressDialog.Position := 0;
-        FProgressDialog.TextCancel := 'Прерывание...';
-        FProgressDialog.OnCancel := OnProgressDialogCancel;
-        FProgressDialog.AutoCalcFooter := True;
-        FProgressDialog.fHwndParent := LastActiveExplorerHandle;
-        FProgressDialog.Execute;
+        if FProgressDialogs.isType[GUIDToString(task.Id)] = rtc_Null then
+        begin
+          FProgressDialog^ := TProgressDialog.Create(Self);
+          FProgressDialogs.asObject[GUIDToString(task.Id)] := @FProgressDialog;
+
+          FProgressDialog^.Title := 'Копирование';
+          FProgressDialog^.CommonAVI := TCommonAVI.aviCopyFiles;
+          FProgressDialog^.TextLine1 := task.Files[task.Current].file_path;
+          FProgressDialog^.TextLine2 := task.LocalFolder;
+          FProgressDialog^.Max := 100;
+          FProgressDialog^.Position := 0;
+          FProgressDialog^.TextCancel := 'Прерывание...';
+          FProgressDialog^.OnCancel := OnProgressDialogCancel;
+          FProgressDialog^.AutoCalcFooter := True;
+          FProgressDialog^.fHwndParent := LastActiveExplorerHandle;
+          FProgressDialog^.Execute;
+        end;
       end;
       mbsTaskFinished:
       begin
-        FProgressDialog.Stop;
+        if FProgressDialogs.isType[GUIDToString(task.Id)] = rtc_Null then
+          Exit;
+        FProgressDialog := PProgressDialog(FProgressDialogs.asObject[GUIDToString(task.Id)]);
+
+        FProgressDialog^.Stop;
+        FreeAndNil(FProgressDialog^);
       end;
       mbsTaskError:
       begin
-        FProgressDialog.Stop;
+        if FProgressDialogs.isType[GUIDToString(task.Id)] = rtc_Null then
+          Exit;
+        FProgressDialog := PProgressDialog(FProgressDialogs.asObject[GUIDToString(task.Id)]);
+
+        FProgressDialog^.Stop;
+        FreeAndNil(FProgressDialog^);
       end;
     end;
 
@@ -3439,7 +3461,8 @@ var
 begin
   //XLog('FormCreate');
 
-  FProgressDialog := TProgressDialog.Create(Self);
+  FProgressDialogs := TRtcRecord.Create;
+  FProgressDialogs.AutoCreate := True;
 
   HintWindowClass := TRmxHintWindow;
 
@@ -3691,7 +3714,7 @@ begin
     i := i - 1;
   end;
 
-  FreeAndNil(FProgressDialog);
+  FreeAndNil(FProgressDialogs);
 end;
 
 procedure TMainForm.FormHide(Sender: TObject);
