@@ -54,6 +54,7 @@ type
   end;
   TFileInfoList = array of TFileInfo;
 
+  TDirectionBatchTask = (dbtSend, dbtFetch);
   TStatusBatchTask = (sbtNone, sbtWaiting, sbtSending, sbtReceiving, sbtFinished, sbtCanceled);
   TTaskID = TGUID;
 
@@ -75,6 +76,7 @@ type
     FErrorString: string;
     FLastChunkSize: Integer;
     FRemoveFileOnBreak: Boolean;
+    FDirection: TDirectionBatchTask;
     procedure AddFileLits(List: TStrings);
     function GetFile(const Index: Integer): PFileInfo;
     // return total size
@@ -106,6 +108,7 @@ type
     property RefCount: Integer read FRefCount;
     property Locked: Boolean read GetLocked;
     property ErrorString: string read FErrorString write FErrorString;
+    property Direction: TDirectionBatchTask read FDirection;
     // Свойство может быть актуальным только, если есть блокирующая синхронизация
     // иначе свойство не актуально, да и пол класса не актуально
     property LastChunkSize: Integer read FLastChunkSize write FLastChunkSize;
@@ -3368,6 +3371,7 @@ begin
   task             := FTaskList.AddTask;
   task.user        := UserName;
   task.LocalFolder := LocalFolder;
+  task.FDirection  := dbtFetch;
   Result           := task.Id;
 
 
@@ -3484,6 +3488,7 @@ begin
   task.user         := UserName;
   task.RemoteFolder := RemoteFolder;
   task.LocalFolder  := Root;
+  task.FDirection   := dbtSend;
   task.AddFileLits(FileList);
   Result := task.Id;
 

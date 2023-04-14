@@ -1031,44 +1031,45 @@ procedure TMainForm.OnDesktopHostNotifyFileBatchSend(Sender: TObject; const task
 begin
 //  Memo1.Lines.Add(IntToStr(Sender.Recv_FileCount) + ' - ' + Sender.Recv_FileName + ' - ' + IntToStr(Sender.Recv_BytesComplete) + ' - '+ IntToStr(Sender.Recv_BytesTotal));
 
-  case mode of
-    mbsFileStart, mbsFileData, mbsFileStop:
-    begin
-      FProgressDialog.TextLine1 := task.Files[task.Current].file_path;
+  if task.Direction = dbtFetch then
+    case mode of
+      mbsFileStart, mbsFileData, mbsFileStop:
+      begin
+        FProgressDialog.TextLine1 := task.Files[task.Current].file_path;
 
-      FProgressDialog.Position := Round(task.Progress);
+        FProgressDialog.Position := Round(task.Progress);
 
-//      if task.size > 1024 * 1024 * 1024 then
-//        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / (1024 * 1024 * 1024)) + ' GB из ' + FormatFloat('0.00', task.size / (1024 * 1024 * 1024)) + ' GB'
-//      else
-//      if Sender.Recv_BytesTotal > 1024 * 1024 then
-//        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / (1024 * 1024)) + ' MB из ' + FormatFloat('0.00', task.size / (1024 * 1024)) + ' MB'
-//      else
-//        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / 1024) + ' KB из ' + FormatFloat('0.00', task.size / 1024) + ' KB';
+  //      if task.size > 1024 * 1024 * 1024 then
+  //        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / (1024 * 1024 * 1024)) + ' GB из ' + FormatFloat('0.00', task.size / (1024 * 1024 * 1024)) + ' GB'
+  //      else
+  //      if Sender.Recv_BytesTotal > 1024 * 1024 then
+  //        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / (1024 * 1024)) + ' MB из ' + FormatFloat('0.00', task.size / (1024 * 1024)) + ' MB'
+  //      else
+  //        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / 1024) + ' KB из ' + FormatFloat('0.00', task.size / 1024) + ' KB';
+      end;
+      mbsTaskStart:
+      begin
+        FProgressDialog.Title := 'Копирование';
+        FProgressDialog.CommonAVI := TCommonAVI.aviCopyFiles;
+        FProgressDialog.TextLine1 := task.Files[task.Current].file_path;
+        FProgressDialog.TextLine2 := task.LocalFolder;
+        FProgressDialog.Max := 100;
+        FProgressDialog.Position := 0;
+        FProgressDialog.TextCancel := 'Прерывание...';
+        FProgressDialog.OnCancel := OnProgressDialogCancel;
+        FProgressDialog.AutoCalcFooter := True;
+        FProgressDialog.fHwndParent := LastActiveExplorerHandle;
+        FProgressDialog.Execute;
+      end;
+      mbsTaskFinished:
+      begin
+        FProgressDialog.Stop;
+      end;
+      mbsTaskError:
+      begin
+        FProgressDialog.Stop;
+      end;
     end;
-    mbsTaskStart:
-    begin
-      FProgressDialog.Title := 'Копирование';
-      FProgressDialog.CommonAVI := TCommonAVI.aviCopyFiles;
-      FProgressDialog.TextLine1 := task.Files[task.Current].file_path;
-      FProgressDialog.TextLine2 := task.LocalFolder;
-      FProgressDialog.Max := 100;
-      FProgressDialog.Position := 0;
-      FProgressDialog.TextCancel := 'Прерывание...';
-      FProgressDialog.OnCancel := OnProgressDialogCancel;
-      FProgressDialog.AutoCalcFooter := True;
-      FProgressDialog.fHwndParent := LastActiveExplorerHandle;
-      FProgressDialog.Execute;
-    end;
-    mbsTaskFinished:
-    begin
-      FProgressDialog.Stop;
-    end;
-    mbsTaskError:
-    begin
-      FProgressDialog.Stop;
-    end;
-  end;
 
 
 //  if Sender.Recv_BytesTotal = Sender.Recv_BytesComplete then

@@ -51,7 +51,6 @@ type
 
 
     taskID    : TTaskID;
-    direction : TStatusBatchTask;
 
     destructor Destroy; override;
     procedure ForgetWinControl;
@@ -289,7 +288,8 @@ type
     procedure WmSafeDeleteObject(var Message: TMessage); message WM_SAFE_DELETE_OBJECT;
     procedure SafeDeleteObject(const [ref] Obj: TObject);
     procedure RenameFileExplorer(Files: TRtcPFileExplorer; Item: TListItem; const NewName: string);
-    procedure DefTaskPanel(var taskPanel: TTaskPanelInfo; const title: string);
+    procedure DefTaskPanel(var taskPanel: TTaskPanelInfo; const title: string;
+      Direction: TDirectionBatchTask);
     function SaveScroolListView(lv: TRtcPFileExplorer): TListViewInfo;
     procedure RestoreScroolListView(lv: TRtcPFileExplorer; const info: TListViewInfo);
     procedure BuildListDrivs();
@@ -347,7 +347,7 @@ begin
   task := TRtcPFileTransfer(myUI.Module).TaskList.GetTaskByName(taskPanel.taskID.ToString);
   task._AddRef;
   try
-    if taskPanel.direction = sbtReceiving then
+    if task.direction = dbtFetch then
       reload := btnLocalReload else
       reload := btnRemoteReload;
 
@@ -712,9 +712,9 @@ procedure TrdFileTransfer.DownLabelDragOver(Sender, Source: TObject; X, Y: Integ
   end;
 
 procedure TrdFileTransfer.DefTaskPanel(var taskPanel: TTaskPanelInfo;
-  const title: string);
+  const title: string; Direction: TDirectionBatchTask);
 const
-  FORE_COLOR: array [sbtSending..sbtReceiving] of TColor = ($00BFFFBF, $00FFE2C6);
+  FORE_COLOR: array [TDirectionBatchTask] of TColor = ($00BFFFBF, $00FFE2C6);
 var
   img: TImage;
 begin
@@ -739,7 +739,7 @@ begin
   taskPanel.gauge.AlignWithMargins := False;
   taskPanel.gauge.BorderStyle      := bsNone;
   taskPanel.gauge.MaxValue         := 10000;
-  taskPanel.gauge.ForeColor        := FORE_COLOR[taskPanel.direction];
+  taskPanel.gauge.ForeColor        := FORE_COLOR[Direction];
 
   taskPanel.lblFile              := TLabel.Create(taskPanel.panel);
   taskPanel.lblFile.Parent       := taskPanel.panel;
@@ -1208,7 +1208,7 @@ begin
   if not FTaskPanelList.FindTaskInfo(task.Id, taskPanel) then exit;
 
 
-    if taskPanel.direction = sbtReceiving then
+    if task.direction = dbtFetch then
       reload := btnLocalReload else
       reload := btnRemoteReload;
 
@@ -2081,10 +2081,9 @@ begin
           temp_id := TRtcPFileTransfer(myUI.Module).SendBatch(myUI.UserName,
                               FileList, FilesLocal.Directory, FilesRemote.Directory, nil);
           taskPanel := FTaskPanelList.AddTask(temp_id);
-          taskPanel.direction := sbtSending;
           taskPanel.to_path   := FilesRemote.Directory;
           taskPanel.Files     := FileList;
-          DefTaskPanel(taskPanel, ExtractFileName(FilesRemote.Directory));
+          DefTaskPanel(taskPanel, ExtractFileName(FilesRemote.Directory), dbtSend);
         except
           on E: Exception do
             begin
@@ -2150,10 +2149,9 @@ begin
           temp_id := TRtcPFileTransfer(myUI.Module).FetchBatch(myUI.UserName,
                               FileList, FilesRemote.Directory, FilesLocal.Directory, nil);
           taskPanel := FTaskPanelList.AddTask(temp_id);
-          taskPanel.direction := sbtReceiving;
           taskPanel.to_path   := FilesLocal.Directory;
           taskPanel.files     := FileList;
-          DefTaskPanel(taskPanel, ExtractFileName(FilesLocal.Directory));
+          DefTaskPanel(taskPanel, ExtractFileName(FilesLocal.Directory), dbtFetch);
         except
           on E: Exception do
             begin
