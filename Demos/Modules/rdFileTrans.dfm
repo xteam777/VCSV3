@@ -3,8 +3,8 @@ object rdFileTransfer: TrdFileTransfer
   Top = 105
   BorderWidth = 1
   Caption = 'File Explorer'
-  ClientHeight = 605
-  ClientWidth = 1212
+  ClientHeight = 604
+  ClientWidth = 1208
   Color = clWhite
   CustomTitleBar.CaptionAlignment = taCenter
   Constraints.MinHeight = 500
@@ -34,7 +34,7 @@ object rdFileTransfer: TrdFileTransfer
     Left = 0
     Top = 0
     Width = 2
-    Height = 420
+    Height = 419
     Beveled = True
     Color = clBlack
     ParentColor = False
@@ -47,7 +47,7 @@ object rdFileTransfer: TrdFileTransfer
     Left = 2
     Top = 0
     Width = 520
-    Height = 420
+    Height = 419
     Align = alLeft
     BevelOuter = bvNone
     Caption = 'Loading Remote Drive information. Please wait ...'
@@ -59,7 +59,6 @@ object rdFileTransfer: TrdFileTransfer
     ParentFont = False
     TabOrder = 0
     StyleElements = []
-    ExplicitHeight = 419
     object Panel3: TPanel
       Left = 0
       Top = 52
@@ -322,7 +321,7 @@ object rdFileTransfer: TrdFileTransfer
         Left = 84
         Top = 4
         Width = 408
-        Height = 22
+        Height = 25
         Margins.Left = 0
         Margins.Top = 4
         Margins.Right = 0
@@ -342,13 +341,14 @@ object rdFileTransfer: TrdFileTransfer
         OnKeyPress = edRemoteDirKeyPress
         OnSelect = edRemoteDirSelect
         Images = ImageList2
+        ExplicitHeight = 22
       end
     end
     object FilesRemote: TRtcPFileExplorer
       Left = 0
       Top = 116
       Width = 520
-      Height = 235
+      Height = 234
       SortColumn = 0
       SortDirection = sdAscending
       Align = alClient
@@ -380,11 +380,10 @@ object rdFileTransfer: TrdFileTransfer
       OnKeyUp = FilesRemoteKeyUp
       OnSelectItem = FilesRemoteSelectItem
       OnDirectoryChange = FilesRemoteDirectoryChange
-      ExplicitHeight = 234
     end
     object Panel5: TPanel
       Left = 0
-      Top = 351
+      Top = 350
       Width = 520
       Height = 69
       Align = alBottom
@@ -404,7 +403,6 @@ object rdFileTransfer: TrdFileTransfer
       StyleElements = [seFont]
       OnDragDrop = DownLabelDragDrop
       OnDragOver = DownLabelDragOver
-      ExplicitTop = 350
       object pnlInfoRemote: TPanel
         Left = 0
         Top = 0
@@ -1400,8 +1398,8 @@ object rdFileTransfer: TrdFileTransfer
   object Panel_: TPanel
     Left = 522
     Top = 0
-    Width = 690
-    Height = 420
+    Width = 686
+    Height = 419
     Align = alClient
     BevelOuter = bvNone
     Caption = 'Loading Remote Drive information. Please wait ...'
@@ -1413,13 +1411,11 @@ object rdFileTransfer: TrdFileTransfer
     ParentFont = False
     TabOrder = 1
     StyleElements = []
-    ExplicitWidth = 686
-    ExplicitHeight = 419
     object FilesLocal: TRtcPFileExplorer
       Left = 0
       Top = 116
-      Width = 690
-      Height = 235
+      Width = 686
+      Height = 234
       Margins.Top = 4
       SortColumn = 0
       SortDirection = sdAscending
@@ -1454,13 +1450,11 @@ object rdFileTransfer: TrdFileTransfer
       OnSelectItem = FilesLocalSelectItem
       OnDirectoryChange = FilesLocalDirectoryChange
       OnFileOpen = FilesLocalFileOpen
-      ExplicitWidth = 686
-      ExplicitHeight = 234
     end
     object Panel7: TPanel
       Left = 0
-      Top = 351
-      Width = 690
+      Top = 350
+      Width = 686
       Height = 69
       Align = alBottom
       BevelEdges = [beRight, beBottom]
@@ -1479,8 +1473,6 @@ object rdFileTransfer: TrdFileTransfer
       StyleElements = [seFont]
       OnDragDrop = DownLabelDragDrop
       OnDragOver = DownLabelDragOver
-      ExplicitTop = 350
-      ExplicitWidth = 686
       object pnlInfoLocal: TPanel
         Left = 0
         Top = 0
@@ -1513,7 +1505,7 @@ object rdFileTransfer: TrdFileTransfer
     object Panel_1: TPanel
       Left = 0
       Top = 84
-      Width = 690
+      Width = 686
       Height = 32
       Align = alTop
       BevelEdges = [beBottom]
@@ -1530,7 +1522,6 @@ object rdFileTransfer: TrdFileTransfer
       ParentFont = False
       TabOrder = 2
       StyleElements = []
-      ExplicitWidth = 686
       object sbtnSend: TSpeedButton
         Left = 0
         Top = 0
@@ -1711,7 +1702,7 @@ object rdFileTransfer: TrdFileTransfer
     object Panel12: TPanel
       Left = 0
       Top = 0
-      Width = 690
+      Width = 686
       Height = 52
       Align = alTop
       BevelOuter = bvNone
@@ -1724,13 +1715,12 @@ object rdFileTransfer: TrdFileTransfer
       ParentFont = False
       TabOrder = 0
       StyleElements = []
-      ExplicitWidth = 686
       object Image2: TImage
         AlignWithMargins = True
         Left = 3
         Top = 3
         Width = 48
-        Height = 45
+        Height = 48
         Cursor = crHandPoint
         Align = alLeft
         AutoSize = True
@@ -2040,7 +2030,6 @@ object rdFileTransfer: TrdFileTransfer
           FFFF0000}
         Transparent = True
         OnClick = Image1Click
-        ExplicitHeight = 48
       end
       object lLocalName: TLabel
         Left = 63
@@ -2398,7 +2387,7 @@ object rdFileTransfer: TrdFileTransfer
     object Panel6: TPanel
       Left = 0
       Top = 52
-      Width = 690
+      Width = 686
       Height = 32
       Align = alTop
       BevelEdges = []
@@ -2413,12 +2402,11 @@ object rdFileTransfer: TrdFileTransfer
       ParentFont = False
       TabOrder = 1
       StyleElements = []
-      ExplicitWidth = 686
       DesignSize = (
-        690
+        686
         32)
       object btnLocalReload: TSpeedButton
-        Left = 662
+        Left = 658
         Top = 0
         Width = 28
         Height = 32
@@ -2464,7 +2452,7 @@ object rdFileTransfer: TrdFileTransfer
         ExplicitHeight = 28
       end
       object SpeedButton2: TSpeedButton
-        Left = 696
+        Left = 688
         Top = 0
         Width = 27
         Height = 22
@@ -2657,8 +2645,8 @@ object rdFileTransfer: TrdFileTransfer
         AlignWithMargins = True
         Left = 84
         Top = 4
-        Width = 578
-        Height = 22
+        Width = 574
+        Height = 25
         Margins.Left = 0
         Margins.Top = 4
         Margins.Right = 0
@@ -2677,24 +2665,24 @@ object rdFileTransfer: TrdFileTransfer
         OnKeyPress = edLocalDirKeyPress
         OnSelect = edLocalDirSelect
         Images = ImageList2
+        ExplicitWidth = 578
+        ExplicitHeight = 22
       end
     end
   end
   object sb: TStatusBar
     Left = 0
-    Top = 582
-    Width = 1212
+    Top = 581
+    Width = 1208
     Height = 23
     Panels = <>
     SimplePanel = True
     StyleElements = []
-    ExplicitTop = 581
-    ExplicitWidth = 1208
   end
   object PageControlTasks: TPageControl
     Left = 0
-    Top = 420
-    Width = 1212
+    Top = 419
+    Width = 1208
     Height = 137
     ActivePage = tbFileTask
     Align = alBottom
@@ -2708,8 +2696,6 @@ object rdFileTransfer: TrdFileTransfer
     TabOrder = 3
     TabStop = False
     StyleElements = [seFont]
-    ExplicitTop = 419
-    ExplicitWidth = 1208
     object tbFileTask: TTabSheet
       Caption = ' '#1054#1095#1077#1088#1077#1076#1100' '#1079#1072#1076#1072#1085#1080#1081' '
       Font.Charset = DEFAULT_CHARSET
@@ -2891,8 +2877,8 @@ object rdFileTransfer: TrdFileTransfer
   end
   object Panel1: TPanel
     Left = 0
-    Top = 557
-    Width = 1212
+    Top = 556
+    Width = 1208
     Height = 25
     Align = alBottom
     Font.Charset = DEFAULT_CHARSET
@@ -2902,14 +2888,12 @@ object rdFileTransfer: TrdFileTransfer
     Font.Style = []
     ParentFont = False
     TabOrder = 4
-    ExplicitTop = 556
-    ExplicitWidth = 1208
     object lblCloseAllTask: TLabel
       AlignWithMargins = True
       Left = 1019
       Top = 4
       Width = 189
-      Height = 17
+      Height = 12
       Cursor = crHandPoint
       Align = alRight
       Caption = #1047#1072#1082#1088#1099#1090#1100' '#1074#1089#1077' '#1079#1072#1074#1077#1088#1096#1077#1085#1085#1099#1077' '#1079#1072#1076#1072#1095#1080'    '
@@ -2920,14 +2904,13 @@ object rdFileTransfer: TrdFileTransfer
       Font.Style = [fsBold, fsUnderline]
       ParentFont = False
       OnClick = lblCloseAllTaskClick
-      ExplicitHeight = 12
     end
     object al_b: TLabel
       AlignWithMargins = True
       Left = 4
       Top = 4
       Width = 3
-      Height = 17
+      Height = 12
       Hint = #1042#1089#1077#1075#1086' '#1087#1088#1080#1085#1103#1090#1086' / '#1086#1090#1087#1088':   '
       Align = alLeft
       Font.Charset = DEFAULT_CHARSET
@@ -2938,7 +2921,6 @@ object rdFileTransfer: TrdFileTransfer
       ParentFont = False
       ParentShowHint = False
       ShowHint = False
-      ExplicitHeight = 12
     end
   end
   object pmFiles: TPopupMenu
