@@ -19,7 +19,7 @@ uses
   rtcPortalMod, rtcpFileTrans, uVircessTypes, CommonUtils, rtcScrUtils, CommonData,
 
 
-  rtcpFileTransEx, FixFileExplorer;
+  FixFileExplorer;
 
 const
   WM_SAFE_DELETE_OBJECT  = WM_USER + 1;
@@ -312,6 +312,7 @@ type
 
     procedure SetFormState;
 
+    property UI:TRtcPFileTransferUI read myUI;
     property OnUIOpen: TUIOpenEvent read FOnUIOpen write FOnUIOpen;
     property OnUIClose: TUICloseEvent read FOnUIClose write FOnUIClose;
     property BeforeClose:TNotifyEvent read FBeforeClose write FBeforeClose;
@@ -350,7 +351,7 @@ begin
       reload := btnLocalReload else
       reload := btnRemoteReload;
 
-    TRtcPFileTransfer(myUI.Module).CancelBatch(task.Id);
+    TRtcPFileTransfer(myUI.Module).CancelBatch(Sender, task.Id);
     FTotalBytesTransfer := FTotalBytesTransfer - task.Size;
     FCurrentBytesTransfer := FCurrentBytesTransfer - task.SentSize;
   finally
