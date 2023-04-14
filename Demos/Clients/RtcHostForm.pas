@@ -788,6 +788,7 @@ type
     procedure AddProgressDialogToList(taskId: TTaskId; ProgressDialog: PProgressDialog);
     function GetProgressDialog(taskId: TTaskId): PProgressDialog;
     procedure RemoveProgressDialog(taskId: TTaskId);
+    procedure RemoveProgressDialogByValue(ProgressDialog: PProgressDialog);
   end;
 
 //type
@@ -861,6 +862,22 @@ begin
   i := FProgressDialogsList.Count - 1;
   while i >= 0 do
     if PProgressDialogData(FProgressDialogsList[i])^.taskId = taskId then
+    begin
+      FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
+      Dispose(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog);
+      Dispose(FProgressDialogsList[i]);
+      FProgressDialogsList.Delete(i);
+      Break;
+    end;
+end;
+
+procedure TMainForm.RemoveProgressDialogByValue(ProgressDialog: PProgressDialog);
+var
+  i: Integer;
+begin
+  i := FProgressDialogsList.Count - 1;
+  while i >= 0 do
+    if PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog = ProgressDialog then
     begin
       FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
       Dispose(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog);
@@ -1090,6 +1107,7 @@ begin
   case mode of
     mbsFileStart, mbsFileData, mbsFileStop:
     begin
+//      New(FProgressDialog);
       FProgressDialog := GetProgressDialog(task.Id);
       if FProgressDialog = nil then
         Exit;
@@ -1097,6 +1115,8 @@ begin
       FProgressDialog^.TextLine1 := task.Files[task.Current].file_path;
 
       FProgressDialog^.Position := Round(task.Progress * 100);
+
+//      Dispose(FProgressDialog);
 
 //      if task.size > 1024 * 1024 * 1024 then
 //        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / (1024 * 1024 * 1024)) + ' GB из ' + FormatFloat('0.00', task.size / (1024 * 1024 * 1024)) + ' GB'
@@ -1110,7 +1130,7 @@ begin
     begin
       New(FProgressDialog);
       FProgressDialog^ := TProgressDialog.Create(Self);
-      AddProgressDialogToList(task.Id, @FProgressDialog);
+      AddProgressDialogToList(task.Id, FProgressDialog);
 
       FProgressDialog^.Title := 'Копирование';
       FProgressDialog^.CommonAVI := TCommonAVI.aviCopyFiles;
@@ -1202,6 +1222,7 @@ end;}
 procedure TMainForm.OnProgressDialogCancel(Sender: TObject);
 begin
   TProgressDialog(Sender).Stop;
+  RemoveProgressDialogByValue(@Sender);
 end;
 
 constructor TPortalHostThread.Create(CreateSuspended: Boolean; AUserName, AGateway, APort, AProxyAddr, AProxyUserName, AProxyPassword: String; AProxyEnabled: Boolean);
