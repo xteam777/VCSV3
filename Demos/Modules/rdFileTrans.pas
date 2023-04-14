@@ -604,11 +604,17 @@ begin
   if Sender = btnRemoteBack then
   begin
     edRemoteDir.Text := IncludeTrailingBackslash(FRemoteRecent.Pop);
+    if edRemoteDir.Text = '\' then
+      edRemoteDir.Text := '';
+
     btnRemoteReloadClick(nil);
   end
   else
   begin
     edLocalDir.Text := IncludeTrailingBackslash(FLocalRecent.Pop);
+    if edLocalDir.Text = '\' then
+      edLocalDir.Text := '';
+
     btnLocalReloadClick(nil);
   end;
 end;
