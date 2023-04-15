@@ -674,6 +674,7 @@ object rdFileTransfer: TrdFileTransfer
       ParentFont = False
       TabOrder = 0
       StyleElements = []
+      ExplicitTop = -3
       DesignSize = (
         520
         52)
@@ -2986,7 +2987,6 @@ object rdFileTransfer: TrdFileTransfer
     object P1: TMenuItem
       Caption = #1042#1089#1090#1072#1074#1082#1072' '#1080#1079' Clipboard'
       ShortCut = 16470
-      OnClick = P1Click
     end
   end
   object ImageList1: TImageList
@@ -3461,7 +3461,6 @@ object rdFileTransfer: TrdFileTransfer
     object MenuItem10: TMenuItem
       Caption = #1042#1089#1090#1072#1074#1082#1072' '#1080#1079' Clipboard'
       ShortCut = 16470
-      OnClick = P1Click
     end
   end
   object myUI: TRtcPFileTransferUI
@@ -3473,5 +3472,11 @@ object rdFileTransfer: TrdFileTransfer
     OnFileList = myUIFileList
     Left = 6
     Top = 130
+  end
+  object tAutoFitColumns: TTimer
+    Enabled = False
+    OnTimer = tAutoFitColumnsTimer
+    Left = 8
+    Top = 198
   end
 end

@@ -5140,6 +5140,7 @@ object rdDesktopViewer: TrdDesktopViewer
       000000000000000000000000000000000000}
   end
   object FT_UI: TRtcPFileTransferUI
+    OnClose = FT_UIClose
     NotifyFileBatchSend = FT_UINotifyFileBatchSend
     Left = 12
     Top = 396

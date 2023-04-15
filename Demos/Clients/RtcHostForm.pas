@@ -13,8 +13,8 @@ interface
 uses
   Windows, Messages, SysUtils, CommonData, System.Types, uProcess, ServiceMgr, //BlackLayered,
   Classes, Graphics, Controls, Forms, DateUtils, CommonUtils, WtsApi, uSysAccount, ClipbrdMonitor,
-  Dialogs, StdCtrls, ExtCtrls, ShellApi, rdFileTransLog, VirtualTrees.Types, SHDocVw, rtcpFileTransUI,
-  ComCtrls, Registry, Math, RtcIdentification, SyncObjs, System.Net.HTTPClient, System.Net.URLClient, ActiveX, ComObj,
+  Dialogs, StdCtrls, ExtCtrls, ShellApi, rdFileTransLog, VirtualTrees.Types, SHDocVw, rtcpFileTransUI, Psapi, Winapi.SHFolder,
+  ComCtrls, Registry, Math, RtcIdentification, SyncObjs, System.Net.HTTPClient, System.Net.URLClient, ActiveX, ComObj, CommCtrl,
   rtcSystem, rtcInfo, uMessageBox, rtcScrUtils, IOUtils, uAcceptEula, ProgressDialog, ShlObj, RecvDataObject,
 
 {$IFDEF IDE_XE3up}
@@ -46,12 +46,6 @@ uses
 
 type
   TSetHostGatewayClientActiveProc = procedure(AValue: Boolean);
-
-  PProgressDialogData = ^TProgressDialogData;
-  TProgressDialogData = record
-    taskId: TTaskID;
-    ProgressDialog: PProgressDialog;
-  end;
 
   PPortalHostThread = ^TPortalHostThread;
   TPortalHostThread = class(TThread)
@@ -335,6 +329,7 @@ type
     pBtnSetup: TPanel;
     bGetUpdate: TSpeedButton;
     Memo1: TMemo;
+    Button5: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -372,6 +367,7 @@ type
     procedure PDesktopControlNewUI(Sender: TRtcPDesktopControl;
       const user: String);
 
+    procedure HostFileTransferModuleUserLeft(Sender: TRtcPModule; const user:string);
     procedure PModuleUserJoined(Sender: TRtcPModule; const user:string);
     procedure PModuleUserLeft(Sender: TRtcPModule; const user:string);
 
@@ -785,10 +781,11 @@ type
   //  function ExecAndWait(const FileName, Params: ShortString; const WinState: Word): boolean;
     property HostGatewayClientActive: Boolean read FHostGatewayClientActive write SetHostGatewayClientActive;
 
-    procedure AddProgressDialogToList(taskId: TTaskId; ProgressDialog: PProgressDialog);
-    function GetProgressDialog(taskId: TTaskId): PProgressDialog;
-    procedure RemoveProgressDialog(taskId: TTaskId);
-    procedure RemoveProgressDialogByValue(ProgressDialog: PProgressDialog);
+    procedure AddProgressDialogToList(ATaskId: TTaskId; AProgressDialog: PProgressDialog; AUserName: String);
+    function GetProgressDialog(ATaskId: TTaskId): PProgressDialog;
+    procedure RemoveProgressDialog(ATaskId: TTaskId);
+    procedure RemoveProgressDialogByValue(AProgressDialog: PProgressDialog);
+    procedure RemoveProgressDialogByUserName(AUserName: String);
   end;
 
 //type
@@ -797,6 +794,9 @@ type
   procedure DisablePowerChanges;
   procedure RestorePowerChanges;
   function GetUniqueString: String;
+
+
+  function GetShellWindow: HWND; stdcall; external 'user32.dll' name 'GetShellWindow';
 
 const
   VCS_MAGIC_NUMBER = 777;
@@ -830,38 +830,39 @@ implementation
 
 {$R *.dfm}
 
-procedure TMainForm.AddProgressDialogToList(taskId: TTaskId; ProgressDialog: PProgressDialog);
+procedure TMainForm.AddProgressDialogToList(ATaskId: TTaskId; AProgressDialog: PProgressDialog; AUserName: String);
 var
   pPDData: PProgressDialogData;
 begin
   New(pPDData);
-  pPDData^.taskId := taskId;
-  pPDData^.ProgressDialog := ProgressDialog;
+  pPDData^.taskId := ATaskId;
+  pPDData^.ProgressDialog := AProgressDialog;
+  pPDData^.UserName := AUserName;
 
   FProgressDialogsList.Add(pPDData);
 end;
 
-function TMainForm.GetProgressDialog(taskId: TTaskId): PProgressDialog;
+function TMainForm.GetProgressDialog(ATaskId: TTaskId): PProgressDialog;
 var
   i: Integer;
 begin
   Result := nil;
 
   for i := 0 to FProgressDialogsList.Count - 1 do
-    if PProgressDialogData(FProgressDialogsList[i])^.taskId = taskId then
+    if PProgressDialogData(FProgressDialogsList[i])^.taskId = ATaskId then
     begin
       Result := PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog;
       Exit;
     end;
 end;
 
-procedure TMainForm.RemoveProgressDialog(taskId: TTaskId);
+procedure TMainForm.RemoveProgressDialog(ATaskId: TTaskId);
 var
   i: Integer;
 begin
   i := FProgressDialogsList.Count - 1;
   while i >= 0 do
-    if PProgressDialogData(FProgressDialogsList[i])^.taskId = taskId then
+    if PProgressDialogData(FProgressDialogsList[i])^.taskId = ATaskId then
     begin
       FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
       Dispose(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog);
@@ -871,13 +872,29 @@ begin
     end;
 end;
 
-procedure TMainForm.RemoveProgressDialogByValue(ProgressDialog: PProgressDialog);
+procedure TMainForm.RemoveProgressDialogByValue(AProgressDialog: PProgressDialog);
 var
   i: Integer;
 begin
   i := FProgressDialogsList.Count - 1;
   while i >= 0 do
-    if PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog = ProgressDialog then
+    if PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog = AProgressDialog then
+    begin
+      FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
+      Dispose(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog);
+      Dispose(FProgressDialogsList[i]);
+      FProgressDialogsList.Delete(i);
+      Break;
+    end;
+end;
+
+procedure TMainForm.RemoveProgressDialogByUserName(AUserName: String);
+var
+  i: Integer;
+begin
+  i := FProgressDialogsList.Count - 1;
+  while i >= 0 do
+    if PProgressDialogData(FProgressDialogsList[i])^.UserName = AUserName then
     begin
       FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
       Dispose(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog);
@@ -913,40 +930,45 @@ var
   WB: IWebbrowser2;
   i: Integer;
 begin
+//  CoInitialize(nil);
+
   ADir := '';
   AHandle := 0;
   Result := False;
 
-  {Explorer - глобальная переменная для доступа ко всем откр.окнам Explorer}
+  //Explorer - глобальная переменная для доступа ко всем откр.окнам Explorer
+//  ShellWindows := CreateComObject(CLASS_ShellWindows) as IShellWindows;
   ShellWindows := CoShellWindows.Create;
 
-  {Цикл прохода по всем откр.в настоящий момент окнам Explorer}
-  for i := 0 to ShellWindows.Count - 1 do      
+  //Цикл прохода по всем откр.в настоящий момент окнам Explorer
+  for i := 0 to ShellWindows.Count - 1 do
   begin
-    spDisp := ShellWindows.Item(i);  
+    spDisp := ShellWindows.Item(i);
     if spDisp = nil then
-      Continue;  
-      
-    spDisp.QueryInterface(iWebBrowser2, WB);
-    if WB = nil then    
       Continue;
 
-    {Если очередное окно пребывает сейчас в фокусе}
+    spDisp.QueryInterface(iWebBrowser2, WB);
+    if WB = nil then
+      Continue;
+
+    //Если очередное окно пребывает сейчас в фокусе
     if GetForegroundWindow = WB.HWND then
     begin
-      {Получаем адресную локацию,т.е путь к каталогу }
+      //Получаем адресную локацию,т.е путь к каталогу
       ADir := WB.LocationUrl;
-      {Замена левосторонних слешев в пути на классич. правосторонний разделитель}
+      //Замена левосторонних слешев в пути на классич. правосторонний разделитель
       ADir := StringReplace(ADir, '/','\', [rfReplaceAll]);
-      {Удаляем 1-ые лишнии 8 символов (http:///)}
+      //Удаляем 1-ые лишнии 8 символов (http:///)
       Delete(ADir, 1, 8);
-      {Замена URL-представления пробела %20 на нормальный символ #32}
+      //Замена URL-представления пробела %20 на нормальный символ #32
       ADir := IncludeTrailingPathDelimiter(StringReplace(ADir, '%20', ' ', [rfReplaceAll]));
 
       AHandle := WB.HWND;
       Result := True;
     end;
   end;
+
+//  CoUninitialize;
 end;
 
 procedure TMainForm.OnGetCbrdFilesData(Sender: TDataObject; AUserName: String);
@@ -1130,7 +1152,7 @@ begin
     begin
       New(FProgressDialog);
       FProgressDialog^ := TProgressDialog.Create(Self);
-      AddProgressDialogToList(task.Id, FProgressDialog);
+      AddProgressDialogToList(task.Id, FProgressDialog, task.User);
 
       FProgressDialog^.Title := 'Копирование';
       FProgressDialog^.CommonAVI := TCommonAVI.aviCopyFiles;
@@ -1330,7 +1352,7 @@ begin
 //  else
 //    FFileTransfer.OnNewUI := MainForm.PFileTransExplorerNewUI_HideMode; //Для контроля указываем невидимый эксплорер
   FFileTransfer.OnUserJoined := MainForm.PModuleUserJoined;
-  FFileTransfer.OnUserLeft := MainForm.PModuleUserLeft;
+  FFileTransfer.OnUserLeft := MainForm.HostFileTransferModuleUserLeft; //MainForm.PModuleUserLeft;
   FFileTransfer.NotifyFileBatchSend := MainForm.OnDesktopHostNotifyFileBatchSend;
   FFileTransfer.Tag := ThreadID;
 
@@ -10127,6 +10149,11 @@ procedure TMainForm.PModuleUserJoined(Sender: TRtcPModule; const user:string);
 //  el.Caption:=s;
 //  eConnected.Update;
   end;
+
+procedure TMainForm.HostFileTransferModuleUserLeft(Sender: TRtcPModule; const user:string);
+begin
+  RemoveProgressDialogByUserName(user);
+end;
 
 procedure TMainForm.PModuleUserLeft(Sender: TRtcPModule; const user:string);
   var

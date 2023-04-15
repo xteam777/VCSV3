@@ -67,10 +67,7 @@ end;
 
 procedure TrdFileTransferLog.SetCaption;
 begin
-//  if myUI.UserDesc <> '' then
-//    Caption := myUI.UserDesc + ' - Лог передачи файлов'
-//  else
-    Caption := RemoveUserPrefix(myUI.UserName) + ' - Лог передачи файлов';
+  Caption := RemoveUserPrefix(RemoveUserPrefix(myUI.UserName)) + ' - Лог передачи файлов';
 end;
 
 procedure TrdFileTransferLog.Form_Open(const mode: string);

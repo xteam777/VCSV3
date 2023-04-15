@@ -4480,6 +4480,14 @@ object MainForm: TMainForm
           'Memo1')
         TabOrder = 3
       end
+      object Button5: TButton
+        Left = 38
+        Top = 100
+        Width = 75
+        Height = 25
+        Caption = 'Button5'
+        TabOrder = 4
+      end
     end
     object pRight: TPanel
       Left = 271
