@@ -171,6 +171,7 @@ type
     myUI: TRtcPFileTransferUI;
     btnRemoteBack: TSpeedButton;
     btnLocalBack: TSpeedButton;
+    tAutoFitColumns: TTimer;
     procedure FormCreate(Sender: TObject);
     procedure FilesRemoteDirectoryChange(Sender: TObject; const FileName: String);
     procedure btnRemoteReloadClick(Sender: TObject);
@@ -245,6 +246,7 @@ type
     procedure FilesEdited(Sender: TObject; Item: TListItem;
       var S: string);
     procedure btnRemoteBackClick(Sender: TObject);
+    procedure tAutoFitColumnsTimer(Sender: TObject);
   private
     FReady: Boolean;
     FOnUIOpen: TUIOpenEvent;
@@ -321,7 +323,6 @@ uses
   Winapi.ShlObj, ComObj, rtcInfo, rtcpFileUtils, System.Math;
 
 
-
 {$R *.dfm}
 
 procedure TrdFileTransfer.CancelBatchClick(Sender: TObject);
@@ -345,7 +346,8 @@ begin
   task._AddRef;
   try
     if task.Direction = dbtFetch then
-      reload := btnLocalReload else
+      reload := btnLocalReload
+    else
       reload := btnRemoteReload;
 
     TRtcPFileTransfer(myUI.Module).CancelBatch(Sender, task.Id);
@@ -472,6 +474,9 @@ begin
   FTaskPanelList.OnChange := OnTaskPanelChange;
   FTaskPanelList.TaskRemoveLogic := trlManual;
 
+  btnRemoteBack.Enabled := FRemoteRecent.Count > 0;
+  btnLocalBack.Enabled := FLocalRecent.Count > 0;
+
   b_ppClick(nil);
 
   DragAcceptFiles(Handle, True);
@@ -585,8 +590,10 @@ procedure TrdFileTransfer.FilesLocalDirectoryChange(Sender: TObject;
   const FileName: string);
 begin
   FLocalRecent.Push(FileName);
+
   edLocalDir.Text:= FileName;
   FilesLocalClick(nil);
+  btnLocalBack.Enabled := FLocalRecent.Count > 0;
 end;
 
 procedure TrdFileTransfer.FilesRemoteDirectoryChange(Sender: TObject; const FileName: String);
@@ -596,7 +603,7 @@ begin
     myUI.GetFileList(FileName,'');
 
   FilesRemoteClick(nil);
-
+  btnRemoteBack.Enabled := FRemoteRecent.Count > 0;
 end;
 
 procedure TrdFileTransfer.btnRemoteBackClick(Sender: TObject);
@@ -604,11 +611,13 @@ begin
   if Sender = btnRemoteBack then
   begin
     edRemoteDir.Text := FRemoteRecent.Pop;
+    btnRemoteBack.Enabled := FRemoteRecent.Count > 0;
     btnRemoteReloadClick(nil);
   end
   else
   begin
     edLocalDir.Text := FLocalRecent.Pop;
+    btnLocalBack.Enabled := FLocalRecent.Count > 0;
     btnLocalReloadClick(nil);
   end;
 end;
@@ -681,7 +690,8 @@ begin
 
   FRemoteRecent.Clear;
   FLocalRecent.Clear;
-
+  btnRemoteBack.Enabled := FRemoteRecent.Count > 0;
+  btnLocalBack.Enabled := FLocalRecent.Count > 0;
 end;
 
 procedure TrdFileTransfer.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -783,23 +793,23 @@ begin
 end;
 
 procedure TrdFileTransfer.DownLabelDragDrop(Sender, Source: TObject; X, Y: Integer);
-  var
-    myFiles:TStringList;
-    a:integer;
+var
+  myFiles:TStringList;
+  a:integer;
+begin
+if assigned(myUI) then
   begin
-  if assigned(myUI) then
-    begin
-    myFiles:=FilesRemote.SelectedFiles;
-    if myFiles.Count>0 then
-      for a:=0 to myFiles.Count-1 do
-        myUI.Fetch(myFiles.Strings[a]);
-    end;
+  myFiles:=FilesRemote.SelectedFiles;
+  if myFiles.Count>0 then
+    for a:=0 to myFiles.Count-1 do
+      myUI.Fetch(myFiles.Strings[a]);
   end;
+end;
 
 procedure TrdFileTransfer.mnRefreshClick(Sender: TObject);
-  begin
+begin
   btnRemoteReloadClick(Sender);
-  end;
+end;
 
 procedure TrdFileTransfer.SafeDeleteObject(const [ref] Obj: TObject);
 begin
@@ -896,26 +906,44 @@ var
    i, numFiles: Integer;
 begin
   numfiles := 0;
-   try
-     Clipboard.Open;
-     f:= Clipboard.GetAsHandle( CF_HDROP ) ;
-     If f <> 0 Then
-     Begin
-       numFiles := DragQueryFile( f, $FFFFFFFF, nil, 0 ) ;
+  try
+   Clipboard.Open;
+   f:= Clipboard.GetAsHandle( CF_HDROP ) ;
+   If f <> 0 Then
+   Begin
+     numFiles := DragQueryFile( f, $FFFFFFFF, nil, 0 ) ;
 
-       for i:= 0 to numfiles - 1 do
-       begin
-         buffer[0] := #0;
-         DragQueryFile( f, i, buffer, sizeof(buffer)) ;
-         send_f(strpas(buffer), edRemoteDir.Text);
-       end;
+     for i:= 0 to numfiles - 1 do
+     begin
+       buffer[0] := #0;
+       DragQueryFile( f, i, buffer, sizeof(buffer)) ;
+       send_f(strpas(buffer), edRemoteDir.Text);
      end;
+   end;
+ finally
+   Clipboard.close;
+ end;
+
+ if numfiles>0 then
+ begin
+  Delay(1000);
+  btnRemoteReloadClick(Sender)
+ end;
+end;
+
+procedure TrdFileTransfer.tAutoFitColumnsTimer(Sender: TObject);
+begin
+   SendMessage(FilesRemote.Handle, WM_SETREDRAW, 0, 0);
+   SendMessage(FilesLocal.Handle, WM_SETREDRAW, 0, 0);
+   try
+     AutoFitColumns(FilesRemote);
+     AutoFitColumns(FilesLocal);
    finally
-     Clipboard.close;
+     SendMessage(FilesLocal.Handle, WM_SETREDRAW, 1, 0);
+     SendMessage(FilesRemote.Handle, WM_SETREDRAW, 1, 0);
    end;
 
-   if numfiles>0 then begin delay(1000); btnRemoteReloadClick(Sender) end;
-
+   tAutoFitColumns.Enabled := False;
 end;
 
 procedure TrdFileTransfer.tiClick(Sender: TObject);
@@ -1268,38 +1296,42 @@ begin
 end;
 
 procedure TrdFileTransfer.comp_border(cp:twincontrol; pix:byte);
-var formrgn : hrgn;
+var
+  formrgn : hrgn;
 begin
   formrgn := CreateRectRgn(pix,pix, cp.width - pix, cp.height - pix);
   SetWindowRgn(cp.Handle, formrgn, True);
 end;
 
 procedure TrdFileTransfer.edRemoteDirKeyPress(Sender: TObject; var Key: Char);
-var s: string;
+var
+  s: string;
 begin
   if Key=#13 then
-    begin
+  begin
     Key:=#0;
-     s:= edRemoteDir.Text;
-     if ExtractFileExt(s)='' then
-        edRemoteDir.Text:= IncludeTrailingPathDelimiter(s);
+    s:= edRemoteDir.Text;
+    if ExtractFileExt(s)='' then
+      edRemoteDir.Text:= IncludeTrailingPathDelimiter(s);
 
-     btnRemoteReloadClick(nil);
-    end;
+    btnRemoteReloadClick(nil);
+  end;
 end;
 
 procedure TrdFileTransfer.edRemoteDirSelect(Sender: TObject);
-var s: string;
+var
+  s: string;
 begin
- s:= edRemoteDir.Items[edRemoteDir.Itemindex];
- delete(s,1,pos('(',s));
+  s:= edRemoteDir.Items[edRemoteDir.Itemindex];
+  delete(s,1,pos('(',s));
 
- edRemoteDir.Text:= copy(s,1,2)+'\';
- btnRemoteReloadClick(nil);
+  edRemoteDir.Text:= copy(s,1,2)+'\';
+  btnRemoteReloadClick(nil);
 end;
 
 procedure TrdFileTransfer.edLocalDirKeyPress(Sender: TObject; var Key: Char);
-var s: string;
+var
+  s: string;
 begin
   if Key=#13 then
     begin
@@ -1313,19 +1345,20 @@ begin
 end;
 
 procedure TrdFileTransfer.edLocalDirSelect(Sender: TObject);
-var s: string;
+var
+  s: string;
 begin
-   s:= edLocalDir.Items[edLocalDir.Itemindex];
-   delete(s,1,pos('(',s));
-   edLocalDir.Text:= copy(s,1,2)+'\';
-   FilesLocal.onPath(edLocalDir.Text);
+  s := edLocalDir.Items[edLocalDir.Itemindex];
+  delete(s,1,pos('(',s));
+  edLocalDir.Text:= copy(s,1,2)+'\';
+  FilesLocal.onPath(edLocalDir.Text);
 
-    try
-     FilesLocal.Selected:=    FilesLocal.Items[0];
-     FilesLocal.ItemFocused:= FilesLocal.Selected;
-    except
-    end;
-    FilesLocal.SetFocus;
+  try
+    FilesLocal.Selected:=    FilesLocal.Items[0];
+    FilesLocal.ItemFocused:= FilesLocal.Selected;
+  except
+  end;
+  FilesLocal.SetFocus;
 end;
 
 type
@@ -1772,20 +1805,14 @@ end;
 procedure TrdFileTransfer.FormResize(Sender: TObject);
 begin
   if panel. Align=alLeft then
-    panel. width:= clientwidth div 2 else
+    panel. width:= clientwidth div 2
+  else
     panel_.width:= clientwidth div 2;
-    comp_border(edRemoteDir,1);
-    comp_border(edLocalDir,1);
 
-   SendMessage(FilesRemote.Handle, WM_SETREDRAW, 0, 0);
-   SendMessage(FilesLocal.Handle, WM_SETREDRAW, 0, 0);
-   try
-     AutoFitColumns(FilesRemote);
-     AutoFitColumns(FilesLocal);
-   finally
-     SendMessage(FilesLocal.Handle, WM_SETREDRAW, 1, 0);
-     SendMessage(FilesRemote.Handle, WM_SETREDRAW, 1, 0);
-   end;
+  comp_border(edRemoteDir,1);
+  comp_border(edLocalDir,1);
+
+  tAutoFitColumns.Enabled := True;
 end;
 
 procedure TrdFileTransfer.FilesReload(Sender: TObject; Files: TRtcPFileExplorer);

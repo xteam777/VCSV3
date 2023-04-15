@@ -3474,4 +3474,10 @@ object rdFileTransfer: TrdFileTransfer
     Left = 6
     Top = 130
   end
+  object tAutoFitColumns: TTimer
+    Enabled = False
+    OnTimer = tAutoFitColumnsTimer
+    Left = 8
+    Top = 198
+  end
 end
