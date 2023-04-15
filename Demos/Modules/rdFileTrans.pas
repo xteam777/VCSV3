@@ -192,7 +192,6 @@ type
     procedure FilesRemoteSelectItem(Sender: TObject; Item: TListItem;
       Selected: Boolean);
     procedure FilesRemoteDragDrop(Sender, Source: TObject; X, Y: Integer);
-    procedure P1Click(Sender: TObject);
     procedure FilesRemoteKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
     procedure tiClick(Sender: TObject);
@@ -261,7 +260,6 @@ type
     FDirFilesInited: Boolean;
     FRepositionFolder: string;
 
-    function send_f(myFile,d: string): Integer;
     function wrong_caption(s: string): Integer;
     function info2pn(lv: TRtcPFileExplorer): Int64;
     procedure add_lg(s: string);
@@ -486,8 +484,8 @@ end;
 
 procedure TrdFileTransfer.Image1Click(Sender: TObject);
 begin
-  with mouse.CursorPos do
-    pop.Popup(x, y);
+//  with mouse.CursorPos do
+//    pop.Popup(x, y);
 end;
 
 
@@ -882,12 +880,6 @@ var
     end;
   end;
 
-function TrdFileTransfer.send_f(myFile,d:string): Integer;
-  begin
-    raise Exception.Create('old method, need to remove');
-        myUI.Send(myFile,d);
-  end;
-
 procedure Delay(dwMilliseconds: Longint);
  var
    iStart, iStop: DWORD;
@@ -897,38 +889,6 @@ begin
      iStop := GetTickCount;
      Application.ProcessMessages;
    until Integer(iStop - iStart) >= dwMilliseconds;
-end;
-
-procedure TrdFileTransfer.P1Click(Sender: TObject);
-var
-   f: THandle;
-   buffer: Array [0..MAX_PATH] of Char;
-   i, numFiles: Integer;
-begin
-  numfiles := 0;
-  try
-   Clipboard.Open;
-   f:= Clipboard.GetAsHandle( CF_HDROP ) ;
-   If f <> 0 Then
-   Begin
-     numFiles := DragQueryFile( f, $FFFFFFFF, nil, 0 ) ;
-
-     for i:= 0 to numfiles - 1 do
-     begin
-       buffer[0] := #0;
-       DragQueryFile( f, i, buffer, sizeof(buffer)) ;
-       send_f(strpas(buffer), edRemoteDir.Text);
-     end;
-   end;
- finally
-   Clipboard.close;
- end;
-
- if numfiles>0 then
- begin
-  Delay(1000);
-  btnRemoteReloadClick(Sender)
- end;
 end;
 
 procedure TrdFileTransfer.tAutoFitColumnsTimer(Sender: TObject);
