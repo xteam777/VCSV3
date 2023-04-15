@@ -334,7 +334,7 @@ begin
     end;
 end;
 
-procedure TMainForm.RemoveProgressDialogByUserName(AUserName: String);
+procedure TrdDesktopViewer.RemoveProgressDialogByUserName(AUserName: String);
 var
   i: Integer;
 begin
@@ -836,7 +836,7 @@ end;
 
 procedure TrdDesktopViewer.FT_UIClose(Sender: TRtcPFileTransferUI);
 begin
-  RemoveProgressDialogByValue(UI.UserName);
+  RemoveProgressDialogByUserName(UI.UserName);
 end;
 
 procedure TrdDesktopViewer.FT_UINotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);
