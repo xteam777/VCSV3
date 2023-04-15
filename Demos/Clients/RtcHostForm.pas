@@ -328,8 +328,6 @@ type
     bSetup: TColorSpeedButton;
     pBtnSetup: TPanel;
     bGetUpdate: TSpeedButton;
-    Memo1: TMemo;
-    Button5: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -781,8 +779,9 @@ type
   //  function ExecAndWait(const FileName, Params: ShortString; const WinState: Word): boolean;
     property HostGatewayClientActive: Boolean read FHostGatewayClientActive write SetHostGatewayClientActive;
 
-    procedure AddProgressDialogToList(ATaskId: TTaskId; AProgressDialog: PProgressDialog; AUserName: String);
-    function GetProgressDialog(ATaskId: TTaskId): PProgressDialog;
+    function AddProgressDialog(ATaskId: TTaskId; AUserName: String): PProgressDialogData;
+    function GetProgressDialogData(ATaskId: TTaskId): PProgressDialogData; overload;
+    function GetProgressDialogData(AProgressDialog: PProgressDialog): PProgressDialogData; overload;
     procedure RemoveProgressDialog(ATaskId: TTaskId);
     procedure RemoveProgressDialogByValue(AProgressDialog: PProgressDialog);
     procedure RemoveProgressDialogByUserName(AUserName: String);
@@ -830,19 +829,18 @@ implementation
 
 {$R *.dfm}
 
-procedure TMainForm.AddProgressDialogToList(ATaskId: TTaskId; AProgressDialog: PProgressDialog; AUserName: String);
-var
-  pPDData: PProgressDialogData;
+function TMainForm.AddProgressDialog(ATaskId: TTaskId; AUserName: String): PProgressDialogData;
 begin
-  New(pPDData);
-  pPDData^.taskId := ATaskId;
-  pPDData^.ProgressDialog := AProgressDialog;
-  pPDData^.UserName := AUserName;
+  New(Result);
+  Result^.taskId := ATaskId;
+  New(Result^.ProgressDialog);
+  Result^.ProgressDialog^ := TProgressDialog.Create(Self);
+  Result^.UserName := AUserName;
 
-  FProgressDialogsList.Add(pPDData);
+  FProgressDialogsList.Add(Result);
 end;
 
-function TMainForm.GetProgressDialog(ATaskId: TTaskId): PProgressDialog;
+function TMainForm.GetProgressDialogData(ATaskId: TTaskId): PProgressDialogData;
 var
   i: Integer;
 begin
@@ -851,7 +849,21 @@ begin
   for i := 0 to FProgressDialogsList.Count - 1 do
     if PProgressDialogData(FProgressDialogsList[i])^.taskId = ATaskId then
     begin
-      Result := PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog;
+      Result := FProgressDialogsList[i];
+      Exit;
+    end;
+end;
+
+function TMainForm.GetProgressDialogData(AProgressDialog: PProgressDialog): PProgressDialogData;
+var
+  i: Integer;
+begin
+  Result := nil;
+
+  for i := 0 to FProgressDialogsList.Count - 1 do
+    if PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^ = AProgressDialog^ then
+    begin
+      Result := FProgressDialogsList[i];
       Exit;
     end;
 end;
@@ -862,6 +874,7 @@ var
 begin
   i := FProgressDialogsList.Count - 1;
   while i >= 0 do
+  begin
     if PProgressDialogData(FProgressDialogsList[i])^.taskId = ATaskId then
     begin
       FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
@@ -870,6 +883,9 @@ begin
       FProgressDialogsList.Delete(i);
       Break;
     end;
+
+    i := i - 1;
+  end;
 end;
 
 procedure TMainForm.RemoveProgressDialogByValue(AProgressDialog: PProgressDialog);
@@ -878,6 +894,7 @@ var
 begin
   i := FProgressDialogsList.Count - 1;
   while i >= 0 do
+  begin
     if PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog = AProgressDialog then
     begin
       FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
@@ -886,6 +903,9 @@ begin
       FProgressDialogsList.Delete(i);
       Break;
     end;
+
+    i := i - 1;
+  end;
 end;
 
 procedure TMainForm.RemoveProgressDialogByUserName(AUserName: String);
@@ -894,6 +914,7 @@ var
 begin
   i := FProgressDialogsList.Count - 1;
   while i >= 0 do
+  begin
     if PProgressDialogData(FProgressDialogsList[i])^.UserName = AUserName then
     begin
       FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
@@ -902,6 +923,9 @@ begin
       FProgressDialogsList.Delete(i);
       Break;
     end;
+
+    i := i - 1;
+  end;
 end;
 
 procedure TMainForm.DesktopHostFileTransferOnNewUI(Sender: TRtcPFileTransfer; const user: String);
@@ -1119,7 +1143,7 @@ end;
 
 procedure TMainForm.OnDesktopHostNotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);
 var
-  FProgressDialog: PProgressDialog;
+  pPDData: PProgressDialogData;
 begin
 //  Memo1.Lines.Add(IntToStr(Sender.Recv_FileCount) + ' - ' + Sender.Recv_FileName + ' - ' + IntToStr(Sender.Recv_BytesComplete) + ' - '+ IntToStr(Sender.Recv_BytesTotal));
 
@@ -1129,16 +1153,13 @@ begin
   case mode of
     mbsFileStart, mbsFileData, mbsFileStop:
     begin
-//      New(FProgressDialog);
-      FProgressDialog := GetProgressDialog(task.Id);
-      if FProgressDialog = nil then
+      pPDData := GetProgressDialogData(task.Id);
+      if pPDData = nil then
         Exit;
 
-      FProgressDialog^.TextLine1 := task.Files[task.Current].file_path;
+      pPDData^.ProgressDialog^.TextLine1 := task.Files[task.Current].file_path;
 
-      FProgressDialog^.Position := Round(task.Progress * 100);
-
-//      Dispose(FProgressDialog);
+      pPDData^.ProgressDialog^.Position := Round(task.Progress * 100);
 
 //      if task.size > 1024 * 1024 * 1024 then
 //        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / (1024 * 1024 * 1024)) + ' GB из ' + FormatFloat('0.00', task.size / (1024 * 1024 * 1024)) + ' GB'
@@ -1150,41 +1171,41 @@ begin
     end;
     mbsTaskStart:
     begin
-      New(FProgressDialog);
-      FProgressDialog^ := TProgressDialog.Create(Self);
-      AddProgressDialogToList(task.Id, FProgressDialog, task.User);
+//      New(FProgressDialog);
+      pPDData := AddProgressDialog(task.Id, task.User);
 
-      FProgressDialog^.Title := 'Копирование';
-      FProgressDialog^.CommonAVI := TCommonAVI.aviCopyFiles;
-      FProgressDialog^.TextLine1 := task.Files[task.Current].file_path;
-      FProgressDialog^.TextLine2 := task.LocalFolder;
-      FProgressDialog^.Max := 100;
-      FProgressDialog^.Position := 0;
-      FProgressDialog^.TextCancel := 'Прерывание...';
-      FProgressDialog^.OnCancel := OnProgressDialogCancel;
-      FProgressDialog^.AutoCalcFooter := True;
-      FProgressDialog^.fHwndParent := LastActiveExplorerHandle;
-      FProgressDialog^.Execute;
+      pPDData^.ProgressDialog^.Title := 'Копирование';
+      pPDData^.ProgressDialog^.CommonAVI := TCommonAVI.aviCopyFiles;
+      pPDData^.ProgressDialog^.TextLine1 := task.Files[task.Current].file_path;
+      pPDData^.ProgressDialog^.TextLine2 := task.LocalFolder;
+      pPDData^.ProgressDialog^.Max := 100;
+      pPDData^.ProgressDialog^.Position := 0;
+      pPDData^.ProgressDialog^.TextCancel := 'Прерывание...';
+      pPDData^.ProgressDialog^.OnCancel := OnProgressDialogCancel;
+      pPDData^.ProgressDialog^.AutoCalcFooter := True;
+      pPDData^.ProgressDialog^.fHwndParent := LastActiveExplorerHandle;
+      pPDData^.ProgressDialog^.Execute;
     end;
     mbsTaskFinished:
     begin
-      FProgressDialog := GetProgressDialog(task.Id);
-      if FProgressDialog = nil then
+      pPDData := GetProgressDialogData(task.Id);
+      if pPDData = nil then
         Exit;
 
-      FProgressDialog^.Stop;
+      pPDData^.ProgressDialog^.Stop;
       RemoveProgressDialog(task.Id);
     end;
     mbsTaskError:
     begin
-      FProgressDialog := GetProgressDialog(task.Id);
-      if FProgressDialog = nil then
+      pPDData := GetProgressDialogData(task.Id);
+      if pPDData = nil then
         Exit;
 
-      FProgressDialog^.Stop;
+      pPDData^.ProgressDialog^.Stop;
       RemoveProgressDialog(task.Id);
     end;
   end;
+
 
 //  if Sender.Recv_BytesTotal = Sender.Recv_BytesComplete then
 //    FProgressDialog.Stop;
@@ -1242,7 +1263,13 @@ begin
 end;}
 
 procedure TMainForm.OnProgressDialogCancel(Sender: TObject);
+var
+  pPDData: PProgressDialogData;
 begin
+  pPDData := GetProgressDialogData(PProgressDialog(@Sender));
+  if pPDData <> nil then
+    tPHostThread.FFileTransfer.CancelBatch(tPHostThread.FFileTransfer, pPDData^.taskId);
+
   TProgressDialog(Sender).Stop;
   RemoveProgressDialogByValue(@Sender);
 end;

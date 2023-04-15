@@ -16,6 +16,8 @@ type
     FDoWork: procedure of object;
   end;
 
+  PRtcPFileTransfer = ^TRtcPFileTransfer;
+
   PProgressDialogData = ^TProgressDialogData;
   TProgressDialogData = record
     taskId: TTaskID;
@@ -67,7 +69,6 @@ type
 
   PRtcHttpPortalClient = ^TRtcHttpPortalClient;
   PRtcPDesktopControl = ^TRtcPDesktopControl;
-  PRtcPFileTransfer = ^TRtcPFileTransfer;
   PRtcPChat = ^TRtcPChat;
 
   PRtcHttpClient = ^TRtcHttpClient;

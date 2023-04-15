@@ -4471,23 +4471,6 @@ object MainForm: TMainForm
         Text = '-'
         OnDblClick = eConsoleIDDblClick
       end
-      object Memo1: TMemo
-        Left = 6
-        Top = 12
-        Width = 249
-        Height = 251
-        Lines.Strings = (
-          'Memo1')
-        TabOrder = 3
-      end
-      object Button5: TButton
-        Left = 38
-        Top = 100
-        Width = 75
-        Height = 25
-        Caption = 'Button5'
-        TabOrder = 4
-      end
     end
     object pRight: TPanel
       Left = 271

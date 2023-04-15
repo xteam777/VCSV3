@@ -180,7 +180,6 @@ begin
 //      if Win32MajorVersion = 10 then
 //        TStyleManager.TrySetStyle('Windows10');
   SvcMgr.Application.Run;
-  err := 1;
 end;
 
 

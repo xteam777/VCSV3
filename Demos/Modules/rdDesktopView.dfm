@@ -4020,15 +4020,6 @@ object rdDesktopViewer: TrdDesktopViewer
         Visible = False
         OnClick = Button1Click
       end
-      object Memo1: TMemo
-        Left = 488
-        Top = 56
-        Width = 529
-        Height = 285
-        Lines.Strings = (
-          'Memo1')
-        TabOrder = 4
-      end
     end
   end
   object myUI: TRtcPDesktopControlUI

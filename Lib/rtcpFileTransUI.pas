@@ -21,6 +21,7 @@ uses
   rtcpFileTrans;
 
 type
+  PRtcPFileTransferUI = ^TRtcPFileTransferUI;
   TRtcPFileTransferUI = class;
 
   TRtcPFileTransUIEvent = procedure(Sender: TRtcPFileTransferUI) of object;

@@ -236,7 +236,7 @@ object rdFileTransfer: TrdFileTransfer
         Top = 0
         Width = 28
         Height = 32
-        Hint = #1053#1072' '#1091#1088#1086#1074#1077#1085#1100' '#1074#1074#1077#1088#1093#13#10'BackSp'
+        Hint = #1053#1072' '#1091#1088#1086#1074#1077#1085#1100' '#1074#1074#1077#1088#1093
         Align = alLeft
         Flat = True
         Font.Charset = DEFAULT_CHARSET
@@ -282,7 +282,7 @@ object rdFileTransfer: TrdFileTransfer
         Top = 0
         Width = 28
         Height = 32
-        Hint = #1053#1072' '#1091#1088#1086#1074#1077#1085#1100' '#1074#1074#1077#1088#1093#13#10'BackSp'
+        Hint = #1053#1072' '#1091#1088#1086#1074#1077#1085#1100' '#1074#1074#1077#1088#1093#13#10'BackSpace'
         Align = alLeft
         Flat = True
         Font.Charset = DEFAULT_CHARSET
@@ -2573,7 +2573,7 @@ object rdFileTransfer: TrdFileTransfer
         Top = 0
         Width = 28
         Height = 32
-        Hint = #1053#1072' '#1091#1088#1086#1074#1077#1085#1100' '#1074#1074#1077#1088#1093#13#10'BackSp'
+        Hint = #1053#1072' '#1091#1088#1086#1074#1077#1085#1100' '#1074#1074#1077#1088#1093#13#10
         Align = alLeft
         Flat = True
         Font.Charset = DEFAULT_CHARSET
@@ -2619,7 +2619,7 @@ object rdFileTransfer: TrdFileTransfer
         Top = 0
         Width = 28
         Height = 32
-        Hint = #1053#1072' '#1091#1088#1086#1074#1077#1085#1100' '#1074#1074#1077#1088#1093#13#10'BackSp'
+        Hint = #1053#1072' '#1091#1088#1086#1074#1077#1085#1100' '#1074#1074#1077#1088#1093#13#10'BackSpace'
         Align = alLeft
         Flat = True
         Font.Charset = DEFAULT_CHARSET

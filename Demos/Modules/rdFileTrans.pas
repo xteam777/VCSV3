@@ -7,16 +7,16 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes,
   Graphics, Controls, Forms, Dialogs, StdCtrls,
-  Buttons, ComCtrls, ExtCtrls, Clipbrd, IOUtils,
-  Character, WinSock,
+  Buttons, ComCtrls, ExtCtrls, Clipbrd, IOUtils, rtcPortalMod, rtcpFileTrans,
+  rtcpFileTransUI, System.ImageList, Vcl.ImgList, Vcl.Menus, Vcl.Samples.Gauges,
+  rtcpFileExplore, rtcSystem, Character,
 
 {$IFDEF IDE_XE3up}
   UITypes,
 {$ENDIF}
 
-  rtcSystem, rtcpFileExplore, rtcpFileTransUI, ShellAPI, Menus, AppEvnts,
-  ImgList, Vcl.Samples.Gauges, System.ImageList,
-  rtcPortalMod, rtcpFileTrans, uVircessTypes, CommonUtils, rtcScrUtils, CommonData;
+  ShellAPI, AppEvnts,
+  uVircessTypes, CommonUtils, rtcScrUtils, CommonData;
 
 const
   WM_SAFE_DELETE_OBJECT  = WM_USER + 1;
