@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Classes, rtcInfo, Controls, Forms, Messages, rtcHttpCli, rtcCliModule,
-  rtcPortalHttpCli, rtcpDesktopControl, rtcpFileTrans, rtcpChat, ShellApi;
+  rtcPortalHttpCli, rtcpDesktopControl, rtcpFileTrans, rtcpChat, ShellApi, ProgressDialog;
 
 type
   TWorkThread = class(TThread)
@@ -14,6 +14,13 @@ type
     procedure Execute; override;
   public
     FDoWork: procedure of object;
+  end;
+
+  PProgressDialogData = ^TProgressDialogData;
+  TProgressDialogData = record
+    taskId: TTaskID;
+    ProgressDialog: PProgressDialog;
+    UserName: String;
   end;
 
   TUIOpenEvent = procedure(UserName, Action: String; var IsPending: Boolean) of Object;

@@ -60,6 +60,8 @@ object MainForm: TMainForm
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
+    ExplicitWidth = 823
+    ExplicitHeight = 486
     DesignSize = (
       827
       487)
@@ -4477,6 +4479,14 @@ object MainForm: TMainForm
         Lines.Strings = (
           'Memo1')
         TabOrder = 3
+      end
+      object Button5: TButton
+        Left = 38
+        Top = 100
+        Width = 75
+        Height = 25
+        Caption = 'Button5'
+        TabOrder = 4
       end
     end
     object pRight: TPanel
