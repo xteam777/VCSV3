@@ -344,7 +344,7 @@ begin
   task := TRtcPFileTransfer(myUI.Module).TaskList.GetTaskByName(taskPanel.taskID.ToString);
   task._AddRef;
   try
-    if task.direction = dbtFetch then
+    if task.Direction = dbtFetch then
       reload := btnLocalReload else
       reload := btnRemoteReload;
 
@@ -470,7 +470,7 @@ begin
   FLocalRecent  := TRecentPathList.Create;
   FTaskPanelList := TTaskPanelList.Create;
   FTaskPanelList.OnChange := OnTaskPanelChange;
-  FTaskPanelList.TaskRemoveLogic := trlDemandError;
+  FTaskPanelList.TaskRemoveLogic := trlManual;
 
   b_ppClick(nil);
 
@@ -603,18 +603,12 @@ procedure TrdFileTransfer.btnRemoteBackClick(Sender: TObject);
 begin
   if Sender = btnRemoteBack then
   begin
-    edRemoteDir.Text := IncludeTrailingBackslash(FRemoteRecent.Pop);
-    if edRemoteDir.Text = '\' then
-      edRemoteDir.Text := '';
-
+    edRemoteDir.Text := FRemoteRecent.Pop;
     btnRemoteReloadClick(nil);
   end
   else
   begin
-    edLocalDir.Text := IncludeTrailingBackslash(FLocalRecent.Pop);
-    if edLocalDir.Text = '\' then
-      edLocalDir.Text := '';
-
+    edLocalDir.Text := FLocalRecent.Pop;
     btnLocalReloadClick(nil);
   end;
 end;
@@ -2324,4 +2318,3 @@ begin
 end;
 
 end.
-
