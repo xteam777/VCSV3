@@ -1096,7 +1096,7 @@ begin
       begin
         ImageIndex := GetDirIconIndex;
         (*SubItems.Add('<Directory>'); // Type 1*)
-        SubItems.Add('Folder'); // Type 1
+        SubItems.Add('Папка'); // Type 1
         SubItems.Add(''); // Size 2
         SubItems.Add(FDate); // Modified 3
         SubItems.Add(Attributes); // Attributes 4
@@ -1109,7 +1109,7 @@ begin
         FName := UpperCase(ExtractFileExt(FName));
         ImageIndex := GetFileIconIndex(FName);
         (*SubItems.Add(FName + ' File'); // Type 1*)
-        SubItems.Add(FName + 'File'); // Type 1
+        SubItems.Add(FName + ' Файл'); // Type 1
         SubItems.Add(FormatFileSize(FSize)); // Size 2
         SubItems.Add(FDate); // Modified 3
         SubItems.Add(Attributes); // Attributes 4
