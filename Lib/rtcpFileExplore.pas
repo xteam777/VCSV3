@@ -1109,7 +1109,10 @@ begin
         FName := UpperCase(ExtractFileExt(FName));
         ImageIndex := GetFileIconIndex(FName);
         (*SubItems.Add(FName + ' File'); // Type 1*)
-        SubItems.Add(FName + ' Τΰιλ'); // Type 1
+        if FName <> '' then
+          SubItems.Add(FName + ' Τΰιλ') // Type 1
+        else
+          SubItems.Add('Τΰιλ'); // Type 1
         SubItems.Add(FormatFileSize(FSize)); // Size 2
         SubItems.Add(FDate); // Modified 3
         SubItems.Add(Attributes); // Attributes 4
