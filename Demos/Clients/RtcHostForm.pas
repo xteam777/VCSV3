@@ -9550,7 +9550,7 @@ begin
 //  xLog('PFileTransferLogUI');
 
   FWin := TrdFileTransferLog.Create(nil);
-  FWin.UIVisible := True;
+  FWin.UIVisible := Sender.UIVisible;
   FWin.OnUIOpen := OnUIOpen;
   FWin.OnUIClose := OnUIClose;
 //  FWin.Parent := Self;
