@@ -37,16 +37,6 @@ type
     ipBase_MovedRP: PByte;
   end;
 
-  PDirtyRect = ^TDirtyRect;
-  TDirtyRect = record
-    Left, Top, Right, Bottom: FixedInt;
-  end;
-
-  PMovedRect = ^TMovedRect;
-  TMovedRect = record
-    Left, Top, Right, Bottom, X, Y: FixedInt;
-  end;
-
 const
   RMX_VERSION = '3.0';
 
