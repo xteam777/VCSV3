@@ -6340,6 +6340,8 @@ begin
 //    PClient.Active := True;
 
     tPHostThread.Restart;
+    hcAccounts.DisconnectNow(True);
+    hcAccounts.Connect(True);
 
     tPClientReconnect.Enabled := False;
   end
