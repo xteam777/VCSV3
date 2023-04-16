@@ -296,8 +296,6 @@ var
   SaveBitMap: TBitmap;
   i, j, TempInt: LongInt;
   fScreenGrabbed: Boolean;
-  DirtyArray: array of TDirtyRect;
-  MovedArray: array of TMovedRect;
 begin
   if not IsWindows8orLater then
     Exit;
@@ -348,8 +346,7 @@ begin
         hMap := OpenFileMapping(FILE_MAP_READ or FILE_MAP_WRITE, False, PWideChar(WideString('Session\' + IntToStr(SessionID) + '\RMX_SCREEN' + NameSuffix)));
         if hMap = 0 then
           Exit;
-        HeaderSize := SizeOf(BitmapSize) + SizeOf(fScreenGrabbed) + SizeOf(FScreenWidth) + SizeOf(FScreenHeight) + SizeOf(FBitsPerPixel) +
-          SizeOf(CurrentProcessId) + SizeOf(ipBase) + SizeOf(FMouseFlags) + SizeOf(FMouseCursor) + SizeOf(DirtyArray) + SizeOf(MovedArray);
+        HeaderSize := SizeOf(BitmapSize) + SizeOf(fScreenGrabbed) + SizeOf(FScreenWidth) + SizeOf(FScreenHeight) + SizeOf(FBitsPerPixel) + SizeOf(CurrentProcessId) + SizeOf(ipBase) + SizeOf(FMouseFlags) + SizeOf(FMouseCursor) + 1000; // + 100000 * 6 * SizeOf(Integer);
         pMap := MapViewOfFile(hMap, //дескриптор "проецируемого" объекта
                                 FILE_MAP_READ or FILE_MAP_WRITE,  // разрешение чтени€/записи
                                 0,0,
@@ -393,11 +390,6 @@ begin
         CurOffset := CurOffset + SizeOf(CurrentProcessId);
 //        CopyMemory(@ipBase, PByte(pMap) + CurOffset, SizeOf(ipBase));
         CurOffset := CurOffset + SizeOf(ipBase);
-        CopyMemory(@FDirtyRCnt, PByte(pMap) + CurOffset, SizeOf(FDirtyRCnt));
-        CurOffset := CurOffset + SizeOf(FDirtyRCnt);
-        CopyMemory(@FMovedRCnt, PByte(pMap) + CurOffset, SizeOf(FMovedRCnt));
-        CurOffset := CurOffset + SizeOf(MovedRCnt);
-
         CopyMemory(@FMouseFlags, PByte(pMap) + CurOffset, SizeOf(FMouseFlags));
         CurOffset := CurOffset + SizeOf(FMouseFlags);
         CopyMemory(@FMouseCursor, PByte(pMap) + CurOffset, SizeOf(FMouseCursor));
@@ -407,13 +399,45 @@ begin
         CopyMemory(@FMouseY, PByte(pMap) + CurOffset, SizeOf(FMouseY));
         CurOffset := CurOffset + SizeOf(FMouseY);
 
+        CopyMemory(@FDirtyRCnt, PByte(pMap) + CurOffset, SizeOf(FDirtyRCnt));
+        CurOffset := CurOffset + SizeOf(FDirtyRCnt);
+        for i := 0 to DirtyRCnt - 1 do
+        begin
+          CopyMemory(@FDirtyR[i].Top, PByte(pMap) + CurOffset, SizeOf(FDirtyR[i].Top));
+          CurOffset := CurOffset + SizeOf(FDirtyR[i].Top);
+          CopyMemory(@FDirtyR[i].Left, PByte(pMap) + CurOffset, SizeOf(FDirtyR[i].Left));
+          CurOffset := CurOffset + SizeOf(FDirtyR[i].Left);
+          CopyMemory(@FDirtyR[i].Bottom, PByte(pMap) + CurOffset, SizeOf(FDirtyR[i].Bottom));
+          CurOffset := CurOffset + SizeOf(FDirtyR[i].Bottom);
+          CopyMemory(@FDirtyR[i].Right, PByte(pMap) + CurOffset, SizeOf(FDirtyR[i].Right));
+          CurOffset := CurOffset + SizeOf(FDirtyR[i].Right);
+        end;
+
+        CopyMemory(@FMovedRCnt, PByte(pMap) + CurOffset, SizeOf(FMovedRCnt));
+        CurOffset := CurOffset + SizeOf(MovedRCnt);
+        for i := 0 to MovedRCnt - 1 do
+        begin
+          CopyMemory(@FMovedR[i].Top, PByte(pMap) + CurOffset, SizeOf(FMovedR[i].Top));
+          CurOffset := CurOffset + SizeOf(FMovedR[i].Top);
+          CopyMemory(@FMovedR[i].Left, PByte(pMap) + CurOffset, SizeOf(FMovedR[i].Left));
+          CurOffset := CurOffset + SizeOf(FMovedR[i].Left);
+          CopyMemory(@FMovedR[i].Bottom, PByte(pMap) + CurOffset, SizeOf(FMovedR[i].Bottom));
+          CurOffset := CurOffset + SizeOf(FMovedR[i].Bottom);
+          CopyMemory(@FMovedR[i].Right, PByte(pMap) + CurOffset, SizeOf(FMovedR[i].Right));
+          CurOffset := CurOffset + SizeOf(FMovedR[i].Right);
+
+          CopyMemory(@FMovedRP[i].X, PByte(pMap) + CurOffset, SizeOf(FMovedRP[i].X));
+          CurOffset := CurOffset + SizeOf(FMovedRP[i].X);
+          CopyMemory(@FMovedRP[i].Y, PByte(pMap) + CurOffset, SizeOf(FMovedRP[i].Y));
+          CurOffset := CurOffset + SizeOf(FMovedRP[i].Y);
+        end;
+
+
         if OnlyGetScreenParams then
           Exit;
 
 //        New(FScreenBuff);
         GetMem(FScreenBuff, BitmapSize);
-        SetLength(DirtyArray, FDirtyRCnt);
-        SetLength(MovedArray, MovedRCnt);
 
         CurOffset := 0;
   //      CopyMemory(@BitmapSize, pMap, SizeOf(BitmapSize));
@@ -430,34 +454,6 @@ begin
         CurOffset := CurOffset + SizeOf(CurrentProcessId);
         CopyMemory(PByte(pMap) + CurOffset, @FScreenBuff, SizeOf(FScreenBuff));
         CurOffset := CurOffset + SizeOf(FScreenBuff);
-        CopyMemory(PByte(pMap) + CurOffset, @DirtyArray, SizeOf(DirtyArray));
-        CurOffset := CurOffset + SizeOf(DirtyArray);
-        CopyMemory(PByte(pMap) + CurOffset, @MovedArray, SizeOf(MovedArray));
-        CurOffset := CurOffset + SizeOf(MovedArray);
-
-        for i := 0 to DirtyRCnt - 1 do
-        begin
-          FDirtyR[i].Top := DirtyArray[i].Top;
-          FDirtyR[i].Left := FDirtyR[i].Left;
-          FDirtyR[i].Bottom := FDirtyR[i].Bottom;
-          FDirtyR[i].Right := FDirtyR[i].Right;
-        end;
-//
-        for i := 0 to MovedRCnt - 1 do
-        begin
-          FMovedR[i].Top := FMovedR[i].Top;
-          FMovedR[i].Left := FMovedR[i].Left;
-          FMovedR[i].Bottom := FMovedR[i].Bottom;
-          FMovedR[i].Right := FMovedR[i].Right;
-
-          FMovedRP[i].X := FMovedRP[i].X;
-          FMovedRP[i].Y := FMovedRP[i].Y;
-        end;
-
-        SetLength(DirtyArray, 0);
-        DirtyArray := nil;
-        SetLength(MovedArray, 0);
-        MovedArray := nil;
       finally
         if pMap <> nil then
           UnmapViewOfFile(pMap);
@@ -768,12 +764,6 @@ var
 begin
 //  DataCS.Enter;
 
-  if Assigned(ScrFull) then
-  begin
-    FScreenWidth := 0; FScreenHeight := 0;
-    // —брасываем информацию о экране
-  end;
-
 time := GetTickCount;
 
   //ShowMessage('GrabScreen');
@@ -808,11 +798,6 @@ time := GetTickCount;
   end;
 
   InfoChanged := ScreenInfoChanged;
-  {$IFDEF DEBUG}
-  if InfoChanged then
-    Debug.Log('ScreenInfo Changed to ' + IntToStr(FScreenWidth) + 'x' +
-      IntToStr(FScreenHeight) + 'x' + IntToStr(FBitsPerPixel));
-  {$ENDIF}
 
   {$IFDEF DEBUG}
   CapLat := Debug.GetMCSTick - CurTick;

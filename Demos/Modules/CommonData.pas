@@ -16,6 +16,14 @@ type
                        mteRegistration,
                        mteRegistrationOK);
 
+  TDirtyRect = record
+    Left, Top, Right, Bottom: FixedInt;
+  end;
+
+  TMovedRect = record
+    Left, Top, Right, Bottom, X, Y: FixedInt;
+  end;
+
 const
   RMX_VERSION = '3.0';
 

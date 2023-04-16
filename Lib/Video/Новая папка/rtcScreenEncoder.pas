@@ -1,0 +1,1621 @@
+{ Copyright (c) Danijel Tkalcec,
+  RealThinClient components - http://www.realthinclient.com }
+
+unit rtcScreenEncoder;
+
+interface
+{$INLINE AUTO}
+
+
+//{$INCLUDE rtcDefs.inc}
+//{$INCLUDE rtcPortalDefs.inc}
+{$POINTERMATH ON}
+
+
+uses
+  Windows, Classes, //Messages, rtcSystem,
+  System.Types, SysUtils, Graphics, Forms, //Controls, Forms, rtcpDesktopHost,
+  Math, Vcl.Dialogs, System.SyncObjs, CommonData,
+  rtcInfo, rtcLog,// rtcZLib, SyncObjs, rtcScrUtils,
+  DX12.D3D11, DX12.D3DCommon, DX12.DXGI, DX12.DXGI1_2,
+  rtcCompress, Vcl.Imaging.JPEG, Vcl.Imaging.PNGImage, //RtcWebPCodec,//rtcXJPEGEncode,
+   {$IFDEF WithSynLZTest} SynLZ, {$ENDIF} lz4d, lz4d.lz4, lz4d.lz4s,
+ {ServiceMgr,} rtcWinLogon;
+
+type
+  TRtcScreenEncoder = class
+  const TempBuffLen = 3000000;
+  private
+    FError: HRESULT;
+  // D3D11
+    FDevice: ID3D11Device;
+    FContext: ID3D11DeviceContext;
+    FFeatureLevel: TD3D_FEATURE_LEVEL;
+  // DGI
+    FOutput: TDXGI_OUTPUT_DESC;
+    FDuplicate: IDXGIOutputDuplication;
+    FTexture: ID3D11Texture2D;
+
+    FrameInfo: TDXGI_OUTDUPL_FRAME_INFO;
+    Desc: TD3D11_TEXTURE2D_DESC;
+
+    DesktopResource: IDXGIResource;
+    Temp: ID3D11Texture2D;
+   // Resource: TD3D11_MAPPED_SUBRESOURCE;
+
+   // PixelFormat : TPixelFormat;
+    DataCS : TCriticalSection;
+    HelperCS: TCriticalSection;
+
+    CodecId, Codec2Param1, Codec3Param1, Codec4Param1, Codec4Param2 : Integer;
+
+
+    FullScreen : Boolean;
+    FScreenWidth, FScreenHeight, FBitsPerPixel : Integer;
+   // FScreenInfoChanged : Boolean;
+
+    FClipRect : TRect;
+
+    ScreenBuff : PByte;
+
+    DirtyRCnt, MovedRCnt : Integer;
+    DirtyR, MovedR : array [0..10000] of TRect;
+    MovedRP : array [0..10000] of TPoint;
+
+    TempBuff : array [0..TempBuffLen] of Byte;
+
+    FInd : INteger;
+
+    DDExists : Boolean;
+    function CreateDD : Boolean;
+    //procedure DestroyDD;
+    function DDCaptureScreen : Boolean;
+    function DDRecieveRects : Boolean;
+
+    function ScreenInfoChanged : Boolean;
+    procedure EncodeImage(Rec : TRtcRecord; var Rect : TRect);
+
+    function GetDataFromHelper(OnlyGetScreenParams: Boolean = False; fFirstScreen: Boolean = False): Boolean;
+
+   // function GetChangedRect(const RectId : integer) : TRect;
+    procedure SetClipRect(const Rect : TRect);
+
+  public
+    constructor Create;
+    destructor Destroy; override;
+  //  function GetFrame(NeedFullCapture : Boolean): Boolean;
+
+    procedure GrabScreen(ScrDelta : PString; ScrFull : PString = NIL);
+
+    property Error: HRESULT read FError;
+    property ScreenWidth : Integer read FScreenWidth;
+    property ScreenHeight : Integer read FScreenHeight;
+    property BitsPerPixel : Integer read FBitsPerPixel;
+   // property ScreenInfoChanged : Boolean read FScreenInfoChanged;
+
+    property ClipRect : TRect read FClipRect write SetClipRect;
+
+  //  property ScreenBuff : PByte read FScreenBuff;
+ //   property ChangedRectsCnt : Integer read FChangedRectsCnt;
+ //   property ChangedRects[const RectId : Integer] : TRect read GetChangedRect;
+  end;
+
+  function CaptureFullScreen(MultiMon: boolean;
+    PixelFormat: TPixelFormat = pf8bit): TBitmap;
+
+implementation
+uses RtcDebug, IniFiles;
+
+type
+  TRtcCaptureMode=(captureEverything, captureDesktopOnly);
+
+var
+  RtcCaptureMode:TRtcCaptureMode=captureEverything;
+  RTC_CAPTUREBLT: DWORD = $40000000;
+
+//function WebPEncodeLosslessRGB(const rgb: PByte; width, height, stride: Integer;
+ // quality_factor: single; var output: PByte): Cardinal; cdecl; external 'libwebp.dll';
+
+//function WebPDecodeRGBInto(const data: PByte; data_size: Cardinal;
+//  output_buffer: PByte; output_buffer_size, output_stride: Integer): PByte;
+//  cdecl; external 'libwebp.dll';
+
+
+{uses Types;
+
+function GetBitsPerPixel(aBitsPerPixel: TPixelFormat): Word;
+begin
+  case aBitsPerPixel of
+    pf1bit: Result := 1;
+    pf4bit: Result := 4;
+    pf8bit: Result := 8;
+    pf15bit: Result := 15;
+    pf16bit: Result := 16;
+    pf24bit: Result := 24;
+    pf32bit: Result := 32;
+    else Result := 32;
+  end;
+end;
+ }
+constructor TRtcScreenEncoder.Create;
+var
+ i : integer;
+begin
+  ClipRect := TRect.Create(0, 0, 0, 0);
+
+  DataCS := TCriticalSection.Create;
+  HelperCS := TCriticalSection.Create;
+
+  {
+  GetMem(ScreenBuff, 1 shl 25);
+
+  for i := 0 to 1280 * 1024 do
+  begin
+    ScreenBuff[i * 4 + 0] := i and 255;
+    ScreenBuff[i * 4 + 1] := i and 255;
+    ScreenBuff[i * 4 + 2] := i and 255;
+    ScreenBuff[i * 4 + 3] := 255;
+  end; }
+  //FillChar(ScreenBuff^, 1 shl 25, 0);
+
+//  GrabScreen(NIL, NIL);
+ // ShowMessage('EncCreate');
+  Debug.Log('-------------------------------------------------------------');
+  Debug.Log('TRtcEncoder Created');
+end;
+
+destructor TRtcScreenEncoder.Destroy;
+begin
+ // DestroyDD;
+  if (FContext <> NIL) and (FTexture <> NIL) then FContext.Unmap(FTexture, 0); //
+
+  DataCS.Free;
+  HelperCS.Free;
+end;
+
+function TRtcScreenEncoder.CreateDD : Boolean;
+var
+  GI: IDXGIDevice;
+  GA: IDXGIAdapter;
+  GO: IDXGIOutput;
+  O1: IDXGIOutput1;
+begin
+  Result := false;
+  DDExists := False;
+
+  //!!!!!!!!!!!!!!fTexture := NIL;
+
+  Debug.Log('Creating DesktopDuplication');
+
+  FTexture := NIL;
+  FDuplicate := NIL;
+
+  FContext := NIL;
+
+  FDevice := NIL;
+  // DGI
+
+  //DXGI_ERROR_SESSION_DISCONNECTED
+//  Sleep(10000);
+  FError := D3D11CreateDevice(
+    nil, // Default adapter
+    D3D_DRIVER_TYPE_HARDWARE, // A hardware driver, which implements Direct3D features in hardware.
+    0,
+    Ord(D3D11_CREATE_DEVICE_SINGLETHREADED),
+    nil, 0, // default feature
+    D3D11_SDK_VERSION,
+    FDevice,
+    FFeatureLevel,
+    FContext
+  );
+
+  if Failed(FError) then
+  begin
+    Debug.Log('D3D11CreateDevice Error: ' + IntToStr(FError));//SysErrorMessage(FError));
+    Exit;
+  end;
+
+  Debug.Log('FDevice.QueryInterface(IID_IDXGIDevice, GI)');
+  FError := FDevice.QueryInterface(IID_IDXGIDevice, GI);
+  if Failed(FError) then
+  begin
+    Debug.Log('QueryInterface IID_IDXGIDevice Error: ' + IntToStr(FError));
+    Exit;
+  end;
+
+  Debug.Log('GI.GetParent(IID_IDXGIAdapter, Pointer(GA)');
+  FError := GI.GetParent(IID_IDXGIAdapter, Pointer(GA));
+  if Failed(FError) then
+  begin
+    Debug.Log('GI.GetParent Error: ' + IntToStr(FError));
+    Exit;
+  end;
+
+  Debug.Log('GA.EnumOutputs(0, GO)');
+  FError := GA.EnumOutputs(0, GO);
+  if Failed(FError) then
+  begin
+    Debug.Log('EnumOutputs Error: ' + IntToStr(FError));
+    Exit;
+  end;
+
+  Debug.Log('GO.GetDesc(FOutput)');
+  FError := GO.GetDesc(FOutput);
+  if Failed(FError) then
+  begin
+    Debug.Log('GetDesc Error: ' + IntToStr(FError));
+    Exit;
+  end;
+
+  Debug.Log('GO.QueryInterface(IID_IDXGIOutput1, O1)');
+  FError := GO.QueryInterface(IID_IDXGIOutput1, O1);
+  if Failed(FError) then
+  begin
+    Debug.Log('QueryInterface IID_IDXGIOutput1 Error: '
+      + IntToStr(FError));
+    Exit;
+  end;
+
+  Debug.Log('O1.DuplicateOutput(FDevice, FDuplicate) '
+    + IntToStr(Integer(O1)) + ' ' + IntToStr(Integer(FDevice)));
+  FError := O1.DuplicateOutput(FDevice, FDuplicate);
+  if Failed(FError) then
+  begin
+    Debug.Log('DuplicateOutput Error: ' +
+      IntToStr(FError));
+    Exit;
+  end;
+  // DXGI_ERROR_NOT_CURRENTLY_AVAILABLE
+   // E_ACCESSDENIED
+  Debug.Log('DesktopDupilcation object created');
+  DDExists := true;
+  Result := True;
+end;
+
+{procedure TRtcScreenEncoder.DestroyDD;
+begin
+  DDExists := false;
+
+  if Assigned(FTexture) then
+  begin
+    FContext.Unmap(FTexture, 0); //Это нужно?
+    FTexture := NIL;
+  end;
+  if Assigned(FDuplicate) then
+  begin
+    FDuplicate.ReleaseFrame;
+    FDuplicate := NIL;
+  end;
+end;
+ }
+function TRtcScreenEncoder.DDCaptureScreen : Boolean;
+var
+ // DesktopResource: IDXGIResource;
+ // Desc: TD3D11_TEXTURE2D_DESC;
+ // Temp: ID3D11Texture2D;
+  Resource: TD3D11_MAPPED_SUBRESOURCE;
+  BadAttempt: Boolean;
+  AttemptId: Integer;
+  ResourceDesc: TDXGI_OUTDUPL_DESC;
+  time: DWORD;
+ // BufLen : Integer;
+  label CaptureStart, ErrorInCapture, FailedCapture, AttemptFinish;
+begin
+  Debug.Log('Capturing screen');
+  time := GetTickCount;
+
+  BadAttempt := false;
+  AttemptId := 1;
+
+//  if (not DDExists) or (not DDCaptureScreen) or (not DDRecieveRects) then
+//  if (not CreateDD) or (not DDCaptureScreen) or (not DDRecieveRects) then
+ // begin
+  //  Result := false;
+  //end;
+ //fNeedRecreate := False;
+  if not DDExists then goto ErrorInCapture;
+
+  CaptureStart:
+
+  if FDuplicate = nil then goto ErrorInCapture;
+  //else
+   // FDuplicate.ReleaseFrame;
+
+  //Sleep(1);
+
+
+  FDuplicate.ReleaseFrame;
+  Sleep(1);
+  FError := FDuplicate.AcquireNextFrame(200, FrameInfo, DesktopResource);
+  if Failed(FError) then
+  begin
+    Debug.Log('AcquireNextFrame Error: ' + IntToStr(FError));
+//    if FError = DXGI_ERROR_ACCESS_LOST then
+   //   fNeedRecreate := True;
+    goto ErrorInCapture;
+  end;
+
+  //if FrameInfo.TotalMetadataBufferSize <= 0 then Exit;
+
+  //if FTexture <> nil then
+    FTexture := nil;
+
+  FError := DesktopResource.QueryInterface(IID_ID3D11Texture2D, FTexture);
+  DesktopResource := nil;
+  if Failed(FError) then
+  begin
+    Debug.Log('QueryInterface.IID_ID3D11Texture2D Error: ' + IntToStr(FError));
+    goto ErrorInCapture;
+  end;
+
+  FTexture.GetDesc(Desc);
+
+  FDuplicate.GetDesc(ResourceDesc);
+
+  ZeroMemory(@Desc, SizeOf(Desc));
+  Desc.Width := ResourceDesc.ModeDesc.Width;
+  Desc.Height := ResourceDesc.ModeDesc.Height;
+  Desc.MipLevels := 1;
+  Desc.ArraySize := 1;
+  Desc.Format := DXGI_FORMAT_B8G8R8A8_TYPELESS;
+  Desc.SampleDesc.Count := 1;
+  Desc.Usage := D3D11_USAGE_STAGING;
+  Desc.BindFlags := 0;
+  Desc.CPUAccessFlags := Ord(D3D11_CPU_ACCESS_READ) or Ord(D3D11_CPU_ACCESS_WRITE);
+  Desc.MiscFlags := 0;
+
+//  Desc.BindFlags := 0;
+////  Desc.Format := DXGI_FORMAT_B8G8R8X8_TYPELESS; //DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+//  Desc.CPUAccessFlags := Ord(D3D11_CPU_ACCESS_READ) or Ord(D3D11_CPU_ACCESS_WRITE);
+//  Desc.Usage := D3D11_USAGE_STAGING;
+//  Desc.MiscFlags := 0;
+
+  //  READ/WRITE texture
+  FError := FDevice.CreateTexture2D(@Desc, nil, Temp);
+  if Failed(FError) then
+  begin
+    Debug.Log('CreateTexture2D Error: ' + IntToStr(FError));
+   // FTexture := nil;
+   // FDuplicate.ReleaseFrame;
+
+    goto ErrorInCapture;
+  end;
+
+  // copy original to the RW texture
+  FContext.CopyResource(Temp, FTexture);
+  if Failed(FError) then
+  begin
+    Debug.Log('FContext.CopyResource Error: ' + IntToStr(FError));
+
+    goto ErrorInCapture;
+  end;
+
+  // get texture bits
+  FError := FContext.Map(Temp, 0, D3D11_MAP_READ_WRITE, 0, Resource);
+  if Failed(FError) then
+  begin
+    Debug.Log('FContext.Map Error: ' + IntToStr(FError));
+  //  FTexture := nil;
+    //FDuplicate.ReleaseFrame;
+
+    goto ErrorInCapture;
+  end;
+
+ // CheckScreenInfo(@Desc);
+
+  //Result := false;
+
+  ScreenBuff := Resource.pData;
+ // getmem(ScreenBuff, 1920 * 1090 * 4);
+  //Move(Resource.pData^, ScreenBuff^, 1280 * 1024 * 4);
+ // ScreenBuff^:= 0;
+
+  if not DDRecieveRects then ;//goto ErrorInCapture;
+
+AttemptFinish:
+  if BadAttempt then
+  begin
+    if (FContext <> NIL) and (FTexture <> NIL) then FContext.Unmap(FTexture, 0); //
+    FTexture := nil;
+
+    Temp := NIL;
+    DesktopResource := NIL;
+
+  if AttemptId > 1 then goto FailedCapture;
+
+    Inc(AttemptId);
+    BadAttempt := false;
+
+    if not CreateDD then goto FailedCapture;
+
+    goto CaptureStart;
+  end;
+
+  Result := true;
+  time := GetTickCount - time;
+  Debug.Log('cap time: ' + IntToStr(time));
+  Debug.Log('Screen successfully captured');
+
+  Exit;
+
+ErrorInCapture:
+  BadAttempt := true;
+  goto AttemptFinish;
+
+FailedCapture:
+  Debug.Log('Failed to capture screen');
+  Result := false;
+end;
+
+function TRtcScreenEncoder.DDRecieveRects : Boolean;
+var
+  i, j, S1, S2, SU, SI : Integer;
+  BytesRecieved : UInt;
+  RctU, RctI : TRect;
+
+  PMoveRect : PDXGI_OUTDUPL_MOVE_RECT;
+  PDirtyRect : PRECT;
+
+  CLeft, CTop, CRight, CBottom : Boolean;
+  time: DWORD;
+begin
+  Result := true;
+  time := GetTickCount;
+
+  {if FrameInfo.TotalMetadataBufferSize <= 0 then
+  begin
+    MovedRCnt := 0;
+    DirtyRCnt := 0;
+    Exit;
+  end;}
+
+  // Получаем MoveRects и зансоим их в FChangeRects
+  FError := FDuplicate.GetFrameMoveRects(TempBuffLen,
+        PDXGI_OUTDUPL_MOVE_RECT(@TempBuff[0]), BytesRecieved);
+  if Failed(FError) then
+  begin
+    //Result := false;
+   // Exit;
+    MovedRCnt := 0;
+  end else MovedRCnt := (BytesRecieved div SizeOf(TDXGI_OUTDUPL_MOVE_RECT));
+
+  for i := 0 to MovedRCnt - 1 do
+  begin
+    PMoveRect := PDXGI_OUTDUPL_MOVE_RECT(@TempBuff[0]) + i;
+  {  ChangedRects[ChangedRectsCnt] := TRect.Create(TPoint.Create(PMoveRect.SourcePoint.X, PMoveRect.SourcePoint.Y),
+    PMoveRect.DestinationRect.Right - PMoveRect.DestinationRect.Left,
+    PMoveRect.DestinationRect.Bottom - PMoveRect.DestinationRect.Top);
+    ChangedRects[ChangedRectsCnt + 1] := TRect.Create(PMoveRect.DestinationRect.Left, PMoveRect.DestinationRect.Top,
+    PMoveRect.DestinationRect.Right, PMoveRect.DestinationRect.Bottom);
+    Inc(ChangedRectsCnt, 2);}
+    with PMoveRect^ do
+    begin
+      MovedR[i] := DestinationRect;//TRect.Create(DestinationRect.Left,
+       // DestinationRect.Top, DestinationRect.Right, DestinationRect.Bottom);
+      MovedRP[i] := SourcePoint;//TPoint.Create(PMoveRect.SourcePoint.X,
+     //   PMoveRect.SourcePoint.Y
+    end;
+
+  end;
+
+
+  // Получаем DirtyRects и зансоим их в FChangeRects
+  FDuplicate.GetFrameDirtyRects(TempBuffLen, PRECT(@TempBuff[0]), BytesRecieved);
+  if Failed(FError) then
+  begin
+    //Result := false;
+    DirtyRCnt := 0;
+//    Exit;
+  end else DirtyRCnt := (BytesRecieved div SizeOf(TRECT));
+
+ // Result := true;
+
+  DirtyRCnt := (Integer(BytesRecieved) div SizeOf(TRECT));
+  for i := 0 to DirtyRCnt - 1 do
+  begin
+    PDirtyRect := PRECT(@TempBuff[0]) + i;
+    with PDirtyRect^ do
+    begin
+      DirtyR[i] := TRect.Create(Left, Top, Right, Bottom);
+      Debug.Log('DirtyRect recieved (' + IntToStr(Left)
+         + ', ' + IntToStr(Top) + ', ' + IntToStr(Right)
+         + ', ' + IntToStr(Bottom) + ')');
+    end;
+  end;
+
+  // Отсекаем части прямоугольников из DirtyRecs, выходящие за ClipRect
+  if (ClipRect.Width <> 0) and (ClipRect.Height <> 0) then
+    for i := 0 to DirtyRCnt - 1 do
+      DirtyR[i] := TRect.Intersect(DirtyR[i], ClipRect);
+
+  time := GetTickCount - time;
+  Debug.Log('enc time: ' + IntToStr(time));
+
+  Exit;//!!!!!!!!!!!!!!!!!!!!!!!!
+  // Если при перемещении областей MoveR часть окна попала из невидимой
+  // зоны в видимую то эту часть нужно добавить в DirtyR
+  // Если движение было по диагонали добавляем 3 прямоуголника, иначе 1
+
+  for i := 0 to MovedRCnt - 1 do
+    with MovedR[i], MovedRP[i] do
+    begin
+      CLeft := (X < Left) and (X < ClipRect.Left); // нужно перерисовать область слева от окна
+      CTop := (Y < Top) and (Y < ClipRect.Top); // сверху
+      CRight := (X >= Left) and (X + Width >= ClipRect.Right); // справа
+      CBottom := (Y >= Bottom) and (Y + Height >= ClipRect.Bottom); // снизу
+
+      // Горизонтальные или вертикальные области по боковым граням окна
+      if CLeft then
+      begin
+        DirtyR[DirtyRCnt] := TRect.Create(ClipRect.Left, Top,
+          ClipRect.Left + Left - X + 1, Bottom);
+        Inc(DirtyRCnt);
+      end;
+      if CTop then
+      begin
+        DirtyR[DirtyRCnt] := TRect.Create(Left, ClipRect.Top,
+          Right, ClipRect.Top + Top - Y + 1);
+        Inc(DirtyRCnt);
+      end;
+      if CRight then
+      begin
+        DirtyR[DirtyRCnt] := TRect.Create(ClipRect.Right - (X - Left) - 1,
+          Top, ClipRect.Right, Bottom);
+        Inc(DirtyRCnt);
+      end;
+      if CBottom then
+      begin
+        DirtyR[DirtyRCnt] := TRect.Create(Left, ClipRect.Bottom - (Y - Bottom) - 1,
+          Right, ClipRect.Bottom);
+        Inc(DirtyRCnt);
+      end;
+
+      // Пересечение горизонтальных и вертикальных областей
+      // нужно если перемещение было по обоим осям сразу
+      if CLeft and CTop then
+      begin
+        DirtyR[DirtyRCnt] := TRect.Create(ClipRect.Left, ClipRect.Top,
+          ClipRect.Left + Left - X, ClipRect.Top + Top - Y);
+        Inc(DirtyRCnt);
+      end;
+      if CLeft and CBottom then
+      begin
+        DirtyR[DirtyRCnt] := TRect.Create(ClipRect.Left,
+          ClipRect.Bottom - (Y - Top) - 1,
+          ClipRect.Left + Left - X, ClipRect.Bottom);
+        Inc(DirtyRCnt);
+      end;
+      if CRight and CTop then
+      begin
+        DirtyR[DirtyRCnt] := TRect.Create(ClipRect.Right - (X - Left) - 1,
+          ClipRect.Top, ClipRect.Right, ClipRect.Top + Top - Y);
+        Inc(DirtyRCnt);
+      end;
+      if CRight and CBottom then
+      begin
+        DirtyR[DirtyRCnt] := TRect.Create(ClipRect.Right - (X - Left) - 1,
+          ClipRect.Bottom - (Y - Top) - 1, ClipRect.Right, ClipRect.Bottom);
+        Inc(DirtyRCnt);
+      end;
+
+      // Корректируем MoveR и MoveRP чтобы они не выходили за ClipRect
+      if CLeft then begin Left := ClipRect.Left + Left - X; X := ClipRect.Left; end;
+      if CTop then begin Top := ClipRect.Top + Top - Y; Y := ClipRect.Top; end;
+      if CRight then begin Right := ClipRect.Right - (X - Left); X := ClipRect.Left + (X - Left); end;
+      if CBottom then begin Bottom := ClipRect.Bottom - (Y - Bottom); Y := ClipRect.Top + (Y - Top); end;
+    end;
+
+
+  // Обьеденяем прямоугольники из ChangedRects если их площадь пересечения велика
+ { for i := 0 to ChangedRectsCnt - 1 do
+  begin
+    j := i + 1;
+    while j < ChangedRectsCnt do
+    begin
+      RctU := TRect.Union(ChangedRects[i], ChangedRects[j]);
+      RctI := TRect.Intersect(ChangedRects[i], ChangedRects[j]);
+
+      S1 := ChangedRects[i].Width * ChangedRects[i].Height;
+      S2 := ChangedRects[j].Width * ChangedRects[j].Height;
+      SU := RctU.Width * RctU.Height; SI := RctI.Width * RctI.Height;
+
+      if SU - (S1 + S2) > SI then
+      begin
+        Inc(j);
+        continue; // Площадь пересечения двух прямоугольников мала
+      end;
+          // Площадь пересечения двух прямоугольников велика
+          // Заносим в i-ый прямоугольник прямоугольник обьединения i и j
+          // j-ый прямоугольник удаляем
+      ChangedRects[i] := RctU;
+
+      Move(ChangedRects[j + 1], ChangedRects[j],
+        (ChangedRectsCnt - j - 1) * SizeOf(TRect));
+
+      Dec(ChangedRectsCnt);
+    end;
+  end; }
+  Result := true;
+  time := GetTickCount - time;
+  Debug.Log('enc time: ' + IntToStr(time));
+end;
+
+function TRtcScreenEncoder.ScreenInfoChanged : Boolean;
+var
+  NewBitsPerPixel : Integer;
+begin
+  Result := false;
+
+  if FScreenWidth <> Desc.Width then
+  begin
+    FScreenWidth := Desc.Width;
+    Result := true;
+  end;
+
+  if FScreenHeight <> Desc.Height then
+  begin
+    FScreenHeight := Desc.Height;
+    Result := true;
+  end;
+
+  if Result and FullScreen then
+    FClipRect := TRect.Create(0, 0, FScreenWidth, FScreenHeight);
+
+  case Desc.Format of
+    DXGI_FORMAT_R8G8B8A8_TYPELESS,
+    DXGI_FORMAT_R8G8B8A8_UNORM,
+    DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+    DXGI_FORMAT_R8G8B8A8_UINT,
+    DXGI_FORMAT_R8G8B8A8_SNORM,
+    DXGI_FORMAT_R8G8B8A8_SINT,
+    DXGI_FORMAT_B8G8R8A8_UNORM,
+    DXGI_FORMAT_B8G8R8X8_UNORM,
+    DXGI_FORMAT_B8G8R8A8_TYPELESS,
+    DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+    DXGI_FORMAT_B8G8R8X8_TYPELESS,
+    DXGI_FORMAT_B8G8R8X8_UNORM_SRGB : NewBitsPerPixel := 32;
+  end;
+  if FBitsPerPixel <> NewBitsPerPixel then
+  begin
+    FBitsPerPixel := NewBitsPerPixel;
+    Result := true;
+  end;
+end;
+
+procedure TRtcScreenEncoder.EncodeImage(Rec : TRtcRecord; var Rect : TRect);
+var
+  Image, PackedImage : RtcByteArray;
+  DataPos : PByte;
+  ImagePos : PByte;
+  RectId, RowId, Len, DataSize : Integer;
+  RowSize, ScreenRowSize : Integer;
+
+  MS : TMemoryStream;
+  FS : TFileStream;
+  Bmp : TBitmap;
+  JPG : TJPEGImage;
+  PNG : TPNGImage;
+begin
+ // if (ImageCompressionType < 1) or (ImageCompressionType > 2) then
+  //  ImageCompressionType := 1;
+  //!!!!!!!!!!!!with Debug.ScreenCapture do
+  begin
+    Debug.Log('Encoding image CodecId ' + IntToStr(CodecId) + ' (' + IntToStr(Rect.Left) + ',' +
+      IntToStr(Rect.Top) + ',' + IntToStr(Rect.Right) + ',' + IntToStr(Rect.Bottom) + ')' );
+
+    if CodecId in [0, 1, 5, 6, 7] then
+    begin // No compression, passing bitmap
+      SetLength(Image, (Rect.Width * Rect.Height * FBitsPerPixel) shr 3);
+      ImagePos := ScreenBuff +
+                ((Rect.Top * FScreenWidth + Rect.Left) * FBitsPerPixel) shr 3;
+                 DataPos := @Image[0];
+              //  if (Rect.Height < 2) or (Cardinal(Bmp.ScanLine[0]) <
+               //   Cardinal(Bmp.ScanLine[1])) then RowSize := 1 else
+               // RowSize := -1;
+
+              RowSize := (Rect.Width * FBitsPerPixel) shr 3;
+              ScreenRowSize := (FScreenWidth * FBitsPerPixel) shr 3;
+              for RowId := 0 to Rect.Height - 1 do
+              begin
+                Move(ImagePos^, DataPos^, Abs(RowSize));
+                Inc(ImagePos, ScreenRowSize);
+                Inc(DataPos, RowSize);
+              end;
+
+           // Move();
+            //SetLength(PackedImage, RowSize * Rect.Height);
+    end;
+
+    {if ImageCompressionType = 1 then
+    begin
+    if (Rect.Height < 2) or (Cardinal(Bmp.ScanLine[0]) then
+      PackedImage := Bmp.ScanLine[0]; else
+      PackedImage := Bmp.ScanLine[Bmp.Height - 1];
+    end;}
+
+    MS := TMemoryStream.Create;
+
+    if CodecId = 0 then
+    begin
+      MS.SetSize(Length(Image));
+      MS.WriteData(Image, Length(Image));
+     // PackedImage := Image;
+    end;
+
+    if CodecId = 1 then
+    begin
+      PackedImage := NIL;
+      SetLength(PackedImage, ((Rect.Width * Rect.Height * FBitsPerPixel) shr 3) * 3);
+   {  if (Rect.Height < 2) or (Cardinal(Bmp.ScanLine[0]) < Cardinal(Bmp.ScanLine[1]))
+        then Len := DWordCompress_Normal(Bmp.ScanLine[0], Addr(PackedImage[0]),
+      (Rect.Height * Rect.Width * FBitsPerPixel) shr 3)
+         else Len := DWordCompress_Normal(Bmp.ScanLine[Bmp.Height - 1], Addr(PackedImage[0]),
+      (Rect.Height * Rect.Width * FBitsPerPixel) shr 3);
+    }
+      Len := DWordCompress_Normal(Addr(Image[0]), Addr(PackedImage[0]),
+        (Rect.Height * Rect.Width * FBitsPerPixel) shr 3);
+
+    //SetLength(PackedImage, Len);
+      MS.SetSize(Len);
+      MS.WriteData(PackedImage, Len);
+     // SetLength(Image, 0);
+    end;
+
+    if CodecId in [2, 3] then
+    begin
+      Bmp := TBitmap.Create;
+      Bmp.PixelFormat := pf32bit;
+      Bmp.SetSize(Rect.Width, Rect.Height);
+      ImagePos := ScreenBuff + ((Rect.Top * FScreenWidth +
+        Rect.Left) * FBitsPerPixel) shr 3;
+      DataPos := Bmp.ScanLine[0];
+      if (Rect.Height < 2) or (Cardinal(Bmp.ScanLine[0]) <
+                  Cardinal(Bmp.ScanLine[1])) then
+                   RowSize := 1 else RowSize := -1;
+
+      RowSize := RowSize * ((Rect.Width * FBitsPerPixel) shr 3);
+      ScreenRowSize := (FScreenWidth * FBitsPerPixel) shr 3;
+      for RowId := 0 to Rect.Height - 1 do
+      begin
+        Move(ImagePos^, DataPos^, Abs(RowSize));
+        Inc(ImagePos, ScreenRowSize);
+        Inc(DataPos, RowSize);
+      end;
+    end;
+
+    if CodecId = 2 then
+    begin
+      //bmp.SaveToFile('d:\bbb.bmp');
+      JPG := TJPEGImage.Create;
+     // Bmp.Dormant;
+      JPG.Assign(Bmp);
+     // JPG.JPEGNeeded;
+      // JPG.Compress;
+      JPG.ProgressiveEncoding := false;
+      JPG.CompressionQuality := Codec2Param1;
+      //MS.Position := 0;
+      JPG.SaveToStream(MS);
+      // JPG.SaveToFile('d:\bbb.jpg');
+      JPG.Free;
+      Bmp.Free;
+    end;
+
+    if CodecId = 3 then
+    begin
+      //bmp.SaveToFile('d:\bbb.bmp');
+      PNG := TPNGImage.Create;
+      // Bmp.Dormant;
+      PNG.Assign(Bmp);
+      PNG.CompressionLevel := Codec3Param1;
+      //MS.Position := 0;
+      PNG.SaveToStream(MS);
+      // JPG.SaveToFile('d:\bbb.jpg');
+      PNG.Free;
+      Bmp.Free;
+    end;
+
+{    if (CodecId = 4) and (FScreenHeight >= 4) then
+    begin
+
+    //  DataPos := @(TempBuff[0]);
+
+    //  Len := WebPEncodeLosslessRGBFunc(ScreenBuff + ((Rect.Top * FScreenWidth +
+    //    Rect.Left) * FBitsPerPixel) shr 3, Rect.Width, Rect.Height,
+     //  (FScreenWidth * FBitsPerPixel) shr 3, Codec4Param1, DataPos);
+       // @(TempBuff[0]));
+
+     //if Rect.Height < 16 then Rect.Top := Min(Integer(Rect.Top) - 16, 0);
+     //if Rect.Height < 16 then Rect.Height := 16;
+
+
+      if Rect.Height < 16 then
+      begin
+        Rect.Top := Max(0, Rect.Top - (16 - Rect.Height));
+        Rect.Height := 16;
+      end;
+
+//       if Rect.Top > 16 then
+//       begin
+//         Rect.Height := 16;
+//         Rect.Top := Rect.Top - (16 - Rect.Height);
+//         Rect.Height := 16;
+//       end else
+//       begin
+//         Rect.Height := 16;
+//       end;
+
+     // выравнивание по 32 байтам чтобы внутренние алгоритмы кодека могли с ним работать
+
+      DataSize := 1 shl 25;
+      GetMem(DataPos, DataSize);
+
+      TRtcWebPCodec.SetComprParams(Codec4Param1, Codec4Param2);
+      Len := TRtcWebPCodec.CompressImage(ScreenBuff, (FScreenWidth * FBitsPerPixel) shr 3,
+        Rect, DataPos, DataSize);
+
+      //  if Len = 0 then ShowMessage('Len=0');
+
+//       if (Rect.Width > 100) and (Rect.Height > 100) then
+//       begin
+//       FS := TFileStream.Create('c:\out\img' + IntToStr(FInd) + '.webp', fmCreate);
+//       FS.Write(DataPos^, Len);
+//       FS.Free;
+//       Inc(FInd);
+//       end;
+      // TWebPCodec.
+       MS.WriteData(DataPos, Len);
+
+       FreeMem(DataPos);
+    end;}
+
+    if CodecId in [5, 6, 7] then
+    begin
+       PackedImage := NIL;
+      SetLength(PackedImage, ((Rect.Width * Rect.Height * FBitsPerPixel) shr 3) * 3);
+      case CodecId of
+        5:   Len :=  TLZ4.Encode(Addr(Image[0]), Addr(PackedImage[0]),
+          (Rect.Height * Rect.Width * FBitsPerPixel) shr 3, ((Rect.Width * Rect.Height * FBitsPerPixel) shr 3) * 3);
+        6: Len := TLZ4.Stream_Encode( Addr(Image[0]), Addr(PackedImage[0]),
+          (Rect.Height * Rect.Width * FBitsPerPixel) shr 3, ((Rect.Width * Rect.Height * FBitsPerPixel) shr 3) * 3
+           ,sbs4MB, False );
+        7: ;//SynLZcompress1asm(;
+      end;
+
+      MS.SetSize(Len);
+      MS.WriteData(PackedImage, Len);
+    end;
+
+    with Rec, Rect do
+    begin
+      asInteger['Left'] := Left;
+      asInteger['Top'] := Top;
+      asInteger['Width'] := Width;
+      asInteger['Height'] := Height;
+      asInteger['Codec'] := CodecId;
+      MS.Seek(0, SOBeginning);
+      asByteStream['Data'] := MS;
+
+      PackedImage := NIL;
+    end;
+
+    MS.Free;
+  end;
+  //SetLength(Image);
+end;
+
+procedure TRtcScreenEncoder.GrabScreen(ScrDelta : PString; ScrFull : PString = NIL);
+var
+  Rec : TRtcRecord;
+  Str : RtcString;
+  InfoChanged : Boolean;
+  RectId : Integer;
+  F : TextFile;
+  CurTick, CapLat, EncLat : UInt64;
+  IniF: TIniFile;
+begin
+
+ //Debug.Log('ScreenInfo ' + IntToStr(FScreenWidth) + 'x' +
+   //   IntToStr(FScreenHeight) + 'x' + IntToStr(FBitsPerPixel));
+
+  DataCS.Enter;
+
+  if Assigned(ScrFull) then
+  begin
+    FScreenWidth := 0; FScreenHeight := 0;
+    // Сбрасываем информацию о экране
+  end;
+
+  //ShowMessage('GrabScreen');
+  {$IFDEF DEBUG}
+    CurTick := Debug.GetMCSTick;
+  {$ENDIF}
+
+ //  IsService := True;
+  if IsService then
+  begin
+//    time := GetTickCount;
+    GetDataFromHelper;
+//    time := GetTickCount - time;
+
+//    DataCS.Leave;
+  end
+  else
+  begin
+    if not DDCaptureScreen then
+    begin
+      DataCS.Leave;
+
+      //FScreenWidth := 0; FScreenHeight := 0;
+
+      ScrDelta^ := '';
+      if Assigned(ScrFull) then ScrFull^ := '';
+
+      Exit;
+    end;
+  end;
+
+  {$IFDEF DEBUG}
+  CapLat := Debug.GetMCSTick - CurTick;
+  {$ENDIF}
+// Assert((ScreenBuff and 31) = 0, 'Unable to load libwebp_debug.dll or libsharpyuv_debug.dll from path ' + ExtractFilePath(Application.ExeName));
+
+
+ //ShowMessage('DDRecieved');
+  InfoChanged := ScreenInfoChanged;
+  {$IFDEF DEBUG}
+  if InfoChanged then
+    Debug.Log('ScreenInfo Changed to ' + IntToStr(FScreenWidth) + 'x' +
+      IntToStr(FScreenHeight) + 'x' + IntToStr(FBitsPerPixel));
+  {$ENDIF}
+
+//  DDRecieveRects;
+
+ {
+   FBitsPerPixel := 32;
+  ClipRect := TRect.Create(0, 0, 1280, 1024);
+  InfoChanged := true;
+  DirtyRCnt := 1;
+  DirtyR[0] := ClipRect;
+  }
+
+ // AssignFile(F, ExtractFilePath(Application.ExeName) + 'webp.txt');
+ // Reset(F);
+ // Read(F, Codec4Param1, Codec4Param2);
+ // CloseFile(F);
+
+ // CodecId := 4;
+ // Codec4Param1 := 20;//IniF.ReadInteger('ScreenCapture', 'Codec4Param1', 50);
+ // Codec4Param2 := 0;//IniF.ReadInteger('ScreenCapture', 'Codec4Param2', 3);
+
+
+// // InfoChanged := true;
+
+  CodecId := 5;
+  Codec2Param1 := 0;
+  Codec3Param1 := 1;
+  Codec4Param1 := 0;
+  Codec4Param2 := 0;
+
+//  IniF := TIniFile.Create(ExtractFilePath(Application.ExeName) + 'debug.ini');
+////
+// with IniF do
+//  begin
+//    CodecId := ReadInteger('ScreenCapture', 'CodecId', 1);
+//  {if ScreenCapture.CodecId < 0 then
+//  begin
+//   // ShowMessage('Unable to open "' + IniF.FileName + '"');
+//    Application.Terminate;
+//    CodecId := 0;
+//  end;  }
+//
+//    Codec2Param1 := ReadInteger('ScreenCapture', 'Codec2Param1', 0);
+//    Codec3Param1 := ReadInteger('ScreenCapture', 'Codec3Param1', 0);
+//    Codec4Param1 := ReadInteger('ScreenCapture', 'Codec4Param1', 0);
+//    Codec4Param2 := ReadInteger('ScreenCapture', 'Codec4Param2', 0);
+//  end;
+////
+//  IniF.Free;
+
+  if InfoChanged or Assigned(ScrFull) then
+  begin
+    Rec := TRtcRecord.Create;
+    with Rec.newRecord('res') do//Res.newRecord('res') do
+    begin
+      asInteger['Width'] := FClipRect.Width;//ScreenDD.ScreenWidth;
+      asInteger['Height'] := FClipRect.Height;//ScreenDD.ScreenHeight;
+      asInteger['Bits'] := FBitsPerPixel;
+      //if FullScreen then FScreenRect := FClipRect;
+         // asInteger['BytesPerPixel'] := FBytesPerPixel;
+    end;
+
+    //Debug.Log('Encoding full screen1');
+
+   // DirtyRCnt := 1;
+   // DirtyR[0] := FClipRect;
+   {$IFDEF DEBUG}
+    CurTick := Debug.GetMCSTick;
+   {$ENDIF}
+    //Debug.Log('Encoding full screen2');
+
+    EncodeImage(Rec.newArray('scrdr').NewRecord(0){AsRecord[0]}, FClipRect);
+
+    {$IFDEF DEBUG}
+      EncLat := Debug.GetMCSTick - CurTick;
+
+      with Rec.newRecord('scrfs') do
+      begin
+        asInteger['CapLat'] :=  CapLat;
+        asInteger['EncLat'] :=  EncLat;
+      end;
+      {$ENDIF}
+
+    Debug.Log('Encoded full screen');
+
+    Str := Rec.toCode;
+    //Arr := Rec.asArray['scr'].AsRecord[0].asByteArray['Data'];
+    //SetLength(Arr, 0);
+    Rec.Free;
+
+   // ShowMessage('FullScreen');
+
+    if Assigned(ScrFull) then ScrFull^ := Str;
+  end;
+
+
+  if Assigned(ScrDelta) then
+    if InfoChanged then
+    begin
+      ScrDelta^ := Str;
+     // FDuplicate.ReleaseFrame;
+      //Exit;
+    end else
+    if {$IFDEF DEBUG} true or {$ENDIF} (DirtyRCnt + MovedRCnt > 0) then
+    begin
+      Rec := TRtcRecord.Create;
+
+      Debug.Log('Encoding MoveRects ' + IntToStr(MovedRCnt) +
+        ' DirtyRects ' + IntToStr(DirtyRCnt));
+
+      if MovedRCnt > 0 then
+        with Rec.newArray('scrmr') do
+          for RectId := 0 to MovedRCnt - 1 do
+            with NewRecord(RectId), MovedR[RectId], MovedRP[RectId] do
+            begin
+              asInteger['Left'] :=  Left;
+              asInteger['Top'] :=  Top;
+              asInteger['Right'] :=  Right;
+              asInteger['Bottom'] := Bottom;
+              asInteger['PointX'] :=  X;
+              asInteger['PointY'] :=  Y;
+            end;
+
+
+      {$IFDEF DEBUG}
+      CurTick := Debug.GetMCSTick;
+      {$ENDIF}
+
+      if DirtyRCnt > 0 then
+        with Rec.newArray('scrdr') do
+          for RectId := 0 to DirtyRCnt - 1 do
+            EncodeImage(NewRecord(RectId), DirtyR[RectId]);
+
+        {with Rec.asArray['scr'] do
+          for RectId := 0 to FChangedRectsCnt - 1 do
+          begin
+            ByteS := AsRecord[RectId].asByteStream['Data'] as TMemoryStream;
+            ByteS.Free;
+          end;      }
+
+
+      {$IFDEF DEBUG}
+      EncLat := Debug.GetMCSTick - CurTick;
+
+      with Rec.newRecord('scrfs') do
+      begin
+        asInteger['CapLat'] :=  CapLat;
+        asInteger['EncLat'] :=  EncLat;
+      end;
+      {$ENDIF}
+
+      ScrDelta^ := Rec.toCode;
+      Rec.Free;
+    end else
+      ScrDelta^ := '';
+
+  Debug.Log('Host data sent');
+
+  if (FContext <> NIL) and (FTexture <> NIL) then FContext.Unmap(FTexture, 0); //
+  FTexture := nil;
+
+  Temp := NIL;
+  DesktopResource := NIL;
+
+  DataCS.Leave;
+
+ //FDuplicate.ReleaseFrame;
+end;
+
+
+procedure TRtcScreenEncoder.SetClipRect(const Rect : TRect);
+begin
+  if (Rect.Width = 0) or (Rect.Height = 0) then
+  begin
+    FullScreen := true;
+    FClipRect := TRect.Create(0, 0, FScreenWidth, FScreenHeight);
+  end else
+  begin
+    FullScreen := false;
+    FClipRect := Rect;
+  end;
+end;
+
+
+function GetCaptureWindow:HWND;
+  var
+    h1,h2:HWND;
+  begin
+  h1 := GetDesktopWindow;
+  if (h1<>0) and (RtcCaptureMode=captureDesktopOnly) then
+    begin
+    h2 := FindWindowEx (h1, 0, 'Progman', 'Program Manager');
+    if h2<>0 then h1:=h2;
+    end;
+  Result:=h1;
+  end;
+
+function CaptureFullScreen(MultiMon: boolean;
+  PixelFormat: TPixelFormat = pf8bit): TBitmap;
+var
+  DW: HWND;
+  SDC: HDC;
+  X, Y: integer;
+begin
+  SwitchToActiveDesktop;
+
+  Result := TBitmap.Create;
+  Result.PixelFormat := PixelFormat;
+
+{$IFDEF MULTIMON}
+  if MultiMon then
+  begin
+    Result.Width := Screen.DesktopWidth;
+    Result.Height := Screen.DesktopHeight;
+    X := Screen.DesktopLeft;
+    Y := Screen.DesktopTop;
+  end
+  else
+{$ENDIF}
+  begin
+    Result.Width := Screen.Width;
+    Result.Height := Screen.Height;
+    X := 0;
+    Y := 0;
+  end;
+
+  Result.Canvas.Lock;
+  try
+    DW := GetCaptureWindow;
+    try
+      SDC := GetDC(DW);
+    except
+      SDC := 0;
+    end;
+    if (DW <> 0) and (SDC = 0) then
+    begin
+      DW := 0;
+      try
+        SDC := GetDC(DW);
+      except
+        SDC := 0;
+      end;
+      if SDC = 0 then
+        raise Exception.Create('Can not lock on to Desktop Canvas');
+    end;
+    try
+      if not BitBlt(Result.Canvas.Handle, 0, 0, Result.Width, Result.Height,
+        SDC, X, Y, SRCCOPY or RTC_CAPTUREBLT) then
+      begin
+        Result.Free;
+        raise Exception.Create('Error capturing screen contents');
+      end;
+    finally
+      ReleaseDC(DW, SDC);
+    end;
+  finally
+    Result.Canvas.Unlock;
+  end;
+end;
+    (*
+procedure SetDefaultPalette(var Pal: TMaxLogPalette);
+var
+  i, r, g, b: integer;
+  { havepal:boolean;
+    Hdl:HWND;
+    DC:HDC; }
+  procedure SetPal(i, b, g, r: integer);
+  begin
+    with Pal.palPalEntry[i] do
+    begin
+      peRed := r;
+      peGreen := g;
+      peBlue := b;
+    end;
+  end;
+
+begin
+  if Pal.palNumEntries = 16 then
+  begin
+    { Ignore the disk image of the palette for 16 color bitmaps.
+      Replace with the first and last 8 colors of the system palette }
+    GetPaletteEntries(SystemPalette16, 0, 8, Pal.palPalEntry[0]);
+    GetPaletteEntries(SystemPalette16, 8, 8,
+      Pal.palPalEntry[Pal.palNumEntries - 8]);
+  end
+  else if Pal.palNumEntries = 256 then
+  begin
+    { Hdl := GetDesktopWindow;
+      DC := GetDC(Hdl);
+      try
+      if (GetDeviceCaps (DC, RASTERCAPS) and RC_PALETTE = RC_PALETTE ) then
+      havepal:=GetSystemPaletteEntries ( DC, 0, 256, Pal.palPalEntry )=256
+      else
+      havepal:=False;
+      finally
+      ReleaseDC(Hdl,DC);
+      end; }
+
+    // if not havepal then
+    begin
+      SetPal(0, $80, 0, 0);
+      SetPal(1, 0, $80, 0);
+      SetPal(2, 0, 0, $80);
+      SetPal(3, $80, $80, 0);
+      SetPal(4, 0, $80, $80);
+      SetPal(5, $80, 0, $80);
+      i := 6;
+      for b := 0 to 4 do
+        for r := 0 to 5 do
+          for g := 0 to 6 do
+          begin
+            with Pal.palPalEntry[i] do
+            begin
+              peBlue := round(b * 255 / 4);
+              peRed := round(r * 255 / 5);
+              peGreen := round(g * 255 / 6);
+            end;
+            Inc(i);
+          end;
+      for r := 1 to 40 do
+      begin
+        with Pal.palPalEntry[i] do
+        begin
+          peRed := round(r * 255 / 41);
+          peGreen := round(r * 255 / 41);
+          peBlue := round(r * 255 / 41);
+        end;
+        Inc(i);
+      end;
+    end;
+  end;
+end;
+
+   *)
+(*
+    type
+    TMyWinList=class
+    cnt:integer;
+    list:array[1..1000] of HWnd;
+    end;
+
+    function _EnumWindowsProc(Wnd: HWnd; const obj:TMyWinList): Bool; export; stdcall;
+    begin
+    if (obj.cnt<1000) and IsWindowVisible(Wnd) then
+    begin
+    if (GetWindowLong(Wnd, GWL_EXSTYLE) and WS_EX_LAYERED) = WS_EX_LAYERED then
+    begin
+    Inc(obj.cnt);
+    obj.list[obj.cnt]:=Wnd;
+    end;
+    EnumChildWindows(Wnd, @_EnumWindowsProc, longint(obj));
+    end;
+    Result:=True;
+    end;
+
+    function GetLayeredWindowsList:TMyWinList;
+    begin
+    Result:=TMyWinList.Create;
+    Result.cnt:=0;
+    EnumDesktopWindows(GetThreadDesktop(Windows.GetCurrentThreadId),@_EnumWindowsProc, Longint(Result));
+    end;
+  *)
+
+(*
+procedure ByteSwapColors(var Colors; Count: integer);
+var // convert RGB to BGR and vice-versa.  TRGBQuad <-> TPaletteEntry
+  SysInfo: TSystemInfo;
+begin
+  GetSystemInfo(SysInfo);
+  asm
+    MOV   EDX, Colors
+    MOV   ECX, Count
+    DEC   ECX
+    JS    @@END
+    LEA   EAX, SysInfo
+    CMP   [EAX].TSystemInfo.wProcessorLevel, 3
+    JE    @@386
+  @@1:  MOV   EAX, [EDX+ECX*4]
+    BSWAP EAX
+    SHR   EAX,8
+    MOV   [EDX+ECX*4],EAX
+    DEC   ECX
+    JNS   @@1
+    JMP   @@END
+  @@386:
+    PUSH  EBX
+  @@2:  XOR   EBX,EBX
+    MOV   EAX, [EDX+ECX*4]
+    MOV   BH, AL
+    MOV   BL, AH
+    SHR   EAX,16
+    SHL   EBX,8
+    MOV   BL, AL
+    MOV   [EDX+ECX*4],EBX
+    DEC   ECX
+    JNS   @@2
+    POP   EBX
+  @@END:
+  end;
+end;
+*)
+(*
+function BitmapIsReverse(const Image: TBitmap): boolean;
+begin
+  With Image do
+    if Height < 2 then
+      Result := False
+    else
+      Result := Cardinal(ScanLine[0]) > Cardinal(ScanLine[1]);
+end;
+
+function BitmapDataPtr(const Image: TBitmap): pointer;
+begin
+  With Image do
+  begin
+    if Height < 2 then
+      Result := ScanLine[0]
+    else if Cardinal(ScanLine[0]) < Cardinal(ScanLine[1]) then
+      Result := ScanLine[0]
+    Else
+      Result := ScanLine[Height - 1];
+  End;
+end;
+
+function IsWinNT: boolean;
+var
+  OS: TOSVersionInfo;
+begin
+  ZeroMemory(@OS, SizeOf(OS));
+  OS.dwOSVersionInfoSize := SizeOf(OS);
+  GetVersionEx(OS);
+  Result := OS.dwPlatformId = VER_PLATFORM_WIN32_NT;
+end;
+ *)
+
+ function TRtcScreenEncoder.GetDataFromHelper(OnlyGetScreenParams: Boolean = False; fFirstScreen: Boolean = False): Boolean;
+var
+  h, hMap: THandle;
+  pMap: Pointer;
+  hScrDC, hDestDC, hMemDC: HDC;
+  hBmp: HBitmap;
+  BitmapSize: Cardinal;
+  bitmap_info: BITMAPINFO;
+  EventWriteBegin, EventWriteEnd, EventReadBegin, EventReadEnd: THandle;
+  SessionID: DWORD;
+  HeaderSize, CurOffset: Integer;
+  NameSuffix: String;
+  ipBase: Pointer;
+  hOld: HGDIOBJ;
+  hProc: THandle;
+  numberRead : SIZE_T;
+  WaitTimeout: DWORD;
+  SaveBitMap: TBitmap;
+  i, j, TempInt: LongInt;
+  fScreenGrabbed: Boolean;
+begin
+//  if not IsWindows8orLater then
+//    Exit;
+
+  WaitTimeout := 1000;
+
+  HelperCS.Acquire;
+  try
+    Result := False;
+
+    if IsService then
+    begin
+      SessionID := ActiveConsoleSessionID;
+      NameSuffix := '_C';
+    end
+    else
+    begin
+      SessionID := CurrentSessionID;
+      NameSuffix := '';
+    end;
+
+//    NameSuffix := '_C';
+
+    EventWriteBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_WRITE_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    if EventWriteBegin = 0 then
+      Exit;
+    EventWriteEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_WRITE_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    if EventWriteEnd = 0 then
+      Exit;
+    EventReadBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_READ_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    if EventReadBegin = 0 then
+      Exit;
+    EventReadEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_READ_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    if EventReadEnd = 0 then
+      Exit;
+
+    try
+      ResetEvent(EventWriteEnd);
+      ResetEvent(EventReadBegin);
+      ResetEvent(EventReadEnd);
+
+      SetEvent(EventWriteBegin); //Если чтение не идет, то начинаем запись скрина
+
+      WaitForSingleObject(EventWriteEnd, WaitTimeout); //Добавить таймаут, ждем окончания записи скрина
+      ResetEvent(EventWriteEnd);
+
+      try
+        hMap := OpenFileMapping(FILE_MAP_READ or FILE_MAP_WRITE, False, PWideChar(WideString('Session\' + IntToStr(SessionID) + '\RMX_SCREEN' + NameSuffix)));
+        if hMap = 0 then
+          Exit;
+        HeaderSize := SizeOf(BitmapSize) + SizeOf(fScreenGrabbed) + SizeOf(FScreenWidth) + SizeOf(FScreenHeight) + SizeOf(FBitsPerPixel) + SizeOf(CurrentProcessId) + SizeOf(ipBase) + SizeOf(FMouseFlags) + SizeOf(FMouseCursor) + 1000; // + 100000 * 6 * SizeOf(Integer);
+        pMap := MapViewOfFile(hMap, //дескриптор "проецируемого" объекта
+                                FILE_MAP_READ or FILE_MAP_WRITE,  // разрешение чтения/записи
+                                0,0,
+                                HeaderSize);  //размер буфера
+        if pMap = nil then
+          Exit;
+
+        BitmapSize := 0;
+//        FScreenWidth := 0;
+//        FScreenHeight := 0;
+//        FBitsPerPixel := 0;
+        FScreenInfoChanged := False;
+        CurOffset := 0;
+        CopyMemory(@BitmapSize, pMap, SizeOf(BitmapSize));
+        CurOffset := CurOffset + SizeOf(BitmapSize);
+        CopyMemory(@fScreenGrabbed, PByte(pMap) + CurOffset, SizeOf(fScreenGrabbed));
+        CurOffset := CurOffset + SizeOf(fScreenGrabbed);
+
+        CopyMemory(@TempInt, PByte(pMap) + CurOffset, SizeOf(TempInt));
+        CurOffset := CurOffset + SizeOf(TempInt);
+        if TempInt <> FScreenWidth then
+          FScreenInfoChanged := True;
+        FScreenWidth := TempInt;
+        CopyMemory(@TempInt, PByte(pMap) + CurOffset, SizeOf(TempInt));
+        CurOffset := CurOffset + SizeOf(TempInt);
+        if TempInt <> FScreenHeight then
+          FScreenInfoChanged := True;
+        FScreenHeight := TempInt;
+        CopyMemory(@TempInt, PByte(pMap) + CurOffset, SizeOf(TempInt));
+        CurOffset := CurOffset + SizeOf(TempInt);
+        if TempInt <> FBitsPerPixel then
+          FScreenInfoChanged := True;
+        FBitsPerPixel := TempInt;
+
+        FClipRect.Top := 0;
+        FClipRect.Left := 0;
+        FClipRect.Bottom := FScreenHeight;
+        FClipRect.Right := FScreenWidth;
+
+//        CopyMemory(@PID, PByte(pMap) + CurOffset, SizeOf(PID));
+        CurOffset := CurOffset + SizeOf(CurrentProcessId);
+//        CopyMemory(@ipBase, PByte(pMap) + CurOffset, SizeOf(ipBase));
+        CurOffset := CurOffset + SizeOf(ipBase);
+        CopyMemory(@FMouseFlags, PByte(pMap) + CurOffset, SizeOf(FMouseFlags));
+        CurOffset := CurOffset + SizeOf(FMouseFlags);
+        CopyMemory(@FMouseCursor, PByte(pMap) + CurOffset, SizeOf(FMouseCursor));
+        CurOffset := CurOffset + SizeOf(FMouseCursor);
+        CopyMemory(@FMouseX, PByte(pMap) + CurOffset, SizeOf(FMouseX));
+        CurOffset := CurOffset + SizeOf(FMouseX);
+        CopyMemory(@FMouseY, PByte(pMap) + CurOffset, SizeOf(FMouseY));
+        CurOffset := CurOffset + SizeOf(FMouseY);
+
+        CopyMemory(@FDirtyRCnt, PByte(pMap) + CurOffset, SizeOf(FDirtyRCnt));
+        CurOffset := CurOffset + SizeOf(FDirtyRCnt);
+        for i := 0 to DirtyRCnt - 1 do
+        begin
+          CopyMemory(@FDirtyR[i].Top, PByte(pMap) + CurOffset, SizeOf(FDirtyR[i].Top));
+          CurOffset := CurOffset + SizeOf(FDirtyR[i].Top);
+          CopyMemory(@FDirtyR[i].Left, PByte(pMap) + CurOffset, SizeOf(FDirtyR[i].Left));
+          CurOffset := CurOffset + SizeOf(FDirtyR[i].Left);
+          CopyMemory(@FDirtyR[i].Bottom, PByte(pMap) + CurOffset, SizeOf(FDirtyR[i].Bottom));
+          CurOffset := CurOffset + SizeOf(FDirtyR[i].Bottom);
+          CopyMemory(@FDirtyR[i].Right, PByte(pMap) + CurOffset, SizeOf(FDirtyR[i].Right));
+          CurOffset := CurOffset + SizeOf(FDirtyR[i].Right);
+        end;
+
+        CopyMemory(@FMovedRCnt, PByte(pMap) + CurOffset, SizeOf(FMovedRCnt));
+        CurOffset := CurOffset + SizeOf(MovedRCnt);
+        for i := 0 to MovedRCnt - 1 do
+        begin
+          CopyMemory(@FMovedR[i].Top, PByte(pMap) + CurOffset, SizeOf(FMovedR[i].Top));
+          CurOffset := CurOffset + SizeOf(FMovedR[i].Top);
+          CopyMemory(@FMovedR[i].Left, PByte(pMap) + CurOffset, SizeOf(FMovedR[i].Left));
+          CurOffset := CurOffset + SizeOf(FMovedR[i].Left);
+          CopyMemory(@FMovedR[i].Bottom, PByte(pMap) + CurOffset, SizeOf(FMovedR[i].Bottom));
+          CurOffset := CurOffset + SizeOf(FMovedR[i].Bottom);
+          CopyMemory(@FMovedR[i].Right, PByte(pMap) + CurOffset, SizeOf(FMovedR[i].Right));
+          CurOffset := CurOffset + SizeOf(FMovedR[i].Right);
+
+          CopyMemory(@FMovedRP[i].X, PByte(pMap) + CurOffset, SizeOf(FMovedRP[i].X));
+          CurOffset := CurOffset + SizeOf(FMovedRP[i].X);
+          CopyMemory(@FMovedRP[i].Y, PByte(pMap) + CurOffset, SizeOf(FMovedRP[i].Y));
+          CurOffset := CurOffset + SizeOf(FMovedRP[i].Y);
+        end;
+
+
+        if OnlyGetScreenParams then
+          Exit;
+
+//        New(FScreenBuff);
+        GetMem(FScreenBuff, BitmapSize);
+
+        CurOffset := 0;
+  //      CopyMemory(@BitmapSize, pMap, SizeOf(BitmapSize));
+        CurOffset := CurOffset + SizeOf(BitmapSize);
+  //      CopyMemory(@fScreenGrabbed, PByte(pMap) + CurOffset, SizeOf(fScreenGrabbed));
+        CurOffset := CurOffset + SizeOf(fScreenGrabbed);
+  //      CopyMemory(@FHelper_Width, PByte(pMap) + CurOffset, SizeOf(FHelper_Width));
+        CurOffset := CurOffset + SizeOf(FScreenWidth);
+  //      CopyMemory(@FHelper_Height, PByte(pMap) + CurOffset, SizeOf(FHelper_Height));
+        CurOffset := CurOffset + SizeOf(FScreenHeight);
+  //      CopyMemory(@FHelper_BitsPerPixel, PByte(pMap) + CurOffset, SizeOf(FHelper_BitsPerPixel));
+        CurOffset := CurOffset + SizeOf(FBitsPerPixel);
+        CopyMemory(PByte(pMap) + CurOffset, @CurrentProcessId, SizeOf(CurrentProcessId));
+        CurOffset := CurOffset + SizeOf(CurrentProcessId);
+        CopyMemory(PByte(pMap) + CurOffset, @FScreenBuff, SizeOf(FScreenBuff));
+        CurOffset := CurOffset + SizeOf(FScreenBuff);
+      finally
+        if pMap <> nil then
+          UnmapViewOfFile(pMap);
+        if hMap <> 0 then
+          CloseHandle(hMap);
+      end;
+
+      SetEvent(EventReadBegin);
+      if WaitForSingleObject(EventReadEnd, WaitTimeout) = WAIT_TIMEOUT then
+        Exit;
+    finally
+      ResetEvent(EventReadEnd);
+
+      if EventWriteEnd <> 0 then
+      begin
+        CloseHandle(EventWriteEnd);
+        EventWriteEnd := 0;
+      end;
+      if EventWriteBegin <> 0 then
+      begin
+        CloseHandle(EventWriteBegin);
+        EventWriteBegin := 0;
+      end;
+      if EventReadBegin <> 0 then
+      begin
+        CloseHandle(EventReadBegin);
+        EventReadBegin := 0;
+      end;
+      if EventReadEnd <> 0 then
+      begin
+        CloseHandle(EventReadEnd);
+        EventReadEnd := 0;
+      end;
+    end;
+  finally
+    HelperCS.Release;
+  end;
+end;
+
+ end.
