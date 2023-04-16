@@ -7992,9 +7992,12 @@ begin
       SetStatusStringDelayed('Партнер не в сети. Подключение невозможно');
 //      SetStatusStringDelayed('Готов к подключению', 2000);
 
-      PRItem := GetPendingItemByUserName(asWideString['user'], asString['action']);
-      if PRItem = nil then
-        Exit;
+//      PRItem := GetPendingItemByUserName(asWideString['user'], asString['action']);
+//      if PRItem = nil then
+//        Exit;
+
+      RemovePortalConnectionByUserAndAction(asWideString['user'], asString['action']);
+      DeletePendingRequest(asWideString['user'], asString['action']);
 
 //      DoGetDeviceState(eAccountUserName.Text,
 //        PClient.LoginUserName,
@@ -8235,7 +8238,7 @@ begin
   else
 //    HostPingTimer.Enabled := True;
 
-{  if Result.asRecord.asBoolean['NeedHostRelogin'] then
+  if Result.asRecord.asBoolean['NeedHostRelogin'] then
   begin
     xLog('resHostPingReturn: NeedHostRelogin');
 
@@ -8285,7 +8288,7 @@ begin
 //    SetConnectedState(False);
 //    if not isClosing then
 //      tHcAccountsReconnect.Enabled := True;
-  end;}
+  end;
 end;
 
 procedure TMainForm.resHostTimerLoginReturn(Sender: TRtcConnection; Data,
