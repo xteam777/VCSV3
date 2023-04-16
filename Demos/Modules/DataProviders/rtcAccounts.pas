@@ -1189,9 +1189,8 @@ begin
   try
     // Remove existing info.
     if HostsInfo.Child[uname] <> nil then
-      DelUserFromGateway(uname, gateway)
-    else
-      FHostsCount := FHostsCount + 1;
+      DelUserFromGateway(uname, gateway);
+    FHostsCount := FHostsCount + 1;
 
     // Get callback info, if exists
     cb := GetCallback(uname);
