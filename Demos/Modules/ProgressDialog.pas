@@ -174,6 +174,9 @@ Begin
         mHasUserCancelled := fOwner.iiProgressDialog.HasUserCancelled;
       except
         mHasUserCancelled := 1;
+
+        Terminate;
+        Break;
       end;
     finally
     end;
