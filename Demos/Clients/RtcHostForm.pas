@@ -4522,7 +4522,7 @@ begin
 //    SetConnectedState(False);
 //  end;    \
 
-  tHcAccountsReconnect.Enabled := True;
+//  tHcAccountsReconnect.Enabled := True;
 end;
 
 procedure TMainForm.hcAccountsConnectFail(Sender: TRtcConnection);
