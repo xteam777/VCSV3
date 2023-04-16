@@ -180,7 +180,7 @@ Begin
 
     if not Assigned(fOwner.iiProgressDialog) then
       Break
-    else if fOwner.iiProgressDialog.HasUserCancelled <> 0 then
+    else if mHasUserCancelled <> 0 then
     begin
       Synchronize(AnnounceDone);
       Terminate;
