@@ -185,7 +185,7 @@ type
     procedure Init; override;
   public
     FHaveScreen: Boolean;
-    FOnHaveScreeenChanged: TNotifyEvent;
+    FOnHaveScreenChanged: TNotifyEvent;
 
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -326,7 +326,7 @@ type
     property OnUserLeft;
 
     property HaveScreen: Boolean read FHaveScreen;
-    property OnHaveScreeenChanged: TNotifyEvent read FOnHaveScreeenChanged write FOnHaveScreeenChanged;
+    property OnHaveScreeenChanged: TNotifyEvent read FOnHaveScreenChanged write FOnHaveScreenChanged;
   end;
 
 //function CaptureFullScreen(MultiMon: boolean; PixelFormat: TPixelFormat = pf8bit): TBitmap;
@@ -1514,6 +1514,7 @@ begin
       end;
 
       Scr := TRtcScreenCapture.Create;
+      Scr.FOnHaveScreenChanged := FOnHaveScreenChanged;
       case FColorLimit of
         rdColor4bit:
           begin

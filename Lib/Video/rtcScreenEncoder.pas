@@ -43,6 +43,8 @@ type
     FScreenBuff: PByte;
     FScreenInfoChanged : Boolean;
 
+    FHaveScreen: Boolean;
+    FOnHaveScreenChanged: TNotifyEvent;
     HelperIOData: THelperIOData;
 
     function GetScreenWidth: Integer;
@@ -67,6 +69,9 @@ type
     procedure EncodeImage(Rec : TRtcRecord; Rect : TRect);
 
     function GetDataFromHelper(OnlyGetScreenParams: Boolean = False; fFirstScreen: Boolean = False): Boolean;
+
+    function GetHaveScreen: Boolean;
+    procedure SetHaveScreen(const Value: Boolean);
   public
     constructor Create;
     destructor Destroy; override;
@@ -86,6 +91,9 @@ type
     property MovedRP[Index: Integer]: TPoint read GetMovedRP write SetMovedRP;
     property ClipRect: TRect read GetClipRect write SetClipRect;
     property ScreenInfoChanged: Boolean read GetScreenInfoChanged;
+
+    property HaveScreen: Boolean read GetHaveScreen write SetHaveScreen;
+    property OnHaveScreeenChanged: TNotifyEvent read FOnHaveScreenChanged write FOnHaveScreenChanged;
   end;
 
 implementation
@@ -122,6 +130,21 @@ begin
   end;
 end;
  }
+
+function TRtcScreenEncoder.GetHaveScreen: Boolean;
+begin
+  Result := FHaveScreen;
+end;
+
+procedure TRtcScreenEncoder.SetHaveScreen(const Value: Boolean);
+begin
+  if FHaveScreen <> Value then
+  begin
+    FHaveScreen := Value;
+    if Assigned(FOnHaveScreenChanged) then
+      FOnHaveScreenChanged(Self);
+  end;
+end;
 
 function TRtcScreenEncoder.GetScreenInfoChanged: Boolean;
 begin
@@ -792,7 +815,6 @@ var
   WaitTimeout: DWORD;
   SaveBitMap: TBitmap;
   i, j, TempInt: LongInt;
-  fScreenGrabbed: Boolean;
 begin
   if not IsWindows8orLater then
     Exit;
@@ -860,7 +882,7 @@ begin
 
         //Записываем входные параметры
         BitmapSize := HelperIOData.BitmapSize;
-        fScreenGrabbed := HelperIOData.HaveScreen;
+        HaveScreen := HelperIOData.HaveScreen;
         if HelperIOData.ScreenWidth <> FScreenWidth then
           FScreenInfoChanged := True;
         FScreenWidth := HelperIOData.ScreenWidth;
@@ -885,8 +907,8 @@ begin
 //        CurOffset := 0;
 //        CopyMemory(@BitmapSize, pMap, SizeOf(BitmapSize));
 //        CurOffset := CurOffset + SizeOf(BitmapSize);
-//        CopyMemory(@fScreenGrabbed, PByte(pMap) + CurOffset, SizeOf(fScreenGrabbed));
-//        CurOffset := CurOffset + SizeOf(fScreenGrabbed);
+//        CopyMemory(@FHaveScreen, PByte(pMap) + CurOffset, SizeOf(FHaveScreen));
+//        CurOffset := CurOffset + SizeOf(FHaveScreen);
 //
 //        CopyMemory(@TempInt, PByte(pMap) + CurOffset, SizeOf(TempInt));
 //        CurOffset := CurOffset + SizeOf(TempInt);

@@ -117,11 +117,9 @@ type
     procedure SetLowReduceType(const Value: integer);
 
     procedure SetClipRect(const Value : TRect);
-    function GetHaveScreen: Boolean;
-    procedure SetHaveScreen(const Value: Boolean);
   public
     FHaveScreen: Boolean;
-    FOnHaveScreeenChanged: TNotifyEvent;
+    FOnHaveScreenChanged: TNotifyEvent;
 
     constructor Create; virtual;
     destructor Destroy; override;
@@ -185,7 +183,8 @@ type
 
     property MultiMonitor: boolean read FMultiMon write SetMultiMon
       default False;
-   // property HaveScreen: Boolean read GetHaveScreen write SetHaveScreen default False;
+    property HaveScreen: Boolean read FHaveScreen;
+    property OnHaveScreeenChanged: TNotifyEvent read FOnHaveScreenChanged write FOnHaveScreenChanged;
   end;
 
 const
@@ -401,6 +400,7 @@ begin
   FMouseX := -1;
   FMouseY := -1;
   ScrEnc := TRtcScreenEncoder.Create;
+  ScrEnc.OnHaveScreeenChanged := OnHaveScreeenChanged;
  SwitchToActiveDesktop;
 
 end;
@@ -1780,21 +1780,6 @@ begin
     KeyUp(VK_MENU, []);
   if FCtrlDown then
     KeyUp(VK_CONTROL, []);
-end;
-
-function TRtcScreenCapture.GetHaveScreen: Boolean;
-begin
-  Result := FHaveScreen;
-end;
-
-procedure TRtcScreenCapture.SetHaveScreen(const Value: Boolean);
-begin
-  if FHaveScreen <> Value then
-  begin
-    FHaveScreen := Value;
-    if Assigned(FOnHaveScreeenChanged) then
-      FOnHaveScreeenChanged(Self);
-  end;
 end;
 
 procedure TRtcScreenCapture.SetMultiMon(const Value: boolean);
