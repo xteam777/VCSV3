@@ -1556,6 +1556,7 @@ begin
     if lNeedRestartThread then
     begin
       FGatewayClient.Disconnect;
+      FGatewayClient.Stop;
       FGatewayClient.Active := False;
       FGatewayClient.GateAddr := Gateway;
       FGatewayClient.Gate_Proxy := ProxyEnabled;
@@ -4519,7 +4520,9 @@ begin
 //    SetStatusString('Сервер недоступен');
 //    tHcAccountsReconnect.Enabled := True;
 //    SetConnectedState(False);
-//  end;
+//  end;    \
+
+  tHcAccountsReconnect.Enabled := True;
 end;
 
 procedure TMainForm.hcAccountsConnectFail(Sender: TRtcConnection);
@@ -4534,6 +4537,8 @@ begin
 //    tConnect.Enabled := True;
 //    SetConnectedState(False);
 //  end;
+
+  tHcAccountsReconnect.Enabled := True;
 end;
 
 procedure TMainForm.hcAccountsConnectLost(Sender: TRtcConnection);
@@ -6175,8 +6180,13 @@ procedure TMainForm.tHcAccountsReconnectTimer(Sender: TObject);
 begin
 //  xLog('tHcAccountsReconnectTimer');
 
-  if not hcAccounts.isConnecting then
+  if not hcAccounts.isConnected then
+  begin
+    hcAccounts.DisconnectNow(True);
     hcAccounts.Connect(True);
+  end;
+
+  tHcAccountsReconnect.Enabled := False;
 
 //  PClient.Disconnect;
 //  PClient.Active := False;
@@ -6340,8 +6350,6 @@ begin
 //    PClient.Active := True;
 
     tPHostThread.Restart;
-    hcAccounts.DisconnectNow(True);
-    hcAccounts.Connect(True);
 
     tPClientReconnect.Enabled := False;
   end
@@ -8227,7 +8235,7 @@ begin
   else
 //    HostPingTimer.Enabled := True;
 
-  if Result.asRecord.asBoolean['NeedHostRelogin'] then
+{  if Result.asRecord.asBoolean['NeedHostRelogin'] then
   begin
     xLog('resHostPingReturn: NeedHostRelogin');
 
@@ -8277,7 +8285,7 @@ begin
 //    SetConnectedState(False);
 //    if not isClosing then
 //      tHcAccountsReconnect.Enabled := True;
-  end;
+  end;}
 end;
 
 procedure TMainForm.resHostTimerLoginReturn(Sender: TRtcConnection; Data,
@@ -10029,6 +10037,8 @@ begin
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': PClientFatalError ' + Msg));
 
   TRtcHttpPortalClient(Sender).Disconnect;
+
+//  tPHostThread.Restart;
 
 //  if Msg = 'Сервер недоступен.' then
 //    TRtcHttpPortalClient(Sender).Active := False;
