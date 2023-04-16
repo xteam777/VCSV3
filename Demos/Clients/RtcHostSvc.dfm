@@ -1,5 +1,4 @@
 object RemoxService: TRemoxService
-  OldCreateOrder = False
   OnCreate = ServiceCreate
   OnDestroy = ServiceDestroy
   DisplayName = 'Remox'

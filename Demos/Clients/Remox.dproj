@@ -262,8 +262,26 @@
                     </Platform>
                 </DeployFile>
                 <DeployFile LocalName="Remox.exe" Configuration="Debug" Class="ProjectOutput"/>
+                <DeployFile LocalName="Remox.exe" Configuration="Debug" Class="ProjectOutput">
+                    <Platform Name="Win32">
+                        <RemoteName>Remox.exe</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="Remox.rsm" Configuration="Debug" Class="DebugSymbols"/>
+                <DeployFile LocalName="Remox.rsm" Configuration="Debug" Class="DebugSymbols">
+                    <Platform Name="Win32">
+                        <RemoteName>Remox.rsm</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="rmx_w32.exe" Configuration="Debug" Class="ProjectFile"/>
+                <DeployFile LocalName="rmx_w32.exe" Configuration="Debug" Class="ProjectFile">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployClass Name="AdditionalDebugSymbols">
                     <Platform Name="iOSSimulator">
                         <Operation>1</Operation>

@@ -16,10 +16,33 @@ type
                        mteRegistration,
                        mteRegistrationOK);
 
+  THelperIOData = record
+    //Out from helper
+    BitmapSize: Cardinal;
+    HaveScreen: Boolean;
+    ScreenWidth : Integer;
+    ScreenHeight : Integer;
+    BitsPerPixel : Integer;
+    MouseFlags : DWORD;
+    MouseCursor : HCURSOR;
+    MouseX, MouseY: Integer;
+    DirtyRCnt: Integer;
+    MovedRCnt: Integer;
+
+    //In to helper
+    PID: DWORD;
+    ipBase_ScreenBuff: PByte;
+    ipBase_DirtyR: PByte;
+    ipBase_MovedR: PByte;
+    ipBase_MovedRP: PByte;
+  end;
+
+  PDirtyRect = ^TDirtyRect;
   TDirtyRect = record
     Left, Top, Right, Bottom: FixedInt;
   end;
 
+  PMovedRect = ^TMovedRect;
   TMovedRect = record
     Left, Top, Right, Bottom, X, Y: FixedInt;
   end;

@@ -153,19 +153,18 @@ var
   NameSuffix: String;
 //  CS: TCriticalSection;
 
-  sWidth, sHeight: Integer;
+//  sWidth, sHeight: Integer;
   hScrDC, hMemDC: HDC;
   hDeskWin, hMap: THandle;
   pMap: Pointer;
   hBmp: HBitmap;
   bitmap_info: BITMAPINFO;
-  ipBase, pBits: Pointer;
+//  ipBase_Screen, ipBase_DirtyArray, ipBase_MovedArray: PByte; //Адрес MMF, передаваемый из клиента
   hOld: HGDIOBJ;
   CurrentPID: DWORD;
   HeaderSize: Integer;
   err: LongInt;
   fHaveScreen: Boolean;
-  FLastChangedX1, FLastChangedY1, FLastChangedX2, FLastChangedY2: Integer;
 
   dwFlags, wVk, wScan: DWORD;
   IOtype, dx, dy, mouseData: Integer;
@@ -181,6 +180,7 @@ var
   function RpcImpersonateClient(BindingHandle: RPC_BINDING_HANDLE): RPC_STATUS; stdcall; external 'rpcrt4.dll';
   function ProcessIdToSessionId(dwProcessId: DWORD; out pSessionId: DWORD): BOOL; stdcall; external 'kernel32.dll';
   function WTSGetActiveConsoleSessionId: THandle; external 'Kernel32.dll' name 'WTSGetActiveConsoleSessionId';
+
 
 function IsWindows8orLater: Boolean;
 begin
@@ -1971,7 +1971,7 @@ begin
   end;
 end;}
 
-procedure CreateBitmapData;
+{procedure CreateBitmapData;
 //var
 //  cClrBits: Word;
 begin
@@ -2025,7 +2025,7 @@ begin
   if hBmp <> 0 then
     DeleteObject(hBmp);
   ReleaseDC(hDeskWin, hScrDC);
-end;
+end;}
 
 function SwitchToActiveDesktop: String;
 var
@@ -2617,82 +2617,142 @@ begin
    Result := (GetLastError <> ERROR_ALREADY_EXISTS);
 end;
 
+//В хелпере создается отображение в память и заполняется
 procedure ReadWriteMMFData;
 var
   ci: TCursorInfo;
-  BitmapSize: Cardinal;
-  CurOffset: Integer;
-  PID: DWORD;
+//  BitmapSize: Cardinal;
+//  CurOffset: Integer;
+//  PID: DWORD;
   WaitTimeout: DWORD;
   hProc: THandle;
-  numberRead : SIZE_T;
+  numberWrite : SIZE_T;
+  i: Integer;
+  HelperIOData: THelperIOData;
 begin
-  WaitTimeout := 1000;
-  BitmapSize := sHeight * sWidth * 4;
+  WaitTimeout := 1000; //INFINITE;
+//  ipBase_Screen := nil;
+//  ipBase_DirtyArray := nil;
+//  ipBase_MovedArray := nil;
 
   ZeroMemory(@ci, SizeOf(TCursorInfo));
   ci.cbSize := SizeOf(TCursorInfo);
   ci.hCursor := 0;
   GetCursorInfo(ci);
 
-  CurOffset := 0;
-  CopyMemory(pMap, @BitmapSize, sizeof(BitmapSize));
-  CurOffset := sizeof(BitmapSize);
-  CopyMemory(PByte(pMap) + CurOffset, @fHaveScreen, sizeof(fHaveScreen));
-  CurOffset := CurOffset + sizeof(fHaveScreen);
-  CopyMemory(PByte(pMap) + CurOffset, @sWidth, sizeof(sWidth));
-  CurOffset := CurOffset + sizeof(sWidth);
-  CopyMemory(PByte(pMap) + CurOffset, @sHeight, sizeof(sHeight));
-  CurOffset := CurOffset + sizeof(sHeight);
-  CopyMemory(PByte(pMap) + CurOffset, @bitmap_info.bmiHeader.biBitCount, sizeof(Word));
-  CurOffset := CurOffset + sizeof(Word);
-//          CopyMemory(@PID, PByte(pMap) + CurOffset, sizeof(PID));
-  CurOffset := CurOffset + sizeof(CurrentPID);
-//          CopyMemory(PByte(pMap) + CurOffset, @pBits, sizeof(pBits));
-  CurOffset := CurOffset + sizeof(pBits);
-  CopyMemory(PByte(pMap) + CurOffset, @ci.flags, sizeof(ci.flags));
-  CurOffset := CurOffset + sizeof(ci.flags);
-  CopyMemory(PByte(pMap) + CurOffset, @ci.hCursor, sizeof(ci.hCursor));
-  CurOffset := CurOffset + sizeof(ci.hCursor);
-  CopyMemory(PByte(pMap) + CurOffset, @ci.ptScreenPos.X, sizeof(ci.ptScreenPos.X));
-  CurOffset := CurOffset + sizeof(ci.ptScreenPos.X);
-  CopyMemory(PByte(pMap) + CurOffset, @ci.ptScreenPos.Y, sizeof(ci.ptScreenPos.Y));
-  CurOffset := CurOffset + sizeof(ci.ptScreenPos.Y);
-  CopyMemory(PByte(pMap) + CurOffset, @FLastChangedX1, sizeof(FLastChangedX1));
-  CurOffset := CurOffset + sizeof(FLastChangedX1);
-  CopyMemory(PByte(pMap) + CurOffset, @FLastChangedY1, sizeof(FLastChangedY1));
-  CurOffset := CurOffset + sizeof(FLastChangedY1);
-  CopyMemory(PByte(pMap) + CurOffset, @FLastChangedX2, sizeof(FLastChangedX2));
-  CurOffset := CurOffset + sizeof(FLastChangedX2);
-  CopyMemory(PByte(pMap) + CurOffset, @FLastChangedY2, sizeof(FLastChangedY2));
-  CurOffset := CurOffset + sizeof(FLastChangedY2);
+  //Записываем выходные параметры
+  HelperIOData.BitmapSize := FDesktopDuplicator.ScreenHeight * FDesktopDuplicator.ScreenWidth * 4;
+  HelperIOData.HaveScreen := fHaveScreen;
+  HelperIOData.ScreenWidth := FDesktopDuplicator.ScreenWidth;
+  HelperIOData.ScreenHeight := FDesktopDuplicator.ScreenHeight;
+  HelperIOData.BitsPerPixel := FDesktopDuplicator.BitsPerPixel;
+  HelperIOData.MouseFlags := ci.flags;
+  HelperIOData.MouseCursor := ci.hCursor;
+  HelperIOData.MouseX := ci.ptScreenPos.X;
+  HelperIOData.MouseY := ci.ptScreenPos.Y;
+  HelperIOData.DirtyRCnt := FDesktopDuplicator.DirtyRCnt;
+  HelperIOData.MovedRCnt := FDesktopDuplicator.MovedRCnt;
+
+//  //Инициализируем входные параметры
+//  HelperIOData.PID := 0;
+//  HelperIOData.ipBase_ScreenBuff := nil;
+//  HelperIOData.ipBase_DirtyArray := nil;
+//  HelperIOData.ipBase_MovedArray := nil;
+
+  CopyMemory(PByte(pMap), @HelperIOData, SizeOf(HelperIOData));
+
+//  CurOffset := 0;
+//  CopyMemory(pMap, @BitmapSize, sizeof(BitmapSize));
+//  CurOffset := sizeof(BitmapSize);
+//  CopyMemory(PByte(pMap) + CurOffset, @fHaveScreen, sizeof(fHaveScreen));
+//  CurOffset := CurOffset + sizeof(fHaveScreen);
+//  CopyMemory(PByte(pMap) + CurOffset, @FDesktopDuplicator.ScreenWidth, sizeof(FDesktopDuplicator.ScreenWidth));
+//  CurOffset := CurOffset + sizeof(FDesktopDuplicator.ScreenWidth);
+//  CopyMemory(PByte(pMap) + CurOffset, @FDesktopDuplicator.ScreenHeight, sizeof(FDesktopDuplicator.ScreenHeight));
+//  CurOffset := CurOffset + sizeof(FDesktopDuplicator.ScreenHeight);
+//  CopyMemory(PByte(pMap) + CurOffset, @FDesktopDuplicator.BitsPerPixel, sizeof(FDesktopDuplicator.BitsPerPixel));
+//  CurOffset := CurOffset + sizeof(FDesktopDuplicator.BitsPerPixel);
+////          CopyMemory(@PID, PByte(pMap) + CurOffset, sizeof(PID));
+//  CurOffset := CurOffset + sizeof(CurrentPID);
+////          CopyMemory(PByte(pMap) + CurOffset, @pBits, sizeof(pBits));
+//  CurOffset := CurOffset + sizeof(FDesktopDuplicator.ScreenBuff);
+//
+//  CopyMemory(PByte(pMap) + CurOffset, @ci.flags, sizeof(ci.flags));
+//  CurOffset := CurOffset + sizeof(ci.flags);
+//  CopyMemory(PByte(pMap) + CurOffset, @ci.hCursor, sizeof(ci.hCursor));
+//  CurOffset := CurOffset + sizeof(ci.hCursor);
+//  CopyMemory(PByte(pMap) + CurOffset, @ci.ptScreenPos.X, sizeof(ci.ptScreenPos.X));
+//  CurOffset := CurOffset + sizeof(ci.ptScreenPos.X);
+//  CopyMemory(PByte(pMap) + CurOffset, @ci.ptScreenPos.Y, sizeof(ci.ptScreenPos.Y));
+//  CurOffset := CurOffset + sizeof(ci.ptScreenPos.Y);
 
   SetEvent(EventWriteEnd);
   if WaitForSingleObject(EventReadBegin, WaitTimeout) = WAIT_TIMEOUT then
     Exit;
 
-  CurOffset := 0;
-//          CopyMemory(pMap, @BitmapSize, sizeof(BitmapSize));
-  CurOffset := sizeof(BitmapSize);
-//          CopyMemory(PByte(pMap) + CurOffset, @mResult, sizeof(mResult));
-  CurOffset := CurOffset + sizeof(fHaveScreen);
-//          CopyMemory(PByte(pMap) + CurOffset, @sWidth, sizeof(sWidth));
-  CurOffset := CurOffset + sizeof(sWidth);
-//          CopyMemory(PByte(pMap) + CurOffset, @sHeight, sizeof(sHeight));
-  CurOffset := CurOffset + sizeof(sHeight);
-//          CopyMemory(PByte(pMap) + CurOffset, @bitmap_info.bmiHeader.biBitCount, sizeof(Word));
-  CurOffset := CurOffset + sizeof(Word);
-  CopyMemory(@PID, PByte(pMap) + CurOffset, sizeof(PID));
-  CurOffset := CurOffset + sizeof(CurrentPID);
-  CopyMemory(@ipBase, PByte(pMap) + CurOffset, sizeof(ipBase));
-  CurOffset := CurOffset + sizeof(ipBase);
+ //Считываем входные параметры
+
+ CopyMemory(@HelperIOData, PByte(pMap), SizeOf(HelperIOData));
+
+//  HelperIOData.PID := 0;
+//  HelperIOData.ipBase_ScreenBuff := nil;
+//  HelperIOData.ipBase_DirtyArray := nil;
+//  HelperIOData.ipBase_MovedArray := nil;
+
+//  CurOffset := 0;
+////          CopyMemory(pMap, @BitmapSize, sizeof(BitmapSize));
+//  CurOffset := sizeof(BitmapSize);
+////          CopyMemory(PByte(pMap) + CurOffset, @mResult, sizeof(mResult));
+//  CurOffset := CurOffset + sizeof(fHaveScreen);
+////          CopyMemory(PByte(pMap) + CurOffset, @sWidth, sizeof(sWidth));
+//  CurOffset := CurOffset + sizeof(FDesktopDuplicator.ScreenWidth);
+////          CopyMemory(PByte(pMap) + CurOffset, @sHeight, sizeof(sHeight));
+//  CurOffset := CurOffset + sizeof(FDesktopDuplicator.ScreenHeight);
+////          CopyMemory(PByte(pMap) + CurOffset, @FDesktopDuplicator.BitsPerPixel, sizeof(FDesktopDuplicator.BitsPerPixel));
+//  CurOffset := CurOffset + sizeof(FDesktopDuplicator.BitsPerPixel);
+//  CopyMemory(@PID, PByte(pMap) + CurOffset, sizeof(PID));
+//  CurOffset := CurOffset + sizeof(CurrentPID);
+//  CopyMemory(@ipBase_Screen, PByte(pMap) + CurOffset, sizeof(ipBase_Screen));
+//  CurOffset := CurOffset + sizeof(ipBase_Screen); //Адрес переменной, с выделенной памятью в процессе клиента для записи скриншота
+//  CopyMemory(PByte(pMap) + CurOffset, @ipBase_DirtyArray, sizeof(ipBase_DirtyArray));
+//  CurOffset := CurOffset + sizeof(ipBase_DirtyArray);
+//  CopyMemory(PByte(pMap) + CurOffset, @ipBase_MovedArray, sizeof(ipBase_MovedArray));
+//  CurOffset := CurOffset + sizeof(ipBase_MovedArray);
+//
+//  CopyMemory(PByte(pMap) + CurOffset, @FDesktopDuplicator.DirtyRCnt, sizeof(FDesktopDuplicator.DirtyRCnt));
+//  CurOffset := CurOffset + sizeof(FDesktopDuplicator.DirtyRCnt);
+//  CopyMemory(PByte(pMap) + CurOffset, @FDesktopDuplicator.MovedRCnt, sizeof(FDesktopDuplicator.MovedRCnt));
+//  CurOffset := CurOffset + sizeof(FDesktopDuplicator.MovedRCnt);
+
+//  for i := 0 to FDesktopDuplicator.DirtyRCnt - 1 do
+//  begin
+//    TDirtyRect(DirtyArray[i]).Top := FDesktopDuplicator.DirtyR[i].Top;
+//    TDirtyRect(DirtyArray[i]).Left := FDesktopDuplicator.DirtyR[i].Left;
+//    TDirtyRect(DirtyArray[i]).Bottom := FDesktopDuplicator.DirtyR[i].Bottom;
+//    TDirtyRect(DirtyArray[i]).Right := FDesktopDuplicator.DirtyR[i].Right;
+//  end;
+//  for i := 0 to FDesktopDuplicator.MovedRCnt - 1 do
+//  begin
+//    TMovedRect(MovedArray[i]).Top := FDesktopDuplicator.MovedR[i].Top;
+//    TMovedRect(MovedArray[i]).Left := FDesktopDuplicator.MovedR[i].Left;
+//    TMovedRect(MovedArray[i]).Bottom := FDesktopDuplicator.MovedR[i].Bottom;
+//    TMovedRect(MovedArray[i]).Right := FDesktopDuplicator.MovedR[i].Right;
+//
+//    TMovedRect(MovedArray[i]).X := FDesktopDuplicator.MovedRP[i].X;
+//    TMovedRect(MovedArray[i]).Y := FDesktopDuplicator.MovedRP[i].Y;
+//  end;
 
 //  time := GetTickCount;
 
-  hProc := OpenProcess(PROCESS_VM_WRITE or PROCESS_VM_OPERATION, False, PID); // подключаемся к процессу зная его ID
+  //Записываем данные в процесс
+
+  hProc := OpenProcess(PROCESS_VM_WRITE or PROCESS_VM_OPERATION, False, HelperIOData.PID); // подключаемся к процессу зная его ID
   if hProc <> 0 then // условие проверки подключения к процессу
   try
-    WriteProcessMemory(hProc, ipBase, pBits, BitmapSize, numberRead); // чтение из памяти строки
+    WriteProcessMemory(hProc, HelperIOData.ipBase_ScreenBuff, FDesktopDuplicator.ScreenBuff, HelperIOData.BitmapSize, numberWrite); // запись скриншота в память процесса
+    WriteProcessMemory(hProc, HelperIOData.ipBase_DirtyR, @FDesktopDuplicator.DirtyR, FDesktopDuplicator.DirtyRCnt * SizeOf(TRect), numberWrite);
+    WriteProcessMemory(hProc, HelperIOData.ipBase_MovedR, @FDesktopDuplicator.MovedR, FDesktopDuplicator.MovedRCnt * SizeOf(TRect), numberWrite);
+    WriteProcessMemory(hProc, HelperIOData.ipBase_MovedRP, @FDesktopDuplicator.MovedRP, FDesktopDuplicator.MovedRCnt * SizeOf(TPoint), numberWrite);
   finally
     CloseHandle(hProc); // отсоединяемся от процесса
   end;
@@ -2700,7 +2760,7 @@ begin
 //  time := GetTickCount - time;
 end;
 
-function GetGDIScreenshot: Boolean;
+{function GetGDIScreenshot: Boolean;
 begin
   hOld := SelectObject(hMemDC, hBmp);
   Result := BitBlt(hMemDC, 0, 0, sWidth, sHeight, hScrDC, 0, 0, SRCCOPY);
@@ -2709,7 +2769,7 @@ begin
     err := GetLastError;
     xLog('BitBlt Error: ' + IntToStr(err) + ' ' + SysErrorMessage(err));
   end;
-end;
+end;}
 
 function GetPixelFormat(aBitsCount: Word): TPixelFormat;
 begin
@@ -2725,7 +2785,7 @@ begin
   end;
 end;
 
-function GetDDAScreenshot: Boolean;
+{function GetDDAScreenshot: Boolean;
 begin
   Result := False;
 
@@ -2778,14 +2838,14 @@ begin
   end;
 
 //  time := GetTickCount - time;
-end;
+end;}
 
 function ScreenShotThreadProc(pParam: Pointer): DWORD; stdcall;
 //var
 //  SaveBitMap: TBitmap;
 begin
   try
-    FDesktopDuplicator := TDesktopDuplicationWrapper.Create(fCreated);
+    FDesktopDuplicator := TDesktopDuplicationWrapper.Create;
 
     while True do
     begin
@@ -2800,15 +2860,15 @@ begin
           SelectInputWinStation;
           SwitchToActiveDesktop;
 
-          CreateBitmapData;
-
           fHaveScreen := False;
 
 //          time := GetTickCount;
-          if not GetDDAScreenshot then
-            if not GetGDIScreenshot then
+          if not FDesktopDuplicator.DDCaptureScreen then
+//            if not GetGDIScreenshot then
               Continue;
 //          time := GetTickCount - time;
+
+          FDesktopDuplicator.ScreenInfoChanged;
 
           fHaveScreen := True;
 
@@ -2844,16 +2904,13 @@ begin
         ResetEvent(EventWriteEnd);
         ResetEvent(EventReadBegin);
         SetEvent(EventReadEnd);
-
-        SelectObject(hMemDC, hOld);
-        DestroyBitmapData;
       end;
 
 //      time := GetTickCount - time;
       time := time;
     end;
   finally
-    FDesktopDuplicator.Free;
+    FreeAndNil(FDesktopDuplicator);
 
     ExitThread(0);
   end;
@@ -2896,8 +2953,9 @@ begin
 
   xLog('Started in session ' + IntToStr(CurrentSessionID));
 
-  HeaderSize := sizeof(Cardinal) + sizeof(Boolean) + sizeof(sWidth) + sizeof(sHeight) + sizeof(Word) +
-    sizeof(CurrentPID) + sizeof(DWORD) + sizeof(HCURSOR) + sizeof(Integer) + sizeof(Integer);
+  HeaderSize := SizeOf(THelperIOData);
+//  HeaderSize := sizeof(Cardinal) + sizeof(Boolean) + sizeof(FDesktopDuplicator.ScreenWidth) + sizeof(FDesktopDuplicator.ScreenHeight) + sizeof(Integer) +
+//    sizeof(CurrentPID) + sizeof(ipBase_Screen) + SizeOf(ipBase_DirtyArray) + SizeOf(ipBase_MovedArray) + sizeof(HCURSOR) + sizeof(Integer) + sizeof(Integer) + sizeof(Integer);
   hMap := CreateFileMapping(INVALID_HANDLE_VALUE, nil, PAGE_READWRITE, 0, HeaderSize,
     PWideChar(WideString('Session\' + IntToStr(CurrentSessionID) + '\RMX_SCREEN' + NameSuffix)));
 

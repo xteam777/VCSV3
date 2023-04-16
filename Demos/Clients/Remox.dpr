@@ -10,6 +10,12 @@
 {$define FullDebugMode}
 {$define LogMemoryLeakDetailToFile}
 
+
+
+
+
+
+
 {$R *.dres}
 
 uses

@@ -43,6 +43,8 @@ type
     FScreenBuff: PByte;
     FScreenInfoChanged : Boolean;
 
+    HelperIOData: THelperIOData;
+
     function GetScreenWidth: Integer;
     function GetScreenHeight: Integer;
     function GetBitsPerPixel: Integer;
@@ -274,227 +276,6 @@ begin
   if Win32MajorVersion = 6 then
     if Win32MinorVersion >= 2 then
       Result := True;
-end;
-
-function TRtcScreenEncoder.GetDataFromHelper(OnlyGetScreenParams: Boolean = False; fFirstScreen: Boolean = False): Boolean;
-var
-  h, hMap: THandle;
-  pMap: Pointer;
-  hScrDC, hDestDC, hMemDC: HDC;
-  hBmp: HBitmap;
-  BitmapSize: Cardinal;
-  bitmap_info: BITMAPINFO;
-  EventWriteBegin, EventWriteEnd, EventReadBegin, EventReadEnd: THandle;
-  SessionID: DWORD;
-  HeaderSize, CurOffset: Integer;
-  NameSuffix: String;
-  ipBase: Pointer;
-  hOld: HGDIOBJ;
-  hProc: THandle;
-  numberRead : SIZE_T;
-  WaitTimeout: DWORD;
-  SaveBitMap: TBitmap;
-  i, j, TempInt: LongInt;
-  fScreenGrabbed: Boolean;
-  DirtyArray: array of TDirtyRect;
-  MovedArray: array of TMovedRect;
-begin
-  if not IsWindows8orLater then
-    Exit;
-
-  WaitTimeout := 1000;
-
-  HelperCS.Acquire;
-  try
-    Result := False;
-
-    if IsService then
-    begin
-      SessionID := ActiveConsoleSessionID;
-      NameSuffix := '_C';
-    end
-    else
-    begin
-      SessionID := CurrentSessionID;
-      NameSuffix := '';
-    end;
-
-//    NameSuffix := '_C';
-
-    EventWriteBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_WRITE_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
-    if EventWriteBegin = 0 then
-      Exit;
-    EventWriteEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_WRITE_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
-    if EventWriteEnd = 0 then
-      Exit;
-    EventReadBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_READ_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
-    if EventReadBegin = 0 then
-      Exit;
-    EventReadEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_READ_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
-    if EventReadEnd = 0 then
-      Exit;
-
-    try
-      ResetEvent(EventWriteEnd);
-      ResetEvent(EventReadBegin);
-      ResetEvent(EventReadEnd);
-
-      SetEvent(EventWriteBegin); //Если чтение не идет, то начинаем запись скрина
-
-      WaitForSingleObject(EventWriteEnd, WaitTimeout); //Добавить таймаут, ждем окончания записи скрина
-      ResetEvent(EventWriteEnd);
-
-      try
-        hMap := OpenFileMapping(FILE_MAP_READ or FILE_MAP_WRITE, False, PWideChar(WideString('Session\' + IntToStr(SessionID) + '\RMX_SCREEN' + NameSuffix)));
-        if hMap = 0 then
-          Exit;
-        HeaderSize := SizeOf(BitmapSize) + SizeOf(fScreenGrabbed) + SizeOf(FScreenWidth) + SizeOf(FScreenHeight) + SizeOf(FBitsPerPixel) +
-          SizeOf(CurrentProcessId) + SizeOf(ipBase) + SizeOf(FMouseFlags) + SizeOf(FMouseCursor) + SizeOf(DirtyArray) + SizeOf(MovedArray);
-        pMap := MapViewOfFile(hMap, //дескриптор "проецируемого" объекта
-                                FILE_MAP_READ or FILE_MAP_WRITE,  // разрешение чтения/записи
-                                0,0,
-                                HeaderSize);  //размер буфера
-        if pMap = nil then
-          Exit;
-
-        BitmapSize := 0;
-//        FScreenWidth := 0;
-//        FScreenHeight := 0;
-//        FBitsPerPixel := 0;
-        FScreenInfoChanged := False;
-        CurOffset := 0;
-        CopyMemory(@BitmapSize, pMap, SizeOf(BitmapSize));
-        CurOffset := CurOffset + SizeOf(BitmapSize);
-        CopyMemory(@fScreenGrabbed, PByte(pMap) + CurOffset, SizeOf(fScreenGrabbed));
-        CurOffset := CurOffset + SizeOf(fScreenGrabbed);
-
-        CopyMemory(@TempInt, PByte(pMap) + CurOffset, SizeOf(TempInt));
-        CurOffset := CurOffset + SizeOf(TempInt);
-        if TempInt <> FScreenWidth then
-          FScreenInfoChanged := True;
-        FScreenWidth := TempInt;
-        CopyMemory(@TempInt, PByte(pMap) + CurOffset, SizeOf(TempInt));
-        CurOffset := CurOffset + SizeOf(TempInt);
-        if TempInt <> FScreenHeight then
-          FScreenInfoChanged := True;
-        FScreenHeight := TempInt;
-        CopyMemory(@TempInt, PByte(pMap) + CurOffset, SizeOf(TempInt));
-        CurOffset := CurOffset + SizeOf(TempInt);
-        if TempInt <> FBitsPerPixel then
-          FScreenInfoChanged := True;
-        FBitsPerPixel := TempInt;
-
-        FClipRect.Top := 0;
-        FClipRect.Left := 0;
-        FClipRect.Bottom := FScreenHeight;
-        FClipRect.Right := FScreenWidth;
-
-//        CopyMemory(@PID, PByte(pMap) + CurOffset, SizeOf(PID));
-        CurOffset := CurOffset + SizeOf(CurrentProcessId);
-//        CopyMemory(@ipBase, PByte(pMap) + CurOffset, SizeOf(ipBase));
-        CurOffset := CurOffset + SizeOf(ipBase);
-        CopyMemory(@FDirtyRCnt, PByte(pMap) + CurOffset, SizeOf(FDirtyRCnt));
-        CurOffset := CurOffset + SizeOf(FDirtyRCnt);
-        CopyMemory(@FMovedRCnt, PByte(pMap) + CurOffset, SizeOf(FMovedRCnt));
-        CurOffset := CurOffset + SizeOf(MovedRCnt);
-
-        CopyMemory(@FMouseFlags, PByte(pMap) + CurOffset, SizeOf(FMouseFlags));
-        CurOffset := CurOffset + SizeOf(FMouseFlags);
-        CopyMemory(@FMouseCursor, PByte(pMap) + CurOffset, SizeOf(FMouseCursor));
-        CurOffset := CurOffset + SizeOf(FMouseCursor);
-        CopyMemory(@FMouseX, PByte(pMap) + CurOffset, SizeOf(FMouseX));
-        CurOffset := CurOffset + SizeOf(FMouseX);
-        CopyMemory(@FMouseY, PByte(pMap) + CurOffset, SizeOf(FMouseY));
-        CurOffset := CurOffset + SizeOf(FMouseY);
-
-        if OnlyGetScreenParams then
-          Exit;
-
-//        New(FScreenBuff);
-        GetMem(FScreenBuff, BitmapSize);
-        SetLength(DirtyArray, FDirtyRCnt);
-        SetLength(MovedArray, MovedRCnt);
-
-        CurOffset := 0;
-  //      CopyMemory(@BitmapSize, pMap, SizeOf(BitmapSize));
-        CurOffset := CurOffset + SizeOf(BitmapSize);
-  //      CopyMemory(@fScreenGrabbed, PByte(pMap) + CurOffset, SizeOf(fScreenGrabbed));
-        CurOffset := CurOffset + SizeOf(fScreenGrabbed);
-  //      CopyMemory(@FHelper_Width, PByte(pMap) + CurOffset, SizeOf(FHelper_Width));
-        CurOffset := CurOffset + SizeOf(FScreenWidth);
-  //      CopyMemory(@FHelper_Height, PByte(pMap) + CurOffset, SizeOf(FHelper_Height));
-        CurOffset := CurOffset + SizeOf(FScreenHeight);
-  //      CopyMemory(@FHelper_BitsPerPixel, PByte(pMap) + CurOffset, SizeOf(FHelper_BitsPerPixel));
-        CurOffset := CurOffset + SizeOf(FBitsPerPixel);
-        CopyMemory(PByte(pMap) + CurOffset, @CurrentProcessId, SizeOf(CurrentProcessId));
-        CurOffset := CurOffset + SizeOf(CurrentProcessId);
-        CopyMemory(PByte(pMap) + CurOffset, @FScreenBuff, SizeOf(FScreenBuff));
-        CurOffset := CurOffset + SizeOf(FScreenBuff);
-        CopyMemory(PByte(pMap) + CurOffset, @DirtyArray, SizeOf(DirtyArray));
-        CurOffset := CurOffset + SizeOf(DirtyArray);
-        CopyMemory(PByte(pMap) + CurOffset, @MovedArray, SizeOf(MovedArray));
-        CurOffset := CurOffset + SizeOf(MovedArray);
-
-        for i := 0 to DirtyRCnt - 1 do
-        begin
-          FDirtyR[i].Top := DirtyArray[i].Top;
-          FDirtyR[i].Left := FDirtyR[i].Left;
-          FDirtyR[i].Bottom := FDirtyR[i].Bottom;
-          FDirtyR[i].Right := FDirtyR[i].Right;
-        end;
-//
-        for i := 0 to MovedRCnt - 1 do
-        begin
-          FMovedR[i].Top := FMovedR[i].Top;
-          FMovedR[i].Left := FMovedR[i].Left;
-          FMovedR[i].Bottom := FMovedR[i].Bottom;
-          FMovedR[i].Right := FMovedR[i].Right;
-
-          FMovedRP[i].X := FMovedRP[i].X;
-          FMovedRP[i].Y := FMovedRP[i].Y;
-        end;
-
-        SetLength(DirtyArray, 0);
-        DirtyArray := nil;
-        SetLength(MovedArray, 0);
-        MovedArray := nil;
-      finally
-        if pMap <> nil then
-          UnmapViewOfFile(pMap);
-        if hMap <> 0 then
-          CloseHandle(hMap);
-      end;
-
-      SetEvent(EventReadBegin);
-      if WaitForSingleObject(EventReadEnd, WaitTimeout) = WAIT_TIMEOUT then
-        Exit;
-    finally
-      ResetEvent(EventReadEnd);
-
-      if EventWriteEnd <> 0 then
-      begin
-        CloseHandle(EventWriteEnd);
-        EventWriteEnd := 0;
-      end;
-      if EventWriteBegin <> 0 then
-      begin
-        CloseHandle(EventWriteBegin);
-        EventWriteBegin := 0;
-      end;
-      if EventReadBegin <> 0 then
-      begin
-        CloseHandle(EventReadBegin);
-        EventReadBegin := 0;
-      end;
-      if EventReadEnd <> 0 then
-      begin
-        CloseHandle(EventReadEnd);
-        EventReadEnd := 0;
-      end;
-    end;
-  finally
-    HelperCS.Release;
-  end;
 end;
 
 constructor TRtcScreenEncoder.Create;
@@ -990,6 +771,235 @@ time := GetTickCount;
   Debug.Log('grab: ' + IntToStr(time));
 
  //FDuplicate.ReleaseFrame;
+end;
+
+
+function TRtcScreenEncoder.GetDataFromHelper(OnlyGetScreenParams: Boolean = False; fFirstScreen: Boolean = False): Boolean;
+var
+  h, hMap: THandle;
+  pMap: Pointer;
+  hScrDC, hDestDC, hMemDC: HDC;
+  hBmp: HBitmap;
+  BitmapSize: Cardinal;
+  bitmap_info: BITMAPINFO;
+  EventWriteBegin, EventWriteEnd, EventReadBegin, EventReadEnd: THandle;
+  SessionID: DWORD;
+  HeaderSize, CurOffset: Integer;
+  NameSuffix: String;
+  hOld: HGDIOBJ;
+  hProc: THandle;
+  numberRead : SIZE_T;
+  WaitTimeout: DWORD;
+  SaveBitMap: TBitmap;
+  i, j, TempInt: LongInt;
+  fScreenGrabbed: Boolean;
+begin
+  if not IsWindows8orLater then
+    Exit;
+
+  WaitTimeout := 1000; //INFINITE;
+
+  HelperCS.Acquire;
+  try
+    Result := False;
+
+    if IsService then
+    begin
+      SessionID := ActiveConsoleSessionID;
+      NameSuffix := '_C';
+    end
+    else
+    begin
+      SessionID := CurrentSessionID;
+      NameSuffix := '';
+    end;
+
+//    NameSuffix := '_C';
+//    SessionID := 1;
+
+    EventWriteBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_WRITE_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    if EventWriteBegin = 0 then
+      Exit;
+    EventWriteEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_WRITE_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    if EventWriteEnd = 0 then
+      Exit;
+    EventReadBegin := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_READ_BEGIN_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    if EventReadBegin = 0 then
+      Exit;
+    EventReadEnd := OpenEvent(EVENT_ALL_ACCESS, False, PWideChar(WideString('Global\RMX_SCREEN_READ_END_SESSION_' + IntToStr(SessionID) + NameSuffix)));
+    if EventReadEnd = 0 then
+      Exit;
+
+    try
+      //Сбрасываем события предыдущей итерации
+      ResetEvent(EventWriteEnd);
+      ResetEvent(EventReadBegin);
+      ResetEvent(EventReadEnd);
+
+      SetEvent(EventWriteBegin); //Если чтение не идет, то начинаем запись скрина
+
+      WaitForSingleObject(EventWriteEnd, WaitTimeout); //Добавить таймаут, ждем окончания записи скрина
+      ResetEvent(EventWriteEnd);
+
+      try
+        hMap := OpenFileMapping(FILE_MAP_READ or FILE_MAP_WRITE, False, PWideChar(WideString('Session\' + IntToStr(SessionID) + '\RMX_SCREEN' + NameSuffix)));
+        if hMap = 0 then
+          Exit;
+        HeaderSize := SizeOf(THelperIOData);
+//        HeaderSize := SizeOf(BitmapSize) + SizeOf(fScreenGrabbed) + SizeOf(FScreenWidth) + SizeOf(FScreenHeight) + SizeOf(FBitsPerPixel) +
+//          SizeOf(CurrentProcessId) + SizeOf(FScreenBuff) + SizeOf(DirtyArray) + SizeOf(MovedArray) + SizeOf(FMouseFlags) + SizeOf(FMouseCursor) +
+//          SizeOf(FMouseX) + SizeOf(FMouseY);
+        pMap := MapViewOfFile(hMap, //дескриптор "проецируемого" объекта
+                                FILE_MAP_READ or FILE_MAP_WRITE,  // разрешение чтения/записи
+                                0,0,
+                                HeaderSize);  //размер буфера
+        if pMap = nil then
+          Exit;
+
+        CopyMemory(@HelperIOData, pMap, SizeOf(THelperIOData));
+
+        //Записываем входные параметры
+        BitmapSize := HelperIOData.BitmapSize;
+        fScreenGrabbed := HelperIOData.HaveScreen;
+        if HelperIOData.ScreenWidth <> FScreenWidth then
+          FScreenInfoChanged := True;
+        FScreenWidth := HelperIOData.ScreenWidth;
+        if HelperIOData.ScreenHeight <> FScreenHeight then
+          FScreenInfoChanged := True;
+        FScreenHeight := HelperIOData.ScreenHeight;
+        if HelperIOData.BitsPerPixel <> FBitsPerPixel then
+          FScreenInfoChanged := True;
+        FBitsPerPixel := HelperIOData.BitsPerPixel;
+        FMouseFlags := HelperIOData.MouseFlags;
+        FMouseCursor := HelperIOData.MouseCursor;
+        FMouseX := HelperIOData.MouseX;
+        FMouseY := HelperIOData.MouseY;
+        FDirtyRCnt := HelperIOData.DirtyRCnt;
+        FMovedRCnt := HelperIOData.MovedRCnt;
+
+//        BitmapSize := 0;
+////        FScreenWidth := 0;
+////        FScreenHeight := 0;
+////        FBitsPerPixel := 0;
+//        FScreenInfoChanged := False;
+//        CurOffset := 0;
+//        CopyMemory(@BitmapSize, pMap, SizeOf(BitmapSize));
+//        CurOffset := CurOffset + SizeOf(BitmapSize);
+//        CopyMemory(@fScreenGrabbed, PByte(pMap) + CurOffset, SizeOf(fScreenGrabbed));
+//        CurOffset := CurOffset + SizeOf(fScreenGrabbed);
+//
+//        CopyMemory(@TempInt, PByte(pMap) + CurOffset, SizeOf(TempInt));
+//        CurOffset := CurOffset + SizeOf(TempInt);
+//        if TempInt <> FScreenWidth then
+//          FScreenInfoChanged := True;
+//        FScreenWidth := TempInt;
+//        CopyMemory(@TempInt, PByte(pMap) + CurOffset, SizeOf(TempInt));
+//        CurOffset := CurOffset + SizeOf(TempInt);
+//        if TempInt <> FScreenHeight then
+//          FScreenInfoChanged := True;
+//        FScreenHeight := TempInt;
+//        CopyMemory(@TempInt, PByte(pMap) + CurOffset, SizeOf(TempInt));
+//        CurOffset := CurOffset + SizeOf(TempInt);
+//        if TempInt <> FBitsPerPixel then
+//          FScreenInfoChanged := True;
+//        FBitsPerPixel := TempInt;
+
+        FClipRect.Top := 0;
+        FClipRect.Left := 0;
+        FClipRect.Bottom := FScreenHeight;
+        FClipRect.Right := FScreenWidth;
+
+////        CopyMemory(@PID, PByte(pMap) + CurOffset, SizeOf(PID));
+//        CurOffset := CurOffset + SizeOf(CurrentProcessId);
+////        CopyMemory(@FScreenBuff, PByte(pMap) + CurOffset, SizeOf(FScreenBuff));
+//        CurOffset := CurOffset + SizeOf(FScreenBuff);
+
+//        CopyMemory(@FMouseFlags, PByte(pMap) + CurOffset, SizeOf(FMouseFlags));
+//        CurOffset := CurOffset + SizeOf(FMouseFlags);
+//        CopyMemory(@FMouseCursor, PByte(pMap) + CurOffset, SizeOf(FMouseCursor));
+//        CurOffset := CurOffset + SizeOf(FMouseCursor);
+//        CopyMemory(@FMouseX, PByte(pMap) + CurOffset, SizeOf(FMouseX));
+//        CurOffset := CurOffset + SizeOf(FMouseX);
+//        CopyMemory(@FMouseY, PByte(pMap) + CurOffset, SizeOf(FMouseY));
+//        CurOffset := CurOffset + SizeOf(FMouseY);
+
+        if OnlyGetScreenParams then
+          Exit;
+
+//        CurOffset := 0;
+//  //      CopyMemory(@BitmapSize, pMap, SizeOf(BitmapSize));
+//        CurOffset := CurOffset + SizeOf(BitmapSize);
+//  //      CopyMemory(@fScreenGrabbed, PByte(pMap) + CurOffset, SizeOf(fScreenGrabbed));
+//        CurOffset := CurOffset + SizeOf(fScreenGrabbed);
+//  //      CopyMemory(@FHelper_Width, PByte(pMap) + CurOffset, SizeOf(FHelper_Width));
+//        CurOffset := CurOffset + SizeOf(FScreenWidth);
+//  //      CopyMemory(@FHelper_Height, PByte(pMap) + CurOffset, SizeOf(FHelper_Height));
+//        CurOffset := CurOffset + SizeOf(FScreenHeight);
+//  //      CopyMemory(@FHelper_BitsPerPixel, PByte(pMap) + CurOffset, SizeOf(FHelper_BitsPerPixel));
+//        CurOffset := CurOffset + SizeOf(FBitsPerPixel);
+//        CopyMemory(PByte(pMap) + CurOffset, @CurrentProcessId, SizeOf(CurrentProcessId));
+//        CurOffset := CurOffset + SizeOf(CurrentProcessId);
+//        CopyMemory(PByte(pMap) + CurOffset, @FScreenBuff, SizeOf(FScreenBuff));
+//        CurOffset := CurOffset + SizeOf(FScreenBuff);
+//        CopyMemory(PByte(pMap) + CurOffset, @DirtyArray, SizeOf(DirtyArray));
+//        CurOffset := CurOffset + SizeOf(DirtyArray);
+//        CopyMemory(PByte(pMap) + CurOffset, @MovedArray, SizeOf(MovedArray));
+//        CurOffset := CurOffset + SizeOf(MovedArray);
+//
+//        CopyMemory(PByte(pMap) + CurOffset, @FDirtyRCnt, SizeOf(FDirtyRCnt));
+//        CurOffset := CurOffset + SizeOf(FDirtyRCnt);
+//        CopyMemory(PByte(pMap) + CurOffset, @FMovedRCnt, SizeOf(FMovedRCnt));
+//        CurOffset := CurOffset + SizeOf(FMovedRCnt);
+
+        GetMem(FScreenBuff, BitmapSize);
+
+        //Записываем выходные параметры
+        HelperIOData.PID := CurrentProcessId;
+        HelperIOData.ipBase_ScreenBuff := FScreenBuff;
+        HelperIOData.ipBase_DirtyR := @FDirtyR;
+        HelperIOData.ipBase_MovedR := @FMovedR;
+        HelperIOData.ipBase_MovedRP := @FMovedRP;
+
+        CopyMemory(PByte(pMap), @HelperIOData, SizeOf(HelperIOData));
+      finally
+        if pMap <> nil then
+          UnmapViewOfFile(pMap);
+        if hMap <> 0 then
+          CloseHandle(hMap);
+      end;
+
+      SetEvent(EventReadBegin);
+      if WaitForSingleObject(EventReadEnd, WaitTimeout) = WAIT_TIMEOUT then
+        Exit;
+
+      //Запись экрана и изменений в хелпере в текущий процесс...
+    finally
+      ResetEvent(EventReadEnd);
+
+      if EventWriteEnd <> 0 then
+      begin
+        CloseHandle(EventWriteEnd);
+        EventWriteEnd := 0;
+      end;
+      if EventWriteBegin <> 0 then
+      begin
+        CloseHandle(EventWriteBegin);
+        EventWriteBegin := 0;
+      end;
+      if EventReadBegin <> 0 then
+      begin
+        CloseHandle(EventReadBegin);
+        EventReadBegin := 0;
+      end;
+      if EventReadEnd <> 0 then
+      begin
+        CloseHandle(EventReadEnd);
+        EventReadEnd := 0;
+      end;
+    end;
+  finally
+    HelperCS.Release;
+  end;
 end;
 
 end.

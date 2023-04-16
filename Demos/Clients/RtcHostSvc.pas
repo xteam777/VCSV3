@@ -802,6 +802,8 @@ begin
 //HelperConsoleTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_x64.exe';
 //HelperTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_w32.exe';
 
+//doStartHelper := False;
+
   if doStartHelper then
   begin
     if not File_Exists(HelperConsoleTempFileName) then
