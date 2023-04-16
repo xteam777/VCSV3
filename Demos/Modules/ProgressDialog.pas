@@ -164,12 +164,26 @@ Begin
 End;
 
 procedure TWaitThread.Execute;
+var
+  mHasUserCancelled: Integer;
 Begin
   while True do
   begin
+    try
+      try
+        mHasUserCancelled := fOwner.iiProgressDialog.HasUserCancelled;
+      except
+        mHasUserCancelled := 1;
+
+        Terminate;
+        Break;
+      end;
+    finally
+    end;
+
     if not Assigned(fOwner.iiProgressDialog) then
       Break
-    else if fOwner.iiProgressDialog.HasUserCancelled <> 0 then
+    else if mHasUserCancelled <> 0 then
     begin
       Synchronize(AnnounceDone);
       Terminate;

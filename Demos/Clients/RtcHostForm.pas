@@ -1556,6 +1556,7 @@ begin
     if lNeedRestartThread then
     begin
       FGatewayClient.Disconnect;
+      FGatewayClient.Stop;
       FGatewayClient.Active := False;
       FGatewayClient.GateAddr := Gateway;
       FGatewayClient.Gate_Proxy := ProxyEnabled;
@@ -4519,7 +4520,9 @@ begin
 //    SetStatusString('Сервер недоступен');
 //    tHcAccountsReconnect.Enabled := True;
 //    SetConnectedState(False);
-//  end;
+//  end;    \
+
+//  tHcAccountsReconnect.Enabled := True;
 end;
 
 procedure TMainForm.hcAccountsConnectFail(Sender: TRtcConnection);
@@ -4534,6 +4537,8 @@ begin
 //    tConnect.Enabled := True;
 //    SetConnectedState(False);
 //  end;
+
+  tHcAccountsReconnect.Enabled := True;
 end;
 
 procedure TMainForm.hcAccountsConnectLost(Sender: TRtcConnection);
@@ -6175,8 +6180,13 @@ procedure TMainForm.tHcAccountsReconnectTimer(Sender: TObject);
 begin
 //  xLog('tHcAccountsReconnectTimer');
 
-  if not hcAccounts.isConnecting then
+  if not hcAccounts.isConnected then
+  begin
+    hcAccounts.DisconnectNow(True);
     hcAccounts.Connect(True);
+  end;
+
+  tHcAccountsReconnect.Enabled := False;
 
 //  PClient.Disconnect;
 //  PClient.Active := False;
@@ -7982,9 +7992,12 @@ begin
       SetStatusStringDelayed('Партнер не в сети. Подключение невозможно');
 //      SetStatusStringDelayed('Готов к подключению', 2000);
 
-      PRItem := GetPendingItemByUserName(asWideString['user'], asString['action']);
-      if PRItem = nil then
-        Exit;
+//      PRItem := GetPendingItemByUserName(asWideString['user'], asString['action']);
+//      if PRItem = nil then
+//        Exit;
+
+      RemovePortalConnectionByUserAndAction(asWideString['user'], asString['action']);
+      DeletePendingRequest(asWideString['user'], asString['action']);
 
 //      DoGetDeviceState(eAccountUserName.Text,
 //        PClient.LoginUserName,
@@ -10027,6 +10040,8 @@ begin
 //  SendMessage(Handle, WM_LOGEVENT, 0, LongInt(DateTime2Str(Now) + ': PClientFatalError ' + Msg));
 
   TRtcHttpPortalClient(Sender).Disconnect;
+
+//  tPHostThread.Restart;
 
 //  if Msg = 'Сервер недоступен.' then
 //    TRtcHttpPortalClient(Sender).Active := False;
