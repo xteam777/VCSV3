@@ -172,6 +172,7 @@ type
 //    procedure FT_UIRecvStop(Sender: TRtcPFileTransferUI);
     procedure FT_UINotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);
     procedure FT_UIClose(Sender: TRtcPFileTransferUI);
+    procedure FT_UILogOut(Sender: TRtcPFileTransferUI);
 
   protected
     LMouseX,LMouseY:integer;
@@ -861,6 +862,11 @@ end;
 procedure TrdDesktopViewer.FT_UIClose(Sender: TRtcPFileTransferUI);
 begin
   RemoveProgressDialogByUserName(UI.UserName);
+end;
+
+procedure TrdDesktopViewer.FT_UILogOut(Sender: TRtcPFileTransferUI);
+begin
+  RemoveProgressDialogByUserName(FT_UI.UserName);
 end;
 
 procedure TrdDesktopViewer.FT_UINotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);
