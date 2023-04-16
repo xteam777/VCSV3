@@ -26,6 +26,19 @@ you need EV code signing certificate to SmartScreen ByPass https://www.gironsec.
 //		выводим окно там где вставляем		
 //		закрывать юи при окончании передачи или при отмене. в myUIOpen создавать копи форму и потом закрывать юи
 
+https://stackoverflow.com/questions/63180144/determining-which-swap-chain-formats-are-supported
+
+UINT formatSupport = 0;
+if (FAILED(device->CheckFormatSupport(backBufferFormat, &formatSupport)))
+    formatSupport = 0;
+
+UINT32 required = D3D11_FORMAT_SUPPORT_RENDER_TARGET | D3D11_FORMAT_SUPPORT_DISPLAY;
+if ((formatSupport & required) != required)
+{
+    // Not supported
+}
+
+?при изменении прокси на прямое ав (OpenedModalForm <> nil). до этого она не открывалась
 ?кб ловим в маинформ
 ?	шлем всем субскриберам контролям через дескхост
 ?	шлем всем хостам через дескконтроль
