@@ -1190,7 +1190,8 @@ begin
     // Remove existing info.
     if HostsInfo.Child[uname] <> nil then
       DelUserFromGateway(uname, gateway);
-    FHostsCount := FHostsCount + 1;
+//    else
+//      FHostsCount := FHostsCount + 1;
 
     // Get callback info, if exists
     cb := GetCallback(uname);
@@ -1235,8 +1236,8 @@ begin
   try
   // If logged in under this session ID, remove info
   if HostsInfo.Child[uname] <> nil then
-    if (HostsInfo.Child[uname]['session'] = sessid)
-      or DisconnectAll then
+//    if (HostsInfo.Child[uname]['session'] = sessid)
+//      or DisconnectAll then
     begin
       if DisconnectAll then
         DelUserFromGateway(uname, HostsInfo.Child[uname]['gateway']) //Param gateway = ''
@@ -1388,6 +1389,8 @@ begin
           HostsList.NewRecord(uname);
         if HostsInfo.Child[uname] = nil then
           HostsInfo.NewChild(uname);
+
+        FHostsCount := FHostsCount + 1;
       end;
 //      if not HostsList.isNull[uname] then
 //        doHostLogIn(uname, gateway, Friends, sessid)

@@ -1,9 +1,8 @@
 object Data_Provider: TData_Provider
-  OldCreateOrder = False
   OnCreate = DataModuleCreate
   OnDestroy = DataModuleDestroy
   Height = 441
-  Width = 1017
+  Width = 1109
   object Module1: TRtcServerModule
     Link = ServerLink1
     Compression = cMax
