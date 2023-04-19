@@ -19,7 +19,9 @@
 {$R *.dres}
 
 uses
+  {$IFDEF Debug}
   FastMM4,
+  {$ENDIF}
   rtcLog,
   Classes,
   SysUtils,

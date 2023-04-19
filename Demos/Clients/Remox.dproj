@@ -3,7 +3,7 @@
         <ProjectGuid>{C9C9CB0C-CA8E-4DC3-B257-63F6E0ED7B84}</ProjectGuid>
         <MainSource>Remox.dpr</MainSource>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Debug</Config>
+        <Config Condition="'$(Config)'==''">Release</Config>
         <TargetedPlatforms>1</TargetedPlatforms>
         <AppType>Application</AppType>
         <FrameworkType>VCL</FrameworkType>
