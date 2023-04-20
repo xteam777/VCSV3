@@ -13,14 +13,12 @@ object rdClientSettings: TrdClientSettings
   Font.Name = 'Arial'
   Font.Style = []
   FormStyle = fsStayOnTop
-  OldCreateOrder = False
   Position = poScreenCenter
   PrintScale = poNone
   Scaled = False
   OnClose = FormClose
   OnCreate = FormCreate
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 14
   object tcSettings: TPageControl
     Left = 0
@@ -38,8 +36,6 @@ object rdClientSettings: TrdClientSettings
     TabOrder = 0
     object tsNetwork: TTabSheet
       Caption = #1057#1077#1090#1100
-      ExplicitWidth = 377
-      ExplicitHeight = 204
       object gProxy: TGroupBox
         Left = 3
         Top = 0
@@ -161,8 +157,6 @@ object rdClientSettings: TrdClientSettings
     object tsSequrity: TTabSheet
       Caption = #1041#1077#1079#1086#1087#1072#1089#1085#1086#1089#1090#1100
       ImageIndex = 1
-      ExplicitWidth = 403
-      ExplicitHeight = 196
       object cbOnlyAdminChanges: TCheckBox
         Left = 3
         Top = 167
@@ -197,7 +191,7 @@ object rdClientSettings: TrdClientSettings
         Top = 0
         Width = 410
         Height = 115
-        Caption = #1055#1086#1089#1090#1086#1103#1085#1085#1099#1081' '#1087#1072#1088#1086#1083#1100
+        Caption = #1053#1077#1082#1086#1085#1090#1088#1086#1083#1080#1088#1091#1077#1084#1099#1081' '#1076#1086#1089#1090#1091#1087
         TabOrder = 1
         object Label7: TLabel
           Left = 11

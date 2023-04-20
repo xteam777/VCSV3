@@ -4191,7 +4191,7 @@ object MainForm: TMainForm
         Width = 214
         Height = 22
         AutoSize = False
-        Caption = #1055#1086#1089#1090#1086#1103#1085#1085#1099#1081' '#1076#1086#1089#1090#1091#1087
+        Caption = #1053#1077#1082#1086#1085#1090#1088#1086#1083#1080#1088#1091#1077#1084#1099#1081' '#1076#1086#1089#1090#1091#1087
         Color = clWhite
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
