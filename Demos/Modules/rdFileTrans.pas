@@ -73,10 +73,13 @@ type
   TRecentPathList = class (TStringList)
   private
     FDoubleRet: Boolean;
+    FStep: Integer;
   public
+    constructor Create(); reintroduce; overload;
     procedure Push(const s: string);
     function Pop(): string; overload; inline;
     function Pop(out s: string): Boolean; overload;
+    function Available: Boolean;
   end;
 
   TrdFileTransfer = class(TForm)
@@ -291,6 +294,7 @@ type
     procedure RestoreScroolListView(lv: TRtcPFileExplorer; const info: TListViewInfo);
     procedure BuildListDrivs();
     procedure OnTaskPanelChange(Sender: TObject);
+    procedure OnRecentChange(Sender: TObject);
 
     // new methods
   published
@@ -455,10 +459,10 @@ procedure TrdFileTransfer.FormCreate(Sender: TObject);
 begin
 
   FilesRemote.StyleElements := [];
-  FilesLocal.StyleElements := [];
-  Splitter1.StyleElements := [];
-  FilesRemote.GridLines := True;
-  FilesLocal.GridLines := True;
+  FilesLocal.StyleElements  := [];
+  Splitter1.StyleElements   := [];
+  FilesRemote.GridLines     := True;
+  FilesLocal.GridLines      := True;
 
   Application.HintHidePause := 10000;
 
@@ -466,10 +470,12 @@ begin
   FBmpR := TBitmap.Create;
   FBmpL.Assign(sbtnSend.Glyph);
   FBmpR.Assign(sbtnReceive.Glyph);
-  FRemoteRecent := TRecentPathList.Create;
-  FLocalRecent  := TRecentPathList.Create;
-  FTaskPanelList := TTaskPanelList.Create;
-  FTaskPanelList.OnChange := OnTaskPanelChange;
+  FRemoteRecent                  := TRecentPathList.Create;
+  FLocalRecent                   := TRecentPathList.Create;
+  FLocalRecent.OnChange          := OnRecentChange;
+  FRemoteRecent.OnChange         := OnRecentChange;
+  FTaskPanelList                 := TTaskPanelList.Create;
+  FTaskPanelList.OnChange        := OnTaskPanelChange;
   FTaskPanelList.TaskRemoveLogic := trlManual;
 
   btnRemoteBack.Enabled := FRemoteRecent.Count > 0;
@@ -478,8 +484,6 @@ begin
   b_ppClick(nil);
 
   DragAcceptFiles(Handle, True);
-
-
 end;
 
 procedure TrdFileTransfer.Image1Click(Sender: TObject);
@@ -1184,6 +1188,14 @@ begin
     end;
 end;
 
+procedure TrdFileTransfer.OnRecentChange(Sender: TObject);
+begin
+  if Sender = FRemoteRecent then
+    btnRemoteBack.Enabled := TRecentPathList(Sender).Available
+  else
+    btnLocalBack.Enabled := TRecentPathList(Sender).Available;
+end;
+
 procedure TrdFileTransfer.OnSendBatch(Sender: TObject; const task: TBatchTask;
   mode: TModeBatchSend);
 var
@@ -1385,7 +1397,7 @@ begin
 
  if key in [VK_RETURN] then
  try
-  FilesRemote.DblClick;
+  FilesRemote.PerformDoubleClick;
   FilesRemote.ItemFocused:= FilesRemote.Items[0];
   FilesRemote.Selected:=    FilesRemote.ItemFocused;
   except
@@ -1454,7 +1466,7 @@ begin
 
  if key in [VK_RETURN] then
  try
-  FilesLocal.DblClick;
+  FilesLocal.PerformDoubleClick;
   FilesLocal.ItemFocused:= FilesLocal.Items[0];
   FilesLocal.Selected:=    FilesLocal.ItemFocused;
   except
@@ -1982,39 +1994,58 @@ begin
 end;
 
 procedure TrdFileTransfer.b_dlClick(Sender: TObject);
-var s: string;
+var
+  s: string;
+  list: TStringList;
 begin
-  s:= get_TF(FilesRemote.SelectedFiles_('Каталог:  ','Файл:     '));
-  if TaskMessageDlg(
+  list := TStringList.Create;
+  try
+    FilesRemote.GetSelectedFiles('Каталог:  ', 'Файл:     ', list);
+    s := get_TF(list);
+    if TaskMessageDlg(
     'Удаление',
-    'Подтвердите удаление для выбранного ('+FilesRemote.SelectedFiles.Count.ToString+'):'+s,
-    mtInformation, [mbCancel, mbOK], 0, mbCancel) <> mrOK then exit;
+    'Подтвердите удаление для выбранного (' + list.Count.ToString + '):' + s,
+      mtInformation, [mbCancel, mbOK], 0, mbCancel) <> mrOK then exit;
 
-     mnDeleteClick(nil);
+       mnDeleteClick(nil);
+  finally
+    list.Free;
+  end;
 end;
 
 procedure TrdFileTransfer.b_dl2Click(Sender: TObject);
-var myFiles:TStringList;
-    a: Integer;
-    s: string;
+var
+  i: Integer;
+  s: string;
+  list: TStringList;
 begin
-  s:= get_TF(FilesLocal.SelectedFiles_('Каталог:  ','Файл:     '));
+  list := TStringList.Create;
+  try
+    FilesLocal.GetSelectedFiles('Каталог:  ','Файл:     ', list);
+    s := get_TF(list);
 
-  if TaskMessageDlg(
+    if TaskMessageDlg(
     'Удаление',
-    'Подтвердите удаление для выбранного ('+FilesLocal.SelectedFiles.Count.ToString+'):'+s,
-    mtInformation, [mbCancel, mbOK], 0, mbCancel) <> mrOK then exit;
+    'Подтвердите удаление для выбранного (' + list.Count.ToString + '):' + s,
+      mtInformation, [mbCancel, mbOK], 0, mbCancel) <> mrOK then exit;
 
 
-    myFiles:= FilesLocal.SelectedFiles;
+      if list.Count > 0 then
+        begin
 
-    if myFiles.Count>0 then
-      for a:=myFiles.Count-1 downto 0 do
-      begin
-        if DirectoryExists(myFiles[a]) then TDirectory.Delete(myFiles[a], True) else
-        if FileExists(myFiles[a]) then TFile.Delete(myFiles[a]);
-      end;
-      FilesLocal.onPath(FilesLocal.Directory);
+          FilesLocal.GetSelectedFiles('', '', list);
+          for i := list.Count-1 downto 0 do
+            begin
+              if DirectoryExists(list[i]) then
+                TDirectory.Delete(list[i], True)
+              else if FileExists(list[i]) then
+                TFile.Delete(list[i]);
+            end;
+          FilesLocal.onPath(FilesLocal.Directory);
+        end;
+  finally
+    list.Free;
+  end;
 end;
 
 procedure TrdFileTransfer.sbtnSendBatchClick(Sender: TObject);
@@ -2181,6 +2212,17 @@ end;
 {                               TRecentPathList                                }
 { **************************************************************************** }
 
+function TRecentPathList.Available: Boolean;
+begin
+  Result := FStep > 0;
+end;
+
+constructor TRecentPathList.Create;
+begin
+  inherited Create;
+  //Add('');
+end;
+
 function TRecentPathList.Pop: string;
 begin
   Pop(Result);
@@ -2191,19 +2233,24 @@ begin
   if FDoubleRet then
     Delete(Count-1);
   FDoubleRet := false;
-  Result := Count > 0;
+  Result := FStep > 0;
   s := '';
   if Result then
+    Dec(FStep);
+  if Count > 0 then
     begin
       s := Strings[Count-1];
       Delete(Count-1);
     end
+  else if Result then
+    Changed;
 end;
 
 procedure TRecentPathList.Push(const s: string);
 begin
   Add(s);
   FDoubleRet := true;
+  Inc(FStep);
 end;
 
 

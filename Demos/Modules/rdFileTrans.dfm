@@ -238,6 +238,7 @@ object rdFileTransfer: TrdFileTransfer
         Height = 32
         Hint = #1053#1072' '#1091#1088#1086#1074#1077#1085#1100' '#1074#1074#1077#1088#1093
         Align = alLeft
+        Enabled = False
         Flat = True
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -315,7 +316,7 @@ object rdFileTransfer: TrdFileTransfer
           0000}
         ParentFont = False
         OnClick = btnRemoteBackClick
-        ExplicitLeft = 32
+        ExplicitLeft = -4
       end
       object edRemoteDir: TComboBoxEx
         AlignWithMargins = True
@@ -674,7 +675,6 @@ object rdFileTransfer: TrdFileTransfer
       ParentFont = False
       TabOrder = 0
       StyleElements = []
-      ExplicitTop = -3
       DesignSize = (
         520
         52)
@@ -2465,7 +2465,7 @@ object rdFileTransfer: TrdFileTransfer
         ExplicitHeight = 28
       end
       object SpeedButton2: TSpeedButton
-        Left = 660
+        Left = 652
         Top = 0
         Width = 27
         Height = 22
@@ -2575,6 +2575,7 @@ object rdFileTransfer: TrdFileTransfer
         Height = 32
         Hint = #1053#1072' '#1091#1088#1086#1074#1077#1085#1100' '#1074#1074#1077#1088#1093#13#10
         Align = alLeft
+        Enabled = False
         Flat = True
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -2921,7 +2922,6 @@ object rdFileTransfer: TrdFileTransfer
       Font.Style = [fsBold, fsUnderline]
       ParentFont = False
       OnClick = lblCloseAllTaskClick
-      ExplicitLeft = 1019
       ExplicitHeight = 12
     end
     object al_b: TLabel
