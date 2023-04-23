@@ -51,7 +51,7 @@ type
 
     function GetSelectedNum: integer;
     function GetSelectedSize: int64;
-    function GetSelectedFiles: TStringList;
+    function GetSelectedFiles: TStringList; overload;
 
     procedure CompareFiles(Sender: TObject; Item1, Item2: TListItem;
       Data: integer; var Compare: integer);
@@ -77,17 +77,21 @@ type
     procedure AddFiles(const FData: TRtcDataSet);
 
     procedure Click; override;
+    procedure DblClick; override;
 
     // procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
 
     function GetMediaTypeStr(MT: TRtcPMediaType): String;
 
   public
-    function SelectedFiles_(d_cap,f_cap: string): TStringList;
-    procedure onPath(NewDir: String; mask: String='');
-    procedure DblClick; override;
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+
+    procedure onPath(NewDir: String; mask: String='');
+
+    function SelectedFiles_(d_cap,f_cap: string): TStringList;
+    procedure GetSelectedFiles(const PrefixFolder, PrefixFile: string; List: TStrings); overload;
+    procedure PerformDoubleClick;
 
     procedure RefreshColumns;
 
@@ -197,7 +201,7 @@ function GetShell32Path: string;
 const
   shell32dll = 'shell32.dll';
 begin
-  Result := IncludeTrailingBackslash(GetWindowsSystemFolder) + shell32dll;
+  Result := IncludeTrailingPathDelimiter(GetWindowsSystemFolder) + shell32dll;
 end;
 
 procedure FixIcon(ListView: TRtcPFileExplorer);
@@ -694,6 +698,29 @@ begin
     if Result < 0 then
       Result := AddFileIconNew;
   end;
+end;
+
+procedure TRtcPFileExplorer.GetSelectedFiles(const PrefixFolder,
+  PrefixFile: string; List: TStrings);
+var
+  i: integer;
+begin
+  List.BeginUpdate;
+  try
+    List.Clear;
+    if SelCount > 0 then
+      for i := 0 to Items.Count - 1 do
+        if Items[i].selected then
+          if (Items[i].SubItems[5] = 'dir') or (Items[i].SubItems[5] = 'file')
+          then
+            if (Items[i].SubItems[4] <> '..') then
+            if (Items[i].SubItems[5] = 'dir') then
+              List.Add(PrefixFolder + ExtractFileName(Items[i].SubItems[4])) else
+              List.Add(PrefixFile + ExtractFileName(Items[i].SubItems[4]))
+  finally
+    List.EndUpdate
+  end;
+
 end;
 
 function TRtcPFileExplorer.GetSelectedNum: integer;
@@ -1213,47 +1240,6 @@ begin
   end;
 end;
 
-{procedure TRtcPFileExplorer.onPath(NewDir: String; mask: String='');
-var
-  fld: TRtcDataSet;
-begin
-  inherited;
-
-  if mask='' then mask:= '*.*';
-  NewDir := IncludeTrailingBackslash(NewDir);
-  if FLocal then
-  begin
-    fld := TRtcDataSet.Create;
-    try
-      GetFilesList(NewDir, mask, fld);
-      UpdateFileList(NewDir, fld);
-    finally
-      fld.Free;
-    end;
-  end;
-  if Assigned(FOnDirectoryChange) then
-    FOnDirectoryChange(Self, NewDir);
-end;}
-
-procedure TRtcPFileExplorer.onPath(NewDir, mask: string);
-var
-  data: TRtcDataSet;
-begin
-  if not Local then exit;
-
-  data := TRtcDataSet.Create;
-  try
-    GetFilesList(NewDir, mask, data);
-    UpdateFileList(NewDir, data);
-  finally
-    data.Free;
-  end;
-
-  if Assigned(OnDirectoryChange) then
-    OnDirectoryChange(Self, NewDir);
-
-end;
-
 
 { procedure TRtcPFileExplorer.WMRButtonDown(var Message: TWMRButtonDown);
   begin
@@ -1303,23 +1289,6 @@ begin
         then
           if (Items[i].SubItems[4] <> '..') then
             FSelectedFiles.Add(Items[i].SubItems[4]);
-end;
-
-function TRtcPFileExplorer.SelectedFiles_(d_cap,f_cap: string): TStringList;
-var
-  i: integer;
-begin
-  Result := FSelectedFiles;
-  FSelectedFiles.Clear;
-  if SelCount > 0 then
-    for i := 0 to Items.Count - 1 do
-      if Items[i].selected then
-        if (Items[i].SubItems[5] = 'dir') or (Items[i].SubItems[5] = 'file')
-        then
-          if (Items[i].SubItems[4] <> '..') then
-          if (Items[i].SubItems[5] = 'dir') then
-            FSelectedFiles.Add(d_cap+ExtractFileName(Items[i].SubItems[4])) else
-            FSelectedFiles.Add(f_cap+ExtractFileName(Items[i].SubItems[4]))
 end;
 
 function TRtcPFileExplorer.GetMediaTypeStr(MT: TRtcPMediaType): String;
@@ -1417,7 +1386,7 @@ begin
     end;
     with Columns.Add do // 4
     begin
-      Caption := 'Атриб.';//'Attr';
+      Caption := 'Атрибуты';//'Attr';
       Width := 45;
     end;
   end;
@@ -1450,6 +1419,68 @@ begin
     Items.EndUpdate;
     Screen.Cursor := oldCur;
   end;
+end;
+
+procedure TRtcPFileExplorer.onPath(NewDir, mask: string);
+var
+  data: TRtcDataSet;
+begin
+  if not Local then exit;
+
+  data := TRtcDataSet.Create;
+  try
+    GetFilesList(NewDir, mask, data);
+    UpdateFileList(NewDir, data);
+  finally
+    data.Free;
+  end;
+
+//  if Assigned(OnDirectoryChange) then
+//    OnDirectoryChange(Self, NewDir);
+
+end;
+
+{procedure TRtcPFileExplorer.onPath(NewDir: String; mask: String='');
+var
+  fld: TRtcDataSet;
+begin
+  inherited;
+      if mask='' then mask:= '*.*';
+      NewDir := IncludeTrailingBackslash(NewDir);
+      if FLocal then
+      begin
+        fld := TRtcDataSet.Create;
+        try
+          GetFilesList(NewDir, mask, fld);
+          UpdateFileList(NewDir, fld);
+        finally
+          fld.Free;
+        end;
+      end;
+      if Assigned(FOnDirectoryChange) then
+        FOnDirectoryChange(Self, NewDir);
+end;}
+
+procedure TRtcPFileExplorer.PerformDoubleClick;
+begin
+  DblClick;
+end;
+
+function TRtcPFileExplorer.SelectedFiles_(d_cap,f_cap: string): TStringList;
+var
+  i: integer;
+begin
+  Result := FSelectedFiles;
+  FSelectedFiles.Clear;
+  if SelCount > 0 then
+    for i := 0 to Items.Count - 1 do
+      if Items[i].selected then
+        if (Items[i].SubItems[5] = 'dir') or (Items[i].SubItems[5] = 'file')
+        then
+          if (Items[i].SubItems[4] <> '..') then
+          if (Items[i].SubItems[5] = 'dir') then
+            FSelectedFiles.Add(d_cap+ExtractFileName(Items[i].SubItems[4])) else
+            FSelectedFiles.Add(f_cap+ExtractFileName(Items[i].SubItems[4]))
 end;
 
 end.
