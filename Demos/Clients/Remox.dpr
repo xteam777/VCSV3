@@ -20,7 +20,7 @@
 
 uses
   {$IFDEF Debug}
-  FastMM4,
+  FastMM5,
   {$ENDIF}
   rtcLog,
   Classes,
