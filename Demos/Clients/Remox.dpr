@@ -5,15 +5,8 @@
 
 {$INCLUDE rtcDefs.inc}
 
-
-
 {$define FullDebugMode}
 {$define LogMemoryLeakDetailToFile}
-
-
-
-
-
 
 
 {$R *.dres}
