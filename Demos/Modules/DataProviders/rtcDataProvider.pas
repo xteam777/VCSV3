@@ -87,6 +87,8 @@ type
     PortalGateServerGroup: TRtcFunctionGroup;
     rGateRelogin: TRtcResult;
     HostLogoutByHash: TRtcFunction;
+    AddConnection: TRtcFunction;
+    RemoveConnection: TRtcFunction;
     procedure DataModuleCreate(Sender: TObject);
     procedure DataModuleDestroy(Sender: TObject);
     procedure Module1SessionClose(Sender: TRtcConnection);

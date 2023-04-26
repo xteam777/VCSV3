@@ -351,6 +351,20 @@ object Data_Provider: TData_Provider
     FunctionName = 'Host.LogoutByHash'
     OnExecute = HostLogoutByHashExecute
     Left = 556
-    Top = 263
+    Top = 207
+  end
+  object AddConnection: TRtcFunction
+    Group = GatewayFunctions
+    FunctionName = 'Host.AddConnection'
+    OnExecute = HostLoginExecute
+    Left = 560
+    Top = 265
+  end
+  object RemoveConnection: TRtcFunction
+    Group = GatewayFunctions
+    FunctionName = 'Host.RemoveConnection'
+    OnExecute = HostLoginExecute
+    Left = 624
+    Top = 265
   end
 end
