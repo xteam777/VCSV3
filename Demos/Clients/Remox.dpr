@@ -12,9 +12,9 @@
 {$R *.dres}
 
 uses
-  {$IFDEF Debug}
-  FastMM5,
-  {$ENDIF}
+//  {$IFDEF Debug}
+//  FastMM5,
+//  {$ENDIF}
   rtcLog,
   Classes,
   SysUtils,
