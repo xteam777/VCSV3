@@ -478,9 +478,6 @@ begin
   FTaskPanelList.OnChange        := OnTaskPanelChange;
   FTaskPanelList.TaskRemoveLogic := trlManual;
 
-  btnRemoteBack.Enabled := FRemoteRecent.Count > 0;
-  btnLocalBack.Enabled := FLocalRecent.Count > 0;
-
   b_ppClick(nil);
 
   DragAcceptFiles(Handle, True);
@@ -592,10 +589,8 @@ procedure TrdFileTransfer.FilesLocalDirectoryChange(Sender: TObject;
   const FileName: string);
 begin
   FLocalRecent.Push(FileName);
-
   edLocalDir.Text:= FileName;
   FilesLocalClick(nil);
-  btnLocalBack.Enabled := FLocalRecent.Count > 0;
 end;
 
 procedure TrdFileTransfer.FilesRemoteDirectoryChange(Sender: TObject; const FileName: String);
@@ -605,7 +600,7 @@ begin
     myUI.GetFileList(FileName,'');
 
   FilesRemoteClick(nil);
-  btnRemoteBack.Enabled := FRemoteRecent.Count > 0;
+
 end;
 
 procedure TrdFileTransfer.btnRemoteBackClick(Sender: TObject);
@@ -613,13 +608,11 @@ begin
   if Sender = btnRemoteBack then
   begin
     edRemoteDir.Text := FRemoteRecent.Pop;
-    btnRemoteBack.Enabled := FRemoteRecent.Count > 0;
     btnRemoteReloadClick(nil);
   end
   else
   begin
     edLocalDir.Text := FLocalRecent.Pop;
-    btnLocalBack.Enabled := FLocalRecent.Count > 0;
     btnLocalReloadClick(nil);
   end;
 end;
@@ -690,10 +683,7 @@ begin
         FilesLocal.Items[i].ImageIndex, -1, -1, 0, nil);
     end;
 
-  FRemoteRecent.Clear;
-  FLocalRecent.Clear;
-  btnRemoteBack.Enabled := FRemoteRecent.Count > 0;
-  btnLocalBack.Enabled := FLocalRecent.Count > 0;
+
 end;
 
 procedure TrdFileTransfer.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -906,8 +896,6 @@ begin
      SendMessage(FilesLocal.Handle, WM_SETREDRAW, 1, 0);
      SendMessage(FilesRemote.Handle, WM_SETREDRAW, 1, 0);
    end;
-
-   tAutoFitColumns.Enabled := False;
 end;
 
 procedure TrdFileTransfer.tiClick(Sender: TObject);
@@ -2208,19 +2196,20 @@ end;
 {                               TRecentPathList                                }
 { **************************************************************************** }
 
+function TRecentPathList.Pop: string;
+begin
+  Pop(Result);
+end;
+
 function TRecentPathList.Available: Boolean;
 begin
   Result := FStep > 0;
 end;
+
 constructor TRecentPathList.Create;
 begin
   inherited Create;
   //Add('');
-end;
-
-function TRecentPathList.Pop: string;
-begin
-  Pop(Result);
 end;
 
 function TRecentPathList.Pop(out s: string): Boolean;

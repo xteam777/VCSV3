@@ -3473,6 +3473,7 @@ object rdFileTransfer: TrdFileTransfer
   end
   object tAutoFitColumns: TTimer
     Enabled = False
+    Interval = 100
     OnTimer = tAutoFitColumnsTimer
     Left = 8
     Top = 198

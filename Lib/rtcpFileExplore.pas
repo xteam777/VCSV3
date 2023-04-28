@@ -1222,8 +1222,8 @@ begin
         try
           GetFilesList(NewDir, '*.*', fld);
           UpdateFileList(NewDir, fld);
-          Selected:=     items[0];
-          ItemFocused:=  items[0];
+//          Selected:=     items[0];
+//          ItemFocused:=  items[0];
         finally
           fld.Free;
         end;
