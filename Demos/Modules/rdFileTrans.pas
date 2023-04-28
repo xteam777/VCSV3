@@ -76,7 +76,7 @@ type
     FStep: Integer;
   public
     constructor Create(); reintroduce; overload;
-    procedure Push(const s: string);
+    procedure Push(const s: String);
     function Pop(): string; overload; inline;
     function Pop(out s: string): Boolean; overload;
     function Available: Boolean;
@@ -2246,11 +2246,11 @@ begin
     Changed;
 end;
 
-procedure TRecentPathList.Push(const s: string);
+procedure TRecentPathList.Push(const s: String);
 begin
-  Add(s);
-  FDoubleRet := true;
   Inc(FStep);
+  FDoubleRet := True;
+  Add(s);
 end;
 
 

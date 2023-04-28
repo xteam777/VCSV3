@@ -339,7 +339,6 @@ object rdFileTransfer: TrdFileTransfer
         ParentFont = False
         TabOrder = 0
         TabStop = False
-        Text = 'C:\'
         OnKeyPress = edRemoteDirKeyPress
         OnSelect = edRemoteDirSelect
         Images = ImageList2
@@ -2675,7 +2674,6 @@ object rdFileTransfer: TrdFileTransfer
         ParentFont = False
         TabOrder = 0
         TabStop = False
-        Text = 'C:\'
         OnKeyPress = edLocalDirKeyPress
         OnSelect = edLocalDirSelect
         Images = ImageList2
