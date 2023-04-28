@@ -2006,7 +2006,6 @@ begin
     'Удаление',
     'Подтвердите удаление для выбранного (' + list.Count.ToString + '):' + s,
       mtInformation, [mbCancel, mbOK], 0, mbCancel) <> mrOK then exit;
-
        mnDeleteClick(nil);
   finally
     list.Free;
@@ -2023,16 +2022,13 @@ begin
   try
     FilesLocal.GetSelectedFiles('Каталог:  ','Файл:     ', list);
     s := get_TF(list);
-
     if TaskMessageDlg(
     'Удаление',
     'Подтвердите удаление для выбранного (' + list.Count.ToString + '):' + s,
       mtInformation, [mbCancel, mbOK], 0, mbCancel) <> mrOK then exit;
 
-
       if list.Count > 0 then
         begin
-
           FilesLocal.GetSelectedFiles('', '', list);
           for i := list.Count-1 downto 0 do
             begin
@@ -2216,7 +2212,6 @@ function TRecentPathList.Available: Boolean;
 begin
   Result := FStep > 0;
 end;
-
 constructor TRecentPathList.Create;
 begin
   inherited Create;

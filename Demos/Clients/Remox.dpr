@@ -63,8 +63,7 @@ uses
   uSetup in 'uSetup.pas',
   uAcceptEula in '..\Modules\uAcceptEula.pas' {fAcceptEULA},
   NTImport in 'NTImport.pas',
-  rtcpFileTrans in 'rtcpFileTrans.pas',
-  MultiFileTrans in 'MultiFileTrans.pas';
+  rtcpFileTrans in 'rtcpFileTrans.pas';
 
 {$R rtcportaluac.res rtcportaluac.rc}
 {$R *.res}

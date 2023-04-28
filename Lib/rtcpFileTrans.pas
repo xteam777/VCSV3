@@ -1120,8 +1120,8 @@ var
   fsize: int64;
 begin
   fname := ExtractFileName(FileName);
-  if fname=FileName then
-    ffolder:=''
+  if fname = FileName then
+    ffolder := ''
   else
     ffolder := ExtractFilePath(FileName);
   fsize := CancelFileSending(Sender, UserName, fname, ffolder);

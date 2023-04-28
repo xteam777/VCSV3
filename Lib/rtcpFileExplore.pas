@@ -1240,7 +1240,6 @@ begin
   end;
 end;
 
-
 { procedure TRtcPFileExplorer.WMRButtonDown(var Message: TWMRButtonDown);
   begin
   DoMouseDown(Message, mbRight, []);
@@ -1295,19 +1294,19 @@ function TRtcPFileExplorer.GetMediaTypeStr(MT: TRtcPMediaType): String;
 begin
   case MT of
     dtUnknown:
-      Result := '<unknown>';
+      Result := '<неизвестно>';
     dtNotExists:
-      Result := '<not exists>';
+      Result := '<отсутствует>';
     dtRemovable:
-      Result := 'Removable';
+      Result := 'Подключаемый';
     dtFixed:
-      Result := 'Drive';
+      Result := 'Диск';
     dtRemote:
-      Result := 'Remote';
+      Result := 'Удаленный';
     dtCDROM:
       Result := 'CD/DVD-ROM';
     dtRAMDisk:
-      Result := 'RAM Disk';
+      Result := 'RAM диск';
   end;
 end;
 

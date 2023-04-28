@@ -208,7 +208,6 @@
         </DCCReference>
         <DCCReference Include="NTImport.pas"/>
         <DCCReference Include="rtcpFileTrans.pas"/>
-        <DCCReference Include="MultiFileTrans.pas"/>
         <RcItem Include="rmx_w32.exe">
             <ContainerId>ResourceItem</ContainerId>
             <ResourceType>RCDATA</ResourceType>
