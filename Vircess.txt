@@ -5,6 +5,7 @@
 два языка. по умолчанию из локали
 you need EV code signing certificate to SmartScreen ByPass https://www.gironsec.com/blog/2020/12/bypassing-windows-smartscreen/
 фм сетевые и вуртуальные папки
+?права на удаление папки виндовс
 
 //фм
 //	подключение к службе
