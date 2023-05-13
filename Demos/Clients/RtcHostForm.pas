@@ -80,6 +80,7 @@ type
   PPortalThread = ^TPortalThread;
   TPortalThread = class(TThread)
   private
+    FDataModule: TDataModule;
     FUserName: String;
     FAction: String;
     FUID: String;
@@ -1800,7 +1801,9 @@ begin
 
   FUID := GetUniqueString;
 
-  FGatewayClient := TRtcHttpPortalClient.Create(nil);
+  FDataModule := TDataModule.Create(nil);
+
+  FGatewayClient := TRtcHttpPortalClient.Create(FDataModule);
   FGatewayClient.Name := 'PClient_' + FUID;
   FGatewayClient.LoginUserName := DeviceId + '_' + FUserName + '_' + FAction + '_' + FUID; //IntToStr(GatewayClientsList.Count + 1);
   FGatewayClient.LoginUserInfo.asText['RealName'] := DeviceId;
@@ -1850,7 +1853,7 @@ begin
 
   if FAction = 'desk' then
   begin
-    FDesktopControl := TRtcPDesktopControl.Create(nil);
+    FDesktopControl := TRtcPDesktopControl.Create(FDataModule);
     FDesktopControl.Name := 'PDesktopControl_' + FUID;
     FDesktopControl.Client := FGatewayClient;
     FDesktopControl.SendShortcuts := MainForm.PDesktopControl.SendShortcuts;
@@ -1860,7 +1863,7 @@ begin
   else
   if FAction = 'file' then
   begin
-    FFileTransfer := TRtcPFileTransfer.Create(nil);
+    FFileTransfer := TRtcPFileTransfer.Create(FDataModule);
     FFileTransfer.Name := 'PFileTransfer_' + FUID;
     FFileTransfer.Client := FGatewayClient;
     FFileTransfer.AccessControl := False;
@@ -1902,7 +1905,7 @@ begin
   else
   if FAction = 'chat' then
   begin
-    FChat := TRtcPChat.Create(nil);
+    FChat := TRtcPChat.Create(FDataModule);
     FChat.Name := 'PChat_' + FUID;
     FChat.Client := FGatewayClient;
     FChat.AccessControl := False;
@@ -1950,38 +1953,50 @@ end;
 
 destructor TPortalThread.Destroy;
 begin
-  try
-    FGatewayClient.Disconnect;
-  finally
-  end;
-  try
-    FGatewayClient.Active := False;
-  finally
-  end;
+  FGatewayClient.Disconnect;
+  FGatewayClient.Active := False;
+  FDesktopControl.Free;
+  FFileTransfer.Free;
+  FChat.Free;
+  FGatewayClient.Free;
+  FDataModule.Free;
 
-  try
-    if FDesktopControl <> nil then
-      FDesktopControl.Free;
-  finally
-  end;
-  try
-    if FFileTransfer <> nil then
-      FFileTransfer.Free;
-  finally
-  end;
-  try
-    if FChat <> nil then
-      FChat.Free;
-  finally
-  end;
-  try
-    FGatewayClient.Free;
-  finally
-  end;
+//  try
+//    FGatewayClient.Disconnect;
+//  finally
+//  end;
+//  try
+//    FGatewayClient.Active := False;
+//  finally
+//  end;
+//
+//  try
+//    if FDesktopControl <> nil then
+//      FDesktopControl.Free;
+//  finally
+//  end;
+//  try
+//    if FFileTransfer <> nil then
+//      FFileTransfer.Free;
+//  finally
+//  end;
+//  try
+//    if FChat <> nil then
+//      FChat.Free;
+//  finally
+//  end;
+//  try
+//    FGatewayClient.Free;
+//  finally
+//  end;
+//  try
+//    FDataModule.Free;
+//  finally
+//  end;
 
   TSendDestroyClientToGatewayThread.Create(False, FGateway, DeviceId + '_' + FUserName + '_' + FAction + '_' + FUID, False);
 
-  TerminateThread(ThreadID, ExitCode);
+//  TerminateThread(ThreadID, ExitCode);
 end;
 
 procedure TPortalThread.Execute;
