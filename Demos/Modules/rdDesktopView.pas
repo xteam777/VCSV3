@@ -9,7 +9,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, CommonData, CommonUtils,
-  Classes, Graphics, Controls, Forms, Types, IOUtils,
+  Classes, Graphics, Controls, Forms, Types, IOUtils, DateUtils,
   Dialogs, ExtCtrls, StdCtrls, ShellAPI, ProgressDialog, rtcSystem,
 
   rtcpFileTrans, rtcpChat,
@@ -17,9 +17,9 @@ uses
   rtcpDesktopConst, Buttons, Spin, System.Actions, Vcl.ActnList, Vcl.ActnMan,
   Vcl.ActnColorMaps, Vcl.ToolWin,
   Vcl.ActnCtrls, Vcl.ActnMenus, uVircessTypes, rtcLog, ClipBrd,
-  Vcl.PlatformDefaultStyleActnCtrls, {AviFromBitmaps, vfw, }Vcl.Imaging.jpeg,
+  Vcl.PlatformDefaultStyleActnCtrls, Vcl.Imaging.jpeg,
   System.ImageList, Vcl.ImgList, Math, Vcl.ComCtrls, Vcl.Imaging.pngimage,
-  NFPanel, rtcpFileTransUI;
+  NFPanel, rtcpFileTransUI, VideoRecorder;
 
 type
   TrdDesktopViewer = class(TForm)
@@ -43,8 +43,8 @@ type
     aScreenshotToCbrd: TAction;
     aRecordStart: TAction;
     tRecord: TTimer;
-    aRecordPauseResume: TAction;
     aRecordStop: TAction;
+    aRecordCancel: TAction;
     ilTopPanel: TImageList;
     panOptionsTimer: TTimer;
     aStretchScreen: TAction;
@@ -97,8 +97,12 @@ type
     iMiniPanelHide: TImage;
     iMiniPanelShow: TImage;
     iMove: TImage;
-    Button1: TButton;
     FT_UI: TRtcPFileTransferUI;
+    aRecordOpenFolder: TAction;
+    TimerRec: TTimer;
+    aRecordCodecInfo: TAction;
+    imgRec: TImage;
+    lblRecInfo: TLabel;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -143,8 +147,8 @@ type
     procedure aRecordStartExecute(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure tRecordTimer(Sender: TObject);
-    procedure aRecordPauseResumeExecute(Sender: TObject);
     procedure aRecordStopExecute(Sender: TObject);
+    procedure aRecordCancelExecute(Sender: TObject);
     procedure panOptionsTimerTimer(Sender: TObject);
     procedure panOptionsMiniMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
@@ -165,7 +169,6 @@ type
     procedure aSendShortcutsExecute(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure panOptionsMouseLeave(Sender: TObject);
-    procedure Button1Click(Sender: TObject);
 //    procedure FT_UIRecvStart(Sender: TRtcPFileTransferUI);
 //    procedure FT_UIRecv(Sender: TRtcPFileTransferUI);
 //    procedure FT_UIRecvCancel(Sender: TRtcPFileTransferUI);
@@ -173,7 +176,24 @@ type
     procedure FT_UINotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);
     procedure FT_UIClose(Sender: TRtcPFileTransferUI);
     procedure FT_UILogOut(Sender: TRtcPFileTransferUI);
-
+    procedure TimerRecTimer(Sender: TObject);
+    procedure aRecordOpenFolderExecute(Sender: TObject);
+    procedure aRecordCodecInfoExecute(Sender: TObject);
+  private
+    FVideoRecorder: TVideoRecorder;
+    FVideoFile: String;
+    FImageChanged: Boolean;
+    FVideoImage: TBitmap;
+    FLockVideoImage: Integer;
+    procedure DoRecordAction(Action: Integer);
+    procedure RecordStart();
+    procedure RecordStop();
+    procedure RecordCancel();
+	  procedure RecordStopWindowProc(var Message: TMessage); message WM_STOP_RECORD;
+    procedure ModalFormRecordStopActivate(Sender: TObject);
+    procedure OnGetVideoFrame(Sender: TObject);
+    procedure LockVideoImage;
+    procedure UnlockVideoImage;
   protected
     LMouseX,LMouseY:integer;
     LMouseD:boolean;
@@ -185,10 +205,10 @@ type
 
     FProgressDialogsList: TList;
 
-    RecordState: TRecordState;
+//    RecordState: TRecordState;
 //    RecordThread: TRecordThrd;
-    FramesCount: Integer;
-    CurrentFrame: Integer;
+//    FramesCount: Integer;
+//    CurrentFrame: Integer;
 //    Avi: TAviFromBitmaps;
 
     FOnUIOpen: TUIOpenEvent;
@@ -212,13 +232,13 @@ type
 
 //    procedure WndProc(var Msg : TMessage); override;
 
-    function LeaseExpiresDateToDateTime(LeaseExpires: Integer): String;
-    procedure RecordThreadOnTerminate(Sender: TObject);
-    procedure ScreenRecordStart(AFileName: String);
-    procedure ScreenRecordPause;
-    procedure ScreenRecordResume;
-    procedure ScreenRecordStop;
-    procedure CheckRecordState(var msg: TMessage); message WM_SETCURRENTFRAME;
+//    function LeaseExpiresDateToDateTime(LeaseExpires: Integer): String;
+//    procedure RecordThreadOnTerminate(Sender: TObject);
+//    procedure ScreenRecordStart(AFileName: String);
+//    procedure ScreenRecordPause;
+//    procedure ScreenRecordResume;
+//    procedure ScreenRecordStop;
+//    procedure CheckRecordState(var msg: TMessage); message WM_SETCURRENTFRAME;
     procedure ChangeLockedState(var Message: TMessage); message WM_CHANGE_LOCKED_STATUS;
     procedure GetFilesFromHostClipboard(var Message: TMessage); message WM_GET_FILES_FROM_CLIPBOARD;
 //    procedure WMActivate(var Message: TMessage); message WM_ACTIVATE;
@@ -255,6 +275,12 @@ type
     procedure RemoveProgressDialogByUserName(AUserName: String);
   end;
 
+
+const
+  RECORD_START = 0;
+  RECORD_STOP = 1;
+  RECORD_CANCEL = 2;
+  RECORD_CODEC_INFO = 3;
 
 var
   panOptionsVisible: Boolean;
@@ -760,6 +786,8 @@ begin
 //  if not aRecordStart.Enabled then
 //    Avi.Free;
 
+  RecordCancel;
+
   FT_UI.CloseAndClear();
 end;
 
@@ -807,12 +835,12 @@ begin
 
   tRecord.Enabled := False;
 
-  aRecordStart.Enabled := True;
-  aRecordPauseResume.Enabled := False;
-  aRecordPauseResume.Caption := 'Приостановить';
-  aRecordStop.Enabled := False;
-
-  RecordState := RSTATE_STOPPED;
+//  aRecordStart.Enabled := True;
+//  aRecordPauseResume.Enabled := False;
+//  aRecordPauseResume.Caption := 'Приостановить';
+//  aRecordStop.Enabled := False;
+//
+//  RecordState := RSTATE_STOPPED;
 
   panOptionsVisible := True;
   MiniPanelDraggging := False;
@@ -825,6 +853,16 @@ begin
   aSendShortcuts.Checked := True;
 //  UI.Module.SendShortcuts := True;
   SetShortcuts_Hook(True); //Доделать
+
+  imgRec.Left := pImage.Width - 100;
+  imgRec.Top := 10;
+  imgRec.Visible := False;
+  lblRecInfo.Left := pImage.Width - 80;
+  lblRecInfo.Top := 10;
+  lblRecInfo.Visible := False;
+
+  aRecordStop.Enabled := Assigned(FVideoRecorder);
+  aRecordCancel.Enabled := Assigned(FVideoRecorder);
 
   Visible := False; //позже ставим True если не отменено в пендинге
 end;
@@ -852,6 +890,13 @@ begin
   lState.Left := 0;
   lState.Width := ClientWidth;
   lState.Top := Height * 580 div 680;
+
+  imgRec.Left := pImage.Width - 100;
+  imgRec.Top := 10;
+  imgRec.Visible := False;
+  lblRecInfo.Left := pImage.Width - 80;
+  lblRecInfo.Top := 10;
+  lblRecInfo.Visible := False;
 end;
 
 procedure TrdDesktopViewer.FormShow(Sender: TObject);
@@ -1226,6 +1271,17 @@ end;
 
 procedure TrdDesktopViewer.myUIData(Sender: TRtcPDesktopControlUI);
 begin
+  FImageChanged := true;
+  if Assigned(FVideoRecorder) then
+    begin
+      LockVideoImage;
+      try
+        FVideoImage.Canvas.Draw(0, 0, UI.Playback.Image);
+      finally
+        UnlockVideoImage
+      end;
+    end;
+
   //Подгонка размера изображения
   if fFirstScreen and UI.HaveScreen then
   begin
@@ -1381,11 +1437,6 @@ procedure TrdDesktopViewer.btnSettingsClick(Sender: TObject);
 //  cbReduceColors.Enabled:=False;
 //  cbReduceColors.Color:=clBtnFace;
   end;
-
-procedure TrdDesktopViewer.Button1Click(Sender: TObject);
-begin
-//  myUI.Send('C:\Rufus\rufus.log', 'C:\Rufus\');
-end;
 
 procedure TrdDesktopViewer.btnCancelClick(Sender: TObject);
 begin
@@ -1563,53 +1614,218 @@ begin
   UI.Send_PowerOffSystem(Sender);
 end;
 
-procedure TrdDesktopViewer.aRecordPauseResumeExecute(Sender: TObject);
+procedure TrdDesktopViewer.aRecordStopExecute(Sender: TObject);
 begin
-  if aRecordPauseResume.Caption = 'Приостановить' then
-    ScreenRecordPause
-  else
-    ScreenRecordResume;
+  DoRecordAction(RECORD_STOP);
+end;
+
+//procedure TrdDesktopViewer.aRecordStartExecute(Sender: TObject);
+//var
+//  saveDialog : TSaveDialog;
+//begin
+//  saveDialog := TSaveDialog.Create(self);
+//  saveDialog.Title := 'Выберите место для сохранения';
+//  saveDialog.InitialDir := GetCurrentDir;
+//  saveDialog.Filter := 'AVI file|*.avi';
+//  saveDialog.DefaultExt := 'avi';
+//  saveDialog.FilterIndex := 1;
+//  saveDialog.Options := [ofOverwritePrompt, ofPathMustExist];
+//
+//  if saveDialog.Execute then
+//  begin
+//    try
+//      if FileExists(saveDialog.FileName) then
+//        DeleteFile(saveDialog.FileName);
+//    except
+//      on E: Exception do
+//        xLog('aScreenshotToFileExecute. Error: ' + E.ClassName + '. ' + E.Message);
+//    end;
+//
+//    ScreenRecordStart(saveDialog.FileName);
+//  end;
+//
+//  saveDialog.Free;
+//end;
+
+procedure TrdDesktopViewer.RecordStart;
+begin
+  if Assigned(FVideoRecorder) then
+    raise Exception.Create('Video is recording');
+  FVideoFile := IncludeTrailingPathDelimiter(ExpandFileName(RecordsFolder));
+  ForceDirectories(FVideoFile);
+  FVideoFile := FVideoFile + 'Video_' + FormatDateTime('YYYY_MM_DD_HHNNSS', Now) + '.avi';
+  FVideoImage := TBitmap.Create;
+  FVideoImage.SetSize(UI.Playback.Image.Width, UI.Playback.Image.Height);
+  FVideoImage.PixelFormat := pf24bit;
+  FVideoImage.Canvas.Draw(0, 0, UI.Playback.Image);
+  FVideoRecorder := TVideoRecorderAVIVFW.Create(Handle, FVideoFile, 10, OnGetVideoFrame, FVideoImage);
+end;
+
+procedure TrdDesktopViewer.RecordStop;
+var
+  frm: TForm;
+begin
+  if not Assigned(FVideoRecorder) then
+    Exit;
+
+  frm := CreateMessageDialog('Stop Recording .... ', mtInformation, []);
+  frm.Position := poScreenCenter;
+  frm.Caption := Application.Title;
+  frm.OnActivate := ModalFormRecordStopActivate;
+  frm.ShowModal;
+  while Assigned(FVideoImage) do
+    Application.ProcessMessages;
+  frm.Free;
+end;
+
+procedure TrdDesktopViewer.RecordCancel;
+begin
+  if not Assigned(FVideoRecorder) then
+    Exit;
+  FVideoRecorder.Terminate;
+  RecordStop;
+  DeleteFile(FVideoFile);
+end;
+
+procedure TrdDesktopViewer.RecordStopWindowProc(var Message: TMessage);
+var
+  temp: TObject;
+begin
+  temp := FVideoRecorder;
+  FVideoRecorder := nil;
+  temp.Free;
+  FVideoImage.Free;
+  FVideoImage := nil;
+  Message.Result := 0;
+  TForm(Message.LParam).ModalResult := mrOk;
+end;
+
+procedure TrdDesktopViewer.ModalFormRecordStopActivate(Sender: TObject);
+begin
+  PostMessage(Handle, WM_STOP_RECORD, 0, LPARAM(Sender));
+end;
+
+procedure TrdDesktopViewer.OnGetVideoFrame(Sender: TObject);
+begin
+  if not Assigned(FVideoRecorder) then exit;
+//    FVideoRecorder.AddVideoFrame(FVideoImage);
+  LockVideoImage;
+  try
+    TVideoRecorder(Sender).AddVideoFrame(FVideoImage, FImageChanged);
+    FImageChanged := false;
+  finally
+    UnlockVideoImage;
+  end;
+end;
+
+procedure TrdDesktopViewer.LockVideoImage;
+begin
+  while InterlockedExchange(FLockVideoImage, 1) <> 0 do
+    SwitchToThread;
+end;
+
+procedure TrdDesktopViewer.UnlockVideoImage;
+begin
+  InterlockedExchange(FLockVideoImage, 0);
 end;
 
 procedure TrdDesktopViewer.aRecordStartExecute(Sender: TObject);
+begin
+  DoRecordAction(RECORD_START);
+end;
+
+procedure TrdDesktopViewer.DoRecordAction(Action: Integer);
 var
-  saveDialog : TSaveDialog;
+  frm: TForm;
 begin
-  saveDialog := TSaveDialog.Create(self);
-  saveDialog.Title := 'Выберите место для сохранения';
-  saveDialog.InitialDir := GetCurrentDir;
-  saveDialog.Filter := 'AVI file|*.avi';
-  saveDialog.DefaultExt := 'avi';
-  saveDialog.FilterIndex := 1;
-  saveDialog.Options := [ofOverwritePrompt, ofPathMustExist];
-
-  if saveDialog.Execute then
-  begin
-    try
-      if FileExists(saveDialog.FileName) then
-        DeleteFile(saveDialog.FileName);
-    except
-      on E: Exception do
-        xLog('aScreenshotToFileExecute. Error: ' + E.ClassName + '. ' + E.Message);
+  if Action = RECORD_START then
+    begin
+      RecordStart();
+      imgRec.Visible := True;
+      lblRecInfo.Visible := True;
+      lblRecInfo.Tag := GetTickCount;
+      TimerRec.Enabled := true;
+    end
+  else
+  if Action = RECORD_STOP then
+    begin
+      RecordStop();
+      imgRec.Visible := False;
+      lblRecInfo.Visible := False;
+      TimerRec.Enabled := False;
+      MessageBox(Handle, PChar('Record finished'), PChar(Application.Title), MB_ICONINFORMATION or MB_OK);
+    end
+  else
+  if Action = RECORD_CANCEL then
+    begin
+      if MessageBox(Handle, PChar('Do you want to cancel desktop recording?'),
+        PChar(Application.Title), MB_ICONASTERISK or MB_YESNO) <> IDYES  then exit;
+      RecordCancel();
+      imgRec.Visible := False;
+      lblRecInfo.Visible := False;
+      TimerRec.Enabled := False;
+      MessageBox(Handle, PChar('Record canceled'), PChar(Application.Title), MB_ICONINFORMATION or MB_OK);
+    end
+  else
+  if Action = RECORD_CODEC_INFO then
+    begin
+      frm := TForm.Create(Self);
+      try
+        frm.Position := poScreenCenter;
+        frm.Width := 600;
+        frm.Height := 400;
+        frm.Caption := 'Information about specific installed video compressors';
+        with TMemo.Create(frm) do
+          begin
+            Font.Name := 'Consolas';
+            Align := alClient;
+            Parent:= frm;
+            ScrollBars := ssBoth;
+            TVideoRecorderAVIVFW.ExtractCodecInfo(Lines);
+          end;
+        frm.ShowModal
+      finally
+        frm.Free;
+      end;
     end;
-
-    ScreenRecordStart(saveDialog.FileName);
-  end;
-
-  saveDialog.Free;
+  aRecordStop.Enabled := Assigned(FVideoRecorder);
+  aRecordCancel.Enabled := Assigned(FVideoRecorder);
 end;
 
-procedure TrdDesktopViewer.aRecordStopExecute(Sender: TObject);
+procedure TrdDesktopViewer.aRecordCancelExecute(Sender: TObject);
 begin
-  ScreenRecordStop;
+  DoRecordAction(RECORD_CANCEL);
 end;
 
-procedure TrdDesktopViewer.RecordThreadOnTerminate(Sender: TObject);
+procedure TrdDesktopViewer.aRecordCodecInfoExecute(Sender: TObject);
 begin
-
+  DoRecordAction(RECORD_CODEC_INFO);
 end;
 
-function TrdDesktopViewer.LeaseExpiresDateToDateTime(LeaseExpires: Integer): String;
+procedure TrdDesktopViewer.aRecordOpenFolderExecute(Sender: TObject);
+//var
+//  dlg: TFileOpenDialog;
+begin
+//  dlg := TFileOpenDialog.Create(nil);
+//  try
+//    dlg.DefaultFolder := RecordsFolder;
+//    dlg.FileName      := RecordsFolder;
+//    dlg.Options       := dlg.Options + [fdoPickFolders];
+//    if dlg.Execute then
+//      edRecordFolder.Text := dlg.FileName;
+//  finally
+//    dlg.Free;
+//  end;
+  if not DirectoryExists(ExtractFilePath(Application.ExeName) + '\' + RecordsFolder) then
+    ForceDirectories(ExtractFilePath(Application.ExeName) + '\' + RecordsFolder);
+  ShellExecute(Handle, 'open', PWideChar(WideString(ExtractFilePath(Application.ExeName) + '\' + RecordsFolder)), '', '', SW_SHOWNORMAL);
+end;
+
+//procedure TrdDesktopViewer.RecordThreadOnTerminate(Sender: TObject);
+//begin
+//end;
+
+{function TrdDesktopViewer.LeaseExpiresDateToDateTime(LeaseExpires: Integer): String;
 var
   Remain: Integer;
 begin
@@ -1636,7 +1852,7 @@ begin
   Result := Result + Format('%2.2d', [Remain div 60]) + ':';
   Remain := Remain - Remain div 60;
   Result := Result + Format('%2.2d', [Remain]);
-end;
+end;}
 
 procedure TrdDesktopViewer.lFullScreenClick(Sender: TObject);
 begin
@@ -1658,9 +1874,9 @@ begin
   MiniPanelMouseDowned := False;
 end;
 
-procedure TrdDesktopViewer.CheckRecordState(var msg: TMessage);
-begin
-end;
+//procedure TrdDesktopViewer.CheckRecordState(var msg: TMessage);
+//begin
+//end;
 
 procedure TrdDesktopViewer.ChangeLockedState(var Message: TMessage);
 begin
@@ -1732,7 +1948,7 @@ begin
   end;
 end;
 
-procedure TrdDesktopViewer.ScreenRecordStart(AFileName: String);
+{procedure TrdDesktopViewer.ScreenRecordStart(AFileName: String);
 //var
 //  i: Integer;
 //var
@@ -1809,7 +2025,7 @@ begin
 //    FreeAndNil(BackBitmap);
 
   RecordState := RSTATE_STARTED;
-end;
+end;}
 
 procedure TrdDesktopViewer.tRecordTimer(Sender: TObject);
 var
@@ -1871,8 +2087,6 @@ begin
 //  SelectObject(bitdc, hold);
 //  DeleteObject(bitdc);
 //
-  FramesCount := FramesCount + 1;
-  CurrentFrame := CurrentFrame + 1;
 //  SetLength(MappedFiles, Length(MappedFiles) + 1);
 //  MappedFiles[Length(MappedFiles) - 1].hFile := hbitmap;
 //  MappedFiles[Length(MappedFiles) - 1].pImage := bitimage;
@@ -1883,7 +2097,7 @@ begin
   Bitmap.Free;
 end;
 
-procedure TrdDesktopViewer.ScreenRecordPause;
+{procedure TrdDesktopViewer.ScreenRecordPause;
 begin
   tRecord.Enabled := False;
 
@@ -1893,46 +2107,46 @@ begin
   aRecordStop.Enabled := True;
 
   RecordState := RSTATE_PAUSED;
-end;
+end;}
 
-procedure TrdDesktopViewer.ScreenRecordResume;
-begin
-  tRecord.Enabled := True;
+//procedure TrdDesktopViewer.ScreenRecordResume;
+//begin
+//  tRecord.Enabled := True;
+//
+//  aRecordStart.Enabled := False;
+//  aRecordPauseResume.Enabled := True;
+//  aRecordPauseResume.Caption := 'Приостановить';
+//  aRecordStop.Enabled := True;
+//
+////  RecordThread.Resume;
+//
+//  RecordState := RSTATE_STARTED;
+//end;
 
-  aRecordStart.Enabled := False;
-  aRecordPauseResume.Enabled := True;
-  aRecordPauseResume.Caption := 'Приостановить';
-  aRecordStop.Enabled := True;
-
-//  RecordThread.Resume;
-
-  RecordState := RSTATE_STARTED;
-end;
-
-procedure TrdDesktopViewer.ScreenRecordStop;
-//var
-//  i: Integer;
-begin
-  tRecord.Enabled := False;
-
-  aRecordStart.Enabled := True;
-  aRecordPauseResume.Enabled := False;
-  aRecordPauseResume.Caption := 'Приостановить';
-  aRecordStop.Enabled := False;
-
-  RecordState := RSTATE_STARTED;
-//  RecordThread.Terminate;
-
-  FramesCount := 0;
-  CurrentFrame := 0;
-//  for i := 0 to Length(MappedFiles) - 1 do
-//  begin
-//    UnMapViewOfFile(MappedFiles[i].pImage);
-//    CloseHandle(MappedFiles[i].hFile);
-//  end;
-
-//  FreeAndNil(Avi);
-end;
+//procedure TrdDesktopViewer.ScreenRecordStop;
+////var
+////  i: Integer;
+//begin
+//  tRecord.Enabled := False;
+//
+//  aRecordStart.Enabled := True;
+//  aRecordPauseResume.Enabled := False;
+//  aRecordPauseResume.Caption := 'Приостановить';
+//  aRecordStop.Enabled := False;
+//
+//  RecordState := RSTATE_STARTED;
+////  RecordThread.Terminate;
+//
+//  FramesCount := 0;
+//  CurrentFrame := 0;
+////  for i := 0 to Length(MappedFiles) - 1 do
+////  begin
+////    UnMapViewOfFile(MappedFiles[i].pImage);
+////    CloseHandle(MappedFiles[i].hFile);
+////  end;
+//
+////  FreeAndNil(Avi);
+//end;
 
 procedure TrdDesktopViewer.aRestartSystemExecute(Sender: TObject);
 begin
@@ -2308,6 +2522,16 @@ begin
     if err <> 0 then
       xLog(Format('SetShortcuts. Error: %s', [SysErrorMessage(err)]));
   end;
+end;
+
+procedure TrdDesktopViewer.TimerRecTimer(Sender: TObject);
+begin
+  if Assigned(FVideoRecorder) then
+    imgRec.Visible := not imgRec.Visible
+  else
+    imgRec.Visible := False;
+  lblRecInfo.Visible := Assigned(FVideoRecorder);
+  lblRecInfo.Caption := FormatDateTime('HH:NN:SS', IncMilliSecond(0, GetTickCount - Cardinal(lblRecInfo.Tag)));
 end;
 
 procedure TrdDesktopViewer.PFileTransExplorerNewUI(Sender: TRtcPFileTransfer; const user: String);

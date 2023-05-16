@@ -3094,6 +3094,62 @@ object rdDesktopViewer: TrdDesktopViewer
         Transparent = True
         Visible = False
       end
+      object imgRec: TImage
+        Left = 926
+        Top = 7
+        Width = 25
+        Height = 28
+        Center = True
+        Picture.Data = {
+          0954506E67496D61676589504E470D0A1A0A0000000D49484452000000200000
+          00200802000000FC18EDA3000000017352474200AECE1CE90000000467414D41
+          0000B18F0BFC6105000000097048597300000EC300000EC301C76FA864000002
+          D14944415478DA63FCFFFF3F032D012391167C7DFEFCD38D1B3F9F3C616066E6
+          545414D0D666E7E3A382054F77ECB8D1DEFEF4D0219052300202A0867F0C0C2C
+          0C0C0A21219AF5F5423A3AE458F074E7CE231E1E3F191858191898214A916421
+          7AFE3230FC626010949171387C984F4181040BF6D8DB3F397488938181895008
+          407CF39D8141AFB0D0B8AF8F280B567172FEF9F18395980046B206E857313333
+          F793270958B09295F5DF9F3F2CA4980E07C0E012C1B003C582EDBABAEFAF5C21
+          C9ED68E0070383166A58212CB8336FDEB1E4644E0A4C8784D557068690FBF779
+          61718EB0603123233B6A52210F009316978C8CDFE3C728165C9F30E16C61213B
+          C5A6433C014C54BE972F43F207D482750202BF3F7E24982889047F1818E44242
+          AC57AF865AF0FBE7CFA51C1C5CD4081FB8277E333044839D0EB2E0F1C68D0703
+          02A8123EC8A114F1E9133B2F2FC8822BEDED17ABAAD8A867010338BDBA1F3F2E
+          666101B2E0546AEA9D39732849FE980098B16D972C918F8E065B90947467FE7C
+          AA5B60B36891426C2CC8824BF5F5979B9AA81E442EFBF74B3A38802CB8BF6CD9
+          D1E8682A4632033892839F3DE396940459F0EDD5ABD5E2E29C544DA6400BE2E1
+          C91448AD60646424A2F4271200339AB89D9DD3C183080BCE9594DCE8EDA5563C
+          039DEFBC7DBBB48707C202205EC8C84895CCFC0F4C86C3CA5044697AB6A8E87A
+          7F3F85510D097D971D3BA4DDDDD12D0082556C6CFF7EFF66A6C002601124666B
+          EB026E8560B1E0F7D7AFCB787838C88D6D60DCB27070847EFF8E2C885E277F7E
+          FC789D9C1C3BACA94292DB995958C27FFF4613C7D2AA00FA63BDA0E0AFDFBFD9
+          888BF3FFE07C2BA2A3E375F932A62CCE861730CE2FF7F7B3815B708C38CC8594
+          FB40D272EE5C95A424ACE6E06B3A0225CE9794DCECEDFD050E31E4A6E37F7088
+          F3F1F36B3634681614E0F11F518D5F6059F272CF9E4F376F021BBF8C4C4C9C4A
+          4AFCDADA12EEEEACEC845335B1AD6BB2010003194BD0A598E18B000000004945
+          4E44AE426082}
+        Proportional = True
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object lblRecInfo: TLabel
+        Left = 964
+        Top = 11
+        Width = 50
+        Height = 16
+        Caption = '00:00:00'
+        Color = clWhite
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWhite
+        Font.Height = -13
+        Font.Name = 'Arial'
+        Font.Style = []
+        ParentColor = False
+        ParentFont = False
+        Transparent = True
+        StyleElements = []
+      end
       object panOptions: TPanel
         Left = 376
         Top = 0
@@ -3110,6 +3166,7 @@ object rdDesktopViewer: TrdDesktopViewer
           Top = 1
           Width = 345
           Height = 34
+          UseSystemFont = False
           ActionManager = ActionManagerTop
           Align = alNone
           Color = clMenuBar
@@ -3119,7 +3176,7 @@ object rdDesktopViewer: TrdDesktopViewer
           ColorMap.SelectedFontColor = clWhite
           ColorMap.UnusedColor = clWhite
           Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
+          Font.Color = clBlack
           Font.Height = -12
           Font.Name = 'Segoe UI'
           Font.Style = []
@@ -4009,16 +4066,6 @@ object rdDesktopViewer: TrdDesktopViewer
           OnMouseUp = panOptionsMiniMouseUp
         end
       end
-      object Button1: TButton
-        Left = 26
-        Top = 348
-        Width = 75
-        Height = 25
-        Caption = 'Button1'
-        TabOrder = 3
-        Visible = False
-        OnClick = Button1Click
-      end
     end
   end
   object myUI: TRtcPDesktopControlUI
@@ -4235,12 +4282,19 @@ object rdDesktopViewer: TrdDesktopViewer
                     Action = aRecordStart
                   end
                   item
-                    Action = aRecordPauseResume
+                    Tag = 1
+                    Action = aRecordStop
                   end
                   item
-                    Action = aRecordStop
+                    Tag = 2
+                    Action = aRecordCancel
+                  end
+                  item
+                    Action = aRecordOpenFolder
+                  end
+                  item
+                    Action = aRecordCodecInfo
                   end>
-                Visible = False
                 Caption = #1047#1072#1087#1080#1089#1100' '#1089#1077#1072#1085#1089#1072
                 CommandStyle = csMenu
                 CommandProperties.Width = -1
@@ -4332,13 +4386,13 @@ object rdDesktopViewer: TrdDesktopViewer
       Caption = #1053#1072#1095#1072#1090#1100' '#1079#1072#1087#1080#1089#1100
       OnExecute = aRecordStartExecute
     end
-    object aRecordPauseResume: TAction
-      Caption = #1055#1088#1080#1086#1089#1090#1072#1085#1086#1074#1080#1090#1100
-      OnExecute = aRecordPauseResumeExecute
-    end
     object aRecordStop: TAction
-      Caption = #1047#1072#1074#1077#1088#1096#1080#1090#1100
+      Caption = #1054#1089#1090#1072#1085#1086#1074#1080#1090#1100
       OnExecute = aRecordStopExecute
+    end
+    object aRecordCancel: TAction
+      Caption = #1054#1090#1084#1077#1085#1080#1090#1100
+      OnExecute = aRecordCancelExecute
     end
     object aStretchScreen: TAction
       Caption = #1056#1072#1089#1090#1103#1075#1080#1074#1072#1090#1100' '#1080#1079#1086#1073#1088#1072#1078#1077#1085#1080#1077
@@ -4359,6 +4413,14 @@ object rdDesktopViewer: TrdDesktopViewer
     object aSendShortcuts: TAction
       Caption = #1055#1077#1088#1077#1076#1072#1074#1072#1090#1100' '#1089#1086#1095#1077#1090#1072#1085#1080#1103' '#1082#1083#1072#1074#1080#1096
       OnExecute = aSendShortcutsExecute
+    end
+    object aRecordOpenFolder: TAction
+      Caption = #1054#1090#1082#1088#1099#1090#1100' '#1087#1072#1087#1082#1091' '#1089' '#1079#1072#1087#1080#1089#1103#1084#1080
+      OnExecute = aRecordOpenFolderExecute
+    end
+    object aRecordCodecInfo: TAction
+      Caption = #1048#1085#1092#1086#1088#1084#1072#1094#1080#1103' '#1086' '#1082#1086#1076#1077#1082#1072#1093
+      OnExecute = aRecordCodecInfoExecute
     end
   end
   object XPColorMap1: TXPColorMap
@@ -5135,5 +5197,11 @@ object rdDesktopViewer: TrdDesktopViewer
     NotifyFileBatchSend = FT_UINotifyFileBatchSend
     Left = 12
     Top = 396
+  end
+  object TimerRec: TTimer
+    Enabled = False
+    OnTimer = TimerRecTimer
+    Left = 10
+    Top = 455
   end
 end

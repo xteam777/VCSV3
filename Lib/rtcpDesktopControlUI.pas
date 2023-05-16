@@ -297,6 +297,10 @@ type
     property CursorX: Integer read GetCursorX;
     property CursorY: Integer read GetCursorY;
 
+    { TODO : Custom new propertys. }
+    property Playback: TRtcScreenPlayback read Scr;
+    property CirticalSection: TCriticalSection read CS;
+
   published
     property Active: boolean read GetActive write SetActive default False;
 
