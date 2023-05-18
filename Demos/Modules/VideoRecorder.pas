@@ -116,6 +116,7 @@ type
     FRecorder: TVideoRecorderAVIVFW;
     FLockRecord, FlockImage: Integer;
     FTerminate, FProcessing, FDestroing: Boolean;
+    FTimerThread, FBackThread: THandle;
 
     procedure FinalizePackets;
     procedure BackgroundExecute();
@@ -714,6 +715,8 @@ begin
       begin
         WaitableTimerExecute;
       end);
+    FBackThreaD := t1.Handle;
+    FTimerThread := t2.Handle;
 
   {$IFDEF DEBUG}
     t1.NameThreadForDebugging('BackgroundExecute: '+t1.ThreadID.ToString, t1.ThreadID);
@@ -750,6 +753,7 @@ begin
       SwitchToThread;
     end;
   FTerminate := true;
+
   SetEvent(FEvent);
 
   while FProcessing do
@@ -759,6 +763,10 @@ begin
     end;
 
   CloseHandle(FEvent);
+
+  WaitForSingleObject(FBackThread, INFINITE);
+  WaitForSingleObject(FTimerThread, INFINITE);
+
   FinalizePackets;
   inherited;
 end;
@@ -828,6 +836,7 @@ begin
         // Cancel the mouse capture
         if GetCapture <> 0 then SendMessage(GetCapture, WM_CANCELMODE, 0, 0);
         // Now actually show the exception
+        EObject.Message := EObject.Message;
         if EObject is Exception then
           if Assigned(Application.OnException) then
             Application.OnException(Self, EObject) else
@@ -933,10 +942,12 @@ begin
   while not FTerminate and not FDestroing do
     try
       repeat
-          t := Cardinal(GetTickCount - last_time);
+
+          t := (GetTickCount - last_time);
+          if t <> 0 then;
 
           period := interval - Integer(GetTickCount - last_time);
-          LARGE_INTEGER(DueTime).QuadPart := -(period * TIMER_UNITS_FACTOR_MILISECOND);
+          LARGE_INTEGER(DueTime).QuadPart := -Integer(period * TIMER_UNITS_FACTOR_MILISECOND);
           if period > 0 then
             begin
               SetWaitableTimer(timer, DueTime, 0, nil, nil, false);
@@ -956,6 +967,7 @@ begin
       HandleException;
     end;
   CloseHandle(timer);
+
 end;
 
 end.
