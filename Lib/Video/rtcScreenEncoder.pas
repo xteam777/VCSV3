@@ -636,11 +636,21 @@ time := GetTickCount;
   DirtyR[0] := ClipRect;
   }
 
-  CodecId := 5;
+  if (ClipRect.Width = ScreenWidth)
+    and (ClipRect.Height = ScreenHeight) then
+    CodecId := 1
+  else
+    CodecId := 5;
   Codec2Param1 := 0;
   Codec3Param1 := 1;
   Codec4Param1 := 0;
   Codec4Param2 := 0;
+
+//  CodecId := 5;
+//  Codec2Param1 := 0;
+//  Codec3Param1 := 1;
+//  Codec4Param1 := 0;
+//  Codec4Param2 := 0;
 
  // AssignFile(F, ExtractFilePath(Application.ExeName) + 'webp.txt');
  // Reset(F);

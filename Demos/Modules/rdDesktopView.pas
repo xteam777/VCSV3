@@ -7,10 +7,16 @@ interface
   {$define RTCViewer}
 {$endif}
 
+{$if CompilerVersion >= 21.0}
+  {$DEFINE USE_GLASS_FORM}
+{$ifend}
+
 uses
   Windows, Messages, SysUtils, CommonData, CommonUtils,
   Classes, Graphics, Controls, Forms, Types, IOUtils, DateUtils,
   Dialogs, ExtCtrls, StdCtrls, ShellAPI, ProgressDialog, rtcSystem,
+
+  {$IFDEF USE_GLASS_FORM}ChromeTabsGlassForm,{$ENDIF}
 
   rtcpFileTrans, rtcpChat,
   rtcpDesktopControl, rtcpDesktopControlUI, rtcPortalMod,
@@ -19,10 +25,16 @@ uses
   Vcl.ActnCtrls, Vcl.ActnMenus, uVircessTypes, rtcLog, ClipBrd,
   Vcl.PlatformDefaultStyleActnCtrls, Vcl.Imaging.jpeg,
   System.ImageList, Vcl.ImgList, Math, Vcl.ComCtrls, Vcl.Imaging.pngimage,
-  NFPanel, rtcpFileTransUI, VideoRecorder;
+  NFPanel, rtcpFileTransUI, VideoRecorder, ChromeTabs;
 
 type
-  TrdDesktopViewer = class(TForm)
+  TFormType = {$IFDEF USE_GLASS_FORM}
+              TChromeTabsGlassForm
+              {$ELSE}
+              TForm
+              {$ENDIF};
+
+  TrdDesktopViewer = class(TFormType)
     myUI: TRtcPDesktopControlUI;
     DesktopTimer: TTimer;
     ActionManagerTop: TActionManager;
@@ -103,6 +115,7 @@ type
     aRecordCodecInfo: TAction;
     imgRec: TImage;
     lblRecInfo: TLabel;
+    ChromeTabs1: TChromeTabs;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -599,7 +612,7 @@ begin
 end;
 
 procedure TrdDesktopViewer.InitScreen;
-  begin
+  begin           Exit;
   Scroll.HorzScrollBar.Visible:=False;
   Scroll.VertScrollBar.Visible:=False;
   Scroll.VertScrollBar.Position:=0;
@@ -816,6 +829,10 @@ end;
 procedure TrdDesktopViewer.FormCreate(Sender: TObject);
 begin
   SetWindowLong(Handle, GWL_EXSTYLE, GetWindowLong(Handle, GWL_EXSTYLE) or WS_EX_APPWINDOW);
+
+  {$IFDEF USE_GLASS_FORM}
+  Self.ChromeTabs := ChromeTabs1;
+  {$ENDIF}
 
   FProgressDialogsList := TList.Create;
 
