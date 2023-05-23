@@ -612,7 +612,7 @@ begin
 end;
 
 procedure TrdDesktopViewer.InitScreen;
-  begin           Exit;
+  begin
   Scroll.HorzScrollBar.Visible:=False;
   Scroll.VertScrollBar.Visible:=False;
   Scroll.VertScrollBar.Position:=0;
