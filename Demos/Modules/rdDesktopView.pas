@@ -25,7 +25,7 @@ uses
   Vcl.ActnCtrls, Vcl.ActnMenus, uVircessTypes, rtcLog, ClipBrd,
   Vcl.PlatformDefaultStyleActnCtrls, Vcl.Imaging.jpeg,
   System.ImageList, Vcl.ImgList, Math, Vcl.ComCtrls, Vcl.Imaging.pngimage,
-  NFPanel, rtcpFileTransUI, VideoRecorder, ChromeTabs;
+  NFPanel, rtcpFileTransUI, VideoRecorder, ChromeTabs, ChromeTabsClasses, ChromeTabsControls, ChromeTabsTypes;
 
 type
   TFormType = {$IFDEF USE_GLASS_FORM}
@@ -192,6 +192,10 @@ type
     procedure TimerRecTimer(Sender: TObject);
     procedure aRecordOpenFolderExecute(Sender: TObject);
     procedure aRecordCodecInfoExecute(Sender: TObject);
+    procedure ControlPolygons(Sender, ChromeTabsControl: TObject;
+      ItemRect: TRect; ItemType: TChromeTabItemType;
+      Orientation: TTabOrientation; var Polygons: IChromeTabPolygons);
+    procedure ChromeTabs1ButtonAddClick(Sender: TObject; var Handled: Boolean);
   private
     FVideoRecorder: TVideoRecorder;
     FVideoFile: String;
@@ -1900,6 +1904,44 @@ begin
   PartnerLockedState := Message.WParam;
   PartnerServiceStarted := Boolean(Message.LParam);
   SetFormState;
+end;
+
+procedure TrdDesktopViewer.ChromeTabs1ButtonAddClick(Sender: TObject;
+  var Handled: Boolean);
+begin
+  BringWindowToTop(MainFormHandle);
+  Handled := True;
+end;
+
+procedure TrdDesktopViewer.ControlPolygons(Sender,
+  ChromeTabsControl: TObject; ItemRect: TRect; ItemType: TChromeTabItemType;
+  Orientation: TTabOrientation; var Polygons: IChromeTabPolygons);
+var
+  ChromeTabControl: TBaseChromeTabsControl;
+  TabTop: Integer;
+begin
+  if (ItemType = itTab) and
+     (ChromeTabsControl is TBaseChromeTabsControl) then
+  begin
+    ChromeTabControl := ChromeTabsControl as TBaseChromeTabsControl;
+
+    Polygons := TChromeTabPolygons.Create;
+
+    TabTop := 0;
+
+//    if (ChromeTabControl is TChromeTabControl) and
+//       (not TChromeTabControl(ChromeTabControl).ChromeTab.GetActive) then
+//      Inc(TabTop, 3);
+
+    Polygons.AddPolygon(ChromeTabControl.NewPolygon(ChromeTabControl.BidiControlRect,
+                                                    [Point(10, RectHeight(ItemRect)),
+                                                     Point(10, TabTop),
+                                                     Point(RectWidth(ItemRect) - 10, TabTop),
+                                                     Point(RectWidth(ItemRect) - 10, RectHeight(ItemRect))],
+                                 Orientation),
+                                 nil,
+                                 nil);
+  end;
 end;
 
 procedure TrdDesktopViewer.GetFilesFromHostClipboard(var Message: TMessage);

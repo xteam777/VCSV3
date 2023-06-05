@@ -49,9 +49,8 @@ object rdDesktopViewer: TrdDesktopViewer
     ParentFont = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
-    ExplicitTop = 0
     ExplicitWidth = 1058
-    ExplicitHeight = 661
+    ExplicitHeight = 634
     object iScreenLocked: TImage
       Left = 0
       Top = 0
@@ -2987,7 +2986,7 @@ object rdDesktopViewer: TrdDesktopViewer
       StyleElements = [seFont, seBorder]
       OnMouseMove = ScrollMouseMove
       ExplicitWidth = 1058
-      ExplicitHeight = 661
+      ExplicitHeight = 634
       object pImage: TRtcPDesktopViewer
         Left = 0
         Top = 0
@@ -4074,6 +4073,8 @@ object rdDesktopViewer: TrdDesktopViewer
     Top = 0
     Width = 1062
     Height = 27
+    OnButtonAddClick = ChromeTabs1ButtonAddClick
+    OnGetControlPolygons = ControlPolygons
     ActiveTabIndex = 0
     Options.Display.CloseButton.Offsets.Vertical = 6
     Options.Display.CloseButton.Offsets.Horizontal = 2
@@ -4206,7 +4207,7 @@ object rdDesktopViewer: TrdDesktopViewer
         Pinned = False
         Visible = True
         Modified = False
-        SpinnerState = tssRenderedDownload
+        SpinnerState = tssNone
         HideCloseButton = False
       end
       item
@@ -4418,9 +4419,7 @@ object rdDesktopViewer: TrdDesktopViewer
     LookAndFeel.ScrollButtons.Arrow.Disabled.OutlineAlpha = 200
     Align = alTop
     TabOrder = 1
-    ExplicitLeft = 2
-    ExplicitTop = 2
-    ExplicitWidth = 628
+    ExplicitWidth = 1058
   end
   object myUI: TRtcPDesktopControlUI
     MapKeys = True
