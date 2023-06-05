@@ -104,7 +104,7 @@ begin
   Forms.Application.Initialize;
 //      if Win32MajorVersion = 10 then
 //        TStyleManager.TrySetStyle('Windows10');
-  TStyleManager.TrySetStyle('Windows10');
+//  TStyleManager.TrySetStyle('Windows10');
   Application.Title := 'Remox';
   Forms.Application.ShowMainForm := (Pos('/SILENT', UpperCase(CmdLine)) = 0);
   Forms.Application.CreateForm(TMainForm, MainForm);
