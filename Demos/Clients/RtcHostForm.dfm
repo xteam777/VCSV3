@@ -67,9 +67,9 @@ object MainForm: TMainForm
       485)
     object lblStatus: TLabel
       AlignWithMargins = True
-      Left = 46
+      Left = 52
       Top = 467
-      Width = 539
+      Width = 533
       Height = 17
       Margins.Left = 75
       Anchors = [akLeft, akTop, akRight]
@@ -85,10 +85,9 @@ object MainForm: TMainForm
       ParentFont = False
       Transparent = True
       Layout = tlCenter
-      ExplicitWidth = 647
     end
     object iStatus1: TImage
-      Left = 2
+      Left = 5
       Top = 471
       Width = 8
       Height = 8
@@ -456,7 +455,7 @@ object MainForm: TMainForm
         010002110311003F001DBF2AD4F2AEFD6B5AE6A2CDF5E6FA854786BA3FFFD9}
     end
     object iStatus2: TImage
-      Left = 12
+      Left = 15
       Top = 471
       Width = 8
       Height = 8
@@ -824,7 +823,7 @@ object MainForm: TMainForm
         010002110311003F001DBF2AD4F2AEFD6B5AE6A2CDF5E6FA854786BA3FFFD9}
     end
     object iStatus3: TImage
-      Left = 22
+      Left = 25
       Top = 471
       Width = 8
       Height = 8
@@ -1192,7 +1191,7 @@ object MainForm: TMainForm
         010002110311003F001DBF2AD4F2AEFD6B5AE6A2CDF5E6FA854786BA3FFFD9}
     end
     object iStatus4: TImage
-      Left = 31
+      Left = 35
       Top = 471
       Width = 8
       Height = 8
