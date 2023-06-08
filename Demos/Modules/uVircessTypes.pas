@@ -7,6 +7,8 @@ uses
   rtcPortalHttpCli, rtcpDesktopControl, rtcpFileTrans, rtcpChat, ShellApi, ProgressDialog;
 
 type
+  PForm = ^TForm;
+
   TWorkThread = class(TThread)
   private
    { Private declarations }

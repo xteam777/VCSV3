@@ -618,7 +618,7 @@ type
     procedure OnUIOpen(UserName, Action: String; var IsPending: Boolean);
     procedure OnUIClose(AThreadId: Cardinal);
 
-    procedure OnCustomFormOpen(AForm: TForm);
+    procedure OnCustomFormOpen(AForm: PForm);
     procedure OnCustomFormClose;
 
     function GetHostGatewayClientActive: Boolean;
@@ -672,7 +672,7 @@ type
 
     FRegisteredSessionNotification: Boolean;
 
-    OpenedModalForm: TForm;
+    OpenedModalForm: PForm;
 
     function GetCurrentExplorerDirectory(var ADir: String; var AHandle: THandle): Boolean;
     procedure SetFilesToClipboard(var Message: TMessage); message WM_SET_FILES_TO_CLIPBOARD;
@@ -2089,7 +2089,7 @@ begin
 
   fAboutForm := TfAboutForm.Create(nil);
   try
-    OnCustomFormOpen(fAboutForm);
+    OnCustomFormOpen(@fAboutForm);
     fAboutForm.ShowModal;
   finally
     fAboutForm.Free;
@@ -2107,7 +2107,7 @@ begin
     fMessageBox.SetText(AText);
     fMessageBox.Caption := ACaption;
 
-    OnCustomFormOpen(fMessageBox);
+    OnCustomFormOpen(@fMessageBox);
     if fMessageBox.ShowModal = mrOk then
     begin
       if AType = 'DeleteDeviceGroup' then
@@ -5290,7 +5290,7 @@ begin
       DForm.GroupUID := PDeviceData(twDevices.GetNodeData(Node)).UID;
     DForm.Mode := 'Add';
 
-    OnCustomFormOpen(DForm);
+    OnCustomFormOpen(@DForm);
     DForm.ShowModal();
     if DForm.ModalResult = mrOk then
     begin
@@ -5370,7 +5370,7 @@ begin
     GForm.AccountUID := AccountUID;
     GForm.Mode := 'Add';
 
-    OnCustomFormOpen(GForm);
+    OnCustomFormOpen(@GForm);
     GForm.ShowModal();
     if GForm.ModalResult = mrOk then
     begin
@@ -7418,7 +7418,7 @@ begin
     Options.PChat := tPHostThread.FChat;
     Options.PFileTrans := tPHostThread.FFileTransfer;
     Options.Execute;
-    OnCustomFormOpen(Options);
+    OnCustomFormOpen(@Options);
   finally
     Options.Free;
   end;
@@ -8091,7 +8091,7 @@ begin
 //      end;
 
         PassForm.user := asWideString['user'];
-        OnCustomFormOpen(PassForm);
+        OnCustomFormOpen(@PassForm);
         PassForm.ShowModal;
         mResult := PassForm.ModalResult;
       finally
@@ -10310,7 +10310,7 @@ begin
       if sett.tcSettings.Pages[i].Name = APage then
         sett.tcSettings.ActivePage := sett.tcSettings.Pages[i];
 
-    OnCustomFormOpen(sett);
+    OnCustomFormOpen(@sett);
     sett.ModalResult := 0;
     sett.Execute;
     sett.ShowModal;
@@ -11028,7 +11028,7 @@ begin
 //  UpdatePendingStatus;
 end;
 
-procedure TMainForm.OnCustomFormOpen(AForm: TForm);
+procedure TMainForm.OnCustomFormOpen(AForm: PForm);
 begin
   OpenedModalForm := AForm;
 end;
