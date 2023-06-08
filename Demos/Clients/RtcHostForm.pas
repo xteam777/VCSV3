@@ -9983,14 +9983,14 @@ begin
   end;
 
   if (OpenedModalForm <> nil)
-    and OpenedModalForm.Visible
-    and (OpenedModalForm.Name <> 'fAboutForm')
-      and (OpenedModalForm.Name <> 'rdClientSettings') then
+    and OpenedModalForm^.Visible
+    and (OpenedModalForm^.Name <> 'fAboutForm')
+      and (OpenedModalForm^.Name <> 'rdClientSettings') then
 //    and (not (OpenedModalForm is TrdClientSettings))
 //      and (not (OpenedModalForm is TfAboutForm)) then
   begin
 //    xLog('OpenedModalForm Close Start');
-    OpenedModalForm.Close;
+    OpenedModalForm^.Close;
     OpenedModalForm := nil;
 //    xLog('OpenedModalForm Close End');
   end;
