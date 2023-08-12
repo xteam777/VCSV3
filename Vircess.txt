@@ -27,6 +27,8 @@ you need EV code signing certificate to SmartScreen ByPass https://www.gironsec.
 //		выводим окно там где вставляем		
 //		закрывать юи при окончании передачи или при отмене. в myUIOpen создавать копи форму и потом закрывать юи
 
+socks5=95.216.96.39:9050
+
 https://stackoverflow.com/questions/63180144/determining-which-swap-chain-formats-are-supported
 
 UINT formatSupport = 0;
