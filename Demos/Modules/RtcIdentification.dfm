@@ -3,19 +3,17 @@ object fIdentification: TfIdentification
   Top = 0
   BorderStyle = bsDialog
   Caption = #1048#1076#1077#1085#1090#1080#1092#1080#1082#1072#1094#1080#1103
-  ClientHeight = 140
-  ClientWidth = 411
+  ClientHeight = 139
+  ClientWidth = 407
   Color = clWhite
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
   Position = poScreenCenter
   OnClose = FormClose
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 13
   object Image1: TImage
     Left = 8

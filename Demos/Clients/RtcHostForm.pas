@@ -2087,8 +2087,9 @@ var
 begin
   //XLog('ShowAboutForm');
 
-  fAboutForm := TfAboutForm.Create(nil);
   try
+    fAboutForm := TfAboutForm.Create(nil);
+    fAboutForm.OnCustomFormClose := OnCustomFormClose;
     OnCustomFormOpen(@fAboutForm);
     fAboutForm.ShowModal;
   finally
@@ -2102,10 +2103,11 @@ var
 begin
   //XLog('ShowMessageBox');
 
-  fMessageBox := TfMessageBox.Create(nil);
   try
+    fMessageBox := TfMessageBox.Create(nil);
     fMessageBox.SetText(AText);
     fMessageBox.Caption := ACaption;
+    fMessageBox.OnCustomFormClose := OnCustomFormClose;
 
     OnCustomFormOpen(@fMessageBox);
     if fMessageBox.ShowModal = mrOk then
@@ -5289,6 +5291,7 @@ begin
     if Node <> nil then
       DForm.GroupUID := PDeviceData(twDevices.GetNodeData(Node)).UID;
     DForm.Mode := 'Add';
+    DForm.OnCustomFormClose := OnCustomFormClose;
 
     OnCustomFormOpen(@DForm);
     DForm.ShowModal();
@@ -5369,6 +5372,7 @@ begin
     GForm.CModule := @cmAccounts;
     GForm.AccountUID := AccountUID;
     GForm.Mode := 'Add';
+    GForm.OnCustomFormClose := OnCustomFormClose;
 
     OnCustomFormOpen(@GForm);
     GForm.ShowModal();
@@ -7417,6 +7421,7 @@ begin
     Options.PDesktop := tPHostThread.FDesktopHost;
     Options.PChat := tPHostThread.FChat;
     Options.PFileTrans := tPHostThread.FFileTransfer;
+    Options.OnCustomFormClose := OnCustomFormClose;
     Options.Execute;
     OnCustomFormOpen(@Options);
   finally
@@ -8091,6 +8096,7 @@ begin
 //      end;
 
         PassForm.user := asWideString['user'];
+        PassForm.OnCustomFormClose := OnCustomFormClose;
         OnCustomFormOpen(@PassForm);
         PassForm.ShowModal;
         mResult := PassForm.ModalResult;
@@ -10304,6 +10310,7 @@ begin
     sett.ePasswordConfirm.Text := RegularPassword;
     sett.cbStoreHistory.Checked := StoreHistory;
     sett.cbStorePasswords.Checked := StorePasswords;
+    sett.OnCustomFormClose := OnCustomFormClose;
 
   //    sett.cbOnlyAdminChanges.Checked := OnlyAdminChanges;
     for i := 0 to sett.tcSettings.PageCount - 1 do

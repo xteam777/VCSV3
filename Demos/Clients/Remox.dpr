@@ -12,9 +12,6 @@
 {$R *.dres}
 
 uses
-//  {$IFDEF Debug}
-//  FastMM5,
-//  {$ENDIF}
   rtcLog,
   Classes,
   SysUtils,
@@ -63,7 +60,11 @@ uses
   uSetup in 'uSetup.pas',
   uAcceptEula in '..\Modules\uAcceptEula.pas' {fAcceptEULA},
   NTImport in 'NTImport.pas',
-  rtcpFileTrans in 'rtcpFileTrans.pas';
+  rtcpFileTrans in 'rtcpFileTrans.pas',
+  rmxVideoFile in '..\..\rmxVideo\API\rmxVideoFile.pas',
+  rmxVideoPacketTypes in '..\..\rmxVideo\API\rmxVideoPacketTypes.pas',
+  rmxVideoStorage in '..\..\rmxVideo\API\rmxVideoStorage.pas',
+  Compressions in '..\..\rmxVideo\Compressor\Compressions.pas';
 
 {$R rtcportaluac.res rtcportaluac.rc}
 {$R *.res}

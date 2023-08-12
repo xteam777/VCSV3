@@ -90,7 +90,7 @@ end;
 procedure TfIdentification.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   if Assigned(FOnCustomFormClose) then
-    FOnCustomFormClose(Handle);
+    FOnCustomFormClose;
 end;
 
 procedure TfIdentification.FormShow(Sender: TObject);

@@ -157,7 +157,7 @@ procedure TrdHostSettings.Execute;
 procedure TrdHostSettings.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   if Assigned(FOnCustomFormClose) then
-    FOnCustomFormClose(Handle);
+    FOnCustomFormClose;
 end;
 
 procedure TrdHostSettings.Setup;

@@ -3,8 +3,8 @@ object fAboutForm: TfAboutForm
   Top = 108
   BorderStyle = bsDialog
   Caption = #1054' '#1087#1088#1086#1075#1088#1072#1084#1084#1077
-  ClientHeight = 271
-  ClientWidth = 382
+  ClientHeight = 270
+  ClientWidth = 378
   Color = clWhite
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -12,18 +12,16 @@ object fAboutForm: TfAboutForm
   Font.Name = 'Tahoma'
   Font.Style = []
   FormStyle = fsStayOnTop
-  OldCreateOrder = True
   Position = poScreenCenter
   OnClose = FormClose
   OnKeyDown = FormKeyDown
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 13
   object ProgramIcon: TImage
     Left = 0
     Top = 0
-    Width = 382
-    Height = 271
+    Width = 378
+    Height = 270
     Align = alClient
     Picture.Data = {
       0A544A504547496D616765036D0000FFD8FFE10DDD4578696600004D4D002A00

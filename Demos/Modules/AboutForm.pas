@@ -43,7 +43,7 @@ var
   i: Integer;
 begin
   if Assigned(FOnCustomFormClose) then
-    FOnCustomFormClose(Handle);
+    FOnCustomFormClose;
 
   Action := caFree;
 end;

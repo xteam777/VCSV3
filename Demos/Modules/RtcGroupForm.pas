@@ -151,7 +151,7 @@ end;
 procedure TGroupForm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   if Assigned(FOnCustomFormClose) then
-    FOnCustomFormClose(Handle);
+    FOnCustomFormClose;
 end;
 
 procedure TGroupForm.FormKeyDown(Sender: TObject; var Key: Word;

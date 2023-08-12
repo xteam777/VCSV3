@@ -208,6 +208,10 @@
         </DCCReference>
         <DCCReference Include="NTImport.pas"/>
         <DCCReference Include="rtcpFileTrans.pas"/>
+        <DCCReference Include="..\..\rmxVideo\API\rmxVideoFile.pas"/>
+        <DCCReference Include="..\..\rmxVideo\API\rmxVideoPacketTypes.pas"/>
+        <DCCReference Include="..\..\rmxVideo\API\rmxVideoStorage.pas"/>
+        <DCCReference Include="..\..\rmxVideo\Compressor\Compressions.pas"/>
         <RcItem Include="rmx_w32.exe">
             <ContainerId>ResourceItem</ContainerId>
             <ResourceType>RCDATA</ResourceType>

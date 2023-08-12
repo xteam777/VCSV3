@@ -2,8 +2,8 @@ object fMessageBox: TfMessageBox
   Left = 0
   Top = 0
   BorderStyle = bsSingle
-  ClientHeight = 88
-  ClientWidth = 429
+  ClientHeight = 87
+  ClientWidth = 425
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -11,10 +11,8 @@ object fMessageBox: TfMessageBox
   Font.Name = 'Tahoma'
   Font.Style = []
   FormStyle = fsStayOnTop
-  OldCreateOrder = False
   Position = poScreenCenter
   OnClose = FormClose
-  PixelsPerInch = 96
   TextHeight = 13
   object lText: TLabel
     AlignWithMargins = True

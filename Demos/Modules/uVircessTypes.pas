@@ -29,7 +29,7 @@ type
 
   TUIOpenEvent = procedure(UserName, Action: String; var IsPending: Boolean) of Object;
   TUICloseEvent = procedure(AThreadId: Cardinal) of Object;
-  TOnCustomFormEvent = procedure(AHandle: THandle);
+  TOnCustomFormEvent = procedure of Object;
   TDoStartFileTransferring = procedure(AUser, AUserName, APassword: String; ANeedGetPass: Boolean = False) of Object;
 
   TDoDeleteDeviceGroup = procedure(AUID: String) of object;

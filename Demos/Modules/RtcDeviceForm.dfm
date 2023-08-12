@@ -3,20 +3,18 @@ object DeviceForm: TDeviceForm
   Top = 0
   BorderStyle = bsDialog
   Caption = #1059#1089#1090#1088#1086#1081#1089#1090#1074#1086
-  ClientHeight = 312
-  ClientWidth = 335
+  ClientHeight = 311
+  ClientWidth = 331
   Color = clWhite
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
   Position = poScreenCenter
   OnClose = FormClose
   OnDestroy = FormDestroy
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 13
   object Label6: TLabel
     Left = 12
