@@ -30,6 +30,7 @@ type
     TWebPDecodeRGBIntoFunc = function (const data: PByte; data_size: Cardinal;
       output_buffer: PByte; output_buffer_size, output_stride: Integer): PByte;
       cdecl;
+    TOnSetScreenData = procedure (Sender: TObject; const Data: RtcString) of object;
 
   private
    // FBytesPerPixel: byte;
@@ -41,9 +42,10 @@ type
       FBPPWidth, FBlockSize: integer;
 
     FImage: TBitmap;
+    FOnSetScreenData: TOnSetScreenData;
 
     function CreateBitmap: TBitmap;
-
+    function SetScreenData(const Data: TRtcRecord): boolean; overload;
   protected
     procedure PrepareStorage;
     procedure ReleaseStorage;
@@ -58,13 +60,20 @@ type
     procedure DecompressBlock2(const Offset: longint; const s: RtcByteArray);
     procedure DecompressBlock3(const Offset: longint; const s: RtcByteArray);
 
+
   public
     constructor Create;
     destructor Destroy; override;
 
-    function SetScreenData(const Data: TRtcRecord): boolean;
+
+    function SetScreenData(const Data: RtcString): boolean;  overload;
 
     property Image: TBitmap read FImage;
+    property ScreenWidth: Integer read FScreenWidth;
+    property ScreenHeight: Integer read FScreenHeight;
+    property ScreenBPP: Integer read FScreenBPP;
+    property OnSetScreenData: TOnSetScreenData read FOnSetScreenData write FOnSetScreenData;
+
   end;
 
   TRtcScreenPlayback = class
@@ -98,6 +107,7 @@ type
     function PaintCursor(const s: RtcString): boolean;
 
     property Image: TBitmap read GetScreen;
+    property ScreenDecoder: TRtcScreenDecoder read ScrOut;
 
     property LoginUserName: String read FLoginUserName write FLoginUserName;
     property CursorVisible: boolean read FCursorVisible;
@@ -166,6 +176,21 @@ begin
   inherited;
 
   CS.Free;
+end;
+
+function TRtcScreenDecoder.SetScreenData(const Data: RtcString): boolean;
+var
+  rec: TRtcRecord;
+begin
+  rec := TRtcRecord.FromCode(Data);
+  try
+    Result := SetScreenData(rec);
+  finally
+    rec.Free;
+  end;
+  if Assigned(FOnSetScreenData) then
+    FOnSetScreenData(Self, Data);
+
 end;
 
 procedure TRtcScreenDecoder.SetScreenInfo(const Info: TRtcRecord);
@@ -599,28 +624,29 @@ begin
     Result := False;
     Exit;
   end;
-  rec := TRtcRecord.FromCode(s);
+
 
   {$IFDEF DEBUG}
-  with rec do
-    if isType['scrfs'] = rtc_Record then  // Screen Frame Stat
-    begin
-      FCapLat := asRecord['scrfs'].asInteger['CapLat'];
-      FEncLat := asRecord['scrfs'].asInteger['EncLat'];
-    end else
-    begin
-      FCapLat := -1;
-      FEncLat := -1;
-    end;
+  rec := TRtcRecord.FromCode(s);
+  try
+    with rec do
+      if isType['scrfs'] = rtc_Record then  // Screen Frame Stat
+      begin
+        FCapLat := asRecord['scrfs'].asInteger['CapLat'];
+        FEncLat := asRecord['scrfs'].asInteger['EncLat'];
+      end else
+      begin
+        FCapLat := -1;
+        FEncLat := -1;
+      end;
+  finally
+    rec.Free;
+  end;
 
   Tick := Debug.GetMCSTick;
   {$ENDIF}
 
-  try
-    Result := ScrOut.SetScreenData(rec);
-  finally
-    rec.Free;
-  end;
+  Result := ScrOut.SetScreenData(s);
 
   {$IFDEF DEBUG}
   FDecLat := Debug.GetMCSTick - Tick;

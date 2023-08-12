@@ -12,20 +12,19 @@ interface
 {$ifend}
 
 uses
-  Windows, Messages, SysUtils, CommonData, CommonUtils,
+  Windows, Messages, SysUtils, CommonData, CommonUtils, uVircessTypes, rtcLog, ClipBrd,
   Classes, Graphics, Controls, Forms, Types, IOUtils, DateUtils,
   Dialogs, ExtCtrls, StdCtrls, ShellAPI, ProgressDialog, rtcSystem,
+  rtcInfo, rmxVideoStorage, rmxVideoFile, rtcpFileTrans, rtcpFileTransUI,
+  System.ImageList, Vcl.ImgList, Vcl.ActnMan, Vcl.ActnColorMaps, System.Actions,
+  Vcl.ActnList, Vcl.PlatformDefaultStyleActnCtrls, rtcPortalMod,
+  rtcpDesktopControl, rtcpDesktopControlUI, ChromeTabs, NFPanel, Vcl.Imaging.jpeg,
+  Vcl.Samples.Spin, Vcl.Buttons, Vcl.ToolWin, Vcl.ActnCtrls, Vcl.ActnMenus,
+  Vcl.ComCtrls, ChromeTabsTypes, ChromeTabsClasses, ChromeTabsControls, rtcpDesktopConst,
 
   {$IFDEF USE_GLASS_FORM}ChromeTabsGlassForm,{$ENDIF}
 
-  rtcpFileTrans, rtcpChat,
-  rtcpDesktopControl, rtcpDesktopControlUI, rtcPortalMod,
-  rtcpDesktopConst, Buttons, Spin, System.Actions, Vcl.ActnList, Vcl.ActnMan,
-  Vcl.ActnColorMaps, Vcl.ToolWin,
-  Vcl.ActnCtrls, Vcl.ActnMenus, uVircessTypes, rtcLog, ClipBrd,
-  Vcl.PlatformDefaultStyleActnCtrls, Vcl.Imaging.jpeg,
-  System.ImageList, Vcl.ImgList, Math, Vcl.ComCtrls, Vcl.Imaging.pngimage,
-  NFPanel, rtcpFileTransUI, VideoRecorder, ChromeTabs, ChromeTabsClasses, ChromeTabsControls, ChromeTabsTypes;
+  Vcl.Imaging.pngimage, VideoRecorder, rtcpChat, Math;
 
 type
   TFormType = {$IFDEF USE_GLASS_FORM}
@@ -198,10 +197,12 @@ type
     procedure ChromeTabs1ButtonAddClick(Sender: TObject; var Handled: Boolean);
   private
     FVideoRecorder: TVideoRecorder;
+    FVideoWriter: TRMXVideoWriter;
     FVideoFile: String;
     FImageChanged: Boolean;
     FVideoImage: TBitmap;
     FLockVideoImage: Integer;
+    FFirstImageArrived: Boolean;
     procedure DoRecordAction(Action: Integer);
     procedure RecordStart();
     procedure RecordStop();
@@ -209,6 +210,7 @@ type
 	  procedure RecordStopWindowProc(var Message: TMessage); message WM_STOP_RECORD;
     procedure ModalFormRecordStopActivate(Sender: TObject);
     procedure OnGetVideoFrame(Sender: TObject);
+    procedure OnSetScreenData(Sender: TObject; const Data: RtcString);
     procedure LockVideoImage;
     procedure UnlockVideoImage;
   protected
@@ -311,6 +313,28 @@ implementation
 {$R *.dfm}
 
 { TrdDesktopViewer }
+
+procedure TrdDesktopViewer.OnSetScreenData(Sender: TObject;
+  const Data: RtcString);
+var
+  rec: TRtcRecord;
+begin
+  if Assigned(FVideoWriter) then
+    begin
+      if FFirstImageArrived then
+        FVideoWriter.WriteRTCCode(Data) else
+        begin
+          rec := TRtcRecord.FromCode(Data);
+          try
+            FFirstImageArrived := (rec.isType['res'] = rtc_Record) and (rec.isType['scrdr'] = rtc_Array);
+            if FFirstImageArrived  then
+              FVideoWriter.WriteRTCCode(Data);
+          finally
+            rec.Free;
+          end;
+        end;
+    end;
+end;
 
 procedure TrdDesktopViewer.CreateParams(var params: TCreateParams);
 begin
@@ -1669,41 +1693,72 @@ end;
 //end;
 
 procedure TrdDesktopViewer.RecordStart;
+var
+  rec: TRtcRecord;
+  fn: TRtcFunctionInfo;
 begin
-  if Assigned(FVideoRecorder) then
+  if Assigned(FVideoWriter) then
     raise Exception.Create('Video is recording');
-  FVideoFile := IncludeTrailingPathDelimiter(ExpandFileName(RecordsFolder));
+  FVideoFile := IncludeTrailingPathDelimiter(RecordsFolder);
   ForceDirectories(FVideoFile);
-  FVideoFile := FVideoFile + 'Video_' + FormatDateTime('YYYY_MM_DD_HHNNSS', Now) + '.avi';
-  FVideoImage := TBitmap.Create;
-  FVideoImage.SetSize(UI.Playback.Image.Width, UI.Playback.Image.Height);
-  FVideoImage.PixelFormat := pf24bit;
-  FVideoImage.Canvas.Draw(0, 0, UI.Playback.Image);
-  FVideoRecorder := TVideoRecorderAVIVFW.Create(Handle, FVideoFile, 10, OnGetVideoFrame, FVideoImage);
+  FVideoFile := FVideoFile + 'Video_' + FormatDateTime('YYYY_MM_DD_HHNNSS', Now) + '.rmxv';
+  FVideoWriter := TRMXVideoWriter.Create(FVideoFile, TRMXVideoFileWin);
+//  rec := TRtcRecord.Create;
+//  try
+//    with Rec.newRecord('res') do//Res.newRecord('res') do
+//    begin
+//      asInteger['Width'] := myUI.Playback.ScreenDecoder.ScreenWidth;
+//      asInteger['Height'] := myUI.Playback.ScreenDecoder.ScreenHeight;
+//      asInteger['Bits'] := myUI.Playback.ScreenDecoder.ScreenBPP;
+//    end;
+//    FVideoWriter.WriteRTCRec(rec);
+//  finally
+//    rec.Free;
+//  end;
+  FFirstImageArrived := false;
+  myUI.Playback.ScreenDecoder.OnSetScreenData := OnSetScreenData;
+  // data to send to the user ...
+  fn := TRtcFunctionInfo.Create;
+  fn.FunctionName := 'restart_desk';
+  myUI.Module.Client.SendToUser(myUI.Module, myUI.UserName, fn);
+//  exit;
+//  if Assigned(FVideoRecorder) then
+//    raise Exception.Create('Video is recording');
+//  FVideoFile := IncludeTrailingPathDelimiter(ExpandFileName(edRecordFolder.Text));
+//  ForceDirectories(FVideoFile);
+//  FVideoFile := FVideoFile + 'Video_' + FormatDateTime('YYYY_MM_DD_HHNNSS', Now) + '.avi';
+//  FVideoImage := TBitmap.Create;
+//  FVideoImage.SetSize(UI.Playback.Image.Width, UI.Playback.Image.Height);
+//  FVideoImage.PixelFormat := pf24bit;
+//  FVideoImage.Canvas.Draw(0, 0, UI.Playback.Image);
+//  FVideoRecorder := TVideoRecorderAVIVFW.Create(Handle, FVideoFile, 10, OnGetVideoFrame, FVideoImage);
 end;
 
 procedure TrdDesktopViewer.RecordStop;
 var
   frm: TForm;
+  w: TRMXVideoWriter;
 begin
-  if not Assigned(FVideoRecorder) then
-    Exit;
-
-  frm := CreateMessageDialog('Stop Recording .... ', mtInformation, []);
-  frm.Position := poScreenCenter;
-  frm.Caption := Application.Title;
-  frm.OnActivate := ModalFormRecordStopActivate;
-  frm.ShowModal;
-  while Assigned(FVideoImage) do
-    Application.ProcessMessages;
-  frm.Free;
+  if not Assigned(FVideoWriter) then exit;
+  myUI.Playback.ScreenDecoder.OnSetScreenData := nil;
+  w := FVideoWriter;
+  FVideoWriter := nil;
+  w.Free;
+//  if not Assigned(FVideoRecorder) then exit;
+//  frm := CreateMessageDialog('Stop Recording .... ', mtInformation, []);
+//  frm.Position := poScreenCenter;
+//  frm.Caption := Application.Title;
+//  frm.OnActivate := ModalFormRecordStopActivate;
+//  frm.ShowModal;
+//  while Assigned(FVideoImage) do Application.ProcessMessages;
+//  frm.Free;
 end;
 
 procedure TrdDesktopViewer.RecordCancel;
 begin
-  if not Assigned(FVideoRecorder) then
-    Exit;
-  FVideoRecorder.Terminate;
+//  if not Assigned(FVideoRecorder) then exit;
+//  FVideoRecorder.Terminate;
+  if not Assigned(FVideoWriter) then exit;
   RecordStop;
   DeleteFile(FVideoFile);
 end;

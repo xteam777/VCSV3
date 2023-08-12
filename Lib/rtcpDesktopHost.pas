@@ -943,6 +943,11 @@ begin
         _sub_desk.asBoolean[uname] := True;
       end;
   end
+  // restart desktop,  send full image
+  else if (data.FunctionName = 'restart_desk') then
+  begin
+    Restart;
+  end;
   //+sstuman
 //  else if Data.FunctionName = 'files_to_copy_list' then
 //  begin

@@ -1,0 +1,223 @@
+object MainForm: TMainForm
+  Left = 0
+  Top = 0
+  Caption = 'rmxPlayer'
+  ClientHeight = 350
+  ClientWidth = 582
+  Color = clBtnFace
+  CustomTitleBar.CaptionAlignment = taCenter
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -10
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  StyleElements = [seFont, seClient]
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnResize = FormResize
+  TextHeight = 12
+  object btnSlide: TSpeedButton
+    Left = 470
+    Top = 21
+    Width = 18
+    Height = 18
+    Margins.Left = 2
+    Margins.Top = 2
+    Margins.Right = 2
+    Margins.Bottom = 2
+    Caption = '5'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -10
+    Font.Name = 'Webdings'
+    Font.Style = []
+    ParentFont = False
+    OnClick = btnSlideClick
+  end
+  object pnlCommon: TPanel
+    Left = 121
+    Top = 0
+    Width = 368
+    Height = 20
+    Margins.Left = 2
+    Margins.Top = 2
+    Margins.Right = 2
+    Margins.Bottom = 2
+    Caption = 'pnlCommon'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -10
+    Font.Name = 'Webdings'
+    Font.Style = []
+    ParentBackground = False
+    ParentColor = True
+    ParentFont = False
+    ShowCaption = False
+    TabOrder = 0
+    object btnPlay: TSpeedButton
+      Left = 38
+      Top = 1
+      Width = 18
+      Height = 18
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
+      Action = actPlay
+      Align = alLeft
+    end
+    object btnPause: TSpeedButton
+      Left = 1
+      Top = 1
+      Width = 18
+      Height = 18
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
+      Action = actPause
+      Align = alLeft
+    end
+    object btnStop: TSpeedButton
+      Left = 56
+      Top = 1
+      Width = 18
+      Height = 18
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
+      Action = actStop
+      Align = alLeft
+    end
+    object btnForward: TSpeedButton
+      Left = 74
+      Top = 1
+      Width = 19
+      Height = 18
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
+      Action = actForward
+      Align = alLeft
+    end
+    object btnBackward: TSpeedButton
+      Left = 19
+      Top = 1
+      Width = 19
+      Height = 18
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
+      Action = actBackward
+      Align = alLeft
+    end
+    object btnOpenFile: TSpeedButton
+      Left = 93
+      Top = 1
+      Width = 18
+      Height = 18
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
+      Action = actOpenFile
+      Align = alLeft
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -10
+      Font.Name = 'Wingdings'
+      Font.Style = []
+      ParentFont = False
+    end
+    object btnConvert: TSpeedButton
+      Left = 111
+      Top = 1
+      Width = 19
+      Height = 18
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
+      Action = actConvert
+      Align = alLeft
+    end
+    object lblTime: TLabel
+      Left = 311
+      Top = 3
+      Width = 52
+      Height = 12
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
+      Alignment = taRightJustify
+      Caption = '00:00/00:00'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -10
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+    end
+    object tbPlay: TTrackBar
+      Left = 131
+      Top = 2
+      Width = 172
+      Height = 12
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
+      Enabled = False
+      TabOrder = 0
+      ThumbLength = 8
+      TickMarks = tmBoth
+      TickStyle = tsNone
+    end
+  end
+  object ActionList: TActionList
+    Left = 296
+    Top = 128
+    object actPlay: TAction
+      Caption = '4'
+      OnExecute = btnPlayClick
+    end
+    object actStop: TAction
+      Caption = '<'
+      OnExecute = actStopExecute
+    end
+    object actPause: TAction
+      Caption = ';'
+      OnExecute = actPauseExecute
+    end
+    object actForward: TAction
+      Caption = ':'
+    end
+    object actBackward: TAction
+      Caption = '9'
+    end
+    object actOpenFile: TAction
+      Caption = '0'
+      OnExecute = actOpenFileExecute
+    end
+    object actConvert: TAction
+      Caption = #183
+      OnExecute = actConvertExecute
+    end
+  end
+  object FileOpenDialog: TFileOpenDialog
+    DefaultExtension = '*.rmxv'
+    FavoriteLinks = <>
+    FileTypes = <
+      item
+        DisplayName = 'RMX Video File'
+        FileMask = '*.rmxv'
+      end>
+    Options = [fdoFileMustExist]
+    Left = 380
+    Top = 128
+  end
+end
