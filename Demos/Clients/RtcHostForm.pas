@@ -4861,13 +4861,13 @@ begin
   end;
 
 //  if tPHostThread.Gateway = '' then
-//    tPHostThread.Gateway := '95.216.96.8';
+//    tPHostThread.Gateway := '95.216.96.6';
   if hcAccounts.ServerAddr = '' then
-    hcAccounts.ServerAddr := '95.216.96.39';
+    hcAccounts.ServerAddr := '95.216.96.6';
   if TimerClient.ServerAddr = '' then
-    TimerClient.ServerAddr := '95.216.96.39';
+    TimerClient.ServerAddr := '95.216.96.6';
   if HostTimerClient.ServerAddr = '' then
-    HostTimerClient.ServerAddr := '95.216.96.39';
+    HostTimerClient.ServerAddr := '95.216.96.6';
 
   if ProxyOption = '' then
     ProxyOption := 'Automatic';
