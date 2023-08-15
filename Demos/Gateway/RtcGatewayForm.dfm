@@ -12,7 +12,6 @@ object MainForm: TMainForm
   Font.Height = -11
   Font.Name = 'Arial'
   Font.Style = []
-  OldCreateOrder = False
   Position = poScreenCenter
   PrintScale = poNone
   Scaled = False
@@ -21,7 +20,6 @@ object MainForm: TMainForm
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 14
   object pMaster: TPanel
     Left = 0
@@ -41,10 +39,6 @@ object MainForm: TMainForm
       TabStop = False
       object Page_Setup: TTabSheet
         Caption = 'Setup'
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
         object Label3: TLabel
           Left = 8
           Top = 103
@@ -236,10 +230,6 @@ object MainForm: TMainForm
       object Page_Active: TTabSheet
         Caption = 'Active'
         ImageIndex = 1
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
         object Label5: TLabel
           Left = 8
           Top = 200

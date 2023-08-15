@@ -395,7 +395,7 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
       GetDataProvider.SQLConnection.Close;
 
     GetDataProvider.FStartForceUserLogoutThread := StartForceUserLogoutThreadInAllGateways;
-    GetDataProvider.SQLConnection.ConnectionString := 'provider=SQLNCLI11;server=' + eSQLServer.Text+ ';User ID=sa;database=Vircess;uid=sa;Persist security info=True;pwd=2230897';
+    GetDataProvider.SQLConnection.ConnectionString := 'provider=SQLNCLI11;server=' + eSQLServer.Text+ ';User ID=sa;database=Remox;uid=sa;Persist security info=True;pwd=2230897';
     GetDataProvider.SQLConnection.Connected := True;
     GetDataProvider.ServerLink1.Server := hsMain1;
     GetDataProvider.ServerLink2.Server := hsMain2;
