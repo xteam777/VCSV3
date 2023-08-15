@@ -7990,6 +7990,7 @@ var
   mResult: TModalResult;
   PassForm: TfIdentification;
   PRItem: PPendingRequestItem;
+  TempPass: String;
 begin
 //  xLog('rGetPartnerInfoReturn');
 
@@ -8078,6 +8079,7 @@ begin
 
       username := GetUserNameByID(asWideString['user']);
 
+      TempPass := '';
       PassForm := TfIdentification.Create(Self);
       try
 //      PassForm.Parent := Self;
@@ -8100,11 +8102,12 @@ begin
         OnCustomFormOpen(@PassForm);
         PassForm.ShowModal;
         mResult := PassForm.ModalResult;
+        TempPass := PassForm.ePassword.Text;
       finally
         PassForm.Free;
       end;
       if mResult = mrOk then
-        ConnectToPartnerStart(asWideString['user'], username, PassForm.ePassword.Text, asString['action'])
+        ConnectToPartnerStart(asWideString['user'], username, TempPass, asString['action'])
       else
       begin
         DeletePendingRequest(asWideString['user'], asString['action']);
