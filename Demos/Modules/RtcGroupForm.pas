@@ -188,8 +188,8 @@ begin
   if (Result.isType = rtc_String) then
   begin
     UID := Result.asString;
-    Close;
     ModalResult := mrOk;
+    Hide;
   end;
 end;
 
@@ -207,8 +207,8 @@ begin
   if (Result.isType = rtc_String)
     and (Result.asString = 'OK') then
   begin
-    Close;
     ModalResult := mrOk;
+    Hide;
   end;
 end;
 

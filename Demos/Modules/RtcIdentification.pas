@@ -69,7 +69,7 @@ end;
 procedure TfIdentification.bOKClick(Sender: TObject);
 begin
   ModalResult := mrOk;
-  Close;
+  Hide;
 end;
 
 procedure TfIdentification.ePasswordKeyDown(Sender: TObject; var Key: Word;

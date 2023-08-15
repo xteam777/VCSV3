@@ -4,24 +4,22 @@ object fAcceptEULA: TfAcceptEULA
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = #1059#1089#1090#1072#1085#1086#1074#1082#1072
-  ClientHeight = 280
-  ClientWidth = 440
+  ClientHeight = 279
+  ClientWidth = 436
   Color = clWhite
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -13
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
   Position = poScreenCenter
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 16
   object Panel1: TPanel
     Left = 0
     Top = 0
-    Width = 440
-    Height = 280
+    Width = 436
+    Height = 279
     Align = alClient
     BevelOuter = bvNone
     Color = 16645629
@@ -35,6 +33,7 @@ object fAcceptEULA: TfAcceptEULA
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
+    ExplicitWidth = 440
     ExplicitHeight = 249
     object Label6: TLabel
       Left = 6

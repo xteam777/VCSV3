@@ -3,8 +3,8 @@ object fIdentification: TfIdentification
   Top = 0
   BorderStyle = bsDialog
   Caption = #1048#1076#1077#1085#1090#1080#1092#1080#1082#1072#1094#1080#1103
-  ClientHeight = 139
-  ClientWidth = 407
+  ClientHeight = 140
+  ClientWidth = 411
   Color = clWhite
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText

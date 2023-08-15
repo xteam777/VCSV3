@@ -332,7 +332,6 @@ begin
 //      SetRegistryAutoRun(cbAutoRun.Checked);
 
   ModalResult := mrOk;
-
   Hide;
 end;
 
