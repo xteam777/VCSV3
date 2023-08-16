@@ -76,7 +76,7 @@ end;
 procedure TRMXVideoWriter.InitalizeFile;
 begin
   FTimer := TStopwatch.Create;
-  FRMXFile.Header.SetCompressionClass(TCompressionLZMA2);
+  FRMXFile.CreateHeader.SetCompressionClass(TCompressionLZMA2);
   FTimer.Start;
 end;
 

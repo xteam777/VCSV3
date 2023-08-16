@@ -3097,8 +3097,8 @@ object rdDesktopViewer: TrdDesktopViewer
       object imgRec: TImage
         Left = 926
         Top = 7
-        Width = 25
-        Height = 28
+        Width = 27
+        Height = 20
         Center = True
         Picture.Data = {
           0954506E67496D61676589504E470D0A1A0A0000000D49484452000000200000
@@ -3134,8 +3134,8 @@ object rdDesktopViewer: TrdDesktopViewer
         Visible = False
       end
       object lblRecInfo: TLabel
-        Left = 964
-        Top = 11
+        Left = 959
+        Top = 9
         Width = 50
         Height = 16
         Caption = '00:00:00'
@@ -3166,7 +3166,6 @@ object rdDesktopViewer: TrdDesktopViewer
           Top = 1
           Width = 345
           Height = 34
-          UseSystemFont = False
           ActionManager = ActionManagerTop
           Align = alNone
           Color = clMenuBar
@@ -3176,7 +3175,7 @@ object rdDesktopViewer: TrdDesktopViewer
           ColorMap.SelectedFontColor = clWhite
           ColorMap.UnusedColor = clWhite
           Font.Charset = DEFAULT_CHARSET
-          Font.Color = clBlack
+          Font.Color = clWindowText
           Font.Height = -12
           Font.Name = 'Segoe UI'
           Font.Style = []

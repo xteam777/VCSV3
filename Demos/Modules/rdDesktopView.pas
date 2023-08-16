@@ -1819,7 +1819,7 @@ begin
       RecordStart();
       imgRec.Visible := True;
       lblRecInfo.Visible := True;
-      lblRecInfo.Tag := GetTickCount;
+      lblRecInfo.Tag := NativeInt(GetTickCount);
       TimerRec.Enabled := true;
     end
   else
@@ -2645,7 +2645,7 @@ begin
   else
     imgRec.Visible := False;
   lblRecInfo.Visible := Assigned(FVideoRecorder);
-  lblRecInfo.Caption := FormatDateTime('HH:NN:SS', IncMilliSecond(0, GetTickCount - Cardinal(lblRecInfo.Tag)));
+  lblRecInfo.Caption := FormatDateTime('HH:NN:SS', IncMilliSecond(0, NativeInt(GetTickCount) - NativeInt(lblRecInfo.Tag)));
 end;
 
 procedure TrdDesktopViewer.PFileTransExplorerNewUI(Sender: TRtcPFileTransfer; const user: String);
