@@ -15,7 +15,7 @@ uses
   Windows, Messages, SysUtils, CommonData, CommonUtils, uVircessTypes, rtcLog, ClipBrd,
   Classes, Graphics, Controls, Forms, Types, IOUtils, DateUtils,
   Dialogs, ExtCtrls, StdCtrls, ShellAPI, ProgressDialog, rtcSystem,
-  rtcInfo, rmxVideoStorage, rmxVideoFile, rtcpFileTrans, rtcpFileTransUI,
+  rtcpChat, Math, rtcpFileTrans, rtcpFileTransUI,
   System.ImageList, Vcl.ImgList, Vcl.ActnMan, Vcl.ActnColorMaps, System.Actions,
   Vcl.ActnList, Vcl.PlatformDefaultStyleActnCtrls, rtcPortalMod,
   rtcpDesktopControl, rtcpDesktopControlUI, ChromeTabs, NFPanel, Vcl.Imaging.jpeg,
@@ -24,7 +24,7 @@ uses
 
   {$IFDEF USE_GLASS_FORM}ChromeTabsGlassForm,{$ENDIF}
 
-  Vcl.Imaging.pngimage, VideoRecorder, rtcpChat, Math;
+  Vcl.Imaging.pngimage, VideoRecorder, rtcInfo, rmxVideoStorage, rmxVideoFile;
 
 type
   TFormType = {$IFDEF USE_GLASS_FORM}
@@ -906,8 +906,9 @@ begin
   lblRecInfo.Top := 10;
   lblRecInfo.Visible := False;
 
-  aRecordStop.Enabled := Assigned(FVideoRecorder);
-  aRecordCancel.Enabled := Assigned(FVideoRecorder);
+  aRecordStart.Enabled := not Assigned(FVideoWriter);
+  aRecordStop.Enabled := Assigned(FVideoWriter);
+  aRecordCancel.Enabled := Assigned(FVideoWriter);
 
   Visible := False; //позже ставим True если не отменено в пендинге
 end;
@@ -1864,8 +1865,10 @@ begin
         frm.Free;
       end;
     end;
-  aRecordStop.Enabled := Assigned(FVideoRecorder);
-  aRecordCancel.Enabled := Assigned(FVideoRecorder);
+
+  aRecordStart.Enabled := not Assigned(FVideoWriter);
+  aRecordStop.Enabled := Assigned(FVideoWriter);
+  aRecordCancel.Enabled := Assigned(FVideoWriter);
 end;
 
 procedure TrdDesktopViewer.aRecordCancelExecute(Sender: TObject);
@@ -2640,11 +2643,11 @@ end;
 
 procedure TrdDesktopViewer.TimerRecTimer(Sender: TObject);
 begin
-  if Assigned(FVideoRecorder) then
+  if Assigned(FVideoWriter) then
     imgRec.Visible := not imgRec.Visible
   else
     imgRec.Visible := False;
-  lblRecInfo.Visible := Assigned(FVideoRecorder);
+  lblRecInfo.Visible := Assigned(FVideoWriter);
   lblRecInfo.Caption := FormatDateTime('HH:NN:SS', IncMilliSecond(0, NativeInt(GetTickCount) - NativeInt(lblRecInfo.Tag)));
 end;
 
