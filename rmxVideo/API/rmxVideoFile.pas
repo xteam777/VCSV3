@@ -1,5 +1,7 @@
 unit rmxVideoFile;
 
+{$RANGECHECKS OFF}
+
 interface
 uses
   Winapi.Windows,
