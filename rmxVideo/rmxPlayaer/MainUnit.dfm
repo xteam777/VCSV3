@@ -6,6 +6,7 @@ object MainForm: TMainForm
   ClientWidth = 582
   Color = clBtnFace
   CustomTitleBar.CaptionAlignment = taCenter
+  DoubleBuffered = True
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -10
@@ -52,8 +53,13 @@ object MainForm: TMainForm
     ParentBackground = False
     ParentColor = True
     ParentFont = False
+    ParentShowHint = False
     ShowCaption = False
+    ShowHint = True
     TabOrder = 0
+    DesignSize = (
+      368
+      20)
     object btnPlay: TSpeedButton
       Left = 38
       Top = 1
@@ -154,6 +160,7 @@ object MainForm: TMainForm
       Margins.Right = 2
       Margins.Bottom = 2
       Alignment = taRightJustify
+      Anchors = [akLeft, akTop, akRight]
       Caption = '00:00/00:00'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -162,49 +169,43 @@ object MainForm: TMainForm
       Font.Style = []
       ParentFont = False
     end
-    object tbPlay: TTrackBar
-      Left = 131
-      Top = 2
-      Width = 172
-      Height = 12
-      Margins.Left = 2
-      Margins.Top = 2
-      Margins.Right = 2
-      Margins.Bottom = 2
-      Enabled = False
-      TabOrder = 0
-      ThumbLength = 8
-      TickMarks = tmBoth
-      TickStyle = tsNone
-    end
   end
   object ActionList: TActionList
     Left = 296
     Top = 128
     object actPlay: TAction
       Caption = '4'
+      Hint = 'Play'
       OnExecute = btnPlayClick
     end
     object actStop: TAction
       Caption = '<'
+      Hint = 'Stop'
       OnExecute = actStopExecute
     end
     object actPause: TAction
       Caption = ';'
+      Hint = 'Pause'
       OnExecute = actPauseExecute
     end
     object actForward: TAction
       Caption = ':'
+      Hint = 'Forward 2 sec'
+      OnExecute = actForwardExecute
     end
     object actBackward: TAction
       Caption = '9'
+      Hint = 'Backward 2 sec'
+      OnExecute = actBackwardExecute
     end
     object actOpenFile: TAction
       Caption = '0'
+      Hint = 'Open a file'
       OnExecute = actOpenFileExecute
     end
     object actConvert: TAction
       Caption = #183
+      Hint = 'Show a converter'
       OnExecute = actConvertExecute
     end
   end

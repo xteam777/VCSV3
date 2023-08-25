@@ -1,5 +1,4 @@
 unit rmxVideoFile;
-
 {$RANGECHECKS OFF}
 
 interface
@@ -119,6 +118,9 @@ type
     FFrameSize: Cardinal; // current frame size
     FPosition: Cardinal;      // current index
     function ReallocFrame(Ptr: Pointer; var FrameOffset: Cardinal; FrameSize: Cardinal): Pointer;
+    function MapFrame(Index: Cardinal): Boolean;
+    procedure SetPosition(const Value: Cardinal);
+
   public
     Origin: PRMXImageSection;
 
@@ -137,10 +139,11 @@ type
     function Next: Boolean;
     function EOF: Boolean;
     function PacketCount: Cardinal;
+    procedure ResetMap;
 
 //    property Cursor: TRMXPacketData read FPacket;
 //    property CursorRaw: PRMXDataPacket read GetCursorRaw;
-    property Position: Cardinal read FPosition;
+    property Position: Cardinal read FPosition write SetPosition;
     property State: TSectionState read FState;
     property MaxAvailaiblePackets: Cardinal read FMaxAvailaiblePackets;
   end;
@@ -869,7 +872,7 @@ begin
   Cardinal(FHeader.Version) := RMX_FILE_VERSION;
   FHeader.Magic             := RMX_MAGIC;
   FHeader.DataAlignment     := RMX_DATA_ALIGNMENT;
-  FHeader.TimeStamp     := DateTimeToUnixMSec(Now, false)
+  FHeader.TimeStamp         := DateTimeToUnixMSec(Now, false)
 
 end;
 
@@ -1143,10 +1146,7 @@ procedure TRMXSectionData.First;
 begin
   if (FState <> ssClosed) or (PacketCount = 0)  then
     raise Exception.Create('Sestion is empty or in the writing state');
-  FRMXFile.Unmap(FBase);
-  FPosition := 0;
-  FOffset := 0;
-  FBase := nil;
+  ResetMap;
   if FSection.SizeOfData < DEF_FRAME_SIZE then
     FFrameSize := FSection.SizeOfData else
     FFrameSize := DEF_FRAME_SIZE;
@@ -1210,20 +1210,19 @@ begin
 
 end;
 
-function TRMXSectionData.Next: Boolean;
+function TRMXSectionData.MapFrame(Index: Cardinal): Boolean;
 var
   sz: Cardinal;
 begin
   Result := false;
   if (FState <> ssClosed) or (PacketCount = 0)  then
     raise Exception.Create('Sestion is empty or in the writing state');
-  if (FPosition + 1) >= FSection.PacketCount then exit;
-  Inc(FPosition);
-  FOffset := FSection.DataDirectory[FPosition].offset;
+  if Index >= FSection.PacketCount then exit;
+  FOffset := FSection.DataDirectory[Index].offset;
 
-  if FFrameSize - FOffset < FSection.DataDirectory[FPosition].size then
+  if FFrameSize - FOffset < FSection.DataDirectory[Index].size then
     begin
-      sz := FSection.SizeOfData - (FOffset + FSection.DataDirectory[FPosition].size);
+      sz := FSection.SizeOfData - (FOffset + FSection.DataDirectory[Index].size);
       if sz < DEF_FRAME_SIZE then
         FFrameSize := sz else
         FFrameSize := DEF_FRAME_SIZE;
@@ -1231,6 +1230,14 @@ begin
     end;
 
   Result := true;
+
+end;
+
+function TRMXSectionData.Next: Boolean;
+begin
+  Result := MapFrame(FPosition + 1);
+  if Result then
+    Inc(FPosition);
 end;
 
 function TRMXSectionData.PacketCount: Cardinal;
@@ -1267,6 +1274,25 @@ begin
 
 end;
 
+
+procedure TRMXSectionData.ResetMap;
+begin
+  FRMXFile.Unmap(FBase);
+  FPosition := 0;
+  FOffset := 0;
+  FBase := nil;
+end;
+
+procedure TRMXSectionData.SetPosition(const Value: Cardinal);
+begin
+  if (FPosition <> Value) and (Value < FSection.PacketCount) then
+    begin
+      FOffset := FFrameSize;
+      if not MapFrame(Value) then
+        raise Exception.Create('Cannot set Position');
+      FPosition := Value;
+    end;
+end;
 
 procedure TRMXSectionData.StartOf;
 begin

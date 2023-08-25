@@ -31,9 +31,13 @@ type
     FRMXFile: TRMXVideoFile;
     FSection: TRMXSectionData;
     FSectionList: TRMXSectionList;
-    FIndex: Cardinal;
+    FSectionIndex: Cardinal;
+    FPacketIndex: Cardinal;
+    FPacketIndexUserAssigned: Boolean;
     procedure InitalizeFile;
     procedure FilalizeFile;
+    procedure SetSectionIndex(const Value: Cardinal);
+    procedure SetPacketIndex(const Value: Cardinal);
 
   public
     constructor Create(const FileName: string; FileClass: TRMXVideoFileClass);
@@ -43,6 +47,8 @@ type
     function ReadRTCCode(out code: RtcString; out TimeStamp: Int64): Boolean;
     function ReadRTCRec(out rec: TRtcRecord; out TimeStamp: Int64): Boolean;
     property RMXFile: TRMXVideoFile read FRMXFile;
+    property SectionIndex: Cardinal read FSectionIndex;// write SetSectionIndex;
+    property PacketIndex: Cardinal read FPacketIndex write SetPacketIndex;
   end;
 
 implementation
@@ -128,9 +134,11 @@ begin
 
 end;
 
+
 procedure TRMXVideoReader.InitalizeFile;
 begin
   FRMXFile.Header.SetCompressionClass(TCompressionLZMA2);
+  FSectionList := FRMXFile.SectionList;
 end;
 
 function TRMXVideoReader.ReadRTCCode(out code: RtcString; out TimeStamp: Int64): Boolean;
@@ -138,25 +146,32 @@ var
   pkt: TRMXPacketData;
 begin
   Result := false;
-  if not Assigned(FSectionList)  then
+  if not FPacketIndexUserAssigned then
     begin
-      FIndex := 0;
-      FSectionList := FRMXFile.SectionList;
-      FSection := FSectionList.Sections[FIndex];
-      if FSection.PacketCount = 0 then exit;
 
-      FSection.First;
-    end
+      if not Assigned(FSection)  then
+        begin
+          FSectionIndex := 0;
+          FSectionList := FRMXFile.SectionList;
+          FSection := FSectionList.Sections[FSectionIndex];
+          if FSection.PacketCount = 0 then exit;
 
-  else
+          FSection.First;
+          FPacketIndex := 0;
+        end
 
-  if not FSection.Next then
-    begin
-      Inc(FIndex);
-      if FIndex >= Integer(FSectionList.Count) then exit;
-      FSection := FSectionList.Sections[FIndex];
-      if FSection.PacketCount = 0 then exit;
-      FSection.First;
+      else
+
+      if not FSection.Next then
+        begin
+          Inc(FSectionIndex);
+          if FSectionIndex >= Integer(FSectionList.Count) then exit;
+          FSection := FSectionList.Sections[FSectionIndex];
+          if FSection.PacketCount = 0 then exit;
+          FSection.First;
+        end
+      else
+        Inc(FPacketIndex);
     end;
 
   pkt := FSection.GetPacket(FSection.Position);
@@ -167,6 +182,7 @@ begin
   finally
     pkt.Free;
   end;
+  FPacketIndexUserAssigned := false;
   Result := true;
 
 end;
@@ -179,5 +195,42 @@ begin
   if Result then
       rec := TRtcRecord.FromCode(code);
 end;
+
+procedure TRMXVideoReader.SetSectionIndex(const Value: Cardinal);
+begin
+  raise Exception.Create('not implemented');
+
+//  if (FSectionIndex = Value) and (Value >= RMXFile.Header.NumberOfSections) then exit;
+//  FSection := FSectionList.Sections[Value];
+//  FSection.First;
+
+end;
+procedure TRMXVideoReader.SetPacketIndex(const Value: Cardinal);
+var
+  sec_idx, pkt_idx: Cardinal;
+  sec: TRMXSectionData;
+begin
+  if (FPacketIndex = Value) and (Value >= RMXFile.Header.NumberOfFrames) then exit;
+  pkt_idx := Value;
+  for sec_idx := 0 to FSectionList.Count do
+    begin
+      sec := FSectionList.Sections[sec_idx];
+      if pkt_idx >= sec.PacketCount then
+        begin
+          pkt_idx := pkt_idx - sec.PacketCount;
+          Continue;
+        end;
+      FSection := sec;
+      FSectionIndex := sec_idx;
+      FSection.Position := pkt_idx;
+      FPacketIndex := Value;
+      FPacketIndexUserAssigned := true;
+      break;
+
+    end;
+
+end;
+
+
 
 end.

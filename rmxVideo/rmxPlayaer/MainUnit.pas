@@ -6,7 +6,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
   FLoatPanelVCL, Vcl.Buttons, AcceleratedPaintBox, PlayImage, System.Actions,
-  Vcl.ActnList, Vcl.ComCtrls, ConvertUnit;
+  Vcl.ActnList, Vcl.ComCtrls, ConvertUnit, SimleTrackBar;
 
 type
   TMainForm = class(TForm)
@@ -27,7 +27,6 @@ type
     btnBackward: TSpeedButton;
     btnOpenFile: TSpeedButton;
     btnConvert: TSpeedButton;
-    tbPlay: TTrackBar;
     lblTime: TLabel;
     FileOpenDialog: TFileOpenDialog;
     procedure FormCreate(Sender: TObject);
@@ -39,6 +38,9 @@ type
     procedure actPauseExecute(Sender: TObject);
     procedure actOpenFileExecute(Sender: TObject);
     procedure actConvertExecute(Sender: TObject);
+    procedure TrackBarChange(Sender: TObject);
+    procedure actForwardExecute(Sender: TObject);
+    procedure actBackwardExecute(Sender: TObject);
   private
     { Private declarations }
     FFLoatPanel: TFloatPanelVCL;
@@ -46,14 +48,18 @@ type
     FPlayer: TPlayerHandler;
     FFileName: string;
     FLastFrame: TBitmap;
+    FPlayerSetProgress: Boolean;
+    FTRackBar: TTrackBarEx;
     procedure PaintImage(Sender: TObject; Bitmap: TBitmap; const Progress: TRMXPlayerProgress);
     procedure OnApplyRegion(Sender: TObject; ctrl: TControl; var r: TRect);
-    procedure ResetFocusTrackBar;
-    function PlayerTimerToStr(cur, max: Int64): string;
+    function PlayerTimerToStr(cur, max: Int64): string; overload;
+    function PlayerTimerToStr(val: Int64): string; overload;
     function IsPanelPlayerVisible: Boolean;
     procedure OnPaintPaintBox(Sender: TObject);
-    procedure UpdateActions;
+    procedure UpdateUserActions;
     procedure PaintFileNameOnTarget(Opacity: Single);
+    procedure OnShowHintTrackBar(var HintStr: string; var CanShow: Boolean;
+      var HintInfo: Vcl.Controls.THintInfo);
   public
     { Public declarations }
     procedure OnPanelSlideFinish(Sender: TObject);
@@ -65,7 +71,16 @@ var
 
 implementation
 
+{$DEFINE FLOAT_PANEL_ALTOP}
+
 {$R *.dfm}
+
+procedure TMainForm.actBackwardExecute(Sender: TObject);
+begin
+  if FPlayer.Running then
+    FPlayer.Position := FPlayer.Position - FPlayer.FPS * 2
+
+end;
 
 procedure TMainForm.actConvertExecute(Sender: TObject);
 var
@@ -78,6 +93,12 @@ begin
   finally
     cvt.Free;
   end;
+end;
+
+procedure TMainForm.actForwardExecute(Sender: TObject);
+begin
+  if FPlayer.Running then
+    FPlayer.Position := FPlayer.Position + FPlayer.FPS * 2
 end;
 
 procedure TMainForm.actOpenFileExecute(Sender: TObject);
@@ -116,7 +137,20 @@ begin
 end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
+const
+  DEF_COFFY_COLOR = $00001932;
 begin
+  // trackbar settings
+  FTRackBar := TTrackBarEx.Create(Self);
+  FTRackBar.Parent      := pnlCommon;
+  FTRackBar.BoundsRect  := Rect(btnConvert.BoundsRect.Right + 2, btnConvert.Top + 3,
+                                lblTime.Left - 6, btnConvert.Height-3);//
+  FTRackBar.Anchors     := FTRackBar.Anchors + [akRight];
+  FTRackBar.OnChange    := TrackBarChange;
+  FTRackBar.OnShowHint  := OnShowHintTrackBar;
+
+
+
   // move controls to the float panel
   FFLoatPanel            := TFloatPanelVCL.Create(Self);
   FFLoatPanel.Parent     := Self;
@@ -140,7 +174,7 @@ begin
   F2DCanvas.Align   := alClient;
   F2DCanvas.OnPaint := OnPaintPaintBox;
   F2DCanvas.HandleNeeded;
-  F2DCanvas.D2DCanvas.Clear($00001932);
+  F2DCanvas.D2DCanvas.Clear(DEF_COFFY_COLOR);
 
 
   FPlayer          := TPlayerHandler.Create;
@@ -148,14 +182,15 @@ begin
 
   FFLoatPanel.OnApplyRegion := OnApplyRegion;
   {$ifdef DEBUG}
-    FFLoatPanel.DrawFrame := true;
+ //   FFLoatPanel.DrawFrame := true;
     FFileName := 'Video_2023_07_30_005708.rmxv';
-    FFileName := 'k:\PROJECTS\RMX_FM\other_trash\RMX_FM-rec_desk\rmxVideo\bin\Video_2023_07_30_005708.rmxv';
   {$endif}
+  {$ifndef FLOAT_PANEL_ALTOP}
   FFLoatPanel.ApplyRegions;
+  {$endif}
   FFLoatPanel.BringToFront;
 
-  ResetFocusTrackBar;
+
   UpdateActions;
 
 end;
@@ -170,7 +205,13 @@ end;
 
 procedure TMainForm.FormResize(Sender: TObject);
 begin
-  FFLoatPanel.Left := (ClientWidth + FFLoatPanel.Width) div 2 - FFLoatPanel.Width;
+  {$ifdef FLOAT_PANEL_ALTOP}
+    FFLoatPanel.BoundsRect := Rect(0, FFLoatPanel.Top, ClientWidth, FFLoatPanel.Height);
+    btnSlide.Left          := FFLoatPanel.Width - (btnSlide.Width ) - 1;
+    FFLoatPanel.ApplyRegions;
+  {$else}
+    FFLoatPanel.Left := (ClientWidth + FFLoatPanel.Width) div 2 - FFLoatPanel.Width;
+  {$endif}
 end;
 
 function TMainForm.IsPanelPlayerVisible: Boolean;
@@ -207,9 +248,15 @@ procedure TMainForm.OnPanelSlideFinish(Sender: TObject);
 begin
   FFLoatPanel.Tag := - FFLoatPanel.Tag;
   if FFLoatPanel.Tag < 0 then
-    btnSlide.Caption := '6'
+    btnSlide.Caption := 'q'
     else
-    btnSlide.Caption := '5'
+    btnSlide.Caption := 'p'
+end;
+
+procedure TMainForm.OnShowHintTrackBar(var HintStr: string;
+  var CanShow: Boolean; var HintInfo: Vcl.Controls.THintInfo);
+begin
+  HintStr := PlayerTimerToStr( FPlayer.PositionToTime(FTRackBar.Position)  );
 end;
 
 procedure TMainForm.PaintFileNameOnTarget(Opacity: Single);
@@ -238,9 +285,11 @@ var
 begin
   if FPlayer.Running and IsPanelPlayerVisible then
     begin
-      tbPlay.Max := Progress.frames_max;
-      tbPlay.Min := Progress.frames_min;
-      tbPlay.Position := Progress.frames_pos;
+      FPlayerSetProgress := true;
+      FTRackBar.Max := Progress.frames_max;
+      FTRackBar.Min := Progress.frames_min;
+      FTRackBar.Position := Progress.frames_pos;
+      FPlayerSetProgress := false;
       lblTime.Caption := PlayerTimerToStr(Progress.time_pos, Progress.time_duration);
     end;
 
@@ -267,6 +316,11 @@ begin
   F2DCanvas.D2DCanvas.EndDraw;
 end;
 
+function TMainForm.PlayerTimerToStr(val: Int64): string;
+begin
+  Result := Format('%2.2d:%2.2d',[val div 1000, (val mod 1000) div 10]);
+end;
+
 function TMainForm.PlayerTimerToStr(cur, max: Int64): string;
 begin
   Result := Format('%2.2d:%2.2d/%2.2d:%2.2d',[cur div 1000, (cur mod 1000) div 10,
@@ -275,20 +329,35 @@ begin
 //                                               (max mod 3600) div 60, (max mod 3600) mod 60]
 end;
 
-procedure TMainForm.ResetFocusTrackBar;
+
+procedure TMainForm.TrackBarChange(Sender: TObject);
+var
+  saved_pause: Boolean;
 begin
-  SendMessage(tbPlay.Handle, WM_UPDATEUISTATE, UIS_CLEAR OR UISF_HIDEFOCUS, 0);
+  if not FPlayerSetProgress and FPlayer.Running then
+    begin
+      saved_pause := FPlayer.Pause;
+      FPlayer.Pause := true;
+      FPlayer.Position := FTRackBar.Position;
+      F2DCanvas.Invalidate;
+      FPlayer.Pause := saved_pause;
+
+    end;
+
 end;
 
-procedure TMainForm.UpdateActions;
+procedure TMainForm.UpdateUserActions;
 begin
 
   actPlay.Enabled     := not FPlayer.Running and FileExists(FFileName);
   actStop.Enabled     := FPlayer.Running;
   actPause.Enabled    := FPlayer.Running;
+  actForward.Enabled  := FPlayer.Running;
+  actBackward.Enabled := FPlayer.Running;
   actOpenFile.Enabled := not FPlayer.Running;
   actConvert.Enabled  := not FPlayer.Running;
 
 end;
+
 
 end.

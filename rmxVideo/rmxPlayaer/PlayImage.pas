@@ -27,21 +27,26 @@ type
     FFPS: Integer;
     FProgress: TRMXPlayerProgress;
     FTimeEllapsed: Int64;
+    FPosition: Integer;
+    FReplayFrame: Boolean;
 
     procedure OnTimer(Sender: TObject);
     procedure PlayFrame();
     procedure SetFPS(const Value: Integer);
     procedure SetPause(const Value: Boolean);
+    procedure SetPosition(Value: Integer);
   public
     constructor Create();
     destructor Destroy; override;
     procedure Play(const AFileName: string);
     procedure Stop;
     function CurrentFrame: TBitmap;
+    function PositionToTime(APosition: Integer): Int64;
     property Running: Boolean read FRunning;// write FRunning;
     property Pause: Boolean read FPause write SetPause;
     property OnFrame: TOnFrameImage read FOnFrame write FOnFrame;
     property FPS: Integer read FFPS write SetFPS;
+    property Position: Integer read FPosition write SetPosition;
   end;
 
 implementation
@@ -102,17 +107,26 @@ begin
 
 
 
-  if Assigned(FOnFrame) and  FBitmaper.DecodeNext then
+  if Assigned(FOnFrame) and (FReplayFrame or FBitmaper.DecodeNext) then
     begin
+      FPosition := FBitmaper.Position;
       FProgress.frames_pos := FBitmaper.Position;
+      FProgress.time_pos := FPosition * FBitmaper.Interval;
       FOnFrame(Self, FBitmaper.Bitmap, FProgress);
-      FProgress.time_pos := FProgress.time_pos + FBitmaper.Interval;
+
 
     end else
     begin
       //FTimer.Enabled := false;
       Stop;
     end;
+end;
+
+function TPlayerHandler.PositionToTime(APosition: Integer): Int64;
+begin
+  if Assigned(FBitmaper) then
+    Result := APosition * FBitmaper.Interval else
+    Result := APosition;
 end;
 
 procedure TPlayerHandler.SetFPS(const Value: Integer);
@@ -131,6 +145,21 @@ begin
     begin
       FPause := Value;
       FTimer.Enabled := not Value;
+    end;
+end;
+
+procedure TPlayerHandler.SetPosition(Value: Integer);
+begin
+  if Value < 0 then Value := 0;
+
+  if FPosition <> Value then
+    begin
+      FBitmaper.Position := Value;
+      FPosition := Value;
+      FReplayFrame := true;
+      if FRunning then
+        PlayFrame;
+      FReplayFrame := false;
     end;
 end;
 
