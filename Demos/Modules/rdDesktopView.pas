@@ -1830,7 +1830,7 @@ begin
       imgRec.Visible := False;
       lblRecInfo.Visible := False;
       TimerRec.Enabled := False;
-      MessageBox(Handle, PChar('Record finished'), PChar(Application.Title), MB_ICONINFORMATION or MB_OK);
+//      MessageBox(Handle, PChar('Record finished'), PChar(Application.Title), MB_ICONINFORMATION or MB_OK);
     end
   else
   if Action = RECORD_CANCEL then
@@ -1841,7 +1841,7 @@ begin
       imgRec.Visible := False;
       lblRecInfo.Visible := False;
       TimerRec.Enabled := False;
-      MessageBox(Handle, PChar('Record canceled'), PChar(Application.Title), MB_ICONINFORMATION or MB_OK);
+//      MessageBox(Handle, PChar('Record canceled'), PChar(Application.Title), MB_ICONINFORMATION or MB_OK);
     end
   else
   if Action = RECORD_CODEC_INFO then
