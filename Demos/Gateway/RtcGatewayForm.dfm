@@ -33,7 +33,7 @@ object MainForm: TMainForm
       Top = 1
       Width = 593
       Height = 439
-      ActivePage = Page_Setup
+      ActivePage = Page_Active
       Align = alClient
       TabOrder = 0
       TabStop = False

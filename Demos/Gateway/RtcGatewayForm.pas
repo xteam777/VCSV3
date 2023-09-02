@@ -389,6 +389,24 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
 
   if cbMainGate.Checked then
   begin
+    Label1.Visible := True;
+    Label11.Visible := True;
+    Label10.Visible := True;
+    Label8.Visible := True;
+    lAccounts.Visible := True;
+    lHosts.Visible := True;
+    lGateways.Visible := True;
+
+    Label5.Visible := False;
+    Label2.Visible := False;
+    Label4.Visible := False;
+    Label6.Visible := False;
+    Label7.Visible := False;
+    l80.Visible := False;
+    l8080.Visible := False;
+    l443.Visible := False;
+    l5938.Visible := False;
+
     GetDataProvider(cbMainGate.Checked).GatewayLogOutStart;
 
     if GetDataProvider(cbMainGate.Checked).SQLConnection.Connected then
@@ -446,6 +464,24 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
   end
   else
   begin
+    Label1.Visible := False;
+    Label11.Visible := False;
+    Label10.Visible := False;
+    Label8.Visible := False;
+    lAccounts.Visible := False;
+    lHosts.Visible := False;
+    lGateways.Visible := False;
+
+    Label5.Visible := True;
+    Label2.Visible := True;
+    Label4.Visible := True;
+    Label6.Visible := True;
+    Label7.Visible := True;
+    l80.Visible := True;
+    l8080.Visible := True;
+    l443.Visible := True;
+    l5938.Visible := True;
+
     GetDataProvider(cbMainGate.Checked).GatewayLogOutStart;
 
     GetDataProvider(cbMainGate.Checked).Gateway1 := Gateway1;
