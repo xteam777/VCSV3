@@ -32,10 +32,6 @@ const
 
 type
   TMainForm = class(TForm)
-    pTitlebar: TPanel;
-    cTitleBar: TLabel;
-    btnMinimize: TSpeedButton;
-    btnClose: TSpeedButton;
     Pages: TPageControl;
     Page_Setup: TTabSheet;
     Page_Active: TTabSheet;
@@ -573,9 +569,9 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
 //  eUsers.Color:=clBtnFace;
 
   // A work-around for disapearing Close and Minimize buttons ...
-  cTitleBar.Refresh;
-  btnMinimize.Refresh;
-  btnClose.Refresh;
+//  cTitleBar.Refresh;
+//  btnMinimize.Refresh;
+//  btnClose.Refresh;
 
 //  lblStatus.Caption:='Gateway running on Port '+ePort.Text;
   lblStatus.Update;

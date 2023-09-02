@@ -2,10 +2,9 @@ object MainForm: TMainForm
   Left = 566
   Top = 123
   BorderIcons = [biSystemMenu, biMinimize]
-  BorderStyle = bsNone
-  Caption = 'RTC Gateway 4.0'
-  ClientHeight = 502
-  ClientWidth = 595
+  Caption = 'Remox Gateway'
+  ClientHeight = 464
+  ClientWidth = 583
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -23,20 +22,25 @@ object MainForm: TMainForm
   TextHeight = 14
   object pMaster: TPanel
     Left = 0
-    Top = 28
-    Width = 595
-    Height = 441
+    Top = 0
+    Width = 583
+    Height = 431
     Align = alClient
     TabOrder = 0
+    ExplicitTop = 28
+    ExplicitWidth = 595
+    ExplicitHeight = 441
     object Pages: TPageControl
       Left = 1
       Top = 1
-      Width = 593
-      Height = 439
-      ActivePage = Page_Active
+      Width = 581
+      Height = 429
+      ActivePage = Page_Setup
       Align = alClient
       TabOrder = 0
       TabStop = False
+      ExplicitWidth = 593
+      ExplicitHeight = 439
       object Page_Setup: TTabSheet
         Caption = 'Setup'
         object Label3: TLabel
@@ -418,64 +422,10 @@ object MainForm: TMainForm
       end
     end
   end
-  object pTitlebar: TPanel
-    Left = 0
-    Top = 0
-    Width = 595
-    Height = 28
-    Align = alTop
-    Color = clMoneyGreen
-    ParentBackground = False
-    TabOrder = 1
-    OnMouseDown = pTitlebarMouseDown
-    OnMouseMove = pTitlebarMouseMove
-    OnMouseUp = pTitlebarMouseUp
-    object cTitleBar: TLabel
-      Left = 6
-      Top = 6
-      Width = 115
-      Height = 16
-      Caption = 'Vircess Gateway'
-      Color = clBtnFace
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clBlack
-      Font.Height = -14
-      Font.Name = 'Arial'
-      Font.Style = [fsBold]
-      ParentColor = False
-      ParentFont = False
-      Transparent = True
-      OnMouseDown = pTitlebarMouseDown
-      OnMouseMove = pTitlebarMouseMove
-      OnMouseUp = pTitlebarMouseUp
-    end
-    object btnMinimize: TSpeedButton
-      Left = 225
-      Top = 4
-      Width = 20
-      Height = 21
-      Caption = '--'
-      OnClick = btnMinimizeClick
-    end
-    object btnClose: TSpeedButton
-      Left = 244
-      Top = 4
-      Width = 21
-      Height = 21
-      Caption = 'X'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -11
-      Font.Name = 'Arial'
-      Font.Style = [fsBold]
-      ParentFont = False
-      OnClick = btnCloseClick
-    end
-  end
   object lblStatusPanel: TPanel
     Left = 0
-    Top = 469
-    Width = 595
+    Top = 431
+    Width = 583
     Height = 33
     Align = alBottom
     BevelInner = bvLowered
@@ -486,11 +436,13 @@ object MainForm: TMainForm
     Font.Name = 'Arial'
     Font.Style = []
     ParentFont = False
-    TabOrder = 2
+    TabOrder = 1
+    ExplicitTop = 469
+    ExplicitWidth = 595
     object lblStatus: TLabel
       Left = 2
       Top = 2
-      Width = 591
+      Width = 579
       Height = 29
       Align = alClient
       Alignment = taCenter
