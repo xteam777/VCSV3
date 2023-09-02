@@ -3,7 +3,7 @@ unit rtcAccounts;
 interface
 
 uses
-  SysUtils, //rtcPortalGate, //SendDestroyToGateway,
+  SysUtils, SendDestroyToGateway,
 
 {$IFDEF VER120}
   FileCtrl,
@@ -71,7 +71,6 @@ type
     FPingTimeout: Integer;
     FAccountsCount, FHostsCount, FGatewaysCount: Integer;
     ThisGatewayAddress: String;
-    Gateway1, Gateway2, Gateway3, Gateway4: TRtcPortalGateway;
 
     constructor Create;
     destructor Destroy; override;
@@ -1241,16 +1240,21 @@ begin
 //    if (HostsInfo.Child[uname]['session'] = sessid)
 //      or DisconnectAll then
     begin
-//      TSendDestroyClientToGatewayThread.Create(False, ThisGatewayAddress, uname + '_', False, False, '', '', '');
 //      Gateway1.StartForceUserLogoutThread(uname, True);
 //      Gateway2.StartForceUserLogoutThread(uname, True);
 //      Gateway3.StartForceUserLogoutThread(uname, True);
 //      Gateway4.StartForceUserLogoutThread(uname, True);
 
       if DisconnectAll then
+      begin
+        TSendDestroyClientToGatewayThread.Create(False, HostsInfo.Child[uname]['gateway'], uname + '_', False, False, '', '', '');
         DelUserFromGateway(uname, HostsInfo.Child[uname]['gateway']) //Param gateway = ''
+      end
       else
+      begin
+        TSendDestroyClientToGatewayThread.Create(False, gateway, uname + '_', False, False, '', '', '');
         DelUserFromGateway(uname, gateway);
+      end;
 
       DelUserFromAccountsID(uname);
       RemoveActiveConsoleClientFromService(uname);
