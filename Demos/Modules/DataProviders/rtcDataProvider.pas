@@ -1284,7 +1284,12 @@ begin
 
   Data_Provider := self;
   Users := TVircessUsers.Create;
+  Users.ThisGatewayAddress := ThisGatewayAddress;
   Users.GetFriendList_Func := GetFriendList;
+  Users.Gateway1 := Gateway1;
+  Users.Gateway2 := Gateway2;
+  Users.Gateway3 := Gateway3;
+  Users.Gateway4 := Gateway4;
 
   tCDHostsThread := TCheckDisconnectedThread.Create(True);
   tCDHostsThread.FDoWork := Users.CheckDisconnectedHosts;

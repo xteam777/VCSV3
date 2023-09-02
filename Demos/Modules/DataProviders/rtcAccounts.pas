@@ -3,7 +3,7 @@ unit rtcAccounts;
 interface
 
 uses
-  SysUtils, SendDestroyToGateway,
+  SysUtils, //rtcPortalGate, //SendDestroyToGateway,
 
 {$IFDEF VER120}
   FileCtrl,
@@ -70,6 +70,8 @@ type
     FOnUserLogOut: TUserEvent;
     FPingTimeout: Integer;
     FAccountsCount, FHostsCount, FGatewaysCount: Integer;
+    ThisGatewayAddress: String;
+    Gateway1, Gateway2, Gateway3, Gateway4: TRtcPortalGateway;
 
     constructor Create;
     destructor Destroy; override;
@@ -1239,7 +1241,11 @@ begin
 //    if (HostsInfo.Child[uname]['session'] = sessid)
 //      or DisconnectAll then
     begin
-      TSendDestroyClientToGatewayThread.Create(False, asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['user'] + '_' + asWideString['action'] + '_', False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword);
+//      TSendDestroyClientToGatewayThread.Create(False, ThisGatewayAddress, uname + '_', False, False, '', '', '');
+//      Gateway1.StartForceUserLogoutThread(uname, True);
+//      Gateway2.StartForceUserLogoutThread(uname, True);
+//      Gateway3.StartForceUserLogoutThread(uname, True);
+//      Gateway4.StartForceUserLogoutThread(uname, True);
 
       if DisconnectAll then
         DelUserFromGateway(uname, HostsInfo.Child[uname]['gateway']) //Param gateway = ''

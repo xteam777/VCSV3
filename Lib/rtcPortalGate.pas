@@ -1,4 +1,4 @@
-unit rtcPortalGate;
+п»їunit rtcPortalGate;
 
 interface
 
@@ -715,7 +715,7 @@ procedure TRtcPortalGateway.ForceUserLogOut(uname: String);
 //    end;
   end;
 
-//Не нужно в этом модуле. Выкидывание вызывается из модуля rtcAccounts Main Gate
+//РќРµ РЅСѓР¶РЅРѕ РІ СЌС‚РѕРј РјРѕРґСѓР»Рµ. Р’С‹РєРёРґС‹РІР°РЅРёРµ РІС‹Р·С‹РІР°РµС‚СЃСЏ РёР· РјРѕРґСѓР»СЏ rtcAccounts Main Gate
 {procedure TRtcPortalGateway.CheckDisconnectedHosts;
 var
   i: Integer;
