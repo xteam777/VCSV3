@@ -228,9 +228,9 @@ procedure TMainForm.TaskBarRemoveIcon;
 
 procedure TMainForm.tGetStatsCountTimer(Sender: TObject);
 begin
-  lAccounts.Caption := IntToStr(GetDataProvider.GetAccountsCount);
-  lHosts.Caption := IntToStr(GetDataProvider.GetHostsCount);
-  lGateways.Caption := IntToStr(GetDataProvider.GetGatewaysCount);
+  lAccounts.Caption := IntToStr(GetDataProvider(cbMainGate.Checked).GetAccountsCount);
+  lHosts.Caption := IntToStr(GetDataProvider(cbMainGate.Checked).GetHostsCount);
+  lGateways.Caption := IntToStr(GetDataProvider(cbMainGate.Checked).GetGatewaysCount);
 
   l80.Caption := IntToStr(Gateway1.GetUsersCount);
   l8080.Caption := IntToStr(Gateway2.GetUsersCount);
@@ -389,19 +389,19 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
 
   if cbMainGate.Checked then
   begin
-    GetDataProvider.GatewayLogOutStart;
+    GetDataProvider(cbMainGate.Checked).GatewayLogOutStart;
 
-    if GetDataProvider.SQLConnection.Connected then
-      GetDataProvider.SQLConnection.Close;
+    if GetDataProvider(cbMainGate.Checked).SQLConnection.Connected then
+      GetDataProvider(cbMainGate.Checked).SQLConnection.Close;
 
-    GetDataProvider.FStartForceUserLogoutThread := StartForceUserLogoutThreadInAllGateways;
-    GetDataProvider.SQLConnection.ConnectionString := 'provider=SQLNCLI11;server=' + eSQLServer.Text+ ';User ID=sa;database=Remox;uid=sa;Persist security info=True;pwd=2230897';
-    GetDataProvider.SQLConnection.Connected := True;
-    GetDataProvider.ServerLink1.Server := hsMain1;
-    GetDataProvider.ServerLink2.Server := hsMain2;
-    GetDataProvider.ServerLink3.Server := hsMain3;
-    GetDataProvider.ServerLink4.Server := hsMain4;
-    GetDataProvider.MainGateServerLink.Server := MainGateServer;
+    GetDataProvider(cbMainGate.Checked).FStartForceUserLogoutThread := StartForceUserLogoutThreadInAllGateways;
+    GetDataProvider(cbMainGate.Checked).SQLConnection.ConnectionString := 'provider=SQLNCLI11;server=' + eSQLServer.Text+ ';User ID=sa;database=Remox;uid=sa;Persist security info=True;pwd=2230897';
+    GetDataProvider(cbMainGate.Checked).SQLConnection.Connected := True;
+    GetDataProvider(cbMainGate.Checked).ServerLink1.Server := hsMain1;
+    GetDataProvider(cbMainGate.Checked).ServerLink2.Server := hsMain2;
+    GetDataProvider(cbMainGate.Checked).ServerLink3.Server := hsMain3;
+    GetDataProvider(cbMainGate.Checked).ServerLink4.Server := hsMain4;
+    GetDataProvider(cbMainGate.Checked).MainGateServerLink.Server := MainGateServer;
   //  GetDataProvider.LogMemo := LogMemo;
   //  GetDataProvider.OnUserLogin := OnBillingUserLogin;
   //  GetDataProvider.OnUserLogOut := OnBillingUserLogOut;
@@ -446,14 +446,14 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
   end
   else
   begin
-    GetDataProvider.GatewayLogOutStart;
+    GetDataProvider(cbMainGate.Checked).GatewayLogOutStart;
 
-    GetDataProvider.Gateway1 := Gateway1;
-    GetDataProvider.Gateway2 := Gateway2;
-    GetDataProvider.Gateway3 := Gateway3;
-    GetDataProvider.Gateway4 := Gateway4;
+    GetDataProvider(cbMainGate.Checked).Gateway1 := Gateway1;
+    GetDataProvider(cbMainGate.Checked).Gateway2 := Gateway2;
+    GetDataProvider(cbMainGate.Checked).Gateway3 := Gateway3;
+    GetDataProvider(cbMainGate.Checked).Gateway4 := Gateway4;
 
-    GetDataProvider.PortalGateServerLink.Server := PortalGateServer;
+    GetDataProvider(cbMainGate.Checked).PortalGateServerLink.Server := PortalGateServer;
 
     HttpServer1.StopListenNow;
     HttpServer2.StopListenNow;
@@ -463,9 +463,9 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
     MainGateServer.StopListenNow;
     PortalGateServer.StopListenNow;
 
-    GetDataProvider.MainGateClientModule.Client := MainGateClient;
-    GetDataProvider.ThisGatewayAddress := eAddress.Text;
-    GetDataProvider.ThisGatewayMaxUsers := StrToInt(eMaxUsers.Text);
+    GetDataProvider(cbMainGate.Checked).MainGateClientModule.Client := MainGateClient;
+    GetDataProvider(cbMainGate.Checked).ThisGatewayAddress := eAddress.Text;
+    GetDataProvider(cbMainGate.Checked).ThisGatewayMaxUsers := StrToInt(eMaxUsers.Text);
 
     if xBindIP.Checked then
     begin
@@ -502,7 +502,7 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
     if cb5938.Checked then
       HttpServer4.Listen();
 
-    GetDataProvider.GatewayReloginStart;
+    GetDataProvider(cbMainGate.Checked).GatewayReloginStart;
 
     PortalGateServer.Listen();
   end;
@@ -574,12 +574,12 @@ procedure TMainForm.btnLogoutClick(Sender: TObject);
     MainGateServer.StopListenNow;
     PortalGateServer.StopListenNow;
 
-   if GetDataProvider.SQLConnection.Connected then
-      GetDataProvider.SQLConnection.Close;
+   if GetDataProvider(cbMainGate.Checked).SQLConnection.Connected then
+      GetDataProvider(cbMainGate.Checked).SQLConnection.Close;
   end
   else
   begin
-    GetDataProvider.GatewayLogOutStart;
+    GetDataProvider(cbMainGate.Checked).GatewayLogOutStart;
 
     HttpServer1.StopListenNow;
     HttpServer2.StopListenNow;

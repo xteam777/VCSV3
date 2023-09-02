@@ -1,4 +1,4 @@
-unit rtcAccounts;
+п»їunit rtcAccounts;
 
 interface
 
@@ -32,7 +32,7 @@ type
 //    UserListFileName: String;
     UserDataFileName: String;
 
-//    AccountsList: TRtcRecord;
+    AccountsList: TRtcRecord;
     AccountsInfo: TRtcInfo;
     AccountsID: TRtcInfo;
     HostsList: TRtcRecord;
@@ -41,6 +41,7 @@ type
     GatewaysInfo: TRtcInfo;
 
     userCS: TRtcCritSec;
+    accountsCS: TRtcCritSec;
     msgCS: TRtcCritSec;
     gatewayCS: TRtcCritSec;
 
@@ -97,6 +98,8 @@ type
 
     function isAccountLoggedIn(account: String; sessid: RtcString): Boolean; overload;
     function isAccountLoggedIn(account: String): Boolean; overload;
+
+    procedure DeleteAccount(account: String);
 
     //////////////////////////////////////// HOSTS /////////////////////////////////////////
 
@@ -195,7 +198,7 @@ begin
   FHostsCount := 0;
   FGatewaysCount := 0;
 
-//  AccountsList := TRtcRecord.Create;
+  AccountsList := TRtcRecord.Create;
   HostsList := TRtcRecord.Create;
 
   AccountsInfo := TRtcInfo.Create;
@@ -207,6 +210,7 @@ begin
   AccountsID := TRtcInfo.Create;
 
   userCS := TRtcCritSec.Create;
+  accountsCS := TRtcCritSec.Create;
   msgCS := TRtcCritSec.Create;
   gatewayCS := TRtcCritSec.Create;
 
@@ -243,12 +247,13 @@ begin
 
   AccountsID.Free;
   AccountsInfo.Free;
-//  AccountsList.Free;
+  AccountsList.Free;
   HostsInfo.Free;
   HostsList.Free;
   GatewaysInfo.Free;
   GatewaysList.Free;
   userCS.Free;
+  accountsCS.Free;
   msgCS.Free;
   gatewayCS.Free;
 
@@ -260,10 +265,26 @@ begin
   userCS.Acquire;
   try
     if AccountsID.Child[Account] = nil then
-      AccountsID.NewChild(Account);
-    if AccountsID.Child[Account].isNull['users'] then
-      AccountsID.Child[Account].NewRecord('users');
-    AccountsID.Child[Account].asRecord['users'].asString[uname] := uname;
+    begin
+      FAccountsCount := FAccountsCount + 1;
+
+      if AccountsID.Child[Account] = nil then
+        AccountsID.NewChild(Account);
+      if AccountsID.Child[Account].isNull['users'] then
+        AccountsID.Child[Account].NewRecord('users');
+
+      if AccountsList.isType[Account] = rtc_Null then
+        AccountsList.NewRecord(Account);
+
+      AccountsID.Child[Account].asRecord['users'].asString[uname] := uname;
+      AccountsID.Child[Account].asRecord['users'].asInteger['UsersCount'] := 1;
+    end
+    else
+    if AccountsID.Child[Account].asRecord['users'].isType[uname] = rtc_Null then
+    begin
+      AccountsID.Child[Account].asRecord['users'].asString[uname] := uname;
+      AccountsID.Child[Account].asRecord['users'].asInteger['UsersCount'] :=  AccountsID.Child[Account].asRecord['users'].asInteger['UsersCount'] + 1;
+    end;
 
     // Remember new session ID
     if AccountsInfo.Child[Account] = nil then
@@ -280,14 +301,27 @@ procedure TVircessUsers.doAccountLogIn(Account, uname: string; Friends: TRtcReco
 begin
   userCS.Acquire;
   try
-    if AccountsInfo.Child[Account] = nil then
+    if AccountsID.Child[Account] = nil then
+    begin
       FAccountsCount := FAccountsCount + 1;
 
-    if AccountsID.Child[Account] = nil then
-      AccountsID.NewChild(Account);
-    if AccountsID.Child[Account].isNull['users'] then
-      AccountsID.Child[Account].NewRecord('users');
-    AccountsID.Child[Account].asRecord['users'].asString[uname] := uname;
+      if AccountsID.Child[Account] = nil then
+        AccountsID.NewChild(Account);
+      if AccountsID.Child[Account].isNull['users'] then
+        AccountsID.Child[Account].NewRecord('users');
+
+      if AccountsList.isType[Account] = rtc_Null then
+        AccountsList.NewRecord(Account);
+
+      AccountsID.Child[Account].asRecord['users'].asString[uname] := uname;
+      AccountsID.Child[Account].asRecord['users'].asInteger['UsersCount'] := 1;
+    end
+    else
+    if AccountsID.Child[Account].asRecord['users'].isType[uname] = rtc_Null then
+    begin
+      AccountsID.Child[Account].asRecord['users'].asString[uname] := uname;
+      AccountsID.Child[Account].asRecord['users'].asInteger['UsersCount'] :=  AccountsID.Child[Account].asRecord['users'].asInteger['UsersCount'] + 1;
+    end;
 
     // Remove existing info.
     AccountsInfo.SetNil(Account);
@@ -312,16 +346,16 @@ var
 begin
   userCS.Acquire;
   try
-    with Friends do //Аккаунты, у которых есть в списке этот ИД
+    with Friends do //ГЂГЄГЄГ ГіГ­ГІГ», Гі ГЄГ®ГІГ®Г°Г»Гµ ГҐГ±ГІГј Гў Г±ГЇГЁГ±ГЄГҐ ГЅГІГ®ГІ Г€Г„
     begin
       rec := TRtcRecord.Create;
       rec2 := TRtcRecord.Create;
       try
         for i := 0 to Count - 1 do // Send "login" message to all friends.
         begin
-          if AccountsID.Child[FieldName[i]] = nil then //Если текущий аккуант не залогинен
+          if AccountsID.Child[FieldName[i]] = nil then //Г…Г±Г«ГЁ ГІГҐГЄГіГ№ГЁГ© Г ГЄГЄГіГ Г­ГІ Г­ГҐ Г§Г Г«Г®ГЈГЁГ­ГҐГ­
             Continue;
-          for j := 0 to AccountsID.Child[FieldName[i]].asRecord['users'].Count - 1 do //Проходимся по всем ид, с которых есть логин в текущий аккаунт
+          for j := 0 to AccountsID.Child[FieldName[i]].asRecord['users'].Count - 1 do //РџСЂРѕС…РѕРґРёРјСЃСЏ РїРѕ РІСЃРµРј РёРґ, СЃ РєРѕС‚РѕСЂС‹С… РµСЃС‚СЊ Р»РѕРіРёРЅ РІ С‚РµРєСѓС‰РёР№ Р°РєРєР°СѓРЅС‚
           begin
             if AccountsID.Child[FieldName[i]].asRecord['users'].isNull[AccountsID.Child[FieldName[i]].asRecord['users'].FieldName[j]] then
               Continue
@@ -376,16 +410,12 @@ begin
   userCS.Acquire;
   try
     if AccountsID.Child[Account] <> nil then
+    begin
       if not AccountsID.Child[Account].asRecord['users'].isNull[uname] then
-      begin
         AccountsID.Child[Account].asRecord['users'].isNull[uname] := True;
-        if AccountsID.Child[Account].asRecord['users'].Count = 0 then
-        begin
-          AccountsID.SetNil(Account);
-        end;
-
-        FAccountsCount := FAccountsCount - 1;
-      end;
+      if AccountsID.Child[Account].asRecord['users'].asInteger['UsersCount'] = 0 then
+        DeleteAccount(Account);
+    end;
 
     // If logged in under this session ID, remove info
     if AccountsInfo.Child[Account] <> nil then
@@ -451,6 +481,9 @@ var
   i, j: Integer;
   fname: String;
 begin
+  if Friends = nil then
+    Exit;
+
   userCS.Acquire;
   try
     if log_out then
@@ -461,7 +494,7 @@ begin
         cb.WakeUp;
 
       try
-        with Friends do //Аккаунты, у которых есть в списке этот ИД
+        with Friends do //РђРєРєР°СѓРЅС‚С‹, Сѓ РєРѕС‚РѕСЂС‹С… РµСЃС‚СЊ РІ СЃРїРёСЃРєРµ СЌС‚РѕС‚ РР”
         begin
           rec := TRtcRecord.Create;
           try
@@ -1077,13 +1110,13 @@ begin
 
   userCS.Acquire;
   try
-    //Указываем хосту ид его консоли
+    //Г“ГЄГ Г§Г»ГўГ ГҐГ¬ ГµГ®Г±ГІГі ГЁГ¤ ГҐГЈГ® ГЄГ®Г­Г±Г®Г«ГЁ
     if HostsInfo.Child[uname] = nil then
       Exit
     else
       HostsInfo.Child[uname].asString['ConsoleId'] := ConsoleId;
 
-    //Указываем службе ее активный консольный клиент
+    //Г“ГЄГ Г§Г»ГўГ ГҐГ¬ Г±Г«ГіГ¦ГЎГҐ ГҐГҐ Г ГЄГІГЁГўГ­Г»Г© ГЄГ®Г­Г±Г®Г«ГјГ­Г»Г© ГЄГ«ГЁГҐГ­ГІ
     if HostsInfo.Child[ConsoleId] = nil then
       Exit
     else
@@ -1099,7 +1132,7 @@ begin
 
   userCS.Acquire;
   try
-    //Получаем ид консоли хоста
+    //ГЏГ®Г«ГіГ·Г ГҐГ¬ ГЁГ¤ ГЄГ®Г­Г±Г®Г«ГЁ ГµГ®Г±ГІГ 
     if HostsInfo.Child[uname] = nil then
       Exit
     else
@@ -1120,7 +1153,7 @@ begin
 
   userCS.Acquire;
   try
-    //Получаем ид консоли хоста
+    //ГЏГ®Г«ГіГ·Г ГҐГ¬ ГЁГ¤ ГЄГ®Г­Г±Г®Г«ГЁ ГµГ®Г±ГІГ 
     if HostsInfo.Child[uname] = nil then
       Exit
     else
@@ -1129,7 +1162,7 @@ begin
     if ConsoleId = '' then
       Exit;
 
-    //Убираем у службы ее активного консольного клиента если этот переданный хост
+    //Г“ГЎГЁГ°Г ГҐГ¬ Гі Г±Г«ГіГ¦ГЎГ» ГҐГҐ Г ГЄГІГЁГўГ­Г®ГЈГ® ГЄГ®Г­Г±Г®Г«ГјГ­Г®ГЈГ® ГЄГ«ГЁГҐГ­ГІГ  ГҐГ±Г«ГЁ ГЅГІГ®ГІ ГЇГҐГ°ГҐГ¤Г Г­Г­Г»Г© ГµГ®Г±ГІ
     if HostsInfo.Child[ConsoleId] = nil then
       Exit
     else
@@ -1432,6 +1465,23 @@ begin
   end;
 end;
 
+procedure TVircessUsers.DeleteAccount(account: String);
+begin
+  accountsCS.Acquire;
+  try
+    AccountsID.isNull[account] := True; // das entfernt den Record aus AccountsID
+    AccountsID.SetNil(account);
+  //    SaveUserList; // Das speichert die neue UserList
+
+    AccountsInfo.isNull[account] := True; // das entfernt den Record aus AccountsID
+    AccountsInfo.SetNil(account);
+
+    FAccountsCount := FAccountsCount - 1;
+  finally
+    accountsCS.Release;
+  end;
+end;
+
 procedure TVircessUsers.HostLogout(uname, gateway, ConsoleId: String; Friends: TRtcRecord; sessid: RtcString);
 begin
   doHostLogOut(uname, gateway, ConsoleId, Friends, sessid);
@@ -1530,15 +1580,22 @@ var
 begin
   userCS.Acquire;
   try
-    for i := 0 to AccountsID.Count - 1 do
+    for i := 0 to AccountsList.Count - 1 do
     begin
-      if AccountsID.Child[AccountsID.FieldName[i]] = nil then
+      if AccountsID.Child[AccountsList.FieldName[i]] = nil then
         Continue;
 
-      if AccountsID.Child[AccountsID.FieldName[i]].isType['users'] = rtc_Null then
+      if AccountsID.Child[AccountsList.FieldName[i]].isType['users'] = rtc_Null then
         Continue;
 
-      AccountsID.Child[AccountsID.FieldName[i]].asRecord['users'].isNull[uname] := True;
+      if AccountsID.Child[AccountsList.FieldName[i]].asRecord['users'].isType[uname] <> rtc_Null then
+      begin
+        AccountsID.Child[AccountsList.FieldName[i]].asRecord['users'].isNull[uname] := True;
+        AccountsID.Child[AccountsList.FieldName[i]].asRecord['users'].asInteger['UsersCount'] := AccountsID.Child[AccountsList.FieldName[i]].asRecord['users'].asInteger['UsersCount'] - 1;
+
+        if AccountsID.Child[AccountsList.FieldName[i]].asRecord['users'].asInteger['UsersCount'] = 0 then
+          doAccountLogOut(AccountsList.FieldName[i],  uname, nil, '');
+      end;
     end;
   finally
     userCS.Release;

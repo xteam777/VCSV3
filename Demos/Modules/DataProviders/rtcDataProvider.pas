@@ -160,6 +160,7 @@ type
   public
     { Public declarations }
     ThisGatewayAddress: String;
+    ThisIsMainGate: Boolean;
     ThisGatewayMaxUsers: Integer;
 
     Gateway1, Gateway2, Gateway3, Gateway4: TRtcPortalGateway;
@@ -171,6 +172,7 @@ type
 
     FStartForceUserLogoutThread: TStartForceUserLogoutThread;
 
+    constructor Create(AOwner: TComponent; AThisIsMainGate: Boolean); overload;
     function GetFriendList(uname: String): TRtcRecord;
     procedure SetOnUserLogIn(AValue: TUserEvent);
     procedure SetOnUserLogOut(AValue: TUserEvent);
@@ -189,7 +191,7 @@ type
     procedure GatewayLogOutStart;
   end;
 
-function GetDataProvider: TData_Provider;
+function GetDataProvider(AThisIsMainGate: Boolean): TData_Provider;
 
 var
   Data_Provider: TData_Provider;
@@ -950,7 +952,7 @@ begin
     try
       try
         SP := TADOStoredProc.Create(nil);
-        SP.Connection := GetDataProvider.SQLConnection;
+        SP.Connection := GetDataProvider(ThisIsMainGate).SQLConnection;
         SP.ProcedureName := 'AccountIsExists';
         SP.Prepared := True;
         SP.Parameters.Refresh;
@@ -1271,11 +1273,18 @@ begin
   end;
 end;
 
-function GetDataProvider: TData_Provider;
+function GetDataProvider(AThisIsMainGate: Boolean): TData_Provider;
 begin
   if not Assigned(Data_Provider) then
-    TData_Provider.Create(nil);
+    TData_Provider.Create(nil, AThisIsMainGate);
   Result := Data_Provider;
+end;
+
+constructor TData_Provider.Create(AOwner: TComponent; AThisIsMainGate: Boolean);
+begin
+  inherited Create(AOwner);
+
+  ThisIsMainGate := AThisIsMainGate;
 end;
 
 procedure TData_Provider.DataModuleCreate(Sender: TObject);
@@ -1287,15 +1296,18 @@ begin
   Users.ThisGatewayAddress := ThisGatewayAddress;
   Users.GetFriendList_Func := GetFriendList;
 
-  tCDHostsThread := TCheckDisconnectedThread.Create(True);
-  tCDHostsThread.FDoWork := Users.CheckDisconnectedHosts;
-  tCDHostsThread.FreeOnTerminate := True;
-  tCDHostsThread.Resume;
+  if ThisIsMainGate then
+  begin
+    tCDHostsThread := TCheckDisconnectedThread.Create(True);
+    tCDHostsThread.FDoWork := Users.CheckDisconnectedHosts;
+    tCDHostsThread.FreeOnTerminate := True;
+    tCDHostsThread.Resume;
 
-  tCDGatewaysThread := TCheckDisconnectedThread.Create(True);
-  tCDGatewaysThread.FDoWork := Users.CheckDisconnectedGateways;
-  tCDGatewaysThread.FreeOnTerminate := True;
-  tCDGatewaysThread.Resume;
+    tCDGatewaysThread := TCheckDisconnectedThread.Create(True);
+    tCDGatewaysThread.FDoWork := Users.CheckDisconnectedGateways;
+    tCDGatewaysThread.FreeOnTerminate := True;
+    tCDGatewaysThread.Resume;
+  end;
 end;
 
 procedure TData_Provider.SendGatewayRelogin;
