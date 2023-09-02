@@ -1,4 +1,4 @@
-unit SendDestroyToGateway;
+﻿unit SendDestroyToGateway;
 
 interface
 
@@ -8,6 +8,7 @@ uses
 type
   TSendDestroyClientToGatewayThread = class(TThread)
   private
+    FDataModule: TDataModule;
     FGateway: String;
     FClientName: String;
     FAllConnectionsById: Boolean;
@@ -41,7 +42,8 @@ begin
   FResultGot := False;
 
   try
-    rtcClient := TRtcHttpClient.Create(nil);
+    FDataModule := TDataModule.Create(nil);
+    rtcClient := TRtcHttpClient.Create(FDataModule);
     rtcClient.AutoConnect := True;
     rtcClient.MultiThreaded := False;
     if Pos(':', AGateway) > 0 then
@@ -60,17 +62,17 @@ begin
     rtcClient.UserLogin.ProxyPassword := ProxyPassword;
     rtcClient.Connect();
 
-    rtcModule := TRtcClientModule.Create(nil);
+    rtcModule := TRtcClientModule.Create(FDataModule);
     rtcModule.Client := rtcClient;
     rtcModule.AutoRepost := 2;
-    rtcModule.AutoSyncEvents := True;
+    rtcModule.AutoSyncEvents := False;
     rtcModule.ModuleFileName := '/portalgategroup';
     rtcModule.SecureKey := '2240897';
     rtcModule.ForceEncryption := True;
     rtcModule.EncryptionKey := 16;
     rtcModule.Compression := cMax;
 
-    rtcRes := TRtcResult.Create(nil);
+    rtcRes := TRtcResult.Create(FDataModule);
     rtcRes.OnReturn := rtcResReturn;
     rtcRes.RequestAborted := rtcResRequestAborted;
 
@@ -85,7 +87,10 @@ begin
       end;
     except
       on E: Exception do
+      begin
         Data.Clear;
+        FResultGot := True; //??? при ошибке завершаем поток
+      end;
     end;
   finally
   end;
@@ -98,15 +103,19 @@ begin
   finally
   end;
   try
-    rtcModule.Free;
+    FreeAndNil(rtcModule);
   finally
   end;
   try
-    rtcClient.Free;
+    FreeAndNil(rtcClient);
   finally
   end;
   try
-    rtcRes.Free;
+    FreeAndNil(rtcRes);
+  finally
+  end;
+  try
+    FreeAndNil(FDataModule);
   finally
   end;
 end;

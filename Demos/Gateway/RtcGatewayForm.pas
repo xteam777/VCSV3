@@ -273,7 +273,7 @@ procedure TMainForm.FormCreate(Sender: TObject);
 
   LoadSetup;
 
-//  eAddress.Text := '95.216.96.39'; //GetLocalIP;
+//  eAddress.Text := '95.216.96.6'; //GetLocalIP;
   end;
 
 procedure TMainForm.FormShow(Sender: TObject);

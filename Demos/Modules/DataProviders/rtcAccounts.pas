@@ -1247,7 +1247,7 @@ begin
 
       if DisconnectAll then
       begin
-        TSendDestroyClientToGatewayThread.Create(False, HostsInfo.Child[uname]['gateway'], uname + '_', False, False, '', '', '');
+        TSendDestroyClientToGatewayThread.Create(False, HostsInfo.Child[uname]['gateway'], uname, True, False, '', '', '');
         DelUserFromGateway(uname, HostsInfo.Child[uname]['gateway']) //Param gateway = ''
       end
       else
