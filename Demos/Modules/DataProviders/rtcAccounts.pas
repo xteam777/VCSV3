@@ -3,7 +3,7 @@ unit rtcAccounts;
 interface
 
 uses
-  SysUtils,
+  SysUtils, SendDestroyToGateway,
 
 {$IFDEF VER120}
   FileCtrl,
@@ -1239,6 +1239,8 @@ begin
 //    if (HostsInfo.Child[uname]['session'] = sessid)
 //      or DisconnectAll then
     begin
+      TSendDestroyClientToGatewayThread.Create(False, asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['user'] + '_' + asWideString['action'] + '_', False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword);
+
       if DisconnectAll then
         DelUserFromGateway(uname, HostsInfo.Child[uname]['gateway']) //Param gateway = ''
       else
