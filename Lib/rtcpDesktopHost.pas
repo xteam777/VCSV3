@@ -753,6 +753,7 @@ begin
           //    SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 0, 0);
           //    SendMessage(MainFormHandle, WM_DRAG_FULL_WINDOWS_MESSAGE, 0, 0);
           //    SetBlankMonitor(True);
+                BlankOutScreen(True);
               end;
             end
             else
@@ -765,6 +766,7 @@ begin
           //    SetBlankMonitor(False);
           //    SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 1, 0);
           //    SendMessage(MainFormHandle, WM_DRAG_FULL_WINDOWS_MESSAGE, 1, 0);
+                RestoreScreen;
               end;
             end
             else

@@ -3,60 +3,74 @@ object fmBlankoutForm: TfmBlankoutForm
   Top = 160
   BorderStyle = bsNone
   Caption = 'fmBlankoutForm'
-  ClientHeight = 575
-  ClientWidth = 744
+  ClientHeight = 460
+  ClientWidth = 595
   Color = clWhite
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
-  Font.Height = -14
+  Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
   OnCreate = FormCreate
   OnResize = FormResize
   OnShow = FormShow
-  PixelsPerInch = 120
-  TextHeight = 17
+  TextHeight = 13
   object Panel1: TPanel
-    Left = 15
-    Top = 10
-    Width = 671
-    Height = 514
+    Left = 12
+    Top = 8
+    Width = 537
+    Height = 411
+    Margins.Left = 2
+    Margins.Top = 2
+    Margins.Right = 2
+    Margins.Bottom = 2
     BevelOuter = bvNone
     Color = clWhite
     ParentBackground = False
     TabOrder = 0
     object Label1: TLabel
-      Left = 84
-      Top = 418
-      Width = 495
-      Height = 36
+      Left = 67
+      Top = 334
+      Width = 390
+      Height = 29
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
       Caption = 'Administration work in progress.'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
-      Font.Height = -30
+      Font.Height = -24
       Font.Name = 'Tahoma'
       Font.Style = [fsBold]
       ParentFont = False
     end
     object Label2: TLabel
-      Left = 230
-      Top = 464
-      Width = 209
-      Height = 36
+      Left = 184
+      Top = 371
+      Width = 167
+      Height = 29
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
       Caption = 'Please wait ...'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
-      Font.Height = -30
+      Font.Height = -24
       Font.Name = 'Tahoma'
       Font.Style = [fsBold]
       ParentFont = False
     end
     object Image1: TImage
-      Left = 73
-      Top = 21
-      Width = 523
-      Height = 377
+      Left = 58
+      Top = 17
+      Width = 419
+      Height = 301
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
     end
   end
   object Timer1: TTimer

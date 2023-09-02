@@ -148,6 +148,8 @@ procedure TfmBlankoutForm.FormCreate(Sender: TObject);
   SetLayeredWindowAttributes(Handle, 0,
                              Trunc((255 / 100) * (100 - 0)),
                              LWA_ALPHA);
+
+  SetWindowDisplayAffinity(Handle, WDA_NONE);
   end;
 
 procedure TfmBlankoutForm.FormShow(Sender: TObject);
