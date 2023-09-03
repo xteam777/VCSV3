@@ -30,7 +30,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
 
-    procedure CreateParams(Var params: TCreateParams); override;
+//    procedure CreateParams(Var params: TCreateParams); override;
 
   private
     { Private declarations }
@@ -49,9 +49,9 @@ implementation
 
 {$R *.dfm}
 
-procedure TfmBlankOutForm.CreateParams(Var params: TCreateParams);
-  begin
-  inherited CreateParams( params );
+//procedure TfmBlankOutForm.CreateParams(Var params: TCreateParams);
+//  begin
+//  inherited CreateParams( params );
 //  params.ExStyle := params.ExStyle or
 //                    WS_EX_APPWINDOW or
 //                    WS_EX_TRANSPARENT or
@@ -60,7 +60,7 @@ procedure TfmBlankOutForm.CreateParams(Var params: TCreateParams);
 //                    WS_EX_NOINHERITLAYOUT or
 //                    WS_EX_NOACTIVATE;
 //  params.WndParent := GetDesktopWindow;
-  end;
+//  end;
 
 procedure TfmBlankoutForm.FormResize(Sender: TObject);
 begin
