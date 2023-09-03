@@ -11,7 +11,7 @@ interface
 {$DEFINE RtcViewer}
 
 uses
-  Windows, Messages, SysUtils, CommonData, System.Types, uProcess, ServiceMgr, //BlackLayered,
+  Windows, Messages, SysUtils, CommonData, System.Types, uProcess, ServiceMgr, rtcBlankOutForm, //BlackLayered,
   Classes, Graphics, Controls, Forms, DateUtils, CommonUtils, WtsApi, uSysAccount, ClipbrdMonitor,
   Dialogs, StdCtrls, ExtCtrls, ShellApi, rdFileTransLog, VirtualTrees.Types, SHDocVw, rtcpFileTransUI, Psapi, Winapi.SHFolder,
   ComCtrls, Registry, Math, RtcIdentification, SyncObjs, System.Net.HTTPClient, System.Net.URLClient, ActiveX, ComObj, CommCtrl,
@@ -7660,6 +7660,8 @@ end;
 
 procedure TMainForm.Button4Click(Sender: TObject);
 begin
+  BlankOutScreen(True);
+
 //    PClient.Disconnect;
 ////    PClient.Active := False;
 //    PClient.Stop;

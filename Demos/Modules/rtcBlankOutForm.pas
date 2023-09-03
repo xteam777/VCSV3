@@ -42,6 +42,9 @@ procedure RestoreScreen;
 
 procedure BlankOutScreen(AllMonitors:boolean);
 
+const
+  WDA_EXCLUDEFROMCAPTURE = $00000011;
+
 implementation
 
 {$R *.dfm}
@@ -149,7 +152,7 @@ procedure TfmBlankoutForm.FormCreate(Sender: TObject);
                              Trunc((255 / 100) * (100 - 0)),
                              LWA_ALPHA);
 
-  SetWindowDisplayAffinity(Handle, WDA_NONE);
+  SetWindowDisplayAffinity(Handle, WDA_EXCLUDEFROMCAPTURE);
   end;
 
 procedure TfmBlankoutForm.FormShow(Sender: TObject);
