@@ -74,6 +74,7 @@ object fmBlankoutForm: TfmBlankoutForm
     end
   end
   object Timer1: TTimer
+    Enabled = False
     Interval = 5000
     OnTimer = Timer1Timer
     Left = 28

@@ -98,7 +98,7 @@ procedure RestoreScreen;
 procedure BlankOutScreen(AllMonitors:boolean);
   var
     hUser32                   : HMODULE;
-    SetLayeredWindowAttributes: TSetLayeredWindowAttributes;
+//    SetLayeredWindowAttributes: TSetLayeredWindowAttributes;
     rect                      : TRect;
     i                         : integer;
     ablnkform                 : TForm;
@@ -107,10 +107,10 @@ procedure BlankOutScreen(AllMonitors:boolean);
   hUser32 := GetModuleHandle('USER32.DLL');
   if hUser32 <> 0 then
     begin
-    @SetLayeredWindowAttributes := GetProcAddress(hUser32,'SetLayeredWindowAttributes');
-    // If the import did not succeed, make sure our app can handle it!
-    if @SetLayeredWindowAttributes <> nil then
-      begin
+//    @SetLayeredWindowAttributes := GetProcAddress(hUser32,'SetLayeredWindowAttributes');
+//    // If the import did not succeed, make sure our app can handle it!
+//    if @SetLayeredWindowAttributes <> nil then
+//      begin
       fBlankoutForms := TList.Create;
       for i := 0 to Screen.MonitorCount - 1 do
         begin
@@ -135,7 +135,7 @@ procedure BlankOutScreen(AllMonitors:boolean);
           ablnkform.FormStyle:=fsStayOnTop;
           end;
         end;
-      end;
+//      end;
     end;
   end;
 
