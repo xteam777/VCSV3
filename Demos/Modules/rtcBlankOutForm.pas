@@ -129,8 +129,8 @@ procedure BlankOutScreen(AllMonitors:boolean);
 
           fBlankoutForms.Add(ablnkform);
           ablnkform.Show;
-          SetWindowPos(ablnkform.Handle, HWND_TOP, rect.Left, rect.Top,
-                       ablnkform.Width, ablnkform.Height, 0);
+//          SetWindowPos(ablnkform.Handle, HWND_TOP, rect.Left, rect.Top,
+//                       ablnkform.Width, ablnkform.Height, 0);
 
           ablnkform.FormStyle:=fsStayOnTop;
           end;
@@ -158,7 +158,7 @@ procedure TfmBlankoutForm.FormCreate(Sender: TObject);
 procedure TfmBlankoutForm.FormShow(Sender: TObject);
   begin
   FormCreate(nil);
-  SetWindowPos(Handle, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE or SWP_NOSIZE or SWP_NOACTIVATE);
+//  SetWindowPos(Handle, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE or SWP_NOSIZE or SWP_NOACTIVATE);
   end;
 
 initialization
