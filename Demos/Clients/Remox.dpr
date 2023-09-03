@@ -12,6 +12,17 @@
 {$R *.dres}
 
 uses
+  {$IFDEF EurekaLog}
+  EMemLeaks,
+  EResLeaks,
+  EDebugExports,
+  EDebugJCL,
+  EFixSafeCallException,
+  EMapWin32,
+  EAppService,
+  EAppNonVisual,
+  ExceptionLog7,
+  {$ENDIF EurekaLog}
   rtcLog,
   Classes,
   SysUtils,
@@ -64,7 +75,8 @@ uses
   rmxVideoFile in '..\..\rmxVideo\API\rmxVideoFile.pas',
   rmxVideoPacketTypes in '..\..\rmxVideo\API\rmxVideoPacketTypes.pas',
   rmxVideoStorage in '..\..\rmxVideo\API\rmxVideoStorage.pas',
-  Compressions in '..\..\rmxVideo\Compressor\Compressions.pas';
+  Compressions in '..\..\rmxVideo\Compressor\Compressions.pas',
+  SendDestroyToGateway in '..\Modules\SendDestroyToGateway.pas';
 
 {$R rtcportaluac.res rtcportaluac.rc}
 {$R *.res}
@@ -410,6 +422,7 @@ begin
     xLog('ERROR ' + E.ClassName + ': ' + E.Message);
   end;
 end.
+
 
 
 
