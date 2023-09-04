@@ -907,36 +907,36 @@ object fAboutForm: TfAboutForm
   object Copyright: TLabel
     Left = 22
     Top = 221
-    Width = 191
+    Width = 170
     Height = 16
     Caption = 'Copyright '#169' 2022 Remox Ltd.'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -13
     Font.Name = 'Tahoma'
-    Font.Style = [fsBold]
+    Font.Style = []
     ParentFont = False
     IsControl = True
   end
   object Comments: TLabel
     Left = 22
     Top = 243
-    Width = 127
+    Width = 110
     Height = 16
     Caption = 'All Rights Reserved'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -13
     Font.Name = 'Tahoma'
-    Font.Style = [fsBold]
+    Font.Style = []
     ParentFont = False
     WordWrap = True
     IsControl = True
   end
   object lVersion: TLabel
-    Left = 315
+    Left = 318
     Top = 38
-    Width = 42
+    Width = 39
     Height = 13
     Alignment = taRightJustify
     Caption = 'ver. 3.0'
@@ -944,7 +944,7 @@ object fAboutForm: TfAboutForm
     Font.Color = 3947580
     Font.Height = -11
     Font.Name = 'Tahoma'
-    Font.Style = [fsBold]
+    Font.Style = []
     ParentFont = False
     IsControl = True
   end
