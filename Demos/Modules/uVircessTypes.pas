@@ -27,10 +27,23 @@ type
     UserName: String;
   end;
 
+  TPendingRequestItem = record
+    UserName: String;
+    UserDesc: String;
+    Gateway: String;
+    Action: String;
+    Handle: THandle;
+    ThreadID: Cardinal;
+    IsReconnection: Boolean;
+    UIForm: TForm;
+  end;
+  PPendingRequestItem = ^TPendingRequestItem;
+
   TUIOpenEvent = procedure(UserName, Action: String; var IsPending: Boolean) of Object;
   TUICloseEvent = procedure(AThreadId: Cardinal) of Object;
   TOnCustomFormEvent = procedure of Object;
   TDoStartFileTransferring = procedure(AUser, AUserName, APassword: String; ANeedGetPass: Boolean = False) of Object;
+  TReconnectToPartnerStart = procedure(user, username, pass, action: String; AUIForm: TForm) of Object;
 
   TDoDeleteDeviceGroup = procedure(AUID: String) of object;
   TDoExit = procedure of object;
@@ -97,16 +110,6 @@ type
     MaxUsers: Integer;
     Users: TRtcRecord;
   end;
-
-  TPendingRequestItem = record
-    UserName: String;
-    UserDesc: String;
-    Gateway: String;
-    Action: String;
-    Handle: THandle;
-    ThreadID: Cardinal;
-  end;
-  PPendingRequestItem = ^TPendingRequestItem;
 
   TGatewayServerList = array of PGatewayServerRec;
 

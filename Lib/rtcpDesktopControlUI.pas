@@ -46,6 +46,7 @@ type
   TRtcPDesktopControlMode = (rtcpNoControl, rtcpManualControl, rtcpAutoControl,
     rtcpFullControl);
 
+  PRtcPDesktopViewer = ^TRtcPDesktopViewer;
   TRtcPDesktopViewer = class(TPaintBox)
   private
     FUI: TRtcPDesktopControlUI;
@@ -564,13 +565,13 @@ begin
     if FrameStatLastTick = 0 then
     begin
       FrameStatLastTick := Debug.GetMCSTick;
-      if Debug.FrameStatLog <> '' then
-      begin
-        AssignFile(F, ExtractFilePath(Application.ExeName) + Debug.FrameStatLog);
-        Append(F);
-        WriteLn(F, '---------------------------------------------------------------');
-        CloseFile(F);
-      end;
+//      if Debug.FrameStatLog <> '' then
+//      begin
+//        AssignFile(F, ExtractFilePath(Application.ExeName) + Debug.FrameStatLog);
+//        Append(F);
+//        WriteLn(F, '---------------------------------------------------------------');
+//        CloseFile(F);
+//      end;
     end else
     begin
       CurTick := Debug.GetMCSTick;
@@ -588,15 +589,15 @@ begin
       if WPE > 0 then Dec(Misc, WPE);
       if WPD > 0 then Dec(Misc, WPD);
 
-      if Debug.FrameStatLog <> '' then
-      begin
-        AssignFile(F, ExtractFilePath(Application.ExeName) + Debug.FrameStatLog);
-        Append(F);
-        WriteLn(F, DateTimeToStr(Now), ' ', (DD / 1000):7:2, ' ',
-          (WPE / 1000):7:2, ' ', (WPD / 1000):7:2, ' ', (Misc / 1000):7:2, ' ',
-          (Total / 1000):7:2, ' ', (Vol / 1024):7:2);
-        CloseFile(F);
-      end;
+//      if Debug.FrameStatLog <> '' then
+//      begin
+//        AssignFile(F, ExtractFilePath(Application.ExeName) + Debug.FrameStatLog);
+//        Append(F);
+//        WriteLn(F, DateTimeToStr(Now), ' ', (DD / 1000):7:2, ' ',
+//          (WPE / 1000):7:2, ' ', (WPD / 1000):7:2, ' ', (Misc / 1000):7:2, ' ',
+//          (Total / 1000):7:2, ' ', (Vol / 1024):7:2);
+//        CloseFile(F);
+//      end;
 
 
       if FrameStatCnt >= 100 then

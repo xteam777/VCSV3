@@ -3,7 +3,7 @@
         <ProjectGuid>{C9C9CB0C-CA8E-4DC3-B257-63F6E0ED7B84}</ProjectGuid>
         <MainSource>Remox.dpr</MainSource>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Release</Config>
+        <Config Condition="'$(Config)'==''">Debug</Config>
         <TargetedPlatforms>1</TargetedPlatforms>
         <AppType>Application</AppType>
         <FrameworkType>VCL</FrameworkType>
@@ -215,6 +215,11 @@
         <DCCReference Include="..\..\rmxVideo\API\rmxVideoStorage.pas"/>
         <DCCReference Include="..\..\rmxVideo\Compressor\Compressions.pas"/>
         <DCCReference Include="..\Modules\SendDestroyToGateway.pas"/>
+        <DCCReference Include="..\Modules\uUIDataModule.pas">
+            <Form>UIDataModule</Form>
+            <FormType>dfm</FormType>
+            <DesignClass>TDataModule</DesignClass>
+        </DCCReference>
         <RcItem Include="rmx_w32.exe">
             <ContainerId>ResourceItem</ContainerId>
             <ResourceType>RCDATA</ResourceType>

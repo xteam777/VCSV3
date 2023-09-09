@@ -2987,23 +2987,6 @@ object rdDesktopViewer: TrdDesktopViewer
       OnMouseMove = ScrollMouseMove
       ExplicitWidth = 1058
       ExplicitHeight = 634
-      object pImage: TRtcPDesktopViewer
-        Left = 0
-        Top = 0
-        Width = 1062
-        Height = 635
-        Align = alClient
-        Color = 1381653
-        ParentColor = False
-        OnDblClick = pImageDblClick
-        OnMouseDown = pImageMouseDown
-        OnMouseMove = pImageMouseMove
-        OnMouseUp = pImageMouseUp
-        ExplicitLeft = 3
-        ExplicitTop = -3
-        ExplicitWidth = 1070
-        ExplicitHeight = 664
-      end
       object iMiniPanelHide: TImage
         Left = 10
         Top = 304
@@ -4066,16 +4049,27 @@ object rdDesktopViewer: TrdDesktopViewer
           OnMouseUp = panOptionsMiniMouseUp
         end
       end
+      object Button1: TButton
+        Left = 200
+        Top = 158
+        Width = 75
+        Height = 25
+        Caption = 'Button1'
+        TabOrder = 3
+        OnClick = Button1Click
+      end
     end
   end
-  object ChromeTabs1: TChromeTabs
+  object MainChromeTabs: TChromeTabs
     Left = 0
     Top = 0
     Width = 1062
     Height = 27
-    OnButtonAddClick = ChromeTabs1ButtonAddClick
+    OnActiveTabChanged = MainChromeTabsActiveTabChanged
+    OnButtonAddClick = MainChromeTabsButtonAddClick
+    OnButtonCloseTabClick = MainChromeTabsButtonCloseTabClick
     OnGetControlPolygons = ControlPolygons
-    ActiveTabIndex = 0
+    ActiveTabIndex = -1
     Options.Display.CloseButton.Offsets.Vertical = 6
     Options.Display.CloseButton.Offsets.Horizontal = 2
     Options.Display.CloseButton.Height = 14
@@ -4197,31 +4191,7 @@ object rdDesktopViewer: TrdDesktopViewer
     Options.Scrolling.DragScroll = True
     Options.Scrolling.DragScrollOffset = 50
     Options.Scrolling.MouseWheelScroll = True
-    Tabs = <
-      item
-        Caption = 'Chrome Tab 1'
-        Active = True
-        Tag = 0
-        ImageIndex = 3
-        ImageIndexOverlay = -1
-        Pinned = False
-        Visible = True
-        Modified = False
-        SpinnerState = tssNone
-        HideCloseButton = False
-      end
-      item
-        Caption = 'Chrome Tab 2'
-        Active = False
-        Tag = 0
-        ImageIndex = -1
-        ImageIndexOverlay = -1
-        Pinned = False
-        Visible = True
-        Modified = False
-        SpinnerState = tssNone
-        HideCloseButton = False
-      end>
+    Tabs = <>
     LookAndFeel.TabsContainer.StartColor = 14586466
     LookAndFeel.TabsContainer.StopColor = 13201730
     LookAndFeel.TabsContainer.StartAlpha = 255
@@ -4420,21 +4390,6 @@ object rdDesktopViewer: TrdDesktopViewer
     Align = alTop
     TabOrder = 1
     ExplicitWidth = 1058
-  end
-  object myUI: TRtcPDesktopControlUI
-    MapKeys = True
-    SmoothScale = True
-    ControlMode = rtcpFullControl
-    AutoScroll = True
-    MarkRemoteCursor.Size = 0
-    Viewer = pImage
-    OnOpen = myUIOpen
-    OnClose = myUIClose
-    OnError = myUIError
-    OnLogOut = myUILogOut
-    OnData = myUIData
-    Left = 6
-    Top = 264
   end
   object DesktopTimer: TTimer
     Enabled = False
@@ -5545,17 +5500,17 @@ object rdDesktopViewer: TrdDesktopViewer
       0000000000000000000000000000000000000000000000000000000000000000
       000000000000000000000000000000000000}
   end
-  object FT_UI: TRtcPFileTransferUI
-    OnClose = FT_UIClose
-    OnLogOut = FT_UILogOut
-    NotifyFileBatchSend = FT_UINotifyFileBatchSend
-    Left = 12
-    Top = 396
-  end
   object TimerRec: TTimer
     Enabled = False
     OnTimer = TimerRecTimer
     Left = 10
     Top = 455
+  end
+  object TimerReconnect: TTimer
+    Enabled = False
+    Interval = 20000
+    OnTimer = TimerReconnectTimer
+    Left = 8
+    Top = 511
   end
 end

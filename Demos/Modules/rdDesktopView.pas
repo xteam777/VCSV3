@@ -15,7 +15,7 @@ uses
   Windows, Messages, SysUtils, CommonData, CommonUtils, uVircessTypes, rtcLog, ClipBrd,
   Classes, Graphics, Controls, Forms, Types, IOUtils, DateUtils,
   Dialogs, ExtCtrls, StdCtrls, ShellAPI, ProgressDialog, rtcSystem,
-  rtcpChat, Math, rtcpFileTrans, rtcpFileTransUI,
+  rtcpChat, Math, rtcpFileTrans, rtcpFileTransUI, uUIDataModule,
   System.ImageList, Vcl.ImgList, Vcl.ActnMan, Vcl.ActnColorMaps, System.Actions,
   Vcl.ActnList, Vcl.PlatformDefaultStyleActnCtrls, rtcPortalMod,
   rtcpDesktopControl, rtcpDesktopControlUI, ChromeTabs, NFPanel, Vcl.Imaging.jpeg,
@@ -33,8 +33,8 @@ type
               TForm
               {$ENDIF};
 
+  PrdDesktopViewer = ^TrdDesktopViewer;
   TrdDesktopViewer = class(TFormType)
-    myUI: TRtcPDesktopControlUI;
     DesktopTimer: TTimer;
     ActionManagerTop: TActionManager;
     XPColorMap1: TXPColorMap;
@@ -64,7 +64,6 @@ type
     aOptimizeSpeed: TAction;
     pMain: TPanel;
     Scroll: TScrollBox;
-    pImage: TRtcPDesktopViewer;
     panOptions: TPanel;
     ammbActions: TActionMainMenuBar;
     panSettings: TPanel;
@@ -108,13 +107,14 @@ type
     iMiniPanelHide: TImage;
     iMiniPanelShow: TImage;
     iMove: TImage;
-    FT_UI: TRtcPFileTransferUI;
     aRecordOpenFolder: TAction;
     TimerRec: TTimer;
     aRecordCodecInfo: TAction;
     imgRec: TImage;
     lblRecInfo: TLabel;
-    ChromeTabs1: TChromeTabs;
+    MainChromeTabs: TChromeTabs;
+    TimerReconnect: TTimer;
+    Button1: TButton;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -194,7 +194,12 @@ type
     procedure ControlPolygons(Sender, ChromeTabsControl: TObject;
       ItemRect: TRect; ItemType: TChromeTabItemType;
       Orientation: TTabOrientation; var Polygons: IChromeTabPolygons);
-    procedure ChromeTabs1ButtonAddClick(Sender: TObject; var Handled: Boolean);
+    procedure MainChromeTabsButtonAddClick(Sender: TObject; var Handled: Boolean);
+    procedure TimerReconnectTimer(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
+    procedure MainChromeTabsActiveTabChanged(Sender: TObject; ATab: TChromeTab);
+    procedure MainChromeTabsButtonCloseTabClick(Sender: TObject;
+      ATab: TChromeTab; var Close: Boolean);
   private
     FVideoRecorder: TVideoRecorder;
     FVideoWriter: TRMXVideoWriter;
@@ -221,6 +226,8 @@ type
     RMouseDown,
     LWinDown,
     RWinDown: Boolean;
+
+    UIModulesList: TList;
 
     FProgressDialogsList: TList;
 
@@ -264,6 +271,11 @@ type
   public
     { Public declarations }
 
+//    myUI: TRtcPDesktopControlUI;
+//    FT_UI: TRtcPFileTransferUI;
+//    FUserName: String;
+//    FUserDesc: String;
+//    FUserPass: String;
     PFileTrans: TRtcPFileTransfer;
     PChat: TRtcPChat;
     fFirstScreen: Boolean;
@@ -271,6 +283,7 @@ type
     PartnerLockedState: Integer;
     PartnerServiceStarted: Boolean;
 //    MappedFiles: array of TMappedFileRec;
+    ReconnectToPartnerStart: TReconnectToPartnerStart;
 
     function SetShortcuts_Hook(fBlockInput: Boolean): Boolean;
 
@@ -281,7 +294,6 @@ type
 
     procedure SetFormState;
 
-    property UI: TRtcPDesktopControlUI read myUI;
     property OnUIOpen: TUIOpenEvent read FOnUIOpen write FOnUIOpen;
     property OnUIClose: TUICloseEvent read FOnUIClose write FOnUIClose;
     property DoStartFileTransferring: TDoStartFileTransferring read FDoStartFileTransferring write FDoStartFileTransferring;
@@ -292,6 +304,10 @@ type
     procedure RemoveProgressDialog(ATaskId: TTaskId);
     procedure RemoveProgressDialogByValue(AProgressDialog: PProgressDialog);
     procedure RemoveProgressDialogByUserName(AUserName: String);
+    procedure AddTab(AUserName, AUserDesc, AUserPass: String; AModule: TRtcPDesktopControl);
+    function GetUIDataModule(AUserName: String): TUIDataModule;
+    function RemoveUIDataModule(AUserName: String): TUIDataModule;
+    procedure CloseForm;
   end;
 
 
@@ -308,11 +324,194 @@ var
   KeyboardShortcutsHook: HWND;
   FormHandle: HWND;
 
+  //    UIDataModule: TUIDataModule;
+  //  UIDataModule := TUIDataModule.Create(nil);
+  //  FreeAndNil(UIDataModule);
+
 implementation
 
 {$R *.dfm}
 
 { TrdDesktopViewer }
+
+procedure TrdDesktopViewer.AddTab(AUserName, AUserDesc, AUserPass: String; AModule: TRtcPDesktopControl);
+var
+  pTab: TChromeTab;
+  pUIItem: TUIDataModule;
+//  pViewer: TRtcPDesktopViewer;
+//  fIsPending: Boolean;
+begin
+//  if Assigned(FOnUIOpen) then
+//    FOnUIOpen(AUserName, 'desk', fIsPending);
+//
+//  if not fIsPending then //Если подключение отменено закрываем
+//    Exit
+//  else
+//  begin
+//    Show;
+//    BringToFront;
+//    //BringWindowToTop(Handle);
+//    SetForegroundWindow(Handle);
+//  end;
+
+  pTab := MainChromeTabs.Tabs.Add;
+  pTab.UserName := AUserName;  //К которому изначально подключались (не UserToConnect, на которого перенаправило)
+  pTab.UserDesc := AUserDesc;
+  pTab.UserPass := AUserPass;
+  if pTab.UserDesc <> '' then
+    pTab.Caption := pTab.UserDesc
+  else
+    pTab.Caption := pTab.UserName;
+
+  pUIITem := TUIDataModule.Create(Self);
+
+//  pViewer := TRtcPDesktopViewer.Create(Self);
+  pUIITem.pImage^ := TRtcPDesktopViewer.Create(Self);
+  pUIITem.pImage.Parent := Scroll;
+  pUIITem.pImage.Align := alClient;
+  pUIITem.pImage.Color := clBlack;
+
+  pUIItem.UI.Viewer := pUIITem.pImage^;
+  pUIITem.UserName := AUserName;  //К которому изначально подключались (не UserToConnect, на которого перенаправило)
+  pUIITem.UserDesc := AUserDesc;
+  pUIITem.UserPass := AUserPass;
+//  pUIItem.UI := TRtcPDesktopControlUI.Create(DesktopsForm);
+  pUIItem.UI.MapKeys := True;
+  pUIItem.UI.SmoothScale := True;
+  pUIItem.UI.ExactCursor := True;
+  pUIItem.UI.OnOpen := myUIOpen;
+  pUIItem.UI.OnData := myUIData;
+  pUIItem.UI.OnError := myUIError;
+  pUIItem.UI.OnLogout := myUILogout;
+  pUIItem.UI.OnClose := myUIClose;
+  pUIItem.UI.ControlMode := rtcpFullControl;
+  pUIItem.UI.UserName := pTab.UserName;
+  pUIItem.UI.UserDesc := pTab.UserDesc;
+  // Always set UI.Module *after* setting UI.UserName !!!
+  pUIItem.UI.Module := AModule;
+//    pUIItem.UI.Tag := Sender.Tag; //ThreadID
+//  if Assigned(PFileTrans.Client) then
+//    PFileTrans.Close(PFileTrans.Client.LoginUserName);
+//  pUIItem.PFileTrans := TRtcPFileTransfer.Create(DesktopsForm);
+  pUIItem.PFileTrans.Client := AModule.Client;
+  pUIItem.PFileTrans.OnNewUI := PFileTransExplorerNewUI;
+  pUIItem.PFileTrans.Open(pTab.UserName, False, AModule);
+
+  UIModulesList.Add(pUIItem);
+
+  MainChromeTabsActiveTabChanged(nil, pTab);
+end;
+
+procedure TrdDesktopViewer.MainChromeTabsButtonAddClick(Sender: TObject;
+  var Handled: Boolean);
+begin
+  BringWindowToTop(MainFormHandle);
+  Handled := True;
+end;
+
+procedure TrdDesktopViewer.MainChromeTabsButtonCloseTabClick(Sender: TObject;
+  ATab: TChromeTab; var Close: Boolean);
+var
+  pUIItem: TUIDataModule;
+begin
+//  pUIItem := RemoveUIDataModule(ATab.UserName);
+  if UIModulesList.Count = 0 then
+    CloseForm;
+end;
+
+procedure TrdDesktopViewer.CloseForm;
+begin
+  Close;
+end;
+
+function TrdDesktopViewer.RemoveUIDataModule(AUserName: String): TUIDataModule;
+var
+  i: Integer;
+begin
+  Result := nil;
+  i := UIModulesList.Count - 1;
+  while i >= 0 do
+    if TUIDataModule(UIModulesList[i]).UserName = AUserName then
+    begin
+      FreeAndNil(TUIDataModule(UIModulesList[i]));
+      UIModulesList.Delete(i);
+      Break;
+    end;
+end;
+
+function TrdDesktopViewer.GetUIDataModule(AUserName: String): TUIDataModule;
+var
+  i: Integer;
+begin
+  Result := nil;
+  for i := 0 to UIModulesList.Count - 1 do
+    if TUIDataModule(UIModulesList[i]).UserName = AUserName then
+    begin
+      Result := UIModulesList[i];
+      Break;
+    end;
+end;
+
+procedure TrdDesktopViewer.MainChromeTabsActiveTabChanged(Sender: TObject;
+  ATab: TChromeTab);
+var
+  i: Integer;
+  pUIItem: TUIDataModule;
+begin
+  if ATab.Caption = '' then
+    Exit;
+
+  pUIItem := GetUIDataModule(ATab.UserName);
+  for i := 0 to UIModulesList.Count - 1 do
+    if UIModulesList[i] = pUIItem then
+    begin
+      TUIDataModule(UIModulesList[i]).pImage.Align := alClient;
+      TUIDataModule(UIModulesList[i]).pImage.Visible := True;
+    end
+    else
+    begin
+      TUIDataModule(UIModulesList[i]).pImage.Align := alNone;
+      TUIDataModule(UIModulesList[i]).pImage.Left := -1;
+      TUIDataModule(UIModulesList[i]).pImage.Top := -1;
+      TUIDataModule(UIModulesList[i]).pImage.Width := 1;
+      TUIDataModule(UIModulesList[i]).pImage.Height := 1;
+      TUIDataModule(UIModulesList[i]).pImage.Visible := False;
+    end;
+
+//  if PFileTrans <> nil then
+//    PFileTrans.Free;
+
+//  UI.Free;
+////  UI := TRtcPDesktopControlUI.Create(Self);
+////  UI.Viewer := pImage;
+////  UI.MapKeys := True;
+////  UI.SmoothScale := True;
+////  UI.ExactCursor := True;
+////  UI.OnOpen := myUIOpen;
+////  UI.OnData := myUIData;
+////  UI.OnError := myUIError;
+////  UI.OnLogout := myUILogout;
+////  UI.OnClose := myUIClose;
+////  UI.ControlMode := rtcpFullControl;
+//  UI.UserName := ATab.UserName;
+//  UI.UserDesc := ATab.UserDesc;
+//  // Always set UI.Module *after* setting UI.UserName !!!
+//  UI.Module := ATab.Module;
+////    DesktopsForm.UI.Tag := Sender.Tag; //ThreadID
+
+//  FT_UI.Free;
+//  FT_UI := TRtcPFileTransferUI.Create(Self);
+//  FT_UI.Module := nil;
+//  FT_UI.NotifyFileBatchSend := FT_UINotifyFileBatchSend;
+//  FT_UI.OnLogOut := FT_UILogOut;
+//  FT_UI.OnClose := FT_UIClose;
+
+//  if Assigned(PFileTrans.Client) then
+//    PFileTrans.Close(PFileTrans.Client.LoginUserName);
+//  PFileTrans.Client := UI.Module.Client;
+//  PFileTrans.OnNewUI := PFileTransExplorerNewUI;
+//  PFileTrans.Open(UI.UserName, False, Sender);
+end;
 
 procedure TrdDesktopViewer.OnSetScreenData(Sender: TObject;
   const Data: RtcString);
@@ -513,27 +712,26 @@ end;
 //  {$ENDIF}
 //end;
 
-{$IFNDEF RtcViewer}
 procedure TrdDesktopViewer.aBlockKeyboardMouseExecute(Sender: TObject);
 begin
   aBlockKeyboardMouse.Checked := not aBlockKeyboardMouse.Checked;
 
-  if aBlockKeyboardMouse.Checked then
-    UI.Send_BlockKeyboardAndMouse
-  else
-    UI.Send_UnBlockKeyboardAndMouse;
+//  if aBlockKeyboardMouse.Checked then //Доделать
+//    UI.Send_BlockKeyboardAndMouse
+//  else
+//    UI.Send_UnBlockKeyboardAndMouse;
 end;
 
 procedure TrdDesktopViewer.AcceptFiles( var msg : TMessage );
-  const
-    cnMaxFileNameLen = 1024;
-  var
-    i,
-    nCount     : integer;
-    acFileName : array [0..cnMaxFileNameLen] of char;
-    myFileName : string;
-  begin
-  // find out how many files we're accepting
+const
+  cnMaxFileNameLen = 1024;
+var
+  i,
+  nCount     : integer;
+  acFileName : array [0..cnMaxFileNameLen] of char;
+  myFileName : string;
+begin
+{  // find out how many files we're accepting
   nCount := DragQueryFile( msg.WParam,
                            $FFFFFFFF,
                            acFileName,
@@ -554,14 +752,14 @@ procedure TrdDesktopViewer.AcceptFiles( var msg : TMessage );
   finally
     // let Windows know that you're done
     DragFinish( msg.WParam );
-    end;
-  end;
+    end;} //Доделать
+end;
 
 procedure TrdDesktopViewer.aScreenshotToCbrdExecute(Sender: TObject);
 var
   Bitmap: TBitmap;
 begin
-  Bitmap := TBitmap.Create;
+{  Bitmap := TBitmap.Create;
   Bitmap.SetSize(myUI.ScreenWidth, myUI.ScreenHeight);
   myUI.DrawScreen(Bitmap.Canvas, Bitmap.Width, Bitmap.Height);
 
@@ -577,7 +775,7 @@ begin
     on E: Exception do
       xLog('aScreenshotToCbrdExecute. Error: ' + E.ClassName + '. ' + E.Message);
   end;
-  Bitmap.Free;
+  Bitmap.Free;} //Доделать
 end;
 
 procedure TrdDesktopViewer.aScreenshotToFileExecute(Sender: TObject);
@@ -585,7 +783,7 @@ var
   Bitmap: TBitmap;
   saveDialog : TSaveDialog;
 begin
-  saveDialog := TSaveDialog.Create(nil);
+{  saveDialog := TSaveDialog.Create(nil);
   saveDialog.Title := 'Выберите место для сохранения';
   saveDialog.InitialDir := GetCurrentDir;
   saveDialog.Filter := 'Bitmap file|*.bmp';
@@ -621,22 +819,22 @@ begin
     end;
     Bitmap.Free;
   end;
-  saveDialog.Free;
+  saveDialog.Free;} //Доделать
 end;
 
 procedure TrdDesktopViewer.aSendShortcutsExecute(Sender: TObject);
 begin
-  aSendShortcuts.Checked := not aSendShortcuts.Checked;
-  UI.Module.SendShortcuts := aSendShortcuts.Checked;
-  SetShortcuts_Hook(aSendShortcuts.Checked); //Доделать
+//  aSendShortcuts.Checked := not aSendShortcuts.Checked;
+//  UI.Module.SendShortcuts := aSendShortcuts.Checked;
+//  SetShortcuts_Hook(aSendShortcuts.Checked); //Доделать
 end;
 
 procedure TrdDesktopViewer.aShowRemoteCursorExecute(Sender: TObject);
 begin
-  UI.RemoteCursor := not UI.RemoteCursor;
-  pImage.Repaint;
-
-  aShowRemoteCursor.Checked := UI.RemoteCursor;
+//  UI.RemoteCursor := not UI.RemoteCursor;
+//  pImage.Repaint;
+//
+//  aShowRemoteCursor.Checked := UI.RemoteCursor;
 end;
 
 procedure TrdDesktopViewer.InitScreen;
@@ -646,7 +844,7 @@ procedure TrdDesktopViewer.InitScreen;
   Scroll.VertScrollBar.Position:=0;
   Scroll.HorzScrollBar.Position:=0;
 
-  pImage.Left:=0;
+{  pImage.Left:=0;
   pImage.Top:=0;
   WindowState:=wsNormal;
   BorderStyle:=bsSizeable;
@@ -685,11 +883,9 @@ procedure TrdDesktopViewer.InitScreen;
 
   BringToFront;
 
-  {$IFNDEF RtcViewer}
-  { tell Windows that you're accepting drag and drop files }
+  // tell Windows that you're accepting drag and drop files
   if assigned(PFileTrans) then
-    DragAcceptFiles( Handle, True );
-  {$ENDIF}
+    DragAcceptFiles( Handle, True );} //Доделать
   end;
 
 procedure TrdDesktopViewer.lCloseClick(Sender: TObject);
@@ -714,7 +910,7 @@ procedure TrdDesktopViewer.FullScreen;
   Width:=Screen.Width;
   Height:=Screen.Height;
 
-  if (pImage.Align=alNone)
+{  if (pImage.Align=alNone)
     and myUI.HaveScreen
     and aStretchScreen.Checked then
   begin
@@ -734,10 +930,8 @@ procedure TrdDesktopViewer.FullScreen;
 
   BringToFront;
 
-  {$IFNDEF RtcViewer}
-  { tell Windows that you're accepting drag and drop files }
-  DragAcceptFiles( Handle, True );
-  {$ENDIF}
+  //tell Windows that you're accepting drag and drop files
+  DragAcceptFiles( Handle, True );} //Доделать
 
   end;
 
@@ -752,7 +946,7 @@ procedure TrdDesktopViewer.DoResizeImage;
 var
   Scale: Real;
 begin
-  if myUI.HaveScreen then
+{  if myUI.HaveScreen then
   begin
     if iPrepare.Visible then
       SetFormState;
@@ -811,32 +1005,30 @@ begin
       Scroll.HorzScrollBar.Visible := False;
       Scroll.VertScrollBar.Visible := False;
     end;
-  end;
+  end;} //Доделать
 end;
-
-{$ENDIF}
 
 procedure TrdDesktopViewer.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   DesktopTimer.Enabled := False;
   Action := caFree;
 
-  if Assigned(FOnUIClose) then
-    FOnUIClose(myUI.Tag); //ThreadID
+//  if Assigned(FOnUIClose) then
+//    FOnUIClose(myUI.Tag); //ThreadID  //Доделать
 
 //  if not aRecordStart.Enabled then
 //    Avi.Free;
 
   RecordCancel;
 
-  FT_UI.CloseAndClear();
+  //FT_UI.CloseAndClear(); //Доделать
 end;
 
 procedure TrdDesktopViewer.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
-  Hide;
+//  Hide;
 
-  if aHideWallpaper.Checked then
+{  if aHideWallpaper.Checked then
   try
     if UI.Active then
       UI.Send_ShowDesktop;
@@ -851,7 +1043,7 @@ begin
   end;
 
   DesktopTimer.Enabled := False;
-  CanClose := myUI.CloseAndClear;
+  CanClose := myUI.CloseAndClear;} //Доделать
 end;
 
 procedure TrdDesktopViewer.FormCreate(Sender: TObject);
@@ -859,7 +1051,7 @@ begin
   SetWindowLong(Handle, GWL_EXSTYLE, GetWindowLong(Handle, GWL_EXSTYLE) or WS_EX_APPWINDOW);
 
   {$IFDEF USE_GLASS_FORM}
-  Self.ChromeTabs := ChromeTabs1;
+  Self.ChromeTabs := MainChromeTabs;
   {$ENDIF}
 
   FProgressDialogsList := TList.Create;
@@ -899,10 +1091,10 @@ begin
 //  UI.Module.SendShortcuts := True;
   SetShortcuts_Hook(True); //Доделать
 
-  imgRec.Left := pImage.Width - 100;
+  imgRec.Left := Width - 100;
   imgRec.Top := 10;
   imgRec.Visible := False;
-  lblRecInfo.Left := pImage.Width - 80;
+  lblRecInfo.Left := Width - 80;
   lblRecInfo.Top := 10;
   lblRecInfo.Visible := False;
 
@@ -911,17 +1103,21 @@ begin
   aRecordCancel.Enabled := Assigned(FVideoWriter);
 
   Visible := False; //позже ставим True если не отменено в пендинге
+
+//  PFileTrans := TRtcPFileTransfer.Create(Self);
+
+  UIModulesList := TList.Create;
 end;
 
 procedure TrdDesktopViewer.myUILogOut(Sender: TRtcPDesktopControlUI);
 begin
 //  Memo1.Lines.Add('myUILogOut');
-  Close;
+//  Close;
 end;
 
 procedure TrdDesktopViewer.FormMouseWheel(Sender: TObject; Shift: TShiftState; WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
 begin
-  myUI.SendMouseWheel(WheelDelta, Shift);
+//  myUI.SendMouseWheel(WheelDelta, Shift); //Доделать
   Handled := True;
 end;
 
@@ -937,10 +1133,10 @@ begin
   lState.Width := ClientWidth;
   lState.Top := Height * 580 div 680;
 
-  imgRec.Left := pImage.Width - 100;
+  imgRec.Left := Width - 100;
   imgRec.Top := 10;
   imgRec.Visible := False;
-  lblRecInfo.Left := pImage.Width - 80;
+  lblRecInfo.Left := Width - 80;
   lblRecInfo.Top := 10;
   lblRecInfo.Visible := False;
 end;
@@ -952,12 +1148,12 @@ end;
 
 procedure TrdDesktopViewer.FT_UIClose(Sender: TRtcPFileTransferUI);
 begin
-  RemoveProgressDialogByUserName(UI.UserName);
+//  RemoveProgressDialogByUserName(UI.UserName); //Доделать
 end;
 
 procedure TrdDesktopViewer.FT_UILogOut(Sender: TRtcPFileTransferUI);
 begin
-  RemoveProgressDialogByUserName(FT_UI.UserName);
+//  RemoveProgressDialogByUserName(FT_UI.UserName); //Доделать
 end;
 
 procedure TrdDesktopViewer.FT_UINotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);
@@ -1078,8 +1274,8 @@ begin
 end;}
 
 procedure TrdDesktopViewer.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
-  begin
-  case Key of
+begin
+{  case Key of
     VK_LWIN: LWinDown:=True;
     VK_RWIN: RWinDown:=True;
     end;
@@ -1115,20 +1311,16 @@ procedure TrdDesktopViewer.FormKeyDown(Sender: TObject; var Key: Word; Shift: TS
       Exit;
       end;
     end;
-  {$IFNDEF RtcViewer}
   if myUI.ControlMode<>rtcpNoControl then
     myUI.SendKeyDown(Key,Shift);
-  {$ENDIF}
-  Key:=0;
-  end;
+  Key:=0;} //Доделать
+end;
 
 procedure TrdDesktopViewer.FormKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
-{$IFNDEF RtcViewer}
-  var
-    temp:Word;
-{$ENDIF}
-  begin
-  if (LWinDown or RWinDown) and (Key in [Ord('S'),Ord('W')]) then
+var
+  temp:Word;
+begin
+{  if (LWinDown or RWinDown) and (Key in [Ord('S'),Ord('W')]) then
     Exit;
 
   case Key of
@@ -1136,19 +1328,17 @@ procedure TrdDesktopViewer.FormKeyUp(Sender: TObject; var Key: Word; Shift: TShi
     VK_RWIN: RWinDown:=False;
     end;
 
-  {$IFNDEF RtcViewer}
   if myUI.ControlMode<>rtcpNoControl then
     begin
     temp:=Key; // a work-around for Internal Error in Delphi 7 compiler
     myUI.SendKeyUp(temp,Shift);
     end;
-  {$ENDIF}
-  Key:=0;
-  end;
+  Key:=0;} //Доделать
+end;
 
 procedure TrdDesktopViewer.FormDeactivate(Sender: TObject);
 begin
-  myUI.Deactivated;
+//  myUI.Deactivated; //Доделать
   LWinDown := False;
   RWinDown := False;
   LMouseDown := False;
@@ -1172,14 +1362,20 @@ begin
     Dispose(FProgressDialogsList[i]);
   end;
   FreeAndNil(FProgressDialogsList);
+
+  for i := 0 to UIModulesList.Count - 1 do
+  begin
+    FreeAndNil(TUIDataModule(UIModulesList[i]));
+  end;
+  FreeAndNil(UIModulesList);
 end;
 
 procedure TrdDesktopViewer.SetCaption;
 begin
-  if myUI.UserDesc <> '' then
-    Caption := myUI.UserDesc// + ' - Управление' // + checkControl
-  else
-    Caption := RemoveUserPrefix(myUI.UserName);
+//  if myUI.UserDesc <> '' then
+//    Caption := myUI.UserDesc// + ' - Управление' // + checkControl
+//  else
+//    Caption := RemoveUserPrefix(myUI.UserName); //Доделать
 end;
 
 procedure TrdDesktopViewer.myUIOpen(Sender: TRtcPDesktopControlUI);
@@ -1188,9 +1384,9 @@ var
 begin
 //  Memo1.Lines.Add('myUIOpen');
   if Assigned(FOnUIOpen) then
-    FOnUIOpen(myUI.UserName, 'desk', fIsPending);
+    FOnUIOpen(Sender.UserName, 'desk', fIsPending);
 
-  if not fIsPending then
+  if not fIsPending then //Если подключение отменено закрываем
   begin
     Close;
     Exit;
@@ -1203,8 +1399,13 @@ begin
     SetForegroundWindow(Handle);
   end;
 
+  TimerReconnect.Enabled := False;
+
+  //pImage.Align := alClient; //Доделать
+
+
 //  if aStretchScreen.Checked then
-    pImage.Align := alClient;
+//    pImage.Align := alClient;
 //  else
 //    pImage.Align := alNone;
 
@@ -1241,23 +1442,18 @@ begin
   if Assigned(PFileTrans) then
     DragAcceptFiles( Handle, True );
   {$ENDIF}
-
-  PFileTrans := TRtcPFileTransfer.Create(Self);
-  PFileTrans.Client := UI.Module.Client;
-  PFileTrans.OnNewUI := PFileTransExplorerNewUI;
-  PFileTrans.Open(UI.UserName, False, Sender);
 end;
 
 procedure TrdDesktopViewer.OnProgressDialogCancel(Sender: TObject);
 var
   pPDData: PProgressDialogData;
 begin
-  pPDData := GetProgressDialogData(PProgressDialog(@Sender));
+{  pPDData := GetProgressDialogData(PProgressDialog(@Sender));
   if pPDData <> nil then
     FT_UI.Module.CancelBatch(FT_UI.Module, pPDData^.taskId);
 
   TProgressDialog(Sender).Stop;
-  RemoveProgressDialogByValue(@Sender);
+  RemoveProgressDialogByValue(@Sender);} // Доделать
 end;
 
 procedure TrdDesktopViewer.myUIClose(Sender: TRtcPDesktopControlUI);
@@ -1284,7 +1480,8 @@ begin
   DragAcceptFiles(Handle, False);
   {$ENDIF}
 
-  Close;
+  TimerReconnect.Enabled := True;
+//  Close;
 end;
 
 procedure TrdDesktopViewer.myUIError(Sender: TRtcPDesktopControlUI);
@@ -1317,7 +1514,7 @@ end;
 
 procedure TrdDesktopViewer.myUIData(Sender: TRtcPDesktopControlUI);
 begin
-  FImageChanged := true;
+{  FImageChanged := true;
   if Assigned(FVideoRecorder) then
     begin
       LockVideoImage;
@@ -1359,13 +1556,11 @@ begin
 //      Left := (Screen.Width - Width) div 2;
 //      Top := (Screen.Height - Height) div 2;
 //    end;
-    {$IFNDEF RtcViewer}
-    { tell Windows that you're accepting drag and drop files }
+    //tell Windows that you're accepting drag and drop files
     if Assigned(PFileTrans) then
       DragAcceptFiles(Handle, True);
-    {$ENDIF}
     DesktopTimer.Enabled := True;
-  end;
+  end;} //Доделать
 end;
 
 procedure TrdDesktopViewer.ScrollMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
@@ -1484,6 +1679,11 @@ procedure TrdDesktopViewer.btnSettingsClick(Sender: TObject);
 //  cbReduceColors.Color:=clBtnFace;
   end;
 
+procedure TrdDesktopViewer.Button1Click(Sender: TObject);
+begin
+  TimerReconnectTimer(nil);
+end;
+
 procedure TrdDesktopViewer.btnCancelClick(Sender: TObject);
 begin
   panSettings.Visible := False;
@@ -1491,24 +1691,23 @@ end;
 
 procedure TrdDesktopViewer.aChatExecute(Sender: TObject);
 begin
-  PChat.Open(UI.UserName, Sender);
+//  PChat.Open(UI.UserName, Sender); //Доделать
 end;
 
 procedure TrdDesktopViewer.aCtrlAltDelExecute(Sender: TObject);
 begin
-  UI.Send_CtrlAltDel;
+//  UI.Send_CtrlAltDel; } //Доделать
 end;
 
 procedure TrdDesktopViewer.aFileTransferExecute(Sender: TObject);
 begin
-//  PFileTrans.Open(UI.UserName, Sender);
-  if Assigned(FDoStartFileTransferring) then
-    FDoStartFileTransferring(UI.UserName, UI.UserDesc, '', True);
+//  if Assigned(FDoStartFileTransferring) then
+//    FDoStartFileTransferring(UI.UserName, UI.UserDesc, '', True); //Доделать
 end;
 
 procedure TrdDesktopViewer.aFullScreenExecute(Sender: TObject);
 begin
-  if (myUI.ScreenWidth>=Screen.Width) or
+{  if (myUI.ScreenWidth>=Screen.Width) or
      (myUI.ScreenHeight>=Screen.Height) then
     begin
     if aStretchScreen.Checked then
@@ -1542,22 +1741,22 @@ begin
       end;
     end;
 
-  aFullScreen.Checked := not aFullScreen.Checked;
+  aFullScreen.Checked := not aFullScreen.Checked;} //Доделать
 end;
 
 procedure TrdDesktopViewer.aHideWallpaperExecute(Sender: TObject);
 begin
-  if not aHideWallpaper.Checked then
+{  if not aHideWallpaper.Checked then
     UI.Send_HideDesktop(Sender)
   else
     UI.Send_ShowDesktop(Sender);
 
-  aHideWallpaper.Checked := not aHideWallpaper.Checked;
+  aHideWallpaper.Checked := not aHideWallpaper.Checked;} //Доделать
 end;
 
 procedure TrdDesktopViewer.aLockSystemExecute(Sender: TObject);
 begin
-  UI.Send_LockSystem(Sender);
+//  UI.Send_LockSystem(Sender); //Доделать
 end;
 
 procedure TrdDesktopViewer.aLockSystemOnCloseExecute(Sender: TObject);
@@ -1567,7 +1766,7 @@ end;
 
 procedure TrdDesktopViewer.aLogoffExecute(Sender: TObject);
 begin
-  UI.Send_LogoffSystem(Sender);
+//  UI.Send_LogoffSystem(Sender); //Доделать
 end;
 
 procedure TrdDesktopViewer.aOptimalScaleExecute(Sender: TObject);
@@ -1580,7 +1779,7 @@ end;
 
 procedure TrdDesktopViewer.UpdateQuality;
 begin
-  if aOptimizeQuality.Checked then
+{  if aOptimizeQuality.Checked then
   begin
     UI.ChgDesktop_Begin;
     try
@@ -1618,7 +1817,7 @@ begin
     finally
       UI.ChgDesktop_End;
     end;
-  end;
+  end;} //Доделать
 end;
 
 procedure TrdDesktopViewer.aOptimizeQualityExecute(Sender: TObject);
@@ -1649,15 +1848,15 @@ begin
   aBlockKeyboardMouse.Checked := aPowerOffMonitor.Checked;
   aBlockKeyboardMouse.Enabled := not aPowerOffMonitor.Checked;
 
-  if aPowerOffMonitor.Checked then
-    UI.Send_PowerOffMonitor(Sender)
-  else
-    UI.Send_PowerOnMonitor(Sender);
+//  if aPowerOffMonitor.Checked then
+//    UI.Send_PowerOffMonitor(Sender)
+//  else
+//    UI.Send_PowerOnMonitor(Sender); //Доделать
 end;
 
 procedure TrdDesktopViewer.aPowerOffSystemExecute(Sender: TObject);
 begin
-  UI.Send_PowerOffSystem(Sender);
+//  UI.Send_PowerOffSystem(Sender); //Доделать
 end;
 
 procedure TrdDesktopViewer.aRecordStopExecute(Sender: TObject);
@@ -1698,41 +1897,18 @@ var
   rec: TRtcRecord;
   fn: TRtcFunctionInfo;
 begin
-  if Assigned(FVideoWriter) then
+{  if Assigned(FVideoWriter) then
     raise Exception.Create('Video is recording');
   FVideoFile := IncludeTrailingPathDelimiter(RecordsFolder);
   ForceDirectories(FVideoFile);
   FVideoFile := FVideoFile + 'Video_' + FormatDateTime('YYYY_MM_DD_HHNNSS', Now) + '.rmxv';
   FVideoWriter := TRMXVideoWriter.Create(FVideoFile, TRMXVideoFileWin);
-//  rec := TRtcRecord.Create;
-//  try
-//    with Rec.newRecord('res') do//Res.newRecord('res') do
-//    begin
-//      asInteger['Width'] := myUI.Playback.ScreenDecoder.ScreenWidth;
-//      asInteger['Height'] := myUI.Playback.ScreenDecoder.ScreenHeight;
-//      asInteger['Bits'] := myUI.Playback.ScreenDecoder.ScreenBPP;
-//    end;
-//    FVideoWriter.WriteRTCRec(rec);
-//  finally
-//    rec.Free;
-//  end;
   FFirstImageArrived := false;
   myUI.Playback.ScreenDecoder.OnSetScreenData := OnSetScreenData;
   // data to send to the user ...
   fn := TRtcFunctionInfo.Create;
   fn.FunctionName := 'restart_desk';
-  myUI.Module.Client.SendToUser(myUI.Module, myUI.UserName, fn);
-//  exit;
-//  if Assigned(FVideoRecorder) then
-//    raise Exception.Create('Video is recording');
-//  FVideoFile := IncludeTrailingPathDelimiter(ExpandFileName(edRecordFolder.Text));
-//  ForceDirectories(FVideoFile);
-//  FVideoFile := FVideoFile + 'Video_' + FormatDateTime('YYYY_MM_DD_HHNNSS', Now) + '.avi';
-//  FVideoImage := TBitmap.Create;
-//  FVideoImage.SetSize(UI.Playback.Image.Width, UI.Playback.Image.Height);
-//  FVideoImage.PixelFormat := pf24bit;
-//  FVideoImage.Canvas.Draw(0, 0, UI.Playback.Image);
-//  FVideoRecorder := TVideoRecorderAVIVFW.Create(Handle, FVideoFile, 10, OnGetVideoFrame, FVideoImage);
+  myUI.Module.Client.SendToUser(myUI.Module, myUI.UserName, fn);} //Доделать
 end;
 
 procedure TrdDesktopViewer.RecordStop;
@@ -1740,19 +1916,11 @@ var
   frm: TForm;
   w: TRMXVideoWriter;
 begin
-  if not Assigned(FVideoWriter) then exit;
+{  if not Assigned(FVideoWriter) then exit;
   myUI.Playback.ScreenDecoder.OnSetScreenData := nil;
   w := FVideoWriter;
   FVideoWriter := nil;
-  w.Free;
-//  if not Assigned(FVideoRecorder) then exit;
-//  frm := CreateMessageDialog('Stop Recording .... ', mtInformation, []);
-//  frm.Position := poScreenCenter;
-//  frm.Caption := Application.Title;
-//  frm.OnActivate := ModalFormRecordStopActivate;
-//  frm.ShowModal;
-//  while Assigned(FVideoImage) do Application.ProcessMessages;
-//  frm.Free;
+  w.Free;} //Доделать
 end;
 
 procedure TrdDesktopViewer.RecordCancel;
@@ -1964,13 +2132,6 @@ begin
   SetFormState;
 end;
 
-procedure TrdDesktopViewer.ChromeTabs1ButtonAddClick(Sender: TObject;
-  var Handled: Boolean);
-begin
-  BringWindowToTop(MainFormHandle);
-  Handled := True;
-end;
-
 procedure TrdDesktopViewer.ControlPolygons(Sender,
   ChromeTabsControl: TObject; ItemRect: TRect; ItemType: TChromeTabItemType;
   Orientation: TTabOrientation; var Polygons: IChromeTabPolygons);
@@ -2008,7 +2169,7 @@ var
   FileList: TStringList;
   temp_id: TTaskID;
 begin
-  try
+{  try
     FLastActiveExplorerHandle := THandle(Message.WParam);
 
     FileList := TStringList.Create;
@@ -2031,7 +2192,7 @@ begin
   end;
 
 //  for i := 0 to CB_DataObject.FCount - 1 do
-//    FT_UI.Fetch(CB_DataObject.FFiles[i].filePath, String(Message.LParam));
+//    FT_UI.Fetch(CB_DataObject.FFiles[i].filePath, String(Message.LParam));} //Доделать
 end;
 
 procedure TrdDesktopViewer.SetFormState;
@@ -2157,10 +2318,10 @@ var
   Bitmap: TBitmap;
   JPEG: TJPEGImage;
 begin
-  Bitmap := TBitmap.Create;
+{  Bitmap := TBitmap.Create;
 
-    Bitmap.SetSize(myUI.ScreenWidth, myUI.ScreenHeight);
-    myUI.DrawScreen(Bitmap.Canvas, Bitmap.Width, Bitmap.Height);
+  Bitmap.SetSize(myUI.ScreenWidth, myUI.ScreenHeight);
+  myUI.DrawScreen(Bitmap.Canvas, Bitmap.Width, Bitmap.Height);
 
 //  Bitmap.Width := UI.GetScreen.Image.Width;
 //  Bitmap.Height := UI.GetScreen.Image.Height;
@@ -2211,7 +2372,7 @@ begin
   //Write frame
 //  Avi.AppendNewFrame(Bitmap.Handle);
 
-  Bitmap.Free;
+  Bitmap.Free;} //Доделать
 end;
 
 {procedure TrdDesktopViewer.ScreenRecordPause;
@@ -2267,12 +2428,12 @@ end;}
 
 procedure TrdDesktopViewer.aRestartSystemExecute(Sender: TObject);
 begin
-  UI.Send_RestartSystem(Sender);
+//  UI.Send_RestartSystem(Sender); //Доделать
 end;
 
 procedure TrdDesktopViewer.btnAcceptClick(Sender: TObject);
-  begin
-  panSettings.Visible:=False;
+begin
+{  panSettings.Visible:=False;
   UI.ChgDesktop_Begin;
   try
     if grpLayered.ItemIndex>=0 then      UI.ChgDesktop_CaptureLayeredWindows(grpLayered.ItemIndex=0);
@@ -2292,8 +2453,8 @@ procedure TrdDesktopViewer.btnAcceptClick(Sender: TObject);
       end;
   finally
     UI.ChgDesktop_End;
-    end;
-  end;
+    end;} //Доделать
+end;
 
 procedure TrdDesktopViewer.pImageMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
@@ -2322,8 +2483,8 @@ end;
 
 procedure TrdDesktopViewer.DesktopTimerTimer(Sender: TObject);
 begin
-  if assigned(myUI) and MyUI.InControl and (GetForegroundWindow <> Handle) then
-    FormDeactivate(nil);
+//  if assigned(myUI) and MyUI.InControl and (GetForegroundWindow <> Handle) then
+//    FormDeactivate(nil); //Доделать
 end;
 
 procedure TrdDesktopViewer.panOptionsMiniMouseDown(Sender: TObject;
@@ -2641,6 +2802,11 @@ begin
   end;
 end;
 
+procedure TrdDesktopViewer.TimerReconnectTimer(Sender: TObject);
+begin
+//  ReconnectToPartnerStart(FUserName, FUserDesc, FUserPass,  'desk', Self);
+end;
+
 procedure TrdDesktopViewer.TimerRecTimer(Sender: TObject);
 begin
   if Assigned(FVideoWriter) then
@@ -2653,11 +2819,11 @@ end;
 
 procedure TrdDesktopViewer.PFileTransExplorerNewUI(Sender: TRtcPFileTransfer; const user: String);
 begin
-  FT_UI.UserName := UI.UserName;
-  FT_UI.UserDesc := UI.UserDesc;
+{  FT_UI.UserName := user;
+  FT_UI.UserDesc := user;
   // Always set UI.Module *after* setting UI.UserName !!!
   FT_UI.Module := Sender;
-  FT_UI.Module.AccessControl := False;
+  FT_UI.Module.AccessControl := False;} //Доделать
 end;
 
 

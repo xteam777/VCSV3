@@ -30,7 +30,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
 
-//    procedure CreateParams(Var params: TCreateParams); override;
+    procedure CreateParams(Var params: TCreateParams); override;
 
   private
     { Private declarations }
@@ -49,18 +49,18 @@ implementation
 
 {$R *.dfm}
 
-//procedure TfmBlankOutForm.CreateParams(Var params: TCreateParams);
-//  begin
-//  inherited CreateParams( params );
-//  params.ExStyle := params.ExStyle or
-//                    WS_EX_APPWINDOW or
-//                    WS_EX_TRANSPARENT or
-//                    WS_EX_LAYERED or
-//                    WS_EX_NOPARENTNOTIFY or
-//                    WS_EX_NOINHERITLAYOUT or
-//                    WS_EX_NOACTIVATE;
-//  params.WndParent := GetDesktopWindow;
-//  end;
+procedure TfmBlankOutForm.CreateParams(Var params: TCreateParams);
+  begin
+  inherited CreateParams( params );
+  params.ExStyle := params.ExStyle or
+                    WS_EX_APPWINDOW or
+                    WS_EX_TRANSPARENT or
+                    WS_EX_LAYERED or
+                    WS_EX_NOPARENTNOTIFY or
+                    WS_EX_NOINHERITLAYOUT or
+                    WS_EX_NOACTIVATE;
+  params.WndParent := GetDesktopWindow;
+  end;
 
 procedure TfmBlankoutForm.FormResize(Sender: TObject);
 begin
@@ -70,10 +70,10 @@ end;
 
 procedure TfmBlankoutForm.Timer1Timer(Sender: TObject);
 begin
-//  SetWindowPos(Handle, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE or SWP_NOSIZE or
-//    SWP_NOACTIVATE);
-//  SetWindowPos(Handle, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE or SWP_NOSIZE or
-//    SWP_NOACTIVATE);
+  SetWindowPos(Handle, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE or SWP_NOSIZE or
+    SWP_NOACTIVATE);
+  SetWindowPos(Handle, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE or SWP_NOSIZE or
+    SWP_NOACTIVATE);
 end;
 
 var
@@ -98,7 +98,7 @@ procedure RestoreScreen;
 procedure BlankOutScreen(AllMonitors:boolean);
   var
     hUser32                   : HMODULE;
-//    SetLayeredWindowAttributes: TSetLayeredWindowAttributes;
+    SetLayeredWindowAttributes: TSetLayeredWindowAttributes;
     rect                      : TRect;
     i                         : integer;
     ablnkform                 : TForm;
@@ -107,10 +107,10 @@ procedure BlankOutScreen(AllMonitors:boolean);
   hUser32 := GetModuleHandle('USER32.DLL');
   if hUser32 <> 0 then
     begin
-//    @SetLayeredWindowAttributes := GetProcAddress(hUser32,'SetLayeredWindowAttributes');
-//    // If the import did not succeed, make sure our app can handle it!
-//    if @SetLayeredWindowAttributes <> nil then
-//      begin
+    @SetLayeredWindowAttributes := GetProcAddress(hUser32,'SetLayeredWindowAttributes');
+    // If the import did not succeed, make sure our app can handle it!
+    if @SetLayeredWindowAttributes <> nil then
+      begin
       fBlankoutForms := TList.Create;
       for i := 0 to Screen.MonitorCount - 1 do
         begin
@@ -129,36 +129,36 @@ procedure BlankOutScreen(AllMonitors:boolean);
 
           fBlankoutForms.Add(ablnkform);
           ablnkform.Show;
-//          SetWindowPos(ablnkform.Handle, HWND_TOP, rect.Left, rect.Top,
-//                       ablnkform.Width, ablnkform.Height, 0);
+          SetWindowPos(ablnkform.Handle, HWND_TOP, rect.Left, rect.Top,
+                       ablnkform.Width, ablnkform.Height, 0);
 
           ablnkform.FormStyle:=fsStayOnTop;
           end;
         end;
-//      end;
+      end;
     end;
   end;
 
 procedure TfmBlankoutForm.FormCreate(Sender: TObject);
   begin
-//  SetWindowLong(Handle, GWL_EXSTYLE,
-//                GetWindowLong(Handle, GWL_EXSTYLE) or
-//                WS_EX_LAYERED or
-//                WS_EX_TRANSPARENT or
-//                WS_EX_TOPMOST);
-//  // The SetLayeredWindowAttributes function sets the opacity and
-//  // transparency color key of a layered window
-//  SetLayeredWindowAttributes(Handle, 0,
-//                             Trunc((255 / 100) * (100 - 0)),
-//                             LWA_ALPHA);
-//
-//  SetWindowDisplayAffinity(Handle, WDA_EXCLUDEFROMCAPTURE);
+  SetWindowLong(Handle, GWL_EXSTYLE,
+                GetWindowLong(Handle, GWL_EXSTYLE) or
+                WS_EX_LAYERED or
+                WS_EX_TRANSPARENT or
+                WS_EX_TOPMOST);
+  // The SetLayeredWindowAttributes function sets the opacity and
+  // transparency color key of a layered window
+  SetLayeredWindowAttributes(Handle, 0,
+                             Trunc((255 / 100) * (100 - 0)),
+                             LWA_ALPHA);
+
+  SetWindowDisplayAffinity(Handle, WDA_EXCLUDEFROMCAPTURE);
   end;
 
 procedure TfmBlankoutForm.FormShow(Sender: TObject);
   begin
   FormCreate(nil);
-//  SetWindowPos(Handle, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE or SWP_NOSIZE or SWP_NOACTIVATE);
+  SetWindowPos(Handle, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE or SWP_NOSIZE or SWP_NOACTIVATE);
   end;
 
 initialization

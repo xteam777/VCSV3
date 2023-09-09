@@ -76,7 +76,8 @@ uses
   rmxVideoPacketTypes in '..\..\rmxVideo\API\rmxVideoPacketTypes.pas',
   rmxVideoStorage in '..\..\rmxVideo\API\rmxVideoStorage.pas',
   Compressions in '..\..\rmxVideo\Compressor\Compressions.pas',
-  SendDestroyToGateway in '..\Modules\SendDestroyToGateway.pas';
+  SendDestroyToGateway in '..\Modules\SendDestroyToGateway.pas',
+  uUIDataModule in '..\Modules\uUIDataModule.pas' {UIDataModule: TDataModule};
 
 {$R rtcportaluac.res rtcportaluac.rc}
 {$R *.res}
@@ -122,6 +123,7 @@ begin
   Forms.Application.ShowMainForm := (Pos('/SILENT', UpperCase(CmdLine)) = 0);
   Forms.Application.CreateForm(TMainForm, MainForm);
   Application.CreateForm(TfAcceptEULA, fAcceptEULA);
+  Application.CreateForm(TUIDataModule, UIDataModule);
   Forms.Application.Run;
 //    else
 //    begin
