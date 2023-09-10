@@ -474,13 +474,15 @@ begin
     end
     else
     begin
+      TUIDataModule(UIModulesList[i]).pImage.Visible := False;
       TUIDataModule(UIModulesList[i]).pImage.Align := alNone;
       TUIDataModule(UIModulesList[i]).pImage.Left := -1;
       TUIDataModule(UIModulesList[i]).pImage.Top := -1;
       TUIDataModule(UIModulesList[i]).pImage.Width := 1;
       TUIDataModule(UIModulesList[i]).pImage.Height := 1;
-      TUIDataModule(UIModulesList[i]).pImage.Visible := False;
     end;
+
+  DoResizeImage;
 
 //  if PFileTrans <> nil then
 //    PFileTrans.Free;
@@ -950,7 +952,9 @@ procedure TrdDesktopViewer.DoResizeImage;
 var
   Scale: Real;
 begin
-  if ActiveUIModule^.UI.HaveScreen then
+  if (UIModulesList <> nil)
+    and (ActiveUIModule <> nil)
+    and (ActiveUIModule.UI.HaveScreen) then
   begin
     if iPrepare.Visible then
       SetFormState;
@@ -1516,14 +1520,14 @@ begin
     begin
       LockVideoImage;
       try
-        FVideoImage.Canvas.Draw(0, 0, ActiveUIModule^.UI.Playback.Image);
+        FVideoImage.Canvas.Draw(0, 0, Sender.Playback.Image);
       finally
         UnlockVideoImage
       end;
     end;
 
   //Подгонка размера изображения
-  if fFirstScreen and ActiveUIModule^.UI.HaveScreen then
+  if fFirstScreen and Sender.HaveScreen then
   begin
 //    if myUI.UserDesc <> '' then
 //      Caption := myUI.UserDesc// + ' - Управление' //+ checkControl
@@ -1533,12 +1537,12 @@ begin
 //    sStatus.Visible:=False;
     fFirstScreen := False;
     WindowState := wsNormal;
-    if ActiveUIModule^.UI.ScreenWidth < Screen.Width then
-      ClientWidth := ActiveUIModule^.UI.ScreenWidth
+    if Sender.ScreenWidth < Screen.Width then
+      ClientWidth := Sender.ScreenWidth
     else
       ClientWidth := Screen.Width;
-    if ActiveUIModule^.UI.ScreenHeight < Screen.Height then
-      ClientHeight := ActiveUIModule^.UI.ScreenHeight
+    if Sender.ScreenHeight < Screen.Height then
+      ClientHeight := Sender.ScreenHeight
     else
       Height := Screen.Height;
 //    if myUI.ScreenHeight >= Screen.Height then  //sstuman
