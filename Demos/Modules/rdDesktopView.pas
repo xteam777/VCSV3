@@ -951,8 +951,7 @@ procedure TrdDesktopViewer.DoResizeImage;
 var
   Scale: Real;
 begin
-  if (UIModulesList <> nil)
-    and (ActiveUIModule <> nil)
+  if (ActiveUIModule <> nil)
     and (ActiveUIModule.UI.HaveScreen) then
   begin
     if iPrepare.Visible then
@@ -1445,7 +1444,7 @@ begin
 //  if Assigned(PFileTrans) then
 //    DragAcceptFiles( Handle, True );
 
-    UpdateQuality;
+//    UpdateQuality;
 end;
 
 procedure TrdDesktopViewer.OnProgressDialogCancel(Sender: TObject);
