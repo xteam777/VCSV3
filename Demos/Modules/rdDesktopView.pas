@@ -300,7 +300,8 @@ type
     procedure RemoveProgressDialog(ATaskId: TTaskId);
     procedure RemoveProgressDialogByValue(AProgressDialog: PProgressDialog);
     procedure RemoveProgressDialogByUserName(AUserName: String);
-    procedure AddTab(AUserName, AUserDesc, AUserPass: String; AModule: TRtcPDesktopControl);
+    function AddTab(AUserName, AUserDesc, AUserPass: String; AModule: TRtcPDesktopControl): TUIDataModule;
+    procedure SetActiveTab(AUserName: String);
     function GetUIDataModule(AUserName: String): TUIDataModule;
     function RemoveUIDataModule(AUserName: String): Integer;
     procedure CloseForm;
@@ -330,7 +331,7 @@ implementation
 
 { TrdDesktopViewer }
 
-procedure TrdDesktopViewer.AddTab(AUserName, AUserDesc, AUserPass: String; AModule: TRtcPDesktopControl);
+function TrdDesktopViewer.AddTab(AUserName, AUserDesc, AUserPass: String; AModule: TRtcPDesktopControl): TUIDataModule;
 var
   pTab: TChromeTab;
   pUIItem: TUIDataModule;
@@ -398,6 +399,20 @@ begin
 
   ActiveUIModule := pUIItem;
   MainChromeTabsActiveTabChanged(nil, pTab);
+
+  Result := pUIItem;
+end;
+
+procedure TrdDesktopViewer.SetActiveTab(AUserName: String);
+var
+  i: Integer;
+begin
+  for i := 0 to MainChromeTabs.Tabs.Count - 1 do
+    if MainChromeTabs.Tabs[i].UserName = AUserName then
+    begin
+      MainChromeTabs.ActiveTabIndex := i;
+      Break;
+    end;
 end;
 
 procedure TrdDesktopViewer.MainChromeTabsButtonAddClick(Sender: TObject;
@@ -2176,10 +2191,10 @@ begin
 //      Inc(TabTop, 3);
 
     Polygons.AddPolygon(ChromeTabControl.NewPolygon(ChromeTabControl.BidiControlRect,
-                                                    [Point(10, RectHeight(ItemRect)),
-                                                     Point(10, TabTop),
-                                                     Point(RectWidth(ItemRect) - 10, TabTop),
-                                                     Point(RectWidth(ItemRect) - 10, RectHeight(ItemRect))],
+                                                    [Point(0, RectHeight(ItemRect)),
+                                                     Point(0, TabTop),
+                                                     Point(RectWidth(ItemRect), TabTop),
+                                                     Point(RectWidth(ItemRect), RectHeight(ItemRect))],
                                  Orientation),
                                  nil,
                                  nil);

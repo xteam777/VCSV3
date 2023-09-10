@@ -3,7 +3,7 @@ unit uUIDataModule;
 interface
 
 uses
-  System.SysUtils, System.Classes, Vcl.Controls, rtcpFileTrans, rtcpFileTransUI,
+  Messages, System.SysUtils, System.Classes, Vcl.Controls, rtcpFileTrans, rtcpFileTransUI,
   rtcpDesktopControl, rtcpDesktopControlUI, ChromeTabsClasses, rtcPortalMod,
   Vcl.ExtCtrls, uVircessTypes;
 
@@ -15,14 +15,18 @@ type
     PFileTrans: TRtcPFileTransfer;
     TimerReconnect: TTimer;
     procedure TimerReconnectTimer(Sender: TObject);
+  protected
+    procedure WndProc(var Message: TMessage); virtual;
   private
     { Private declarations }
+    FHandle: THandle;
   public
     { Public declarations }
     pImage: PRtcPDesktopViewer;
     UserName, UserDesc, UserPass: String;
     ReconnectToPartnerStart: TReconnectToPartnerStart;
 
+    property Handle: THandle read FHandle;
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
   end;
@@ -41,10 +45,19 @@ begin
   ReconnectToPartnerStart(UserName, UserDesc, UserPass,  'desk');
 end;
 
+procedure TUIDataModule.WndProc(var Message: TMessage);
+begin
+//  if(Message.Msg = UM_TEST) then
+//  begin
+//    ShowMessage('Test');
+//  end;
+end;
+
 constructor TUIDataModule.Create(AOwner: TComponent);
 begin
   inherited;
 
+  FHandle := AllocateHWND(WndProc);
   New(pImage);
 
   TimerReconnect.Enabled := False;
@@ -52,20 +65,11 @@ end;
 
 destructor TUIDataModule.Destroy;
 begin
+  DeallocateHWND(FHandle);
   FreeAndNil(pImage^);
   Dispose(pImage);
 
   inherited;
-
-//  UI.Viewer := nil;
-//  UI.Module := nil;
-//  FT_UI.Module := nil;
-//  PFileTrans.Client := nil;
-
-//  UI.Free;
-//  FT_UI.Free;
-//  PFileTrans.Free;
-//  pImage.Free;
 end;
 
 end.

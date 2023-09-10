@@ -4082,7 +4082,7 @@ object rdDesktopViewer: TrdDesktopViewer
     Options.Display.AddButton.Width = 31
     Options.Display.AddButton.ShowPlusSign = False
     Options.Display.AddButton.Visibility = avRightFloating
-    Options.Display.AddButton.HorizontalOffsetFloating = -3
+    Options.Display.AddButton.HorizontalOffsetFloating = 4
     Options.Display.ScrollButtonLeft.Offsets.Vertical = 10
     Options.Display.ScrollButtonLeft.Offsets.Horizontal = 1
     Options.Display.ScrollButtonLeft.Height = 15
@@ -4099,11 +4099,11 @@ object rdDesktopViewer: TrdDesktopViewer
     Options.Display.TabModifiedGlow.EaseType = ttEaseInOutQuad
     Options.Display.TabModifiedGlow.AnimationUpdateMS = 50
     Options.Display.Tabs.SeeThroughTabs = False
-    Options.Display.Tabs.TabOverlap = 15
+    Options.Display.Tabs.TabOverlap = 0
     Options.Display.Tabs.ContentOffsetLeft = 18
     Options.Display.Tabs.ContentOffsetRight = 16
     Options.Display.Tabs.OffsetLeft = 0
-    Options.Display.Tabs.OffsetTop = 2
+    Options.Display.Tabs.OffsetTop = 0
     Options.Display.Tabs.OffsetRight = 0
     Options.Display.Tabs.OffsetBottom = 0
     Options.Display.Tabs.MinWidth = 25

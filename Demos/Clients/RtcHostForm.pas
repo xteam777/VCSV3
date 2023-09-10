@@ -16,7 +16,7 @@ uses
   Dialogs, StdCtrls, ExtCtrls, ShellApi, rdFileTransLog, VirtualTrees.Types, SHDocVw, rtcpFileTransUI, Psapi, Winapi.SHFolder,
   ComCtrls, Registry, Math, RtcIdentification, SyncObjs, System.Net.HTTPClient, System.Net.URLClient, ActiveX, ComObj, CommCtrl,
   rtcSystem, rtcInfo, uMessageBox, rtcScrUtils, IOUtils, uAcceptEula, ProgressDialog, ShlObj, RecvDataObject, SendDestroyToGateway,
-  ChromeTabsTypes, ChromeTabsClasses, ChromeTabsControls,
+  ChromeTabsTypes, ChromeTabsClasses, ChromeTabsControls, uUIDataModule,
 
 {$IFDEF IDE_XE3up}
   UITypes,
@@ -111,8 +111,8 @@ type
     UserPass: String;
     ID: String;
     Action: String;
-    UIHandle: THandle;
-    UIForm: TForm;
+    DMHandle: THandle;
+    DataModule: TUIDataModule;
     StartLockedState: Integer;
     StartServiceStarted: Boolean;
   end;
@@ -994,7 +994,7 @@ begin
   if pPc <> nil then
   begin
     if GetCurrentExplorerDirectory(CurExplorerDir, CurExplorerHandle) then
-      SendMessage(pPc^.UIHandle, WM_GET_FILES_FROM_CLIPBOARD, WPARAM(CurExplorerHandle), LPARAM(CurExplorerDir));
+      SendMessage(pPc^.DMHandle, WM_GET_FILES_FROM_CLIPBOARD, WPARAM(CurExplorerHandle), LPARAM(CurExplorerDir));
   end
   else
   if tPHostThread.FFileTransfer.isSubscriber(AUserName) then  //Если мы хост, то с контроля-овнера-клибоарда тянем файлы
@@ -2724,7 +2724,7 @@ begin
     pPC^.UserPass := AUserPass;
     pPC^.ID := AUserToConnect;
     pPC^.ThisThread := AThread;
-    pPC^.UIHandle := 0;
+    pPC^.DMHandle := 0;
     PortalConnectionsList.Add(pPC);
   finally
     CS_GW.Release;
@@ -2834,7 +2834,7 @@ begin
 //        end;
         PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, 0, 0); //Закрываем поток с пклиентом
         if ACloseFUI then
-          PostMessage(PPortalConnection(PortalConnectionsList[i])^.UIHandle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
+          PostMessage(PPortalConnection(PortalConnectionsList[i])^.DMHandle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
 
 //        Dispose(PPortalConnection(PortalConnectionsList[i])^.UIForm);
         Dispose(PortalConnectionsList[i]);
@@ -2874,7 +2874,7 @@ begin
 //        end;
         PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, 0, 0); //Закрываем поток с пклиентом
         if ACloseFUI then
-          PostMessage(PPortalConnection(PortalConnectionsList[i])^.UIHandle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
+          PostMessage(PPortalConnection(PortalConnectionsList[i])^.DMHandle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
 
 //        Dispose(PPortalConnection(PortalConnectionsList[i])^.UIForm);
         Dispose(PortalConnectionsList[i]);
@@ -2913,7 +2913,7 @@ begin
 //        end;
         PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, 0, 0); //Закрываем поток с пклиентом
         if ACloseFUI then
-          PostMessage(PPortalConnection(PortalConnectionsList[i])^.UIHandle, WM_CLOSE, 0, 0); //Закрываем форму UI
+          PostMessage(PPortalConnection(PortalConnectionsList[i])^.DMHandle, WM_CLOSE, 0, 0); //Закрываем форму UI
 
 //        Dispose(PPortalConnection(PortalConnectionsList[i])^.UIForm);
         Dispose(PortalConnectionsList[i]);
@@ -4406,7 +4406,7 @@ begin
     begin
       pPC := PPortalConnection(PortalConnectionsList[i]);
       if pPC^.ID = uname then
-        PostMessage(pPC^.UIHandle, WM_CHANGE_LOCKED_STATUS, aLockedStatus, Byte(aServiceStarted));
+        PostMessage(pPC^.DMHandle, WM_CHANGE_LOCKED_STATUS, aLockedStatus, Byte(aServiceStarted));
     end;
   finally
     CS_GW.Release;
@@ -7675,7 +7675,8 @@ begin
   begin
 //    BringWindowToTop(ActiveUIRec^.Handle);
 //    SetForegroundWindow(ActiveUIRec^.Handle);
-    ForceForegroundWindow(PortalConnection^.UIHandle);
+    ForceForegroundWindow(DesktopsForm.Handle);
+    DesktopsForm.SetActiveTab(user);
 //    SetStatusString('Готов к подключению');
     Exit;
   end;
@@ -9365,8 +9366,7 @@ begin
     pPCItem := GetPortalConnection('file', user);
     if pPCItem <> nil then
     begin
-      pPCItem^.UIHandle := FWin.Handle;
-      pPCItem^.UIForm := @FWin;
+      pPCItem^.DMHandle := FWin.Handle;
       FWin.PartnerLockedState := pPCItem^.StartLockedState;
       FWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
       FWin.SetFormState;
@@ -9433,8 +9433,7 @@ begin
     pPCItem := GetPortalConnectionByThreadId(Sender.Tag);
     if pPCItem <> nil then
     begin
-      pPCItem^.UIHandle := FWin.Handle;
-      pPCItem^.UIForm := @FWin;
+      pPCItem^.DMHandle := FWin.Handle;
       FWin.PartnerLockedState := pPCItem^.StartLockedState;
       FWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
       FWin.SetFormState;
@@ -9502,8 +9501,7 @@ begin
     pPCItem := GetPortalConnectionByThreadId(Sender.Tag);
     if pPCItem <> nil then
     begin
-      pPCItem^.UIHandle := FWin.Handle;
-      pPCItem^.UIForm := @FWin;
+      pPCItem^.DMHandle := FWin.Handle;
 //      FWin.PartnerLockedState := pPCItem^.StartLockedState;
 //      FWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
 //      FWin.SetFormState;
@@ -9576,7 +9574,7 @@ begin
     pPCItem := GetPortalConnectionByThreadId(Sender.Tag);
     if pPCItem <> nil then
     begin
-      pPCItem^.UIHandle := CWin.Handle;
+      pPCItem^.DMHandle := CWin.Handle;
       CWin.PartnerLockedState := pPCItem^.StartLockedState;
       CWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
       CWin.SetFormState;
@@ -9679,7 +9677,6 @@ begin
 //    DesktopsForm.FT_UI.Free;
   end;
 
-  DesktopsForm.AddTab(pPCItem^.UserName, GetUserDescription(user, 'desk'), pPCItem^.UserPass, Sender);
 //  pTab := DesktopsForm.MainChromeTabs.Tabs.Add;
 //  pTab.UserName := pPCItem^.UserName;  //К которому изначально подключались (не UserToConnect, на которого перенаправило)
 //  pTab.UserDesc := GetUserDescription(user, 'desk');
@@ -9757,8 +9754,8 @@ begin
     pPCItem := GetPortalConnectionByThreadId(Sender.Tag);
     if pPCItem <> nil then
     begin
-      pPCItem.UIHandle := DesktopsForm.Handle;
-      pPCItem.UIForm := TForm(DesktopsForm);
+      pPCItem^.DMHandle := DesktopsForm.Handle;
+      pPCItem^.DataModule := DesktopsForm.AddTab(pPCItem^.UserName, GetUserDescription(user, 'desk'), pPCItem^.UserPass, Sender);
       DesktopsForm.PartnerLockedState := pPCItem^.StartLockedState;
       DesktopsForm.PartnerServiceStarted := pPCItem^.StartServiceStarted;
       DesktopsForm.ReconnectToPartnerStart := ReconnectToPartnerStart;
@@ -9952,7 +9949,7 @@ begin
     i := PortalConnectionsList.Count - 1;
     while i >= 0 do
     begin
-      PostMessage(PPortalConnection(PortalConnectionsList[i])^.UIHandle, WM_CLOSE, 0, 0);
+      PostMessage(PPortalConnection(PortalConnectionsList[i])^.DMHandle, WM_CLOSE, 0, 0);
       Dispose(PortalConnectionsList[i]);
       PortalConnectionsList.Delete(i);
 
