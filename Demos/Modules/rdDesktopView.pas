@@ -244,14 +244,12 @@ type
     FLastActiveExplorerHandle: THandle;
     procedure OnProgressDialogCancel(Sender: TObject);
 
-    procedure SetCaption;
+//    procedure SetCaption;
 
     procedure CreateParams(var params: TCreateParams); override;
 
-    {$IFNDEF RtcViewer}
     // declare our DROPFILES message handler
-    procedure AcceptFiles(var msg: TMessage); message WM_DROPFILES;
-    {$ENDIF}
+//    procedure AcceptFiles(var msg: TMessage); message WM_DROPFILES;
     procedure DoResizeImage;
     procedure UpdateQuality;
 
@@ -418,7 +416,7 @@ begin
   pUIItem := GetUIDataModule(ATab.UserName);
 
   if Assigned(FOnUIClose) then
-    FOnUIClose('desk', ATab.UserName); //ThreadID  //Доделать
+    FOnUIClose('desk', ATab.UserName); //ThreadID
 
   RemoveUIDataModule(ATab.UserName);
   if UIModulesList.Count = 0 then
@@ -722,13 +720,13 @@ procedure TrdDesktopViewer.aBlockKeyboardMouseExecute(Sender: TObject);
 begin
   aBlockKeyboardMouse.Checked := not aBlockKeyboardMouse.Checked;
 
-//  if aBlockKeyboardMouse.Checked then //Доделать
-//    UI.Send_BlockKeyboardAndMouse
-//  else
-//    UI.Send_UnBlockKeyboardAndMouse;
+  if aBlockKeyboardMouse.Checked then
+    ActiveUIModule^.UI.Send_BlockKeyboardAndMouse
+  else
+    ActiveUIModule^.UI.Send_UnBlockKeyboardAndMouse;
 end;
 
-procedure TrdDesktopViewer.AcceptFiles( var msg : TMessage );
+{procedure TrdDesktopViewer.AcceptFiles( var msg : TMessage );
 const
   cnMaxFileNameLen = 1024;
 var
@@ -737,7 +735,7 @@ var
   acFileName : array [0..cnMaxFileNameLen] of char;
   myFileName : string;
 begin
-{  // find out how many files we're accepting
+  // find out how many files we're accepting
   nCount := DragQueryFile( msg.WParam,
                            $FFFFFFFF,
                            acFileName,
@@ -758,16 +756,16 @@ begin
   finally
     // let Windows know that you're done
     DragFinish( msg.WParam );
-    end;} //Доделать
-end;
+    end;
+end;}
 
 procedure TrdDesktopViewer.aScreenshotToCbrdExecute(Sender: TObject);
 var
   Bitmap: TBitmap;
 begin
-{  Bitmap := TBitmap.Create;
-  Bitmap.SetSize(myUI.ScreenWidth, myUI.ScreenHeight);
-  myUI.DrawScreen(Bitmap.Canvas, Bitmap.Width, Bitmap.Height);
+  Bitmap := TBitmap.Create;
+  Bitmap.SetSize(ActiveUIModule^.UI.ScreenWidth, ActiveUIModule^.UI.ScreenHeight);
+  ActiveUIModule^.UI.DrawScreen(Bitmap.Canvas, Bitmap.Width, Bitmap.Height);
 
 //  Bitmap.Width := myUI.GetScreen.Image.Width;
 //  Bitmap.Height := myUI.GetScreen.Image.Height;
@@ -781,7 +779,7 @@ begin
     on E: Exception do
       xLog('aScreenshotToCbrdExecute. Error: ' + E.ClassName + '. ' + E.Message);
   end;
-  Bitmap.Free;} //Доделать
+  Bitmap.Free;
 end;
 
 procedure TrdDesktopViewer.aScreenshotToFileExecute(Sender: TObject);
@@ -789,7 +787,7 @@ var
   Bitmap: TBitmap;
   saveDialog : TSaveDialog;
 begin
-{  saveDialog := TSaveDialog.Create(nil);
+  saveDialog := TSaveDialog.Create(nil);
   saveDialog.Title := 'Выберите место для сохранения';
   saveDialog.InitialDir := GetCurrentDir;
   saveDialog.Filter := 'Bitmap file|*.bmp';
@@ -810,8 +808,8 @@ begin
 
     Bitmap := TBitmap.Create;
 
-    Bitmap.SetSize(myUI.ScreenWidth, myUI.ScreenHeight);
-    myUI.DrawScreen(Bitmap.Canvas, Bitmap.Width, Bitmap.Height);
+    Bitmap.SetSize(ActiveUIModule^.UI.ScreenWidth, ActiveUIModule^.UI.ScreenHeight);
+    ActiveUIModule^.UI.DrawScreen(Bitmap.Canvas, Bitmap.Width, Bitmap.Height);
 
 //    Bitmap.Width := myUI.GetScreen.Image.Width;
 //    Bitmap.Height := myUI.GetScreen.Image.Height;
@@ -825,14 +823,14 @@ begin
     end;
     Bitmap.Free;
   end;
-  saveDialog.Free;} //Доделать
+  saveDialog.Free;
 end;
 
 procedure TrdDesktopViewer.aSendShortcutsExecute(Sender: TObject);
 begin
-//  aSendShortcuts.Checked := not aSendShortcuts.Checked;
-//  UI.Module.SendShortcuts := aSendShortcuts.Checked;
-//  SetShortcuts_Hook(aSendShortcuts.Checked); //Доделать
+  aSendShortcuts.Checked := not aSendShortcuts.Checked;
+  ActiveUIModule^.UI.Module.SendShortcuts := aSendShortcuts.Checked;
+  SetShortcuts_Hook(aSendShortcuts.Checked);
 end;
 
 procedure TrdDesktopViewer.aShowRemoteCursorExecute(Sender: TObject);
@@ -850,33 +848,33 @@ procedure TrdDesktopViewer.InitScreen;
   Scroll.VertScrollBar.Position:=0;
   Scroll.HorzScrollBar.Position:=0;
 
-{  pImage.Left:=0;
-  pImage.Top:=0;
+  ActiveUIModule^.pImage^.Left:=0;
+  ActiveUIModule^.pImage^.Top:=0;
   WindowState:=wsNormal;
   BorderStyle:=bsSizeable;
 
-  if myUI.HaveScreen then
+  if ActiveUIModule^.UI.HaveScreen then
     begin
-    if myUI.ScreenWidth<Screen.Width then
-      ClientWidth:=myUI.ScreenWidth
+    if ActiveUIModule^.UI.ScreenWidth < Screen.Width then
+      ClientWidth := ActiveUIModule^.UI.ScreenWidth
     else
       Width:=Screen.Width;
-    if myUI.ScreenHeight<Screen.Height then
-      ClientHeight:=myUI.ScreenHeight
+    if ActiveUIModule^.UI.ScreenHeight < Screen.Height then
+      ClientHeight := ActiveUIModule^.UI.ScreenHeight
     else
-      Height:=Screen.Height;
-    if myUI.ScreenHeight>=Screen.Height then
-      begin
-      Left:=0;
-      Top:=0;
-      WindowState:=wsMaximized;
-      end
+      Height := Screen.Height;
+    if ActiveUIModule^.UI.ScreenHeight >= Screen.Height then
+    begin
+      Left := 0;
+      Top := 0;
+      WindowState := wsMaximized;
+    end
     else
-      begin
-      Left:=(Screen.Width-Width) div 2;
-      Top:=(Screen.Height-Height) div 2;
-      end;
+    begin
+      Left := (Screen.Width - Width) div 2;
+      Top := (Screen.Height - Height) div 2;
     end;
+  end;
 
 //  if (pImage.Align<>alClient) and myUI.HaveScreen then
 //    begin
@@ -890,8 +888,8 @@ procedure TrdDesktopViewer.InitScreen;
   BringToFront;
 
   // tell Windows that you're accepting drag and drop files
-  if assigned(PFileTrans) then
-    DragAcceptFiles( Handle, True );} //Доделать
+//  if assigned(PFileTrans) then
+//    DragAcceptFiles( Handle, True );
   end;
 
 procedure TrdDesktopViewer.lCloseClick(Sender: TObject);
@@ -916,30 +914,30 @@ procedure TrdDesktopViewer.FullScreen;
   Width:=Screen.Width;
   Height:=Screen.Height;
 
-{  if (pImage.Align=alNone)
-    and myUI.HaveScreen
+  if (ActiveUIModule^.pImage^.Align=alNone)
+    and ActiveUIModule^.UI.HaveScreen
     and aStretchScreen.Checked then
   begin
-    pImage.Width:=myUI.ScreenWidth;
-    pImage.Height:=myUI.ScreenHeight;
+    ActiveUIModule^.pImage^.Width := ActiveUIModule^.UI.ScreenWidth;
+    ActiveUIModule^.pImage^.Height := ActiveUIModule^.UI.ScreenHeight;
     Scroll.HorzScrollBar.Visible:=True;
     Scroll.VertScrollBar.Visible:=True;
-    if pImage.Width<Screen.Width then
-      pImage.Left:=(Screen.Width-pImage.Width) div 2
+    if ActiveUIModule^.pImage^.Width < Screen.Width then
+      ActiveUIModule^.pImage^.Left := (Screen.Width - ActiveUIModule^.pImage^.Width) div 2
     else
-      pImage.Left:=0;
-    if pImage.Height<Screen.Height then
-      pImage.Top:=(Screen.Height-pImage.Height) div 2
+      ActiveUIModule^.pImage^.Left := 0;
+    if ActiveUIModule^.pImage^.Height < Screen.Height then
+      ActiveUIModule^.pImage^.Top := (Screen.Height - ActiveUIModule^.pImage^.Height) div 2
     else
-      pImage.Top:=0;
+      ActiveUIModule^.pImage^.Top := 0;
   end;
 
   BringToFront;
 
-  //tell Windows that you're accepting drag and drop files
-  DragAcceptFiles( Handle, True );} //Доделать
+//  //tell Windows that you're accepting drag and drop files
+//  DragAcceptFiles( Handle, True );
 
-  end;
+end;
 
 procedure TrdDesktopViewer.aStretchScreenExecute(Sender: TObject);
 begin
@@ -952,14 +950,14 @@ procedure TrdDesktopViewer.DoResizeImage;
 var
   Scale: Real;
 begin
-{  if myUI.HaveScreen then
+  if ActiveUIModule^.UI.HaveScreen then
   begin
     if iPrepare.Visible then
       SetFormState;
 
     if aStretchScreen.Checked then
     begin
-      pImage.Align := alClient;
+      ActiveUIModule^.pImage^.Align := alClient;
 //      pImage.Width := myUI.ScreenWidth;
 //      pImage.Height := myUI.ScreenHeight;
       Scroll.HorzScrollBar.Visible := False;
@@ -975,43 +973,43 @@ begin
     end
     else
     begin
-      pImage.Align := alNone;
+      ActiveUIModule^.pImage^.Align := alNone;
 
-      if (myUI.ScreenWidth <= ClientWidth)
-        and (myUI.ScreenHeight <= ClientHeight) then
+      if (ActiveUIModule^.UI.ScreenWidth <= ClientWidth)
+        and (ActiveUIModule^.UI.ScreenHeight <= ClientHeight) then
       begin
-        pImage.Width := myUI.ScreenWidth;
-        pImage.Height := myUI.ScreenHeight;
-        pImage.Left := (ClientWidth - myUI.ScreenWidth) div 2;
-        pImage.Top := (ClientHeight - myUI.ScreenHeight) div 2;
+        ActiveUIModule^.pImage^.Width := ActiveUIModule^.UI.ScreenWidth;
+        ActiveUIModule^.pImage^.Height := ActiveUIModule^.UI.ScreenHeight;
+        ActiveUIModule^.pImage^.Left := (ClientWidth - ActiveUIModule^.UI.ScreenWidth) div 2;
+        ActiveUIModule^.pImage^.Top := (ClientHeight - ActiveUIModule^.UI.ScreenHeight) div 2;
       end
       else
       begin
-        if (myUI.ScreenWidth > ClientWidth)
-          or (myUI.ScreenHeight > ClientHeight) then
+        if (ActiveUIModule^.UI.ScreenWidth > ClientWidth)
+          or (ActiveUIModule^.UI.ScreenHeight > ClientHeight) then
         begin
-          if ClientWidth / myUI.ScreenWidth < ClientHeight / myUI.ScreenHeight then
-            Scale := ClientWidth / myUI.ScreenWidth
+          if ClientWidth / ActiveUIModule^.UI.ScreenWidth < ClientHeight / ActiveUIModule^.UI.ScreenHeight then
+            Scale := ClientWidth / ActiveUIModule^.UI.ScreenWidth
           else
-            Scale := ClientHeight / myUI.ScreenHeight;
+            Scale := ClientHeight / ActiveUIModule^.UI.ScreenHeight;
         end
         else
         begin
-          if ClientWidth / myUI.ScreenWidth > ClientHeight / myUI.ScreenHeight then
-            Scale := ClientWidth / myUI.ScreenWidth
+          if ClientWidth / ActiveUIModule^.UI.ScreenWidth > ClientHeight / ActiveUIModule^.UI.ScreenHeight then
+            Scale := ClientWidth / ActiveUIModule^.UI.ScreenWidth
           else
-            Scale := ClientHeight / myUI.ScreenHeight;
+            Scale := ClientHeight / ActiveUIModule^.UI.ScreenHeight;
         end;
-        pImage.Width := Floor(ClientWidth * Scale);
-        pImage.Height := Floor(ClientHeight * Scale);
-        pImage.Left := (ClientWidth - pImage.Width) div 2;
-        pImage.Top := (ClientHeight - pImage.Height) div 2;
+        ActiveUIModule^.pImage^.Width := Floor(ClientWidth * Scale);
+        ActiveUIModule^.pImage^.Height := Floor(ClientHeight * Scale);
+        ActiveUIModule^.pImage^.Left := (ClientWidth - ActiveUIModule^.pImage^.Width) div 2;
+        ActiveUIModule^.pImage^.Top := (ClientHeight - ActiveUIModule^.pImage^.Height) div 2;
       end;
 
       Scroll.HorzScrollBar.Visible := False;
       Scroll.VertScrollBar.Visible := False;
     end;
-  end;} //Доделать
+  end;
 end;
 
 procedure TrdDesktopViewer.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -1024,29 +1022,29 @@ begin
 
   RecordCancel;
 
-  //FT_UI.CloseAndClear(); //Доделать
+  ActiveUIModule^.FT_UI.CloseAndClear();
 end;
 
 procedure TrdDesktopViewer.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
 //  Hide;
 
-{  if aHideWallpaper.Checked then
+  if aHideWallpaper.Checked then
   try
-    if UI.Active then
-      UI.Send_ShowDesktop;
+    if ActiveUIModule^.UI.Active then
+      ActiveUIModule^.UI.Send_ShowDesktop;
   except
   end;
 
   if aLockSystemOnClose.Checked then
   try
-    if UI.Active then
-      UI.Send_LockSystem;
+    if ActiveUIModule^.UI.Active then
+      ActiveUIModule^.UI.Send_LockSystem;
   except
   end;
 
   DesktopTimer.Enabled := False;
-  CanClose := myUI.CloseAndClear;} //Доделать
+  CanClose := ActiveUIModule^.UI.CloseAndClear;
 end;
 
 procedure TrdDesktopViewer.FormCreate(Sender: TObject);
@@ -1121,7 +1119,7 @@ end;
 
 procedure TrdDesktopViewer.FormMouseWheel(Sender: TObject; Shift: TShiftState; WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
 begin
-//  myUI.SendMouseWheel(WheelDelta, Shift); //Доделать
+  ActiveUIModule^.UI.SendMouseWheel(WheelDelta, Shift);
   Handled := True;
 end;
 
@@ -1152,12 +1150,12 @@ end;
 
 procedure TrdDesktopViewer.FT_UIClose(Sender: TRtcPFileTransferUI);
 begin
-//  RemoveProgressDialogByUserName(UI.UserName); //Доделать
+  RemoveProgressDialogByUserName(Sender.UserName);
 end;
 
 procedure TrdDesktopViewer.FT_UILogOut(Sender: TRtcPFileTransferUI);
 begin
-//  RemoveProgressDialogByUserName(FT_UI.UserName); //Доделать
+  RemoveProgressDialogByUserName(Sender.UserName);
 end;
 
 procedure TrdDesktopViewer.FT_UINotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);
@@ -1279,33 +1277,33 @@ end;}
 
 procedure TrdDesktopViewer.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
-{  case Key of
+  case Key of
     VK_LWIN: LWinDown:=True;
     VK_RWIN: RWinDown:=True;
     end;
 
   if LWinDown or RWinDown then
     begin
-    if Key=Ord('W') then
-      begin
-      pImage.Align:=alNone;
-      if BorderStyle<>bsNone then
+    if Key = Ord('W') then
+    begin
+      ActiveUIModule^.pImage^.Align := alNone;
+      if BorderStyle <> bsNone then
         FullScreen
       else
         InitScreen;
-      Key:=0;
+      Key := 0;
       Exit;
-      end
-    else if Key=Ord('S') then
-      begin
+    end
+    else if Key = Ord('S') then
+    begin
       if aStretchScreen.Checked then
-        pImage.Align := alClient
+        ActiveUIModule^.pImage^.Align := alClient
       else
-        pImage.Align := alNone;
-      if (myUI.ScreenWidth>=Screen.Width) or
-         (myUI.ScreenHeight>=Screen.Height) then
-        begin
-        if BorderStyle<>bsNone then
+        ActiveUIModule^.pImage.Align := alNone;
+      if (ActiveUIModule^.UI.ScreenWidth >= Screen.Width) or
+         (ActiveUIModule^.UI.ScreenHeight >= Screen.Height) then
+      begin
+        if BorderStyle <> bsNone then
           FullScreen
         else
           InitScreen;
@@ -1313,36 +1311,36 @@ begin
       else
         InitScreen;
       Exit;
-      end;
     end;
-  if myUI.ControlMode<>rtcpNoControl then
-    myUI.SendKeyDown(Key,Shift);
-  Key:=0;} //Доделать
+  end;
+  if ActiveUIModule^.UI.ControlMode <> rtcpNoControl then
+    ActiveUIModule^.UI.SendKeyDown(Key, Shift);
+  Key := 0;
 end;
 
 procedure TrdDesktopViewer.FormKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
 var
   temp:Word;
 begin
-{  if (LWinDown or RWinDown) and (Key in [Ord('S'),Ord('W')]) then
+  if (LWinDown or RWinDown) and (Key in [Ord('S'), Ord('W')]) then
     Exit;
 
   case Key of
-    VK_LWIN: LWinDown:=False;
-    VK_RWIN: RWinDown:=False;
+    VK_LWIN: LWinDown := False;
+    VK_RWIN: RWinDown := False;
     end;
 
-  if myUI.ControlMode<>rtcpNoControl then
-    begin
-    temp:=Key; // a work-around for Internal Error in Delphi 7 compiler
-    myUI.SendKeyUp(temp,Shift);
-    end;
-  Key:=0;} //Доделать
+  if ActiveUIModule^.UI.ControlMode <> rtcpNoControl then
+  begin
+    temp := Key; // a work-around for Internal Error in Delphi 7 compiler
+    ActiveUIModule^.UI.SendKeyUp(temp, Shift);
+  end;
+  Key := 0;
 end;
 
 procedure TrdDesktopViewer.FormDeactivate(Sender: TObject);
 begin
-//  myUI.Deactivated; //Доделать
+  ActiveUIModule^.UI.Deactivated;
   LWinDown := False;
   RWinDown := False;
   LMouseDown := False;
@@ -1373,36 +1371,38 @@ begin
     FreeAndNil(TUIDataModule(UIModulesList[i]));
   end;
   FreeAndNil(UIModulesList);
+
+  SendMessage(MainFormHandle, WM_UIFORMCLOSED, 0, 0);
 end;
 
-procedure TrdDesktopViewer.SetCaption;
+{procedure TrdDesktopViewer.SetCaption;
 begin
-//  if myUI.UserDesc <> '' then
-//    Caption := myUI.UserDesc// + ' - Управление' // + checkControl
-//  else
-//    Caption := RemoveUserPrefix(myUI.UserName); //Доделать
-end;
+  if myUI.UserDesc <> '' then
+    Caption := myUI.UserDesc// + ' - Управление' // + checkControl
+  else
+    Caption := RemoveUserPrefix(myUI.UserName);
+end;}
 
 procedure TrdDesktopViewer.myUIOpen(Sender: TRtcPDesktopControlUI);
-var
-  fIsPending: Boolean;
+//var
+//  fIsPending: Boolean;
 begin
 //  Memo1.Lines.Add('myUIOpen');
-  if Assigned(FOnUIOpen) then
-    FOnUIOpen(Sender.UserName, 'desk', fIsPending);
+//  if Assigned(FOnUIOpen) then
+//    FOnUIOpen(Sender.UserName, 'desk', fIsPending);
 
-  if not fIsPending then //Если подключение отменено закрываем
-  begin
-    Close;
-    Exit;
-  end
-  else
-  begin
-    Show;
-    BringToFront;
-    //BringWindowToTop(Handle);
-    SetForegroundWindow(Handle);
-  end;
+//  if not fIsPending then //Если подключение отменено закрываем
+//  begin
+//    Close;
+//    Exit;
+//  end
+//  else
+//  begin
+//    Show;
+//    BringToFront;
+//    //BringWindowToTop(Handle);
+//    SetForegroundWindow(Handle);
+//  end;
 
   //pImage.Align := alClient; //Доделать
 
@@ -1421,17 +1421,17 @@ begin
 //    else
 //      Caption := myUI.UserName;
 //  end;
-  SetCaption;
+//  SetCaption;
 //  sStatus.Font.Color:=clWhite;
 //  sStatus.Caption := 'Подготовка рабочего стола. Пожалуйста подождите ...';
 //  sStatus.Visible := True;
 
-  WindowState:=wsNormal;
-  BorderStyle:=bsSizeable;
+  WindowState := wsNormal;
+  BorderStyle := bsSizeable;
 //  Width := 400;
 //  Height := 90;
-  Scroll.HorzScrollBar.Position:=0;
-  Scroll.VertScrollBar.Position:=0;
+  Scroll.HorzScrollBar.Position := 0;
+  Scroll.VertScrollBar.Position := 0;
 
 //  BringToFront;
 //  BringWindowToTop(Handle);
@@ -1440,23 +1440,21 @@ begin
 //  UI.Send_HideDesktop(Sender);
 //  aOptimalScale.Checked := UI.SmoothScale;
 
-  {$IFNDEF RtcViewer}
-  { tell Windows that you're accepting drag and drop files }
-  if Assigned(PFileTrans) then
-    DragAcceptFiles( Handle, True );
-  {$ENDIF}
+  //tell Windows that you're accepting drag and drop files
+//  if Assigned(PFileTrans) then
+//    DragAcceptFiles( Handle, True );
 end;
 
 procedure TrdDesktopViewer.OnProgressDialogCancel(Sender: TObject);
 var
   pPDData: PProgressDialogData;
 begin
-{  pPDData := GetProgressDialogData(PProgressDialog(@Sender));
+  pPDData := GetProgressDialogData(PProgressDialog(@Sender));
   if pPDData <> nil then
-    FT_UI.Module.CancelBatch(FT_UI.Module, pPDData^.taskId);
+    ActiveUIModule^.FT_UI.Module.CancelBatch(ActiveUIModule^.FT_UI.Module, pPDData^.taskId);
 
   TProgressDialog(Sender).Stop;
-  RemoveProgressDialogByValue(@Sender);} // Доделать
+  RemoveProgressDialogByValue(@Sender);
 end;
 
 procedure TrdDesktopViewer.myUIClose(Sender: TRtcPDesktopControlUI);
@@ -1504,45 +1502,43 @@ begin
 //  Scroll.VertScrollBar.Position := 0;
 ////  MessageBeep(0);
 
-  {$IFNDEF RtcViewer}
-  { tell Windows that you're accepting drag and drop files }
-  DragAcceptFiles(Handle, False);
-  {$ENDIF}
+  //tell Windows that you're accepting drag and drop files
+//  DragAcceptFiles(Handle, False);
 
 //  myUI.Active := True;
-  Close;
+//  Close; //Доделать
 end;
 
 procedure TrdDesktopViewer.myUIData(Sender: TRtcPDesktopControlUI);
 begin
-{  FImageChanged := true;
+  FImageChanged := true;
   if Assigned(FVideoRecorder) then
     begin
       LockVideoImage;
       try
-        FVideoImage.Canvas.Draw(0, 0, UI.Playback.Image);
+        FVideoImage.Canvas.Draw(0, 0, ActiveUIModule^.UI.Playback.Image);
       finally
         UnlockVideoImage
       end;
     end;
 
   //Подгонка размера изображения
-  if fFirstScreen and UI.HaveScreen then
+  if fFirstScreen and ActiveUIModule^.UI.HaveScreen then
   begin
 //    if myUI.UserDesc <> '' then
 //      Caption := myUI.UserDesc// + ' - Управление' //+ checkControl
 //    else
 //      Caption := myUI.UserName;// + ' - Управление'; // + checkControl;
-    SetCaption;
+//    SetCaption;
 //    sStatus.Visible:=False;
     fFirstScreen := False;
     WindowState := wsNormal;
-    if myUI.ScreenWidth < Screen.Width then
-      ClientWidth := myUI.ScreenWidth
+    if ActiveUIModule^.UI.ScreenWidth < Screen.Width then
+      ClientWidth := ActiveUIModule^.UI.ScreenWidth
     else
       ClientWidth := Screen.Width;
-    if myUI.ScreenHeight < Screen.Height then
-      ClientHeight := myUI.ScreenHeight
+    if ActiveUIModule^.UI.ScreenHeight < Screen.Height then
+      ClientHeight := ActiveUIModule^.UI.ScreenHeight
     else
       Height := Screen.Height;
 //    if myUI.ScreenHeight >= Screen.Height then  //sstuman
@@ -1558,10 +1554,10 @@ begin
 //      Top := (Screen.Height - Height) div 2;
 //    end;
     //tell Windows that you're accepting drag and drop files
-    if Assigned(PFileTrans) then
-      DragAcceptFiles(Handle, True);
+//    if Assigned(PFileTrans) then
+//      DragAcceptFiles(Handle, True);
     DesktopTimer.Enabled := True;
-  end;} //Доделать
+  end;
 end;
 
 procedure TrdDesktopViewer.ScrollMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
@@ -1692,72 +1688,72 @@ end;
 
 procedure TrdDesktopViewer.aChatExecute(Sender: TObject);
 begin
-//  PChat.Open(UI.UserName, Sender); //Доделать
+  PChat.Open(ActiveUIModule^.UI.UserName, Sender);
 end;
 
 procedure TrdDesktopViewer.aCtrlAltDelExecute(Sender: TObject);
 begin
-//  UI.Send_CtrlAltDel; } //Доделать
+  ActiveUIModule^.UI.Send_CtrlAltDel;
 end;
 
 procedure TrdDesktopViewer.aFileTransferExecute(Sender: TObject);
 begin
-//  if Assigned(FDoStartFileTransferring) then
-//    FDoStartFileTransferring(UI.UserName, UI.UserDesc, '', True); //Доделать
+  if Assigned(FDoStartFileTransferring) then
+    FDoStartFileTransferring(ActiveUIModule^.UI.UserName, ActiveUIModule^.UI.UserDesc, '', True);
 end;
 
 procedure TrdDesktopViewer.aFullScreenExecute(Sender: TObject);
 begin
-{  if (myUI.ScreenWidth>=Screen.Width) or
-     (myUI.ScreenHeight>=Screen.Height) then
-    begin
+  if (ActiveUIModule^.UI.ScreenWidth >= Screen.Width) or
+     (ActiveUIModule^.UI.ScreenHeight >= Screen.Height) then
+  begin
     if aStretchScreen.Checked then
-      pImage.Align := alClient
+      ActiveUIModule^.pImage^.Align := alClient
     else
-      pImage.Align := alNone;
-    if BorderStyle<>bsNone then
+      ActiveUIModule^.pImage^.Align := alNone;
+    if BorderStyle <> bsNone then
       FullScreen
     else
       InitScreen;
     end
   else
+  begin
+    if BorderStyle <> bsNone then
     begin
-    if BorderStyle<>bsNone then
-      begin
 //      pImage.Align:=alNone;
       if aStretchScreen.Checked then
-        pImage.Align := alClient
+        ActiveUIModule^.pImage^.Align := alClient
       else
-        pImage.Align := alNone;
+        ActiveUIModule^.pImage^.Align := alNone;
       FullScreen;
-      end
+    end
     else
-      begin
+    begin
 //      pImage.Align:=alClient;
       if aStretchScreen.Checked then
-        pImage.Align := alClient
+        ActiveUIModule^.pImage^.Align := alClient
       else
-        pImage.Align := alNone;
+        ActiveUIModule^.pImage^.Align := alNone;
       InitScreen;
-      end;
     end;
+  end;
 
-  aFullScreen.Checked := not aFullScreen.Checked;} //Доделать
+  aFullScreen.Checked := not aFullScreen.Checked;
 end;
 
 procedure TrdDesktopViewer.aHideWallpaperExecute(Sender: TObject);
 begin
-{  if not aHideWallpaper.Checked then
-    UI.Send_HideDesktop(Sender)
+  if not aHideWallpaper.Checked then
+    ActiveUIModule^.UI.Send_HideDesktop(Sender)
   else
-    UI.Send_ShowDesktop(Sender);
+    ActiveUIModule^.UI.Send_ShowDesktop(Sender);
 
-  aHideWallpaper.Checked := not aHideWallpaper.Checked;} //Доделать
+  aHideWallpaper.Checked := not aHideWallpaper.Checked;
 end;
 
 procedure TrdDesktopViewer.aLockSystemExecute(Sender: TObject);
 begin
-//  UI.Send_LockSystem(Sender); //Доделать
+  ActiveUIModule^.UI.Send_LockSystem(Sender);
 end;
 
 procedure TrdDesktopViewer.aLockSystemOnCloseExecute(Sender: TObject);
@@ -1767,7 +1763,7 @@ end;
 
 procedure TrdDesktopViewer.aLogoffExecute(Sender: TObject);
 begin
-//  UI.Send_LogoffSystem(Sender); //Доделать
+  ActiveUIModule^.UI.Send_LogoffSystem(Sender);
 end;
 
 procedure TrdDesktopViewer.aOptimalScaleExecute(Sender: TObject);
@@ -1780,11 +1776,11 @@ end;
 
 procedure TrdDesktopViewer.UpdateQuality;
 begin
-{  if aOptimizeQuality.Checked then
+  if aOptimizeQuality.Checked then
   begin
-    UI.ChgDesktop_Begin;
+    ActiveUIModule^.UI.ChgDesktop_Begin;
     try
-      UI.ChgDesktop_ColorLimit(rdColor32bit);
+      ActiveUIModule^.UI.ChgDesktop_ColorLimit(rdColor32bit);
 //      UI.ChgDesktop_FrameRate(rdFramesMax);
 //      UI.ChgDesktop_SendScreenInBlocks(rdBlocks1);
 //      UI.ChgDesktop_SendScreenRefineBlocks(rdBlocks12);
@@ -1792,18 +1788,18 @@ begin
 //      UI.ChgDesktop_SendScreenSizeLimit(rdBlockAnySize);
   //    if grpColorLow.ItemIndex>=0 then
   //      begin
-        UI.ChgDesktop_ColorLowLimit(rd_ColorHigh);
+        ActiveUIModule^.UI.ChgDesktop_ColorLowLimit(rd_ColorHigh);
   //      UI.ChgDesktop_ColorReducePercent(cbReduceColors.Value);
   //      end;
     finally
-      UI.ChgDesktop_End;
+      ActiveUIModule^.UI.ChgDesktop_End;
     end;
   end
   else
   begin
-    UI.ChgDesktop_Begin;
+    ActiveUIModule^.UI.ChgDesktop_Begin;
     try
-      UI.ChgDesktop_ColorLimit(rdColor8bit);
+      ActiveUIModule^.UI.ChgDesktop_ColorLimit(rdColor8bit);
 //      UI.ChgDesktop_FrameRate(rdFramesMax);
 //      UI.ChgDesktop_SendScreenInBlocks(rdBlocks1);
 //      UI.ChgDesktop_SendScreenRefineBlocks(rdBlocks12);
@@ -1811,14 +1807,14 @@ begin
 //      UI.ChgDesktop_SendScreenSizeLimit(rdBlockAnySize);
 //  //    if grpColorLow.ItemIndex>=0 then
 //  //      begin
-        UI.ChgDesktop_ColorLowLimit(rd_ColorHigh);
+        ActiveUIModule^.UI.ChgDesktop_ColorLowLimit(rd_ColorHigh);
 //  //      UI.ChgDesktop_ColorReducePercent(cbReduceColors.Value);
 //  //      end;
   //      end;
     finally
-      UI.ChgDesktop_End;
+      ActiveUIModule^.UI.ChgDesktop_End;
     end;
-  end;} //Доделать
+  end;
 end;
 
 procedure TrdDesktopViewer.aOptimizeQualityExecute(Sender: TObject);
@@ -1849,15 +1845,15 @@ begin
   aBlockKeyboardMouse.Checked := aPowerOffMonitor.Checked;
   aBlockKeyboardMouse.Enabled := not aPowerOffMonitor.Checked;
 
-//  if aPowerOffMonitor.Checked then
-//    UI.Send_PowerOffMonitor(Sender)
-//  else
-//    UI.Send_PowerOnMonitor(Sender); //Доделать
+  if aPowerOffMonitor.Checked then
+    ActiveUIModule^.UI.Send_PowerOffMonitor(Sender)
+  else
+    ActiveUIModule^.UI.Send_PowerOnMonitor(Sender);
 end;
 
 procedure TrdDesktopViewer.aPowerOffSystemExecute(Sender: TObject);
 begin
-//  UI.Send_PowerOffSystem(Sender); //Доделать
+  ActiveUIModule^.UI.Send_PowerOffSystem(Sender);
 end;
 
 procedure TrdDesktopViewer.aRecordStopExecute(Sender: TObject);
@@ -1898,18 +1894,18 @@ var
   rec: TRtcRecord;
   fn: TRtcFunctionInfo;
 begin
-{  if Assigned(FVideoWriter) then
+  if Assigned(FVideoWriter) then
     raise Exception.Create('Video is recording');
   FVideoFile := IncludeTrailingPathDelimiter(RecordsFolder);
   ForceDirectories(FVideoFile);
   FVideoFile := FVideoFile + 'Video_' + FormatDateTime('YYYY_MM_DD_HHNNSS', Now) + '.rmxv';
   FVideoWriter := TRMXVideoWriter.Create(FVideoFile, TRMXVideoFileWin);
   FFirstImageArrived := false;
-  myUI.Playback.ScreenDecoder.OnSetScreenData := OnSetScreenData;
+  ActiveUIModule^.UI.Playback.ScreenDecoder.OnSetScreenData := OnSetScreenData;
   // data to send to the user ...
   fn := TRtcFunctionInfo.Create;
   fn.FunctionName := 'restart_desk';
-  myUI.Module.Client.SendToUser(myUI.Module, myUI.UserName, fn);} //Доделать
+  ActiveUIModule^.UI.Module.Client.SendToUser(ActiveUIModule^.UI.Module, ActiveUIModule^.UI.UserName, fn);
 end;
 
 procedure TrdDesktopViewer.RecordStop;
@@ -1917,11 +1913,12 @@ var
   frm: TForm;
   w: TRMXVideoWriter;
 begin
-{  if not Assigned(FVideoWriter) then exit;
-  myUI.Playback.ScreenDecoder.OnSetScreenData := nil;
+  if not Assigned(FVideoWriter) then
+    Exit;
+  ActiveUIModule^.UI.Playback.ScreenDecoder.OnSetScreenData := nil;
   w := FVideoWriter;
   FVideoWriter := nil;
-  w.Free;} //Доделать
+  w.Free;
 end;
 
 procedure TrdDesktopViewer.RecordCancel;
@@ -2170,7 +2167,7 @@ var
   FileList: TStringList;
   temp_id: TTaskID;
 begin
-{  try
+  try
     FLastActiveExplorerHandle := THandle(Message.WParam);
 
     FileList := TStringList.Create;
@@ -2179,7 +2176,7 @@ begin
 
   //  TRtcPFileTransfer(myUI.Module).NotifyFileBatchSend :=FT_UINotifyFileBatchSend;
     try
-      temp_id := FT_UI.Module.FetchBatch(FT_UI.UserName,
+      temp_id := ActiveUIModule^.FT_UI.Module.FetchBatch(ActiveUIModule^.FT_UI.UserName,
                           FileList, ExtractFilePath(CB_DataObject.FFiles[0].filePath), String(Message.LParam), nil);
     except
   //  on E: Exception do
@@ -2193,7 +2190,7 @@ begin
   end;
 
 //  for i := 0 to CB_DataObject.FCount - 1 do
-//    FT_UI.Fetch(CB_DataObject.FFiles[i].filePath, String(Message.LParam));} //Доделать
+//    FT_UI.Fetch(CB_DataObject.FFiles[i].filePath, String(Message.LParam));
 end;
 
 procedure TrdDesktopViewer.SetFormState;
@@ -2319,10 +2316,10 @@ var
   Bitmap: TBitmap;
   JPEG: TJPEGImage;
 begin
-{  Bitmap := TBitmap.Create;
+  Bitmap := TBitmap.Create;
 
-  Bitmap.SetSize(myUI.ScreenWidth, myUI.ScreenHeight);
-  myUI.DrawScreen(Bitmap.Canvas, Bitmap.Width, Bitmap.Height);
+  Bitmap.SetSize(ActiveUIModule^.UI.ScreenWidth, ActiveUIModule^.UI.ScreenHeight);
+  ActiveUIModule^.UI.DrawScreen(Bitmap.Canvas, Bitmap.Width, Bitmap.Height);
 
 //  Bitmap.Width := UI.GetScreen.Image.Width;
 //  Bitmap.Height := UI.GetScreen.Image.Height;
@@ -2373,7 +2370,7 @@ begin
   //Write frame
 //  Avi.AppendNewFrame(Bitmap.Handle);
 
-  Bitmap.Free;} //Доделать
+  Bitmap.Free;
 end;
 
 {procedure TrdDesktopViewer.ScreenRecordPause;
@@ -2429,32 +2426,32 @@ end;}
 
 procedure TrdDesktopViewer.aRestartSystemExecute(Sender: TObject);
 begin
-//  UI.Send_RestartSystem(Sender); //Доделать
+  ActiveUIModule^.UI.Send_RestartSystem(Sender);
 end;
 
 procedure TrdDesktopViewer.btnAcceptClick(Sender: TObject);
 begin
-{  panSettings.Visible:=False;
-  UI.ChgDesktop_Begin;
+  panSettings.Visible:=False;
+  ActiveUIModule^.UI.ChgDesktop_Begin;
   try
-    if grpLayered.ItemIndex>=0 then      UI.ChgDesktop_CaptureLayeredWindows(grpLayered.ItemIndex=0);
-    if grpMirror.ItemIndex>=0 then       UI.ChgDesktop_UseMirrorDriver(grpMirror.ItemIndex=0);
-    if grpMouse.ItemIndex>=0 then        UI.ChgDesktop_UseMouseDriver(grpMouse.ItemIndex=0);
-    if grpMonitors.ItemIndex>=0 then     UI.ChgDesktop_CaptureAllMonitors(grpMonitors.ItemIndex=0);
-    if grpColor.ItemIndex>=0 then        UI.ChgDesktop_ColorLimit(TRdColorLimit(grpColor.ItemIndex));
-    if grpFrame.ItemIndex>=0 then        UI.ChgDesktop_FrameRate(TRdFrameRate(grpFrame.ItemIndex));
-    if grpScreenBlocks.ItemIndex>=0 then UI.ChgDesktop_SendScreenInBlocks(TrdScreenBlocks(grpScreenBlocks.ItemIndex));
-    if grpScreenBlocks2.ItemIndex>=0 then UI.ChgDesktop_SendScreenRefineBlocks(TrdScreenBlocks(grpScreenBlocks2.ItemIndex));
-    if grpScreen2Refine.ItemIndex>=0 then  UI.ChgDesktop_SendScreenRefineDelay(grpScreen2Refine.ItemIndex);
-    if grpScreenLimit.ItemIndex>=0 then  UI.ChgDesktop_SendScreenSizeLimit(TrdScreenLimit(grpScreenLimit.ItemIndex));
+    if grpLayered.ItemIndex>=0 then      ActiveUIModule^.UI.ChgDesktop_CaptureLayeredWindows(grpLayered.ItemIndex=0);
+    if grpMirror.ItemIndex>=0 then       ActiveUIModule^.UI.ChgDesktop_UseMirrorDriver(grpMirror.ItemIndex=0);
+    if grpMouse.ItemIndex>=0 then        ActiveUIModule^.UI.ChgDesktop_UseMouseDriver(grpMouse.ItemIndex=0);
+    if grpMonitors.ItemIndex>=0 then     ActiveUIModule^.UI.ChgDesktop_CaptureAllMonitors(grpMonitors.ItemIndex=0);
+    if grpColor.ItemIndex>=0 then        ActiveUIModule^.UI.ChgDesktop_ColorLimit(TRdColorLimit(grpColor.ItemIndex));
+    if grpFrame.ItemIndex>=0 then        ActiveUIModule^.UI.ChgDesktop_FrameRate(TRdFrameRate(grpFrame.ItemIndex));
+    if grpScreenBlocks.ItemIndex>=0 then ActiveUIModule^.UI.ChgDesktop_SendScreenInBlocks(TrdScreenBlocks(grpScreenBlocks.ItemIndex));
+    if grpScreenBlocks2.ItemIndex>=0 then ActiveUIModule^.UI.ChgDesktop_SendScreenRefineBlocks(TrdScreenBlocks(grpScreenBlocks2.ItemIndex));
+    if grpScreen2Refine.ItemIndex>=0 then  ActiveUIModule^.UI.ChgDesktop_SendScreenRefineDelay(grpScreen2Refine.ItemIndex);
+    if grpScreenLimit.ItemIndex>=0 then  ActiveUIModule^.UI.ChgDesktop_SendScreenSizeLimit(TrdScreenLimit(grpScreenLimit.ItemIndex));
     if grpColorLow.ItemIndex>=0 then
       begin
-      UI.ChgDesktop_ColorLowLimit(TrdLowColorLimit(grpColorLow.ItemIndex));
-      UI.ChgDesktop_ColorReducePercent(cbReduceColors.Value);
+      ActiveUIModule^.UI.ChgDesktop_ColorLowLimit(TrdLowColorLimit(grpColorLow.ItemIndex));
+      ActiveUIModule^.UI.ChgDesktop_ColorReducePercent(cbReduceColors.Value);
       end;
   finally
-    UI.ChgDesktop_End;
-    end;} //Доделать
+    ActiveUIModule^.UI.ChgDesktop_End;
+    end;
 end;
 
 procedure TrdDesktopViewer.pImageMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
@@ -2814,12 +2811,16 @@ begin
 end;
 
 procedure TrdDesktopViewer.PFileTransExplorerNewUI(Sender: TRtcPFileTransfer; const user: String);
+var
+  pUIItem: TUIDataModule;
 begin
-{  FT_UI.UserName := user;
-  FT_UI.UserDesc := user;
+  pUIItem := GetUIDataModule(user);
+
+  pUIItem.FT_UI.UserName := user;
+  pUIItem.FT_UI.UserDesc := user;
   // Always set UI.Module *after* setting UI.UserName !!!
-  FT_UI.Module := Sender;
-  FT_UI.Module.AccessControl := False;} //Доделать
+  pUIItem.FT_UI.Module := Sender;
+  pUIItem.FT_UI.Module.AccessControl := False;
 end;
 
 
