@@ -20,6 +20,7 @@ object rdDesktopViewer: TrdDesktopViewer
   PrintScale = poNone
   Scaled = False
   ShowHint = True
+  WindowState = wsMaximized
   OnClose = FormClose
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate

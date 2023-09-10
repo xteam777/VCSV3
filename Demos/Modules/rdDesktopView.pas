@@ -883,12 +883,12 @@ begin
   Scroll.VertScrollBar.Position:=0;
   Scroll.HorzScrollBar.Position:=0;
 
-  ActiveUIModule.pImage^.Left:=0;
-  ActiveUIModule.pImage^.Top:=0;
+//  ActiveUIModule.pImage^.Left:=0;
+//  ActiveUIModule.pImage^.Top:=0;
   WindowState := wsMaximized;
   BorderStyle := bsSizeable;
 
-  if ActiveUIModule.UI.HaveScreen then
+{  if ActiveUIModule.UI.HaveScreen then
   begin
     if ActiveUIModule.UI.ScreenWidth < Screen.Width then
       ClientWidth := ActiveUIModule.UI.ScreenWidth
@@ -900,16 +900,16 @@ begin
       Height := Screen.Height;
     if ActiveUIModule.UI.ScreenHeight >= Screen.Height then
     begin
-      Left := 0;
-      Top := 0;
-      WindowState := wsMaximized;
+//      Left := 0;
+//      Top := 0;
+//      WindowState := wsMaximized;
     end
     else
     begin
-      Left := (Screen.Width - Width) div 2;
-      Top := (Screen.Height - Height) div 2;
+//      Left := (Screen.Width - Width) div 2;
+//      Top := (Screen.Height - Height) div 2;
     end;
-  end;
+  end;}
 
 //  if (pImage.Align<>alClient) and myUI.HaveScreen then
 //    begin
@@ -1577,7 +1577,7 @@ begin
 //    SetCaption;
 //    sStatus.Visible:=False;
     fFirstScreen := False;
-    WindowState := wsMaximized;
+//    WindowState := wsMaximized;
 //    if Sender.ScreenWidth < ActiveUIModule.pImage.ClientWidth then
 //      ClientWidth := Sender.ScreenWidth
 //    else
