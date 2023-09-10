@@ -4,16 +4,15 @@ object rdChatForm: TrdChatForm
   BorderIcons = []
   BorderStyle = bsNone
   Caption = 'rdChatForm'
-  ClientHeight = 510
-  ClientWidth = 526
+  ClientHeight = 408
+  ClientWidth = 421
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
-  Font.Height = -14
+  Font.Height = -11
   Font.Name = 'MS Sans Serif'
   Font.Style = []
   KeyPreview = True
-  OldCreateOrder = False
   Position = poDefault
   OnClose = FormClose
   OnCloseQuery = FormCloseQuery
@@ -22,13 +21,16 @@ object rdChatForm: TrdChatForm
   OnKeyPress = FormKeyPress
   OnResize = FormResize
   OnShow = FormResize
-  PixelsPerInch = 120
-  TextHeight = 16
+  TextHeight = 13
   object Panel3: TPanel
-    Left = 4
-    Top = 4
-    Width = 518
-    Height = 502
+    Left = 3
+    Top = 3
+    Width = 415
+    Height = 402
+    Margins.Left = 2
+    Margins.Top = 2
+    Margins.Right = 2
+    Margins.Bottom = 2
     Align = alClient
     ParentBackground = False
     TabOrder = 0
@@ -37,28 +39,40 @@ object rdChatForm: TrdChatForm
     OnMouseUp = Panel3MouseUp
     object pSplit: TSplitter
       Left = 1
-      Top = 218
-      Width = 516
+      Top = 174
+      Width = 413
       Height = 4
       Cursor = crVSplit
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
       Align = alTop
       Color = clGray
       ParentColor = False
     end
     object pMain: TPanel
       Left = 1
-      Top = 37
-      Width = 516
-      Height = 181
+      Top = 30
+      Width = 413
+      Height = 144
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
       Align = alTop
       BorderWidth = 2
       ParentBackground = False
       TabOrder = 1
       object mChatLog: TRichEdit
-        Left = 3
-        Top = 3
-        Width = 510
-        Height = 175
+        Left = 2
+        Top = 2
+        Width = 408
+        Height = 140
+        Margins.Left = 2
+        Margins.Top = 2
+        Margins.Right = 2
+        Margins.Bottom = 2
         TabStop = False
         Align = alClient
         Font.Charset = RUSSIAN_CHARSET
@@ -71,14 +85,17 @@ object rdChatForm: TrdChatForm
         ReadOnly = True
         ScrollBars = ssVertical
         TabOrder = 0
-        Zoom = 100
       end
     end
     object pBox: TScrollBox
       Left = 1
-      Top = 326
-      Width = 516
-      Height = 175
+      Top = 261
+      Width = 413
+      Height = 140
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
       VertScrollBar.Smooth = True
       VertScrollBar.Style = ssHotTrack
       VertScrollBar.Tracking = True
@@ -92,8 +109,12 @@ object rdChatForm: TrdChatForm
     object pTitle: TPanel
       Left = 1
       Top = 1
-      Width = 516
-      Height = 36
+      Width = 413
+      Height = 29
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
       Align = alTop
       BevelOuter = bvNone
       Color = 12704960
@@ -103,15 +124,19 @@ object rdChatForm: TrdChatForm
       OnMouseMove = pTitleMouseMove
       OnMouseUp = pTitleMouseUp
       object cTitle: TLabel
-        Left = 10
-        Top = 10
-        Width = 32
-        Height = 16
+        Left = 8
+        Top = 8
+        Width = 27
+        Height = 13
+        Margins.Left = 2
+        Margins.Top = 2
+        Margins.Right = 2
+        Margins.Bottom = 2
         Caption = 'Chat'
         Color = clBtnFace
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clBlack
-        Font.Height = -15
+        Font.Height = -12
         Font.Name = 'MS Sans Serif'
         Font.Style = [fsBold]
         ParentColor = False
@@ -122,47 +147,63 @@ object rdChatForm: TrdChatForm
         OnMouseUp = pTitleMouseUp
       end
       object Panel2: TPanel
-        Left = 383
+        Left = 306
         Top = 0
-        Width = 133
-        Height = 36
+        Width = 107
+        Height = 29
+        Margins.Left = 2
+        Margins.Top = 2
+        Margins.Right = 2
+        Margins.Bottom = 2
         Align = alRight
         BevelOuter = bvNone
         Color = clMoneyGreen
         TabOrder = 0
         object btnClose: TSpeedButton
-          Left = 103
-          Top = 5
-          Width = 26
-          Height = 26
+          Left = 82
+          Top = 4
+          Width = 21
+          Height = 21
+          Margins.Left = 2
+          Margins.Top = 2
+          Margins.Right = 2
+          Margins.Bottom = 2
           Caption = 'X'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clBlack
-          Font.Height = -15
+          Font.Height = -12
           Font.Name = 'MS Sans Serif'
           Font.Style = [fsBold]
           ParentFont = False
           OnClick = btnCloseClick
         end
         object btnMinimize: TSpeedButton
-          Left = 79
-          Top = 5
-          Width = 24
-          Height = 26
+          Left = 63
+          Top = 4
+          Width = 19
+          Height = 21
+          Margins.Left = 2
+          Margins.Top = 2
+          Margins.Right = 2
+          Margins.Bottom = 2
           Caption = '_'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clBlack
-          Font.Height = -15
+          Font.Height = -12
           Font.Name = 'MS Sans Serif'
           Font.Style = []
           ParentFont = False
           OnClick = btnMinimizeClick
         end
         object btnOnTop: TSpeedButton
-          Left = 5
-          Top = 4
-          Width = 65
-          Height = 28
+          Left = 4
+          Top = 3
+          Width = 52
+          Height = 23
+          Margins.Left = 2
+          Margins.Top = 2
+          Margins.Right = 2
+          Margins.Bottom = 2
           Caption = 'To Top'
           Flat = True
           Layout = blGlyphRight
@@ -172,9 +213,13 @@ object rdChatForm: TrdChatForm
     end
     object myBox: TPanel
       Left = 1
-      Top = 256
-      Width = 516
-      Height = 70
+      Top = 205
+      Width = 413
+      Height = 56
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
       Align = alTop
       AutoSize = True
       BevelOuter = bvNone
@@ -184,50 +229,70 @@ object rdChatForm: TrdChatForm
     end
     object Panel12: TPanel
       Left = 1
-      Top = 222
-      Width = 516
-      Height = 34
+      Top = 178
+      Width = 413
+      Height = 27
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
       Align = alTop
       ParentBackground = False
       TabOrder = 4
       object btnLockChatBoxes: TSpeedButton
-        Left = 399
-        Top = 4
-        Width = 114
-        Height = 28
+        Left = 319
+        Top = 3
+        Width = 91
+        Height = 23
+        Margins.Left = 2
+        Margins.Top = 2
+        Margins.Right = 2
+        Margins.Bottom = 2
         Caption = 'Lock Chat Boxes'
         Flat = True
         Layout = blGlyphRight
         OnClick = btnLockChatBoxesClick
       end
       object btnClearHistory: TSpeedButton
-        Left = 84
+        Left = 67
         Top = 2
-        Width = 94
-        Height = 30
+        Width = 75
+        Height = 24
+        Margins.Left = 2
+        Margins.Top = 2
+        Margins.Right = 2
+        Margins.Bottom = 2
         Caption = 'Clear History'
         Flat = True
         OnClick = btnClearHistoryClick
       end
       object btnHideHistory: TSpeedButton
-        Left = 182
+        Left = 146
         Top = 2
-        Width = 95
-        Height = 30
+        Width = 76
+        Height = 24
+        Margins.Left = 2
+        Margins.Top = 2
+        Margins.Right = 2
+        Margins.Bottom = 2
         Caption = 'Hide History'
         Flat = True
         OnClick = btnHideHistoryClick
       end
       object btnDesktop: TSpeedButton
-        Left = 5
+        Left = 4
         Top = 2
-        Width = 75
-        Height = 30
+        Width = 60
+        Height = 24
+        Margins.Left = 2
+        Margins.Top = 2
+        Margins.Right = 2
+        Margins.Bottom = 2
         Caption = 'Desktop'
         Flat = True
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
-        Font.Height = -15
+        Font.Height = -12
         Font.Name = 'MS Sans Serif'
         Font.Style = [fsBold]
         ParentFont = False
@@ -235,10 +300,14 @@ object rdChatForm: TrdChatForm
         OnClick = btnDesktopClick
       end
       object btnHideTyping: TSpeedButton
-        Left = 281
+        Left = 225
         Top = 2
-        Width = 114
-        Height = 30
+        Width = 91
+        Height = 24
+        Margins.Left = 2
+        Margins.Top = 2
+        Margins.Right = 2
+        Margins.Bottom = 2
         Caption = 'Hide my Typing'
         Flat = True
         OnClick = btnHideTypingClick
@@ -246,11 +315,15 @@ object rdChatForm: TrdChatForm
     end
   end
   object pRight: TPanel
-    Left = 522
-    Top = 4
-    Width = 4
-    Height = 502
+    Left = 418
+    Top = 3
+    Width = 3
+    Height = 402
     Cursor = crSizeWE
+    Margins.Left = 2
+    Margins.Top = 2
+    Margins.Right = 2
+    Margins.Bottom = 2
     Align = alRight
     BevelOuter = bvNone
     Color = clGray
@@ -260,10 +333,14 @@ object rdChatForm: TrdChatForm
     OnMouseUp = Panel3MouseUp
     object pSize1: TPanel
       Left = 0
-      Top = 487
-      Width = 4
-      Height = 15
+      Top = 390
+      Width = 3
+      Height = 12
       Cursor = crSizeNWSE
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
       Align = alBottom
       BevelOuter = bvNone
       Color = clBlack
@@ -275,10 +352,14 @@ object rdChatForm: TrdChatForm
   end
   object pBottom: TPanel
     Left = 0
-    Top = 506
-    Width = 526
-    Height = 4
+    Top = 405
+    Width = 421
+    Height = 3
     Cursor = crSizeNS
+    Margins.Left = 2
+    Margins.Top = 2
+    Margins.Right = 2
+    Margins.Bottom = 2
     Align = alBottom
     BevelOuter = bvNone
     Color = clGray
@@ -287,11 +368,15 @@ object rdChatForm: TrdChatForm
     OnMouseMove = Panel3MouseMove
     OnMouseUp = Panel3MouseUp
     object pSize2: TPanel
-      Left = 507
+      Left = 406
       Top = 0
-      Width = 19
-      Height = 4
+      Width = 15
+      Height = 3
       Cursor = crSizeNWSE
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
       Align = alRight
       BevelOuter = bvNone
       Color = clBlack
@@ -303,10 +388,14 @@ object rdChatForm: TrdChatForm
   end
   object pLeft: TPanel
     Left = 0
-    Top = 4
-    Width = 4
-    Height = 502
+    Top = 3
+    Width = 3
+    Height = 402
     Cursor = crSizeWE
+    Margins.Left = 2
+    Margins.Top = 2
+    Margins.Right = 2
+    Margins.Bottom = 2
     Align = alLeft
     BevelOuter = bvNone
     Color = clGray
@@ -317,9 +406,13 @@ object rdChatForm: TrdChatForm
     object pSize4: TPanel
       Left = 0
       Top = 0
-      Width = 4
-      Height = 15
+      Width = 3
+      Height = 12
       Cursor = crSizeNWSE
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
       Align = alTop
       BevelOuter = bvNone
       Color = clBlack
@@ -332,9 +425,13 @@ object rdChatForm: TrdChatForm
   object pTop: TPanel
     Left = 0
     Top = 0
-    Width = 526
-    Height = 4
+    Width = 421
+    Height = 3
     Cursor = crSizeNS
+    Margins.Left = 2
+    Margins.Top = 2
+    Margins.Right = 2
+    Margins.Bottom = 2
     Align = alTop
     BevelOuter = bvNone
     Color = clGray
@@ -345,15 +442,19 @@ object rdChatForm: TrdChatForm
     object pSize3: TPanel
       Left = 0
       Top = 0
-      Width = 18
-      Height = 4
+      Width = 14
+      Height = 3
       Cursor = crSizeNWSE
+      Margins.Left = 2
+      Margins.Top = 2
+      Margins.Right = 2
+      Margins.Bottom = 2
       Align = alLeft
       BevelOuter = bvNone
       Color = clBlack
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clBlack
-      Font.Height = -15
+      Font.Height = -12
       Font.Name = 'MS Sans Serif'
       Font.Style = []
       ParentFont = False

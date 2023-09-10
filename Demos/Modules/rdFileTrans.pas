@@ -914,7 +914,7 @@ procedure TrdFileTransfer.FormClose(Sender: TObject; var Action: TCloseAction);
 //  h: hwnd;
 begin
   if Assigned(FOnUIClose) then
-    FOnUIClose(myUI.Tag); //ThreadID
+    FOnUIClose('file', myUI.UserName); //ThreadID
 
   Action:=caFree;
 //  h:= findwindow('TrdFileTransfer',nil);

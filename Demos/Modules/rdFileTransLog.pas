@@ -96,11 +96,13 @@ begin
 end;
 
 procedure TrdFileTransferLog.FormClose(Sender: TObject; var Action: TCloseAction);
+var
+  i: Integer;
 begin
   Action:=caFree;
 
   if Assigned(FOnUIClose) then
-    FOnUIClose(myUI.Tag); //ThreadID
+    FOnUIClose('file', myUI.UserName); //ThreadID
 end;
 
 procedure TrdFileTransferLog.FormCloseQuery(Sender: TObject; var CanClose: Boolean);

@@ -689,7 +689,7 @@ begin
   Action:=caFree;
 
   if Assigned(FOnUIClose) then
-    FOnUIClose(myUI.Tag); //ThreadID
+    FOnUIClose('chat', myUI.UserName); //ThreadID
 end;
 
 procedure TrdChatForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);

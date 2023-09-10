@@ -122,8 +122,6 @@ begin
   Application.Title := 'Remox';
   Forms.Application.ShowMainForm := (Pos('/SILENT', UpperCase(CmdLine)) = 0);
   Forms.Application.CreateForm(TMainForm, MainForm);
-  Application.CreateForm(TfAcceptEULA, fAcceptEULA);
-  Application.CreateForm(TUIDataModule, UIDataModule);
   Forms.Application.Run;
 //    else
 //    begin

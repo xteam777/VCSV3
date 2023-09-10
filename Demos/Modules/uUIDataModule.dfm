@@ -14,7 +14,14 @@ object UIDataModule: TUIDataModule
     Top = 8
   end
   object PFileTrans: TRtcPFileTransfer
-    Left = 120
+    Left = 122
+    Top = 8
+  end
+  object TimerReconnect: TTimer
+    Enabled = False
+    Interval = 20000
+    OnTimer = TimerReconnectTimer
+    Left = 164
     Top = 8
   end
 end

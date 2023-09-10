@@ -113,7 +113,6 @@ type
     imgRec: TImage;
     lblRecInfo: TLabel;
     MainChromeTabs: TChromeTabs;
-    TimerReconnect: TTimer;
     Button1: TButton;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
@@ -195,7 +194,6 @@ type
       ItemRect: TRect; ItemType: TChromeTabItemType;
       Orientation: TTabOrientation; var Polygons: IChromeTabPolygons);
     procedure MainChromeTabsButtonAddClick(Sender: TObject; var Handled: Boolean);
-    procedure TimerReconnectTimer(Sender: TObject);
     procedure Button1Click(Sender: TObject);
     procedure MainChromeTabsActiveTabChanged(Sender: TObject; ATab: TChromeTab);
     procedure MainChromeTabsButtonCloseTabClick(Sender: TObject;
@@ -228,6 +226,7 @@ type
     RWinDown: Boolean;
 
     UIModulesList: TList;
+    ActiveUIModule: PUIDataModule;
 
     FProgressDialogsList: TList;
 
@@ -282,8 +281,8 @@ type
     FormMinimized: Boolean;
     PartnerLockedState: Integer;
     PartnerServiceStarted: Boolean;
-//    MappedFiles: array of TMappedFileRec;
     ReconnectToPartnerStart: TReconnectToPartnerStart;
+//    MappedFiles: array of TMappedFileRec;
 
     function SetShortcuts_Hook(fBlockInput: Boolean): Boolean;
 
@@ -364,6 +363,7 @@ begin
     pTab.Caption := pTab.UserName;
 
   pUIITem := TUIDataModule.Create(Self);
+  pUIITem.ReconnectToPartnerStart := ReconnectToPartnerStart;
 
 //  pViewer := TRtcPDesktopViewer.Create(Self);
   pUIITem.pImage^ := TRtcPDesktopViewer.Create(Self);
@@ -399,6 +399,7 @@ begin
 
   UIModulesList.Add(pUIItem);
 
+  ActiveUIModule := @pUIItem;
   MainChromeTabsActiveTabChanged(nil, pTab);
 end;
 
@@ -414,7 +415,12 @@ procedure TrdDesktopViewer.MainChromeTabsButtonCloseTabClick(Sender: TObject;
 var
   pUIItem: TUIDataModule;
 begin
-//  pUIItem := RemoveUIDataModule(ATab.UserName);
+  pUIItem := GetUIDataModule(ATab.UserName);
+
+  if Assigned(FOnUIClose) then
+    FOnUIClose('desk', ATab.UserName); //ThreadID  //Доделать
+
+  RemoveUIDataModule(ATab.UserName);
   if UIModulesList.Count = 0 then
     CloseForm;
 end;
@@ -1013,9 +1019,6 @@ begin
   DesktopTimer.Enabled := False;
   Action := caFree;
 
-//  if Assigned(FOnUIClose) then
-//    FOnUIClose(myUI.Tag); //ThreadID  //Доделать
-
 //  if not aRecordStart.Enabled then
 //    Avi.Free;
 
@@ -1054,6 +1057,7 @@ begin
   Self.ChromeTabs := MainChromeTabs;
   {$ENDIF}
 
+  ActiveUIModule := nil;
   FProgressDialogsList := TList.Create;
 
   fFirstScreen := True;
@@ -1365,6 +1369,7 @@ begin
 
   for i := 0 to UIModulesList.Count - 1 do
   begin
+    FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
     FreeAndNil(TUIDataModule(UIModulesList[i]));
   end;
   FreeAndNil(UIModulesList);
@@ -1398,8 +1403,6 @@ begin
     //BringWindowToTop(Handle);
     SetForegroundWindow(Handle);
   end;
-
-  TimerReconnect.Enabled := False;
 
   //pImage.Align := alClient; //Доделать
 
@@ -1475,12 +1478,10 @@ begin
 //  Scroll.VertScrollBar.Position := 0;
 //  MessageBeep(0);
 
-  {$IFNDEF RtcViewer}
-  { tell Windows that you're accepting drag and drop files }
-  DragAcceptFiles(Handle, False);
-  {$ENDIF}
+  //tell Windows that you're accepting drag and drop files
+  //DragAcceptFiles(Handle, False);
 
-  TimerReconnect.Enabled := True;
+  ActiveUIModule^.TimerReconnect.Enabled := True;
 //  Close;
 end;
 
@@ -1681,7 +1682,7 @@ procedure TrdDesktopViewer.btnSettingsClick(Sender: TObject);
 
 procedure TrdDesktopViewer.Button1Click(Sender: TObject);
 begin
-  TimerReconnectTimer(nil);
+//  TimerReconnectTimer(nil);
 end;
 
 procedure TrdDesktopViewer.btnCancelClick(Sender: TObject);
@@ -2483,8 +2484,8 @@ end;
 
 procedure TrdDesktopViewer.DesktopTimerTimer(Sender: TObject);
 begin
-//  if assigned(myUI) and MyUI.InControl and (GetForegroundWindow <> Handle) then
-//    FormDeactivate(nil); //Доделать
+  if assigned(ActiveUIModule^.UI) and ActiveUIModule^.UI.InControl and (GetForegroundWindow <> Handle) then
+    FormDeactivate(nil);
 end;
 
 procedure TrdDesktopViewer.panOptionsMiniMouseDown(Sender: TObject;
@@ -2800,11 +2801,6 @@ begin
     if err <> 0 then
       xLog(Format('SetShortcuts. Error: %s', [SysErrorMessage(err)]));
   end;
-end;
-
-procedure TrdDesktopViewer.TimerReconnectTimer(Sender: TObject);
-begin
-//  ReconnectToPartnerStart(FUserName, FUserDesc, FUserPass,  'desk', Self);
 end;
 
 procedure TrdDesktopViewer.TimerRecTimer(Sender: TObject);

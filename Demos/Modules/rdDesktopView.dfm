@@ -3149,7 +3149,6 @@ object rdDesktopViewer: TrdDesktopViewer
           Top = 1
           Width = 345
           Height = 34
-          UseSystemFont = False
           ActionManager = ActionManagerTop
           Align = alNone
           Color = clMenuBar
@@ -3159,7 +3158,7 @@ object rdDesktopViewer: TrdDesktopViewer
           ColorMap.SelectedFontColor = clWhite
           ColorMap.UnusedColor = clWhite
           Font.Charset = DEFAULT_CHARSET
-          Font.Color = clBlack
+          Font.Color = clWindowText
           Font.Height = -12
           Font.Name = 'Segoe UI'
           Font.Style = []
@@ -5505,12 +5504,5 @@ object rdDesktopViewer: TrdDesktopViewer
     OnTimer = TimerRecTimer
     Left = 10
     Top = 455
-  end
-  object TimerReconnect: TTimer
-    Enabled = False
-    Interval = 20000
-    OnTimer = TimerReconnectTimer
-    Left = 8
-    Top = 511
   end
 end

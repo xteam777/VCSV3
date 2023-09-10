@@ -95,7 +95,7 @@ type
     FChat: TRtcPChat;
     { Private declarations }
   public
-    constructor Create(CreateSuspended: Boolean; AAction, AUserName, AUserPass, AUserToConnect, AGateway: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; UIVisible: Boolean; AUIForm: TForm); overload;
+    constructor Create(CreateSuspended: Boolean; AAction, AUserName, AUserPass, AUserToConnect, AGateway: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; UIVisible: Boolean); overload;
     destructor Destroy; override;
   private
     procedure Execute; override;
@@ -326,6 +326,7 @@ type
     { Private-Deklarationen }
 //    procedure WMLogEvent(var Message: TMessage); message WM_LOGEVENT;
     procedure WMTaskbarEvent(var Message: TMessage); message WM_TASKBAREVENT;
+    procedure WMUIFormClosed(var Message: TMessage); message WM_UIFORMCLOSED;
     procedure WMWTSSESSIONCHANGE(var Message: TMessage); message WM_WTSSESSION_CHANGE;
 //    procedure WMActivate(var Message: TMessage); message WM_ACTIVATE;
 //    procedure WMBlockInput_Message(var Message: TMessage); message WM_BLOCK_INPUT_MESSAGE;
@@ -566,7 +567,7 @@ type
     function GetUserDescription(aUserName, aAction: String): String;
     function GetUserPassword(aUserName: String): String;
     function UIIsPending(username: String): Boolean;
-    function AddPendingRequest(uname, desc, action: String; fIsReconnection: Boolean; AUIForm: TForm): PPendingRequestItem;
+    function AddPendingRequest(uname, desc, action: String; fIsReconnection: Boolean): PPendingRequestItem;
     procedure DeletePendingRequest(uname, action: String);
     function GetPendingItemByUserName(uname, action: String): PPendingRequestItem;
     function PartnerIsPending(uname, action, gateway: String): Boolean; overload;
@@ -583,7 +584,7 @@ type
 
     function CheckService(bServiceFilename: Boolean = True {False = Service Name} ): String;
 //
-    procedure AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; AThread: PPortalThread; AUIForm: TForm);
+    procedure AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; AThread: PPortalThread);
     function GetPortalConnectionByThreadId(AThreadID: Cardinal): PPortalConnection;
     function GetPortalConnection(AAction: String; AUserName: String): PPortalConnection;
     //procedure RemovePortalConnectionByUIHandle(AUIHandle: THandle);                         f
@@ -600,7 +601,7 @@ type
 //    procedure CheckSAS(value : Boolean; name : String);
 
     procedure OnUIOpen(UserName, Action: String; var IsPending: Boolean);
-    procedure OnUIClose(AThreadId: Cardinal);
+    procedure OnUIClose(AAction, AUserName: String);
 
     procedure OnCustomFormOpen(AForm: PForm);
     procedure OnCustomFormClose;
@@ -718,7 +719,7 @@ type
     procedure SendLockedStateToGateway;
     function IsValidDeviceID(const uname: String): Boolean;
     procedure ConnectToPartnerStart(user, username, pass, action: String);
-    procedure ReconnectToPartnerStart(user, username, pass, action: String; AUIForm: TForm);
+    procedure ReconnectToPartnerStart(user, username, pass, action: String);
 //    function GetDeviceStatus(uname: String): Integer;
     function GetDeviceInfo(uname: String): PDeviceData;
     procedure DoAccountLogin;
@@ -1440,38 +1441,38 @@ end;
 
 destructor TPortalHostThread.Destroy;
 begin
-  try
+//  try
     FGatewayClient.Disconnect;
-  finally
-  end;
-  try
+//  finally
+//  end;
+//  try
     FGatewayClient.Active := False;
-  finally
-  end;
-
-  try
+//  finally
+//  end;
+//
+//  try
     FDesktopHost.FileTransfer.Free;
-  finally
-  end;
-  try
+//  finally
+//  end;
+//  try
     if FDesktopHost <> nil then
       FDesktopHost.Free;
-  finally
-  end;
-  try
+//  finally
+//  end;
+//  try
     if FFileTransfer <> nil then
       FFileTransfer.Free;
-  finally
-  end;
-  try
+//  finally
+//  end;
+//  try
     if FChat <> nil then
       FChat.Free;
-  finally
-  end;
-  try
+//  finally
+//  end;
+//  try
     FGatewayClient.Free;
-  finally
-  end;
+//  finally
+//  end;
 
   FCS.Free;
 
@@ -1652,7 +1653,7 @@ begin
     tPHostThread.Port := TRtcHttpPortalClient(AClient).GatePort;
 end;
 
-constructor TPortalThread.Create(CreateSuspended: Boolean; AAction, AUserName, AUserPass, AUserToConnect, AGateway: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; UIVisible: Boolean; AUIForm: TForm);
+constructor TPortalThread.Create(CreateSuspended: Boolean; AAction, AUserName, AUserPass, AUserToConnect, AGateway: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; UIVisible: Boolean);
 begin
   inherited Create(CreateSuspended);
 
@@ -1663,7 +1664,6 @@ begin
   FUserToConnect := AUserToConnect;
   FGateway := AGateway;
   FAction := AAction;
-  FUIForm := AUIForm;
 
   FUID := GetUniqueString;
 
@@ -1814,7 +1814,7 @@ begin
   if FAction = 'chat' then
     FChat.Open(FUserToConnect);
 
-  MainForm.AddPortalConnection(ThreadID, FAction, FUserName, FUserPass, FUserToConnect, AStartLockedStatus, AStartServiceStarted, @Self, FUIForm);
+  MainForm.AddPortalConnection(ThreadID, FAction, FUserName, FUserPass, FUserToConnect, AStartLockedStatus, AStartServiceStarted, @Self);
 end;
 
 destructor TPortalThread.Destroy;
@@ -2549,6 +2549,11 @@ end;
 //  end;
 //end;
 
+procedure TMainForm.WMUIFormClosed(var Message: TMessage);
+begin
+  DesktopsForm := nil;
+end;
+
 procedure TMainForm.WMTaskbarEvent(var Message: TMessage);
 var
   WindowPlacement: TWindowPlacement;
@@ -2705,7 +2710,7 @@ begin
   end;
 end;
 
-procedure TMainForm.AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; AThread: PPortalThread; AUIForm: TForm);
+procedure TMainForm.AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; AThread: PPortalThread);
 var
   pPC: PPortalConnection;
 begin
@@ -2719,7 +2724,6 @@ begin
     pPC^.ID := AUserToConnect;
     pPC^.ThisThread := AThread;
     pPC^.UIHandle := 0;
-    pPC^.UIForm := AUIForm;
     PortalConnectionsList.Add(pPC);
   finally
     CS_GW.Release;
@@ -7675,7 +7679,7 @@ begin
     Exit;
   end;
 
-  AddPendingRequest(user, username, action, False, nil);
+  AddPendingRequest(user, username, action, False);
 
   DoGetDeviceState(eAccountUserName.Text,
     LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll])),
@@ -7780,7 +7784,7 @@ begin
 //        AddPendingRequest(asWideString['user'], asString['action'], asString['Address'] + ':' +  asString['Port'], 0);
 //          TSendDestroyClientToGatewayThread.Create(False, asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['user'] + '_' + asWideString['action'] + '_', False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword);
           TSendDestroyClientToGatewayThread.Create(False, asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['UserToConnect'] + '_' + asWideString['action'] + '_', False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword);
-          PortalThread := TPortalThread.Create(False, asString['action'], asWideString['user'], asWideString['pass'], asWideString['UserToConnect'], asString['Address'], asInteger['LockedState'], asBoolean['ServiceStarted'], True, PRItem^.UIForm); //Для каждого соединения новый клиент
+          PortalThread := TPortalThread.Create(False, asString['action'], asWideString['user'], asWideString['pass'], asWideString['UserToConnect'], asString['Address'], asInteger['LockedState'], asBoolean['ServiceStarted'], True); //Для каждого соединения новый клиент
           PRItem^.Gateway := asString['Address'];
           PRItem^.ThreadID := PortalThread.ThreadID;
         end;
@@ -7844,7 +7848,7 @@ begin
   end;
 end;
 
-procedure TMainForm.ReconnectToPartnerStart(user, username, pass, action: String; AUIForm: TForm);
+procedure TMainForm.ReconnectToPartnerStart(user, username, pass, action: String);
 var
   PRItem: PPendingRequestItem;
 begin
@@ -7854,10 +7858,9 @@ begin
   begin
     PRItem := GetPendingItemByUserName(user, action);
     PRItem^.IsReconnection := True;
-    PRItem^.UIForm := AUIForm;
   end
   else
-    AddPendingRequest(user, username, action, False, AUIForm);
+    AddPendingRequest(user, username, action, False);
 
   DoGetDeviceState(eAccountUserName.Text,
     LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll])),
@@ -7950,7 +7953,7 @@ begin
         begin
 //        AddPendingRequest(asWideString['user'], asString['action'], asString['Address'] + ':' +  asString['Port'], 0);
           TSendDestroyClientToGatewayThread.Create(False, asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['UserToConnect'] + '_' + asWideString['action'] + '_', False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword);
-          PortalThread := TPortalThread.Create(False, asWideString['action'], asWideString['user'], asWideString['Pass'], asWideString['UserToConnect'], asString['Address'], asInteger['LockedState'], asBoolean['ServiceStarted'], True, PRItem^.UIForm); //Для каждого соединения новый клиент
+          PortalThread := TPortalThread.Create(False, asWideString['action'], asWideString['user'], asWideString['Pass'], asWideString['UserToConnect'], asString['Address'], asInteger['LockedState'], asBoolean['ServiceStarted'], True); //Для каждого соединения новый клиент
           PRItem^.Gateway := asString['Address'];
           PRItem^.ThreadID := PortalThread.ThreadID;
         end;
@@ -9657,7 +9660,7 @@ begin
 
   if DesktopsForm = nil then
   begin
-    DesktopsForm := TrdDesktopViewer.Create(nil);
+    DesktopsForm := TrdDesktopViewer.Create(Self);
     DesktopsForm.OnUIOpen := OnUIOpen;
     DesktopsForm.OnUIClose := OnUIClose;
     DesktopsForm.DoStartFileTransferring := StartFileTransferring;
@@ -10770,7 +10773,7 @@ begin
   end;
 end;
 
-function TMainForm.AddPendingRequest(uname, desc, action: String; fIsReconnection: Boolean; AUIForm: TForm): PPendingRequestItem;
+function TMainForm.AddPendingRequest(uname, desc, action: String; fIsReconnection: Boolean): PPendingRequestItem;
 var
   PRItem: PPendingRequestItem;
 begin
@@ -10783,7 +10786,6 @@ begin
     PRItem^.UserDesc := desc;
     PRItem^.Action := action;
     PRItem^.IsReconnection := fIsReconnection;
-    PRItem^.UIForm := AUIForm;
 //    PRItem^.Gateway := gateway;
 //    ThreadID := ThreadID;
     PendingRequests.Add(PRItem);
@@ -11049,16 +11051,15 @@ begin
   end;
 end;
 
-procedure TMainForm.OnUIClose(AThreadId: Cardinal);
+procedure TMainForm.OnUIClose(AAction, AUserName: String);
 begin
   //xLog('OnUIClose');
 
 //  if IsClosing then
 //    Exit;
 
-  RemovePortalConnectionByThreadId(AThreadId, False);
-
-//  RemoveActiveUIRecByHandle(AHandle);
+  DeletePendingRequest(AUserName, AAction);
+  RemovePortalConnection(AUserName, AAction, False);
 end;
 
 function TMainForm.GetPendingRequestsCount: Integer;

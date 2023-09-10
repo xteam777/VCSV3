@@ -40,10 +40,10 @@ type
   PPendingRequestItem = ^TPendingRequestItem;
 
   TUIOpenEvent = procedure(UserName, Action: String; var IsPending: Boolean) of Object;
-  TUICloseEvent = procedure(AThreadId: Cardinal) of Object;
+  TUICloseEvent = procedure(Action, UserName: String) of Object;
   TOnCustomFormEvent = procedure of Object;
   TDoStartFileTransferring = procedure(AUser, AUserName, APassword: String; ANeedGetPass: Boolean = False) of Object;
-  TReconnectToPartnerStart = procedure(user, username, pass, action: String; AUIForm: TForm) of Object;
+  TReconnectToPartnerStart = procedure(user, username, pass, action: String) of Object;
 
   TDoDeleteDeviceGroup = procedure(AUID: String) of object;
   TDoExit = procedure of object;
