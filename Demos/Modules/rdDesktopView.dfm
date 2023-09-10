@@ -30,7 +30,6 @@ object rdDesktopViewer: TrdDesktopViewer
   OnKeyUp = FormKeyUp
   OnMouseWheel = FormMouseWheel
   OnResize = FormResize
-  OnShow = FormShow
   TextHeight = 14
   object pMain: TPanel
     Left = 0

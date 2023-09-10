@@ -172,7 +172,6 @@ type
     procedure aLockSystemOnCloseExecute(Sender: TObject);
     procedure aOptimizeSpeedExecute(Sender: TObject);
     procedure aOptimizeQualityExecute(Sender: TObject);
-    procedure FormShow(Sender: TObject);
     procedure lHideMiniPanelClick(Sender: TObject);
     procedure lFullScreenClick(Sender: TObject);
     procedure lCloseClick(Sender: TObject);
@@ -226,7 +225,7 @@ type
     RWinDown: Boolean;
 
     UIModulesList: TList;
-    ActiveUIModule: PUIDataModule;
+    ActiveUIModule: TUIDataModule;
 
     FProgressDialogsList: TList;
 
@@ -336,20 +335,20 @@ var
   pTab: TChromeTab;
   pUIItem: TUIDataModule;
 //  pViewer: TRtcPDesktopViewer;
-//  fIsPending: Boolean;
+  fIsPending: Boolean;
 begin
-//  if Assigned(FOnUIOpen) then
-//    FOnUIOpen(AUserName, 'desk', fIsPending);
-//
-//  if not fIsPending then //Если подключение отменено закрываем
-//    Exit
-//  else
-//  begin
-//    Show;
-//    BringToFront;
-//    //BringWindowToTop(Handle);
-//    SetForegroundWindow(Handle);
-//  end;
+  if Assigned(FOnUIOpen) then
+    FOnUIOpen(AUserName, 'desk', fIsPending);
+
+  if not fIsPending then //Если подключение отменено закрываем
+    Exit
+  else
+  begin
+    Show;
+    BringToFront;
+    //BringWindowToTop(Handle);
+    SetForegroundWindow(Handle);
+  end;
 
   pTab := MainChromeTabs.Tabs.Add;
   pTab.UserName := AUserName;  //К которому изначально подключались (не UserToConnect, на которого перенаправило)
@@ -397,7 +396,7 @@ begin
 
   UIModulesList.Add(pUIItem);
 
-  ActiveUIModule := @pUIItem;
+  ActiveUIModule := pUIItem;
   MainChromeTabsActiveTabChanged(nil, pTab);
 end;
 
@@ -723,9 +722,9 @@ begin
   aBlockKeyboardMouse.Checked := not aBlockKeyboardMouse.Checked;
 
   if aBlockKeyboardMouse.Checked then
-    ActiveUIModule^.UI.Send_BlockKeyboardAndMouse
+    ActiveUIModule.UI.Send_BlockKeyboardAndMouse
   else
-    ActiveUIModule^.UI.Send_UnBlockKeyboardAndMouse;
+    ActiveUIModule.UI.Send_UnBlockKeyboardAndMouse;
 end;
 
 {procedure TrdDesktopViewer.AcceptFiles( var msg : TMessage );
@@ -766,8 +765,8 @@ var
   Bitmap: TBitmap;
 begin
   Bitmap := TBitmap.Create;
-  Bitmap.SetSize(ActiveUIModule^.UI.ScreenWidth, ActiveUIModule^.UI.ScreenHeight);
-  ActiveUIModule^.UI.DrawScreen(Bitmap.Canvas, Bitmap.Width, Bitmap.Height);
+  Bitmap.SetSize(ActiveUIModule.UI.ScreenWidth, ActiveUIModule.UI.ScreenHeight);
+  ActiveUIModule.UI.DrawScreen(Bitmap.Canvas, Bitmap.Width, Bitmap.Height);
 
 //  Bitmap.Width := myUI.GetScreen.Image.Width;
 //  Bitmap.Height := myUI.GetScreen.Image.Height;
@@ -810,8 +809,8 @@ begin
 
     Bitmap := TBitmap.Create;
 
-    Bitmap.SetSize(ActiveUIModule^.UI.ScreenWidth, ActiveUIModule^.UI.ScreenHeight);
-    ActiveUIModule^.UI.DrawScreen(Bitmap.Canvas, Bitmap.Width, Bitmap.Height);
+    Bitmap.SetSize(ActiveUIModule.UI.ScreenWidth, ActiveUIModule.UI.ScreenHeight);
+    ActiveUIModule.UI.DrawScreen(Bitmap.Canvas, Bitmap.Width, Bitmap.Height);
 
 //    Bitmap.Width := myUI.GetScreen.Image.Width;
 //    Bitmap.Height := myUI.GetScreen.Image.Height;
@@ -831,7 +830,7 @@ end;
 procedure TrdDesktopViewer.aSendShortcutsExecute(Sender: TObject);
 begin
   aSendShortcuts.Checked := not aSendShortcuts.Checked;
-  ActiveUIModule^.UI.Module.SendShortcuts := aSendShortcuts.Checked;
+  ActiveUIModule.UI.Module.SendShortcuts := aSendShortcuts.Checked;
   SetShortcuts_Hook(aSendShortcuts.Checked);
 end;
 
@@ -844,28 +843,28 @@ begin
 end;
 
 procedure TrdDesktopViewer.InitScreen;
-  begin
+begin
   Scroll.HorzScrollBar.Visible:=False;
   Scroll.VertScrollBar.Visible:=False;
   Scroll.VertScrollBar.Position:=0;
   Scroll.HorzScrollBar.Position:=0;
 
-  ActiveUIModule^.pImage^.Left:=0;
-  ActiveUIModule^.pImage^.Top:=0;
-  WindowState:=wsNormal;
-  BorderStyle:=bsSizeable;
+  ActiveUIModule.pImage^.Left:=0;
+  ActiveUIModule.pImage^.Top:=0;
+  WindowState := wsNormal;
+  BorderStyle := bsSizeable;
 
-  if ActiveUIModule^.UI.HaveScreen then
-    begin
-    if ActiveUIModule^.UI.ScreenWidth < Screen.Width then
-      ClientWidth := ActiveUIModule^.UI.ScreenWidth
+  if ActiveUIModule.UI.HaveScreen then
+  begin
+    if ActiveUIModule.UI.ScreenWidth < Screen.Width then
+      ClientWidth := ActiveUIModule.UI.ScreenWidth
     else
       Width:=Screen.Width;
-    if ActiveUIModule^.UI.ScreenHeight < Screen.Height then
-      ClientHeight := ActiveUIModule^.UI.ScreenHeight
+    if ActiveUIModule.UI.ScreenHeight < Screen.Height then
+      ClientHeight := ActiveUIModule.UI.ScreenHeight
     else
       Height := Screen.Height;
-    if ActiveUIModule^.UI.ScreenHeight >= Screen.Height then
+    if ActiveUIModule.UI.ScreenHeight >= Screen.Height then
     begin
       Left := 0;
       Top := 0;
@@ -892,7 +891,7 @@ procedure TrdDesktopViewer.InitScreen;
   // tell Windows that you're accepting drag and drop files
 //  if assigned(PFileTrans) then
 //    DragAcceptFiles( Handle, True );
-  end;
+end;
 
 procedure TrdDesktopViewer.lCloseClick(Sender: TObject);
 begin
@@ -904,34 +903,34 @@ end;
 procedure TrdDesktopViewer.FullScreen;
   begin
   // move to Full Screen mode
-  Scroll.HorzScrollBar.Visible:=False;
-  Scroll.VertScrollBar.Visible:=False;
-  Scroll.VertScrollBar.Position:=0;
-  Scroll.HorzScrollBar.Position:=0;
+  Scroll.HorzScrollBar.Visible := False;
+  Scroll.VertScrollBar.Visible := False;
+  Scroll.VertScrollBar.Position := 0;
+  Scroll.HorzScrollBar.Position := 0;
 
-  WindowState:=wsNormal;
-  BorderStyle:=bsNone;
-  Left:=0;
-  Top:=0;
-  Width:=Screen.Width;
-  Height:=Screen.Height;
+  WindowState := wsNormal;
+  BorderStyle := bsNone;
+  Left := 0;
+  Top := 0;
+  Width := Screen.Width;
+  Height := Screen.Height;
 
-  if (ActiveUIModule^.pImage^.Align=alNone)
-    and ActiveUIModule^.UI.HaveScreen
+  if (ActiveUIModule.pImage^.Align = alNone)
+    and ActiveUIModule.UI.HaveScreen
     and aStretchScreen.Checked then
   begin
-    ActiveUIModule^.pImage^.Width := ActiveUIModule^.UI.ScreenWidth;
-    ActiveUIModule^.pImage^.Height := ActiveUIModule^.UI.ScreenHeight;
-    Scroll.HorzScrollBar.Visible:=True;
-    Scroll.VertScrollBar.Visible:=True;
-    if ActiveUIModule^.pImage^.Width < Screen.Width then
-      ActiveUIModule^.pImage^.Left := (Screen.Width - ActiveUIModule^.pImage^.Width) div 2
+    ActiveUIModule.pImage^.Width := ActiveUIModule.UI.ScreenWidth;
+    ActiveUIModule.pImage^.Height := ActiveUIModule.UI.ScreenHeight;
+    Scroll.HorzScrollBar.Visible := True;
+    Scroll.VertScrollBar.Visible := True;
+    if ActiveUIModule.pImage^.Width < Screen.Width then
+      ActiveUIModule.pImage^.Left := (Screen.Width - ActiveUIModule.pImage^.Width) div 2
     else
-      ActiveUIModule^.pImage^.Left := 0;
-    if ActiveUIModule^.pImage^.Height < Screen.Height then
-      ActiveUIModule^.pImage^.Top := (Screen.Height - ActiveUIModule^.pImage^.Height) div 2
+      ActiveUIModule.pImage^.Left := 0;
+    if ActiveUIModule.pImage^.Height < Screen.Height then
+      ActiveUIModule.pImage^.Top := (Screen.Height - ActiveUIModule.pImage^.Height) div 2
     else
-      ActiveUIModule^.pImage^.Top := 0;
+      ActiveUIModule.pImage^.Top := 0;
   end;
 
   BringToFront;
@@ -961,7 +960,7 @@ begin
 
     if aStretchScreen.Checked then
     begin
-      ActiveUIModule^.pImage^.Align := alClient;
+      ActiveUIModule.pImage^.Align := alClient;
 //      pImage.Width := myUI.ScreenWidth;
 //      pImage.Height := myUI.ScreenHeight;
       Scroll.HorzScrollBar.Visible := False;
@@ -977,37 +976,37 @@ begin
     end
     else
     begin
-      ActiveUIModule^.pImage^.Align := alNone;
+      ActiveUIModule.pImage^.Align := alNone;
 
-      if (ActiveUIModule^.UI.ScreenWidth <= ClientWidth)
-        and (ActiveUIModule^.UI.ScreenHeight <= ClientHeight) then
+      if (ActiveUIModule.UI.ScreenWidth <= ClientWidth)
+        and (ActiveUIModule.UI.ScreenHeight <= ClientHeight) then
       begin
-        ActiveUIModule^.pImage^.Width := ActiveUIModule^.UI.ScreenWidth;
-        ActiveUIModule^.pImage^.Height := ActiveUIModule^.UI.ScreenHeight;
-        ActiveUIModule^.pImage^.Left := (ClientWidth - ActiveUIModule^.UI.ScreenWidth) div 2;
-        ActiveUIModule^.pImage^.Top := (ClientHeight - ActiveUIModule^.UI.ScreenHeight) div 2;
+        ActiveUIModule.pImage^.Width := ActiveUIModule.UI.ScreenWidth;
+        ActiveUIModule.pImage^.Height := ActiveUIModule.UI.ScreenHeight;
+        ActiveUIModule.pImage^.Left := (ClientWidth - ActiveUIModule.UI.ScreenWidth) div 2;
+        ActiveUIModule.pImage^.Top := (ClientHeight - ActiveUIModule.UI.ScreenHeight) div 2;
       end
       else
       begin
-        if (ActiveUIModule^.UI.ScreenWidth > ClientWidth)
-          or (ActiveUIModule^.UI.ScreenHeight > ClientHeight) then
+        if (ActiveUIModule.UI.ScreenWidth > ClientWidth)
+          or (ActiveUIModule.UI.ScreenHeight > ClientHeight) then
         begin
-          if ClientWidth / ActiveUIModule^.UI.ScreenWidth < ClientHeight / ActiveUIModule^.UI.ScreenHeight then
-            Scale := ClientWidth / ActiveUIModule^.UI.ScreenWidth
+          if ClientWidth / ActiveUIModule.UI.ScreenWidth < ClientHeight / ActiveUIModule.UI.ScreenHeight then
+            Scale := ClientWidth / ActiveUIModule.UI.ScreenWidth
           else
-            Scale := ClientHeight / ActiveUIModule^.UI.ScreenHeight;
+            Scale := ClientHeight / ActiveUIModule.UI.ScreenHeight;
         end
         else
         begin
-          if ClientWidth / ActiveUIModule^.UI.ScreenWidth > ClientHeight / ActiveUIModule^.UI.ScreenHeight then
-            Scale := ClientWidth / ActiveUIModule^.UI.ScreenWidth
+          if ClientWidth / ActiveUIModule.UI.ScreenWidth > ClientHeight / ActiveUIModule.UI.ScreenHeight then
+            Scale := ClientWidth / ActiveUIModule.UI.ScreenWidth
           else
-            Scale := ClientHeight / ActiveUIModule^.UI.ScreenHeight;
+            Scale := ClientHeight / ActiveUIModule.UI.ScreenHeight;
         end;
-        ActiveUIModule^.pImage^.Width := Floor(ClientWidth * Scale);
-        ActiveUIModule^.pImage^.Height := Floor(ClientHeight * Scale);
-        ActiveUIModule^.pImage^.Left := (ClientWidth - ActiveUIModule^.pImage^.Width) div 2;
-        ActiveUIModule^.pImage^.Top := (ClientHeight - ActiveUIModule^.pImage^.Height) div 2;
+        ActiveUIModule.pImage^.Width := Floor(ClientWidth * Scale);
+        ActiveUIModule.pImage^.Height := Floor(ClientHeight * Scale);
+        ActiveUIModule.pImage^.Left := (ClientWidth - ActiveUIModule.pImage^.Width) div 2;
+        ActiveUIModule.pImage^.Top := (ClientHeight - ActiveUIModule.pImage^.Height) div 2;
       end;
 
       Scroll.HorzScrollBar.Visible := False;
@@ -1026,29 +1025,32 @@ begin
 
   RecordCancel;
 
-  ActiveUIModule^.FT_UI.CloseAndClear();
+  ActiveUIModule.FT_UI.CloseAndClear();
 end;
 
 procedure TrdDesktopViewer.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
 //  Hide;
 
-  if aHideWallpaper.Checked then
-  try
-    if ActiveUIModule^.UI.Active then
-      ActiveUIModule^.UI.Send_ShowDesktop;
-  except
-  end;
+  if ActiveUIModule <> nil then
+  begin
+    if aHideWallpaper.Checked then
+    try
+      if ActiveUIModule.UI.Active then
+        ActiveUIModule.UI.Send_ShowDesktop;
+    except
+    end;
 
-  if aLockSystemOnClose.Checked then
-  try
-    if ActiveUIModule^.UI.Active then
-      ActiveUIModule^.UI.Send_LockSystem;
-  except
+    if aLockSystemOnClose.Checked then
+    try
+      if ActiveUIModule.UI.Active then
+        ActiveUIModule.UI.Send_LockSystem;
+    except
+    end;
   end;
 
   DesktopTimer.Enabled := False;
-  CanClose := ActiveUIModule^.UI.CloseAndClear;
+  CanClose := ActiveUIModule.UI.CloseAndClear;
 end;
 
 procedure TrdDesktopViewer.FormCreate(Sender: TObject);
@@ -1123,7 +1125,7 @@ end;
 
 procedure TrdDesktopViewer.FormMouseWheel(Sender: TObject; Shift: TShiftState; WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
 begin
-  ActiveUIModule^.UI.SendMouseWheel(WheelDelta, Shift);
+  ActiveUIModule.UI.SendMouseWheel(WheelDelta, Shift);
   Handled := True;
 end;
 
@@ -1145,11 +1147,6 @@ begin
   lblRecInfo.Left := Width - 80;
   lblRecInfo.Top := 10;
   lblRecInfo.Visible := False;
-end;
-
-procedure TrdDesktopViewer.FormShow(Sender: TObject);
-begin
-  UpdateQuality;
 end;
 
 procedure TrdDesktopViewer.FT_UIClose(Sender: TRtcPFileTransferUI);
@@ -1282,15 +1279,15 @@ end;}
 procedure TrdDesktopViewer.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
   case Key of
-    VK_LWIN: LWinDown:=True;
-    VK_RWIN: RWinDown:=True;
+    VK_LWIN: LWinDown := True;
+    VK_RWIN: RWinDown := True;
     end;
 
   if LWinDown or RWinDown then
     begin
     if Key = Ord('W') then
     begin
-      ActiveUIModule^.pImage^.Align := alNone;
+      ActiveUIModule.pImage^.Align := alNone;
       if BorderStyle <> bsNone then
         FullScreen
       else
@@ -1301,11 +1298,11 @@ begin
     else if Key = Ord('S') then
     begin
       if aStretchScreen.Checked then
-        ActiveUIModule^.pImage^.Align := alClient
+        ActiveUIModule.pImage^.Align := alClient
       else
-        ActiveUIModule^.pImage.Align := alNone;
-      if (ActiveUIModule^.UI.ScreenWidth >= Screen.Width) or
-         (ActiveUIModule^.UI.ScreenHeight >= Screen.Height) then
+        ActiveUIModule.pImage.Align := alNone;
+      if (ActiveUIModule.UI.ScreenWidth >= Screen.Width) or
+         (ActiveUIModule.UI.ScreenHeight >= Screen.Height) then
       begin
         if BorderStyle <> bsNone then
           FullScreen
@@ -1317,8 +1314,8 @@ begin
       Exit;
     end;
   end;
-  if ActiveUIModule^.UI.ControlMode <> rtcpNoControl then
-    ActiveUIModule^.UI.SendKeyDown(Key, Shift);
+  if ActiveUIModule.UI.ControlMode <> rtcpNoControl then
+    ActiveUIModule.UI.SendKeyDown(Key, Shift);
   Key := 0;
 end;
 
@@ -1334,17 +1331,17 @@ begin
     VK_RWIN: RWinDown := False;
     end;
 
-  if ActiveUIModule^.UI.ControlMode <> rtcpNoControl then
+  if ActiveUIModule.UI.ControlMode <> rtcpNoControl then
   begin
     temp := Key; // a work-around for Internal Error in Delphi 7 compiler
-    ActiveUIModule^.UI.SendKeyUp(temp, Shift);
+    ActiveUIModule.UI.SendKeyUp(temp, Shift);
   end;
   Key := 0;
 end;
 
 procedure TrdDesktopViewer.FormDeactivate(Sender: TObject);
 begin
-  ActiveUIModule^.UI.Deactivated;
+  ActiveUIModule.UI.Deactivated;
   LWinDown := False;
   RWinDown := False;
   LMouseDown := False;
@@ -1447,6 +1444,8 @@ begin
   //tell Windows that you're accepting drag and drop files
 //  if Assigned(PFileTrans) then
 //    DragAcceptFiles( Handle, True );
+
+    UpdateQuality;
 end;
 
 procedure TrdDesktopViewer.OnProgressDialogCancel(Sender: TObject);
@@ -1455,7 +1454,7 @@ var
 begin
   pPDData := GetProgressDialogData(PProgressDialog(@Sender));
   if pPDData <> nil then
-    ActiveUIModule^.FT_UI.Module.CancelBatch(ActiveUIModule^.FT_UI.Module, pPDData^.taskId);
+    ActiveUIModule.FT_UI.Module.CancelBatch(ActiveUIModule.FT_UI.Module, pPDData^.taskId);
 
   TProgressDialog(Sender).Stop;
   RemoveProgressDialogByValue(@Sender);
@@ -1483,7 +1482,7 @@ begin
   //tell Windows that you're accepting drag and drop files
   //DragAcceptFiles(Handle, False);
 
-  ActiveUIModule^.TimerReconnect.Enabled := True;
+  ActiveUIModule.TimerReconnect.Enabled := True;
 //  Close;
 end;
 
@@ -1659,9 +1658,9 @@ procedure TrdDesktopViewer.btnSettingsClick(Sender: TObject);
   begin
 //  panOptions.Visible:=False;
 
-  panSettings.Left:=10;
-  panSettings.Top:=10;
-  panSettings.Visible:=True;
+  panSettings.Left := 10;
+  panSettings.Top := 10;
+  panSettings.Visible := True;
 
 //  // Clear Host Settings
 //  grpScreenBlocks.ItemIndex:=-1;
@@ -1692,29 +1691,29 @@ end;
 
 procedure TrdDesktopViewer.aChatExecute(Sender: TObject);
 begin
-  PChat.Open(ActiveUIModule^.UI.UserName, Sender);
+  PChat.Open(ActiveUIModule.UI.UserName, Sender);
 end;
 
 procedure TrdDesktopViewer.aCtrlAltDelExecute(Sender: TObject);
 begin
-  ActiveUIModule^.UI.Send_CtrlAltDel;
+  ActiveUIModule.UI.Send_CtrlAltDel;
 end;
 
 procedure TrdDesktopViewer.aFileTransferExecute(Sender: TObject);
 begin
   if Assigned(FDoStartFileTransferring) then
-    FDoStartFileTransferring(ActiveUIModule^.UI.UserName, ActiveUIModule^.UI.UserDesc, '', True);
+    FDoStartFileTransferring(ActiveUIModule.UI.UserName, ActiveUIModule.UI.UserDesc, '', True);
 end;
 
 procedure TrdDesktopViewer.aFullScreenExecute(Sender: TObject);
 begin
-  if (ActiveUIModule^.UI.ScreenWidth >= Screen.Width) or
-     (ActiveUIModule^.UI.ScreenHeight >= Screen.Height) then
+  if (ActiveUIModule.UI.ScreenWidth >= Screen.Width) or
+     (ActiveUIModule.UI.ScreenHeight >= Screen.Height) then
   begin
     if aStretchScreen.Checked then
-      ActiveUIModule^.pImage^.Align := alClient
+      ActiveUIModule.pImage^.Align := alClient
     else
-      ActiveUIModule^.pImage^.Align := alNone;
+      ActiveUIModule.pImage^.Align := alNone;
     if BorderStyle <> bsNone then
       FullScreen
     else
@@ -1726,18 +1725,18 @@ begin
     begin
 //      pImage.Align:=alNone;
       if aStretchScreen.Checked then
-        ActiveUIModule^.pImage^.Align := alClient
+        ActiveUIModule.pImage^.Align := alClient
       else
-        ActiveUIModule^.pImage^.Align := alNone;
+        ActiveUIModule.pImage^.Align := alNone;
       FullScreen;
     end
     else
     begin
 //      pImage.Align:=alClient;
       if aStretchScreen.Checked then
-        ActiveUIModule^.pImage^.Align := alClient
+        ActiveUIModule.pImage^.Align := alClient
       else
-        ActiveUIModule^.pImage^.Align := alNone;
+        ActiveUIModule.pImage^.Align := alNone;
       InitScreen;
     end;
   end;
@@ -1748,16 +1747,16 @@ end;
 procedure TrdDesktopViewer.aHideWallpaperExecute(Sender: TObject);
 begin
   if not aHideWallpaper.Checked then
-    ActiveUIModule^.UI.Send_HideDesktop(Sender)
+    ActiveUIModule.UI.Send_HideDesktop(Sender)
   else
-    ActiveUIModule^.UI.Send_ShowDesktop(Sender);
+    ActiveUIModule.UI.Send_ShowDesktop(Sender);
 
   aHideWallpaper.Checked := not aHideWallpaper.Checked;
 end;
 
 procedure TrdDesktopViewer.aLockSystemExecute(Sender: TObject);
 begin
-  ActiveUIModule^.UI.Send_LockSystem(Sender);
+  ActiveUIModule.UI.Send_LockSystem(Sender);
 end;
 
 procedure TrdDesktopViewer.aLockSystemOnCloseExecute(Sender: TObject);
@@ -1767,7 +1766,7 @@ end;
 
 procedure TrdDesktopViewer.aLogoffExecute(Sender: TObject);
 begin
-  ActiveUIModule^.UI.Send_LogoffSystem(Sender);
+  ActiveUIModule.UI.Send_LogoffSystem(Sender);
 end;
 
 procedure TrdDesktopViewer.aOptimalScaleExecute(Sender: TObject);
@@ -1780,11 +1779,14 @@ end;
 
 procedure TrdDesktopViewer.UpdateQuality;
 begin
+  if ActiveUIModule = nil then
+    Exit;
+
   if aOptimizeQuality.Checked then
   begin
-    ActiveUIModule^.UI.ChgDesktop_Begin;
+    ActiveUIModule.UI.ChgDesktop_Begin;
     try
-      ActiveUIModule^.UI.ChgDesktop_ColorLimit(rdColor32bit);
+      ActiveUIModule.UI.ChgDesktop_ColorLimit(rdColor32bit);
 //      UI.ChgDesktop_FrameRate(rdFramesMax);
 //      UI.ChgDesktop_SendScreenInBlocks(rdBlocks1);
 //      UI.ChgDesktop_SendScreenRefineBlocks(rdBlocks12);
@@ -1792,18 +1794,18 @@ begin
 //      UI.ChgDesktop_SendScreenSizeLimit(rdBlockAnySize);
   //    if grpColorLow.ItemIndex>=0 then
   //      begin
-        ActiveUIModule^.UI.ChgDesktop_ColorLowLimit(rd_ColorHigh);
+        ActiveUIModule.UI.ChgDesktop_ColorLowLimit(rd_ColorHigh);
   //      UI.ChgDesktop_ColorReducePercent(cbReduceColors.Value);
   //      end;
     finally
-      ActiveUIModule^.UI.ChgDesktop_End;
+      ActiveUIModule.UI.ChgDesktop_End;
     end;
   end
   else
   begin
-    ActiveUIModule^.UI.ChgDesktop_Begin;
+    ActiveUIModule.UI.ChgDesktop_Begin;
     try
-      ActiveUIModule^.UI.ChgDesktop_ColorLimit(rdColor8bit);
+      ActiveUIModule.UI.ChgDesktop_ColorLimit(rdColor8bit);
 //      UI.ChgDesktop_FrameRate(rdFramesMax);
 //      UI.ChgDesktop_SendScreenInBlocks(rdBlocks1);
 //      UI.ChgDesktop_SendScreenRefineBlocks(rdBlocks12);
@@ -1811,12 +1813,12 @@ begin
 //      UI.ChgDesktop_SendScreenSizeLimit(rdBlockAnySize);
 //  //    if grpColorLow.ItemIndex>=0 then
 //  //      begin
-        ActiveUIModule^.UI.ChgDesktop_ColorLowLimit(rd_ColorHigh);
+        ActiveUIModule.UI.ChgDesktop_ColorLowLimit(rd_ColorHigh);
 //  //      UI.ChgDesktop_ColorReducePercent(cbReduceColors.Value);
 //  //      end;
   //      end;
     finally
-      ActiveUIModule^.UI.ChgDesktop_End;
+      ActiveUIModule.UI.ChgDesktop_End;
     end;
   end;
 end;
@@ -1850,14 +1852,14 @@ begin
   aBlockKeyboardMouse.Enabled := not aPowerOffMonitor.Checked;
 
   if aPowerOffMonitor.Checked then
-    ActiveUIModule^.UI.Send_PowerOffMonitor(Sender)
+    ActiveUIModule.UI.Send_PowerOffMonitor(Sender)
   else
-    ActiveUIModule^.UI.Send_PowerOnMonitor(Sender);
+    ActiveUIModule.UI.Send_PowerOnMonitor(Sender);
 end;
 
 procedure TrdDesktopViewer.aPowerOffSystemExecute(Sender: TObject);
 begin
-  ActiveUIModule^.UI.Send_PowerOffSystem(Sender);
+  ActiveUIModule.UI.Send_PowerOffSystem(Sender);
 end;
 
 procedure TrdDesktopViewer.aRecordStopExecute(Sender: TObject);
@@ -1905,11 +1907,11 @@ begin
   FVideoFile := FVideoFile + 'Video_' + FormatDateTime('YYYY_MM_DD_HHNNSS', Now) + '.rmxv';
   FVideoWriter := TRMXVideoWriter.Create(FVideoFile, TRMXVideoFileWin);
   FFirstImageArrived := false;
-  ActiveUIModule^.UI.Playback.ScreenDecoder.OnSetScreenData := OnSetScreenData;
+  ActiveUIModule.UI.Playback.ScreenDecoder.OnSetScreenData := OnSetScreenData;
   // data to send to the user ...
   fn := TRtcFunctionInfo.Create;
   fn.FunctionName := 'restart_desk';
-  ActiveUIModule^.UI.Module.Client.SendToUser(ActiveUIModule^.UI.Module, ActiveUIModule^.UI.UserName, fn);
+  ActiveUIModule.UI.Module.Client.SendToUser(ActiveUIModule.UI.Module, ActiveUIModule.UI.UserName, fn);
 end;
 
 procedure TrdDesktopViewer.RecordStop;
@@ -1919,7 +1921,7 @@ var
 begin
   if not Assigned(FVideoWriter) then
     Exit;
-  ActiveUIModule^.UI.Playback.ScreenDecoder.OnSetScreenData := nil;
+  ActiveUIModule.UI.Playback.ScreenDecoder.OnSetScreenData := nil;
   w := FVideoWriter;
   FVideoWriter := nil;
   w.Free;
@@ -2180,7 +2182,7 @@ begin
 
   //  TRtcPFileTransfer(myUI.Module).NotifyFileBatchSend :=FT_UINotifyFileBatchSend;
     try
-      temp_id := ActiveUIModule^.FT_UI.Module.FetchBatch(ActiveUIModule^.FT_UI.UserName,
+      temp_id := ActiveUIModule.FT_UI.Module.FetchBatch(ActiveUIModule.FT_UI.UserName,
                           FileList, ExtractFilePath(CB_DataObject.FFiles[0].filePath), String(Message.LParam), nil);
     except
   //  on E: Exception do
@@ -2322,8 +2324,8 @@ var
 begin
   Bitmap := TBitmap.Create;
 
-  Bitmap.SetSize(ActiveUIModule^.UI.ScreenWidth, ActiveUIModule^.UI.ScreenHeight);
-  ActiveUIModule^.UI.DrawScreen(Bitmap.Canvas, Bitmap.Width, Bitmap.Height);
+  Bitmap.SetSize(ActiveUIModule.UI.ScreenWidth, ActiveUIModule.UI.ScreenHeight);
+  ActiveUIModule.UI.DrawScreen(Bitmap.Canvas, Bitmap.Width, Bitmap.Height);
 
 //  Bitmap.Width := UI.GetScreen.Image.Width;
 //  Bitmap.Height := UI.GetScreen.Image.Height;
@@ -2430,31 +2432,31 @@ end;}
 
 procedure TrdDesktopViewer.aRestartSystemExecute(Sender: TObject);
 begin
-  ActiveUIModule^.UI.Send_RestartSystem(Sender);
+  ActiveUIModule.UI.Send_RestartSystem(Sender);
 end;
 
 procedure TrdDesktopViewer.btnAcceptClick(Sender: TObject);
 begin
-  panSettings.Visible:=False;
-  ActiveUIModule^.UI.ChgDesktop_Begin;
+  panSettings.Visible := False;
+  ActiveUIModule.UI.ChgDesktop_Begin;
   try
-    if grpLayered.ItemIndex>=0 then      ActiveUIModule^.UI.ChgDesktop_CaptureLayeredWindows(grpLayered.ItemIndex=0);
-    if grpMirror.ItemIndex>=0 then       ActiveUIModule^.UI.ChgDesktop_UseMirrorDriver(grpMirror.ItemIndex=0);
-    if grpMouse.ItemIndex>=0 then        ActiveUIModule^.UI.ChgDesktop_UseMouseDriver(grpMouse.ItemIndex=0);
-    if grpMonitors.ItemIndex>=0 then     ActiveUIModule^.UI.ChgDesktop_CaptureAllMonitors(grpMonitors.ItemIndex=0);
-    if grpColor.ItemIndex>=0 then        ActiveUIModule^.UI.ChgDesktop_ColorLimit(TRdColorLimit(grpColor.ItemIndex));
-    if grpFrame.ItemIndex>=0 then        ActiveUIModule^.UI.ChgDesktop_FrameRate(TRdFrameRate(grpFrame.ItemIndex));
-    if grpScreenBlocks.ItemIndex>=0 then ActiveUIModule^.UI.ChgDesktop_SendScreenInBlocks(TrdScreenBlocks(grpScreenBlocks.ItemIndex));
-    if grpScreenBlocks2.ItemIndex>=0 then ActiveUIModule^.UI.ChgDesktop_SendScreenRefineBlocks(TrdScreenBlocks(grpScreenBlocks2.ItemIndex));
-    if grpScreen2Refine.ItemIndex>=0 then  ActiveUIModule^.UI.ChgDesktop_SendScreenRefineDelay(grpScreen2Refine.ItemIndex);
-    if grpScreenLimit.ItemIndex>=0 then  ActiveUIModule^.UI.ChgDesktop_SendScreenSizeLimit(TrdScreenLimit(grpScreenLimit.ItemIndex));
-    if grpColorLow.ItemIndex>=0 then
+    if grpLayered.ItemIndex >= 0 then      ActiveUIModule.UI.ChgDesktop_CaptureLayeredWindows(grpLayered.ItemIndex = 0);
+    if grpMirror.ItemIndex >= 0 then       ActiveUIModule.UI.ChgDesktop_UseMirrorDriver(grpMirror.ItemIndex = 0);
+    if grpMouse.ItemIndex >= 0 then        ActiveUIModule.UI.ChgDesktop_UseMouseDriver(grpMouse.ItemIndex = 0);
+    if grpMonitors.ItemIndex >= 0 then     ActiveUIModule.UI.ChgDesktop_CaptureAllMonitors(grpMonitors.ItemIndex = 0);
+    if grpColor.ItemIndex >= 0 then        ActiveUIModule.UI.ChgDesktop_ColorLimit(TRdColorLimit(grpColor.ItemIndex));
+    if grpFrame.ItemIndex >= 0 then        ActiveUIModule.UI.ChgDesktop_FrameRate(TRdFrameRate(grpFrame.ItemIndex));
+    if grpScreenBlocks.ItemIndex >= 0 then ActiveUIModule.UI.ChgDesktop_SendScreenInBlocks(TrdScreenBlocks(grpScreenBlocks.ItemIndex));
+    if grpScreenBlocks2.ItemIndex >= 0 then ActiveUIModule.UI.ChgDesktop_SendScreenRefineBlocks(TrdScreenBlocks(grpScreenBlocks2.ItemIndex));
+    if grpScreen2Refine.ItemIndex >= 0 then  ActiveUIModule.UI.ChgDesktop_SendScreenRefineDelay(grpScreen2Refine.ItemIndex);
+    if grpScreenLimit.ItemIndex >= 0 then  ActiveUIModule.UI.ChgDesktop_SendScreenSizeLimit(TrdScreenLimit(grpScreenLimit.ItemIndex));
+    if grpColorLow.ItemIndex >= 0 then
       begin
-      ActiveUIModule^.UI.ChgDesktop_ColorLowLimit(TrdLowColorLimit(grpColorLow.ItemIndex));
-      ActiveUIModule^.UI.ChgDesktop_ColorReducePercent(cbReduceColors.Value);
+      ActiveUIModule.UI.ChgDesktop_ColorLowLimit(TrdLowColorLimit(grpColorLow.ItemIndex));
+      ActiveUIModule.UI.ChgDesktop_ColorReducePercent(cbReduceColors.Value);
       end;
   finally
-    ActiveUIModule^.UI.ChgDesktop_End;
+    ActiveUIModule.UI.ChgDesktop_End;
     end;
 end;
 
@@ -2485,7 +2487,7 @@ end;
 
 procedure TrdDesktopViewer.DesktopTimerTimer(Sender: TObject);
 begin
-  if assigned(ActiveUIModule^.UI) and ActiveUIModule^.UI.InControl and (GetForegroundWindow <> Handle) then
+  if assigned(ActiveUIModule.UI) and ActiveUIModule.UI.InControl and (GetForegroundWindow <> Handle) then
     FormDeactivate(nil);
 end;
 
