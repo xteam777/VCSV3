@@ -1790,18 +1790,19 @@ begin
   if FAction = 'desk' then
   begin
     FDesktopControl.ChgDesktop_Begin;
-    FDesktopControl.ChgDesktop_UseMouseDriver(False);
-    FDesktopControl.ChgDesktop_CaptureLayeredWindows(False);
-    FDesktopControl.ChgDesktop_ColorLimit(rdColor32bit);
-    FDesktopControl.ChgDesktop_FrameRate(rdFramesMax);
-    FDesktopControl.ChgDesktop_SendScreenInBlocks(rdBlocks1);
-    FDesktopControl.ChgDesktop_SendScreenRefineBlocks(rdBlocks12);
-//    FDesktopControl.ChgDesktop_SendScreenRefineDelay(grpScreen2Refine.ItemIndex);
-    FDesktopControl.ChgDesktop_SendScreenSizeLimit(rdBlockAnySize);
+//    FDesktopControl.ChgDesktop_UseMouseDriver(False);
+//    FDesktopControl.ChgDesktop_CaptureLayeredWindows(False);
+    FDesktopControl.ChgDesktop_ColorLimit(rdColor8bit);
+    FDesktopControl.ChgDesktop_ColorLowLimit(rd_ColorHigh);
+//    FDesktopControl.ChgDesktop_FrameRate(rdFramesMax);
+//    FDesktopControl.ChgDesktop_SendScreenInBlocks(rdBlocks1);
+//    FDesktopControl.ChgDesktop_SendScreenRefineBlocks(rdBlocks12);
+//    FDesktopControl.ChgDesktop_SendScreenSizeLimit(rdBlockAnySize);
 //    if grpColorLow.ItemIndex>=0 then
 //      begin
 //      FDesktopControl.ChgDesktop_ColorLowLimit(rd_ColorHigh);
 //      FDesktopControl.ChgDesktop_ColorReducePercent(cbReduceColors.Value);
+//    FDesktopControl.ChgDesktop_SendScreenRefineDelay(grpScreen2Refine.ItemIndex);
     FDesktopControl.Send_HideDesktop(FUserToConnect);
     FDesktopControl.ChgDesktop_End(FUserToConnect);
 

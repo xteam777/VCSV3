@@ -302,7 +302,7 @@ type
     procedure RemoveProgressDialogByUserName(AUserName: String);
     procedure AddTab(AUserName, AUserDesc, AUserPass: String; AModule: TRtcPDesktopControl);
     function GetUIDataModule(AUserName: String): TUIDataModule;
-    function RemoveUIDataModule(AUserName: String): TUIDataModule;
+    function RemoveUIDataModule(AUserName: String): Integer;
     procedure CloseForm;
   end;
 
@@ -411,15 +411,26 @@ procedure TrdDesktopViewer.MainChromeTabsButtonCloseTabClick(Sender: TObject;
   ATab: TChromeTab; var Close: Boolean);
 var
   pUIItem: TUIDataModule;
+  RemovedInd: Integer;
 begin
   pUIItem := GetUIDataModule(ATab.UserName);
 
   if Assigned(FOnUIClose) then
     FOnUIClose('desk', ATab.UserName); //ThreadID
 
-  RemoveUIDataModule(ATab.UserName);
+  RemovedInd := RemoveUIDataModule(ATab.UserName);
   if UIModulesList.Count = 0 then
+  begin
+    ActiveUIModule := nil;
     CloseForm;
+  end
+  else
+  if RemovedInd > 1 then
+    ActiveUIModule := UIModulesList[RemovedInd - 1]
+  else
+    ActiveUIModule := UIModulesList[0];
+
+  DoResizeImage;
 end;
 
 procedure TrdDesktopViewer.CloseForm;
@@ -427,19 +438,25 @@ begin
   Close;
 end;
 
-function TrdDesktopViewer.RemoveUIDataModule(AUserName: String): TUIDataModule;
+function TrdDesktopViewer.RemoveUIDataModule(AUserName: String): Integer;
 var
   i: Integer;
 begin
-  Result := nil;
+  Result := -1;
   i := UIModulesList.Count - 1;
   while i >= 0 do
+  begin
     if TUIDataModule(UIModulesList[i]).UserName = AUserName then
     begin
       FreeAndNil(TUIDataModule(UIModulesList[i]));
       UIModulesList.Delete(i);
+
+      Result := i;
       Break;
     end;
+
+    i := i - 1;
+  end;
 end;
 
 function TrdDesktopViewer.GetUIDataModule(AUserName: String): TUIDataModule;
@@ -851,7 +868,7 @@ begin
 
   ActiveUIModule.pImage^.Left:=0;
   ActiveUIModule.pImage^.Top:=0;
-  WindowState := wsNormal;
+  WindowState := wsMaximized;
   BorderStyle := bsSizeable;
 
   if ActiveUIModule.UI.HaveScreen then
@@ -908,7 +925,7 @@ procedure TrdDesktopViewer.FullScreen;
   Scroll.VertScrollBar.Position := 0;
   Scroll.HorzScrollBar.Position := 0;
 
-  WindowState := wsNormal;
+  WindowState := wsMaximized;
   BorderStyle := bsNone;
   Left := 0;
   Top := 0;
@@ -1049,7 +1066,6 @@ begin
   end;
 
   DesktopTimer.Enabled := False;
-  CanClose := ActiveUIModule.UI.CloseAndClear;
 end;
 
 procedure TrdDesktopViewer.FormCreate(Sender: TObject);
@@ -1368,6 +1384,8 @@ begin
   for i := 0 to UIModulesList.Count - 1 do
   begin
     FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
+    TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
+    TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
     FreeAndNil(TUIDataModule(UIModulesList[i]));
   end;
   FreeAndNil(UIModulesList);
@@ -1426,7 +1444,7 @@ begin
 //  sStatus.Caption := 'Подготовка рабочего стола. Пожалуйста подождите ...';
 //  sStatus.Visible := True;
 
-  WindowState := wsNormal;
+  WindowState := wsMaximized;
   BorderStyle := bsSizeable;
 //  Width := 400;
 //  Height := 90;
@@ -1534,20 +1552,20 @@ begin
 //    SetCaption;
 //    sStatus.Visible:=False;
     fFirstScreen := False;
-    WindowState := wsNormal;
-    if Sender.ScreenWidth < Screen.Width then
-      ClientWidth := Sender.ScreenWidth
-    else
-      ClientWidth := Screen.Width;
-    if Sender.ScreenHeight < Screen.Height then
-      ClientHeight := Sender.ScreenHeight
-    else
-      Height := Screen.Height;
+    WindowState := wsMaximized;
+//    if Sender.ScreenWidth < ActiveUIModule.pImage.ClientWidth then
+//      ClientWidth := Sender.ScreenWidth
+//    else
+//      ClientWidth := Screen.Width;
+//    if Sender.ScreenHeight < ClientHeight then
+//      ClientHeight := Sender.ScreenHeight
+//    else
+//      Height := Screen.Height;
 //    if myUI.ScreenHeight >= Screen.Height then  //sstuman
 //    begin
-      Left := 0;
-      Top := 0;
-      WindowState := wsMaximized;
+//      Left := 0;
+//      Top := 0;
+
 //    end  //sstuman
 //    else
 //    begin
@@ -1559,6 +1577,8 @@ begin
 //    if Assigned(PFileTrans) then
 //      DragAcceptFiles(Handle, True);
     DesktopTimer.Enabled := True;
+
+    DoResizeImage;
   end;
 end;
 
