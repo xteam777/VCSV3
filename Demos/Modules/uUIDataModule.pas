@@ -3,17 +3,21 @@ unit uUIDataModule;
 interface
 
 uses
-  Messages, System.SysUtils, System.Classes, Vcl.Controls, rtcpFileTrans, rtcpFileTransUI,
+  Messages, System.SysUtils, System.Classes, Vcl.Controls, Vcl.StdCtrls, Vcl.Graphics, rtcpFileTrans, rtcpFileTransUI,
   rtcpDesktopControl, rtcpDesktopControlUI, ChromeTabsClasses, rtcPortalMod,
-  Vcl.ExtCtrls, uVircessTypes;
+  Vcl.ExtCtrls, uVircessTypes, VideoRecorder, rmxVideoStorage;
 
 type
+  PImage = ^TImage;
+  PLabel = ^TLabel;
+
   PUIDataModule = ^TUIDataModule;
   TUIDataModule = class(TDataModule)
     UI: TRtcPDesktopControlUI;
     FT_UI: TRtcPFileTransferUI;
     PFileTrans: TRtcPFileTransfer;
     TimerReconnect: TTimer;
+    TimerRec: TTimer;
     procedure TimerReconnectTimer(Sender: TObject);
   protected
     procedure WndProc(var Message: TMessage); virtual;
@@ -23,7 +27,16 @@ type
   public
     { Public declarations }
     pImage: PRtcPDesktopViewer;
+    pImgRec: PImage;
+    pLblRecInfo: PLabel;
     UserName, UserDesc, UserPass: String;
+    FVideoRecorder: TVideoRecorder;
+    FVideoWriter: TRMXVideoWriter;
+    FVideoFile: String;
+    FImageChanged: Boolean;
+    FVideoImage: TBitmap;
+    FLockVideoImage: Integer;
+    FFirstImageArrived: Boolean;
     ReconnectToPartnerStart: TReconnectToPartnerStart;
 
     property Handle: THandle read FHandle;
@@ -58,7 +71,10 @@ begin
   inherited;
 
   FHandle := AllocateHWND(WndProc);
+
   New(pImage);
+  New(pImgRec);
+  New(pLblRecInfo);
 
   TimerReconnect.Enabled := False;
 end;
@@ -67,7 +83,10 @@ destructor TUIDataModule.Destroy;
 begin
   DeallocateHWND(FHandle);
   FreeAndNil(pImage^);
+
   Dispose(pImage);
+  Dispose(pImgRec);
+  Dispose(pLblRecInfo);
 
   inherited;
 end;

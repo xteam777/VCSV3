@@ -108,10 +108,8 @@ type
     iMiniPanelShow: TImage;
     iMove: TImage;
     aRecordOpenFolder: TAction;
-    TimerRec: TTimer;
     aRecordCodecInfo: TAction;
-    imgRec: TImage;
-    lblRecInfo: TLabel;
+    imgRecSource: TImage;
     MainChromeTabs: TChromeTabs;
     Button1: TButton;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -363,11 +361,24 @@ begin
   pUIITem := TUIDataModule.Create(Self);
   pUIITem.ReconnectToPartnerStart := ReconnectToPartnerStart;
 
+  pUIItem.TimerRec.OnTimer := TimerRecTimer;
+
 //  pViewer := TRtcPDesktopViewer.Create(Self);
-  pUIITem.pImage^ := TRtcPDesktopViewer.Create(Self);
-  pUIITem.pImage.Parent := Scroll;
-  pUIITem.pImage.Align := alClient;
-  pUIITem.pImage.Color := clBlack;
+  pUIITem.pImage^ := TRtcPDesktopViewer.Create(Scroll);
+  pUIITem.pImage^.Parent := Scroll;
+  pUIITem.pImage^.Align := alClient;
+  pUIITem.pImage^.Color := clBlack;
+
+  pUIITem.pImgRec^ := TImage.Create(pUIITem.pImage^);
+  pUIITem.pImgRec^.Left := Width - 100;
+  pUIITem.pImgRec^.Top := 10;
+  pUIITem.pImgRec^.Visible := False;
+  pUIITem.pImgRec^.Picture.Bitmap.Assign(imgRecSource.Picture.Bitmap);
+  pUIITem.pLblRecInfo^ := TLabel.Create(pUIITem.pImage^);
+  pUIITem.pLblRecInfo^.Left := Width - 80;
+  pUIITem.pLblRecInfo^.Top := 10;
+  pUIITem.pLblRecInfo^.Caption := '00:00:00';
+  pUIITem.pLblRecInfo^.Visible := False;
 
   pUIItem.UI.Viewer := pUIITem.pImage^;
   pUIITem.UserName := AUserName;  //К которому изначально подключались (не UserToConnect, на которого перенаправило)
@@ -502,17 +513,17 @@ begin
   for i := 0 to UIModulesList.Count - 1 do
     if UIModulesList[i] = pUIItem then
     begin
-      TUIDataModule(UIModulesList[i]).pImage.Align := alClient;
-      TUIDataModule(UIModulesList[i]).pImage.Visible := True;
+      TUIDataModule(UIModulesList[i]).pImage^.Align := alClient;
+      TUIDataModule(UIModulesList[i]).pImage^.Visible := True;
     end
     else
     begin
-      TUIDataModule(UIModulesList[i]).pImage.Visible := False;
-      TUIDataModule(UIModulesList[i]).pImage.Align := alNone;
-      TUIDataModule(UIModulesList[i]).pImage.Left := -1;
-      TUIDataModule(UIModulesList[i]).pImage.Top := -1;
-      TUIDataModule(UIModulesList[i]).pImage.Width := 1;
-      TUIDataModule(UIModulesList[i]).pImage.Height := 1;
+      TUIDataModule(UIModulesList[i]).pImage^.Visible := False;
+      TUIDataModule(UIModulesList[i]).pImage^.Align := alNone;
+      TUIDataModule(UIModulesList[i]).pImage^.Left := -1;
+      TUIDataModule(UIModulesList[i]).pImage^.Top := -1;
+      TUIDataModule(UIModulesList[i]).pImage^.Width := 1;
+      TUIDataModule(UIModulesList[i]).pImage^.Height := 1;
     end;
 
   DoResizeImage;
@@ -878,10 +889,10 @@ end;
 
 procedure TrdDesktopViewer.InitScreen;
 begin
-  Scroll.HorzScrollBar.Visible:=False;
-  Scroll.VertScrollBar.Visible:=False;
-  Scroll.VertScrollBar.Position:=0;
-  Scroll.HorzScrollBar.Position:=0;
+  Scroll.HorzScrollBar.Visible := False;
+  Scroll.VertScrollBar.Visible := False;
+  Scroll.VertScrollBar.Position := 0;
+  Scroll.HorzScrollBar.Position := 0;
 
 //  ActiveUIModule.pImage^.Left:=0;
 //  ActiveUIModule.pImage^.Top:=0;
@@ -1139,12 +1150,12 @@ begin
 //  UI.Module.SendShortcuts := True;
   SetShortcuts_Hook(True); //Доделать
 
-  imgRec.Left := Width - 100;
-  imgRec.Top := 10;
-  imgRec.Visible := False;
-  lblRecInfo.Left := Width - 80;
-  lblRecInfo.Top := 10;
-  lblRecInfo.Visible := False;
+//  imgRec.Left := Width - 100;
+//  imgRec.Top := 10;
+//  imgRec.Visible := False;
+//  lblRecInfo.Left := Width - 80;
+//  lblRecInfo.Top := 10;
+//  lblRecInfo.Visible := False;
 
   aRecordStart.Enabled := not Assigned(FVideoWriter);
   aRecordStop.Enabled := Assigned(FVideoWriter);
@@ -1181,12 +1192,15 @@ begin
   lState.Width := ClientWidth;
   lState.Top := Height * 580 div 680;
 
-  imgRec.Left := Width - 100;
-  imgRec.Top := 10;
-  imgRec.Visible := False;
-  lblRecInfo.Left := Width - 80;
-  lblRecInfo.Top := 10;
-  lblRecInfo.Visible := False;
+  if ActiveUIModule <> nil then
+  begin
+    ActiveUIModule.pImgRec^.Left := Width - 100;
+    ActiveUIModule.pImgRec^.Top := 10;
+    ActiveUIModule.pImgRec^.Visible := False;
+    ActiveUIModule.pLblRecInfo^.Left := Width - 80;
+    ActiveUIModule.pLblRecInfo^.Top := 10;
+    ActiveUIModule.pLblRecInfo^.Visible := False;
+  end;
 end;
 
 procedure TrdDesktopViewer.FT_UIClose(Sender: TRtcPFileTransferUI);
@@ -2034,18 +2048,27 @@ begin
   if Action = RECORD_START then
     begin
       RecordStart();
-      imgRec.Visible := True;
-      lblRecInfo.Visible := True;
-      lblRecInfo.Tag := NativeInt(GetTickCount);
-      TimerRec.Enabled := true;
+
+      if ActiveUIModule <> nil then
+      begin
+        ActiveUIModule.pImgRec^.Visible := True;
+        ActiveUIModule.pLblRecInfo^.Visible := True;
+        ActiveUIModule.pLblRecInfo^.Tag := NativeInt(GetTickCount);
+        ActiveUIModule.TimerRec.Enabled := True;
+      end;
     end
   else
   if Action = RECORD_STOP then
     begin
       RecordStop();
-      imgRec.Visible := False;
-      lblRecInfo.Visible := False;
-      TimerRec.Enabled := False;
+
+      if ActiveUIModule <> nil then
+      begin
+        ActiveUIModule.pImgRec^.Visible := False;
+        ActiveUIModule.pLblRecInfo^.Visible := False;
+        ActiveUIModule.TimerRec.Enabled := False;
+      end;
+
 //      MessageBox(Handle, PChar('Record finished'), PChar(Application.Title), MB_ICONINFORMATION or MB_OK);
     end
   else
@@ -2054,9 +2077,14 @@ begin
       if MessageBox(Handle, PChar('Do you want to cancel desktop recording?'),
         PChar(Application.Title), MB_ICONASTERISK or MB_YESNO) <> IDYES  then exit;
       RecordCancel();
-      imgRec.Visible := False;
-      lblRecInfo.Visible := False;
-      TimerRec.Enabled := False;
+
+      if ActiveUIModule <> nil then
+      begin
+        ActiveUIModule.pImgRec^.Visible := False;
+        ActiveUIModule.pLblRecInfo^.Visible := False;
+        ActiveUIModule.TimerRec.Enabled := False;
+      end;
+
 //      MessageBox(Handle, PChar('Record canceled'), PChar(Application.Title), MB_ICONINFORMATION or MB_OK);
     end
   else
@@ -2072,7 +2100,7 @@ begin
           begin
             Font.Name := 'Consolas';
             Align := alClient;
-            Parent:= frm;
+            Parent := frm;
             ScrollBars := ssBoth;
             TVideoRecorderAVIVFW.ExtractCodecInfo(Lines);
           end;
@@ -2851,13 +2879,16 @@ begin
 end;
 
 procedure TrdDesktopViewer.TimerRecTimer(Sender: TObject);
+var
+  UIDM: TUIDataModule;
 begin
-  if Assigned(FVideoWriter) then
-    imgRec.Visible := not imgRec.Visible
+  UIDM := TUIDataModule(TTimer(Sender).Owner);
+  if Assigned(UIDM.FVideoWriter) then
+    UIDM.pImgRec^.Visible := not UIDM.pImgRec^.Visible
   else
-    imgRec.Visible := False;
-  lblRecInfo.Visible := Assigned(FVideoWriter);
-  lblRecInfo.Caption := FormatDateTime('HH:NN:SS', IncMilliSecond(0, NativeInt(GetTickCount) - NativeInt(lblRecInfo.Tag)));
+    UIDM.pImgRec^.Visible := False;
+  UIDM.pLblRecInfo^.Visible := Assigned(FVideoWriter);
+  UIDM.pLblRecInfo^.Caption := FormatDateTime('HH:NN:SS', IncMilliSecond(0, NativeInt(GetTickCount) - NativeInt(UIDM.pLblRecInfo^.Tag)));
 end;
 
 procedure TrdDesktopViewer.PFileTransExplorerNewUI(Sender: TRtcPFileTransfer; const user: String);

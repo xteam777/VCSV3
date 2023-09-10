@@ -24,4 +24,9 @@ object UIDataModule: TUIDataModule
     Left = 164
     Top = 8
   end
+  object TimerRec: TTimer
+    Enabled = False
+    Left = 206
+    Top = 8
+  end
 end
