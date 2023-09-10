@@ -463,6 +463,8 @@ begin
   begin
     if TUIDataModule(UIModulesList[i]).UserName = AUserName then
     begin
+      TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
+      TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
       FreeAndNil(TUIDataModule(UIModulesList[i]));
       UIModulesList.Delete(i);
 
@@ -1055,29 +1057,37 @@ begin
 //    Avi.Free;
 
   RecordCancel;
-
-  ActiveUIModule.FT_UI.CloseAndClear();
 end;
 
 procedure TrdDesktopViewer.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+var
+  i: Integer;
 begin
 //  Hide;
 
   if ActiveUIModule <> nil then
   begin
     if aHideWallpaper.Checked then
-    try
-      if ActiveUIModule.UI.Active then
+//    try
+//      if ActiveUIModule.UI.Active then
         ActiveUIModule.UI.Send_ShowDesktop;
-    except
-    end;
+//    except
+//    end;
 
     if aLockSystemOnClose.Checked then
-    try
-      if ActiveUIModule.UI.Active then
+//    try
+//      if ActiveUIModule.UI.Active then
         ActiveUIModule.UI.Send_LockSystem;
-    except
-    end;
+//    except
+//    end;
+  end;
+
+  for i := 0 to UIModulesList.Count - 1 do
+  begin
+    FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
+    TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
+    TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
+//    FreeAndNil(TUIDataModule(UIModulesList[i]));
   end;
 
   DesktopTimer.Enabled := False;
@@ -1121,7 +1131,7 @@ begin
   MiniPanelDraggging := False;
   aStretchScreen.Checked := True;
 
-  aOptimizeQuality.Checked := True;
+  aOptimizeSpeed.Checked := True;
 
   FormHandle := Handle;
 
@@ -1399,8 +1409,8 @@ begin
   for i := 0 to UIModulesList.Count - 1 do
   begin
     FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
-    TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
-    TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
+//    TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
+//    TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
     FreeAndNil(TUIDataModule(UIModulesList[i]));
   end;
   FreeAndNil(UIModulesList);
@@ -1592,9 +1602,9 @@ begin
 //    if Assigned(PFileTrans) then
 //      DragAcceptFiles(Handle, True);
     DesktopTimer.Enabled := True;
-
-    DoResizeImage;
   end;
+
+  DoResizeImage;
 end;
 
 procedure TrdDesktopViewer.ScrollMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);

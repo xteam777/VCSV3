@@ -4715,6 +4715,7 @@ object rdDesktopViewer: TrdDesktopViewer
     end
     object aOptimizeSpeed: TAction
       Caption = #1054#1087#1090#1080#1084#1080#1079#1080#1088#1086#1074#1072#1090#1100' '#1089#1082#1086#1088#1086#1089#1090#1100
+      Checked = True
       OnExecute = aOptimizeSpeedExecute
     end
     object aSendShortcuts: TAction
