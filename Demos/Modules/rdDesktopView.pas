@@ -337,7 +337,7 @@ begin
     begin
       Brush.Color := clRed;
       Pen.Color := clRed;
-      Ellipse(10, 10, 20, 20);
+      Ellipse(10, 10, 25, 25);
     end;
 //    ActiveUIModule.pImgRec^.BringToFront;
 //    ActiveUIModule.pLblRecInfo^.BringToFront;
@@ -1770,7 +1770,7 @@ begin
   ActiveUIModule.pImgRec^.Left :=Scroll.Width - 100;
   ActiveUIModule.pImgRec^.Top := 10;
   ActiveUIModule.pImgRec^.Visible := True;
-  ActiveUIModule.pImgRec^.Picture.Bitmap.Assign(imgRecSource.Picture.Bitmap);
+//  ActiveUIModule.pImgRec^.Picture.Bitmap.Assign(imgRecSource.Picture.Bitmap);
 //  ActiveUIModule.pImgRec^.BringToFront;
 end;
 

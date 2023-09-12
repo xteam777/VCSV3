@@ -10,7 +10,7 @@ interface
 
 uses
   Windows, Messages, Classes, SysUtils, Graphics, Controls, Forms, CommonData, BlackLayered, rtcBlankOutForm,
-  ShlObj, Clipbrd, IOUtils, DateUtils, SHDocVw, ExtCtrls, ActiveX, ShellApi, ComObj, ClipbrdMonitor,
+  ShlObj, Clipbrd, IOUtils, DateUtils, SHDocVw, ExtCtrls, ActiveX, ShellApi, ComObj, ClipbrdMonitor, LockFormUnit,
 {$IFNDEF IDE_1}
   Variants,
 {$ENDIF}
@@ -753,7 +753,8 @@ begin
           //    SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 0, 0);
           //    SendMessage(MainFormHandle, WM_DRAG_FULL_WINDOWS_MESSAGE, 0, 0);
           //    SetBlankMonitor(True);
-                BlankOutScreen(False);
+                //BlankOutScreen(False);
+                ShowLockForm;
               end;
             end
             else
@@ -766,7 +767,8 @@ begin
           //    SetBlankMonitor(False);
           //    SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 1, 0);
           //    SendMessage(MainFormHandle, WM_DRAG_FULL_WINDOWS_MESSAGE, 1, 0);
-                RestoreScreen;
+                //RestoreScreen;
+                CloseLockForm;
               end;
             end
             else
