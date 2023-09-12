@@ -25,17 +25,20 @@ uses
   Math;
 
 type
+  TRtcScreenPlayback = class;
+
   TRtcScreenDecoder = class
   type
     TWebPDecodeRGBIntoFunc = function (const data: PByte; data_size: Cardinal;
       output_buffer: PByte; output_buffer_size, output_stride: Integer): PByte;
       cdecl;
-    TOnSetScreenData = procedure (Sender: TObject; const Data: RtcString) of object;
+    TOnSetScreenData = procedure (Sender: TObject; UserName: String; const Data: RtcString) of object;
 
   private
    // FBytesPerPixel: byte;
     TempBuff: RtcByteArray;
     CS : TCriticalSection;
+    Playback: TRtcScreenPlayback;
 
     FScreenWidth, FScreenHeight, FScreenBPP,
 
@@ -91,7 +94,6 @@ type
     FCursorOldY: integer;
     FCursorOldX: integer;
     FCursorUser: String;
-    FLoginUserName: String;
 
     {$IFDEF DEBUG}
     FCapLat, FEncLat, FDecLat : Int64;
@@ -100,6 +102,8 @@ type
     function GetScreen: TBitmap;
 
   public
+    FLoginUserName: String;
+
     constructor Create; virtual;
     destructor Destroy; override;
 
@@ -189,8 +193,7 @@ begin
     rec.Free;
   end;
   if Assigned(FOnSetScreenData) then
-    FOnSetScreenData(Self, Data);
-
+    FOnSetScreenData(Self, Playback.LoginUserName, Data);
 end;
 
 procedure TRtcScreenDecoder.SetScreenInfo(const Info: TRtcRecord);
@@ -594,6 +597,8 @@ constructor TRtcScreenPlayback.Create;
 begin
   inherited;
   ScrOut := TRtcScreenDecoder.Create;
+  ScrOut.Playback := Self;
+
   FCursorVisible := False;
   FLoginUserName := '';
 end;

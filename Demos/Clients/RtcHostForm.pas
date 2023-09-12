@@ -4356,7 +4356,7 @@ begin
   Node := twDevices.GetFirst;
   while Node <> nil do
   begin
-    if TDeviceData(twDevices.GetNodeData(Node)^).ID = StrToInt(RemoveUserPrefix(uname)) then
+    if TDeviceData(twDevices.GetNodeData(Node)^).ID = StrToInt(GetUserFromFromUserName(uname)) then
     begin
       TDeviceData(twDevices.GetNodeData(Node)^).StateIndex := status;
       twDevices.InvalidateNode(Node);
@@ -8105,7 +8105,7 @@ begin
       while CNode <> nil do
       begin
         DData := twDevices.GetNodeData(CNode);
-        if (DData.ID = StrToInt(RemoveUserPrefix(uname))) then
+        if (DData.ID = StrToInt(GetUserFromFromUserName(uname))) then
         begin
           Result := DData;
           Exit;
@@ -9317,7 +9317,7 @@ begin
     Exit;
   end;
 
-  Node := NodeByID(twDevices, StrToInt(RemoveUserPrefix(aUserName)));
+  Node := NodeByID(twDevices, StrToInt(GetUserFromFromUserName(aUserName)));
   if Node <> nil then
     Result := TDeviceData(twDevices.GetNodeData(Node)^).Name
   else
@@ -9334,7 +9334,7 @@ begin
     Exit;
   end;
 
-  Node := NodeByID(twDevices, StrToInt(RemoveUserPrefix(aUserName)));
+  Node := NodeByID(twDevices, StrToInt(GetUserFromFromUserName(aUserName)));
   if Node <> nil then
     Result := TDeviceData(twDevices.GetNodeData(Node)^).Password
   else
@@ -10797,11 +10797,20 @@ begin
 end;
 
 function TMainForm.GetCurrentPendingItemUserName: String;
+var
+  i: Integer;
 begin
   CS_Pending.Acquire;
   try
-    if PendingRequests.Count > 0 then
-      Result := PPendingRequestItem(PendingRequests[PendingRequests.Count - 1])^.UserDesc;
+    i := PendingRequests.Count - 1;
+    while i >= 0 do
+    begin
+      if not PPendingRequestItem(PendingRequests[i])^.IsReconnection then
+      begin
+        Result := PPendingRequestItem(PendingRequests[i])^.UserDesc;
+        Break
+      end;
+    end;
   finally
     CS_Pending.Release;
   end;
@@ -10823,6 +10832,7 @@ begin
 //        Dispose(PPendingRequestItem(PendingRequests[i])^.UIForm);
         Dispose(PendingRequests[i]);
         PendingRequests.Delete(i);
+        Break;
       end;
 
       i := i - 1;

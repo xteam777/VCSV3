@@ -386,8 +386,8 @@ begin
   end
   else
   begin
-    Caption := RemoveUserPrefix(myUI.UserName) + ' - Передача файлов';
-    lRemoteName.Caption := RemoveUserPrefix(myUI.UserName);
+    Caption := GetUserFromFromUserName(myUI.UserName) + ' - Передача файлов';
+    lRemoteName.Caption := GetUserToFromUserName(myUI.UserName);
   end;
 end;
 

@@ -109,7 +109,6 @@ type
     iMove: TImage;
     aRecordOpenFolder: TAction;
     aRecordCodecInfo: TAction;
-    imgRecSource: TImage;
     MainChromeTabs: TChromeTabs;
     Button1: TButton;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -196,23 +195,23 @@ type
     procedure MainChromeTabsButtonCloseTabClick(Sender: TObject;
       ATab: TChromeTab; var Close: Boolean);
   private
-    FVideoRecorder: TVideoRecorder;
-    FVideoWriter: TRMXVideoWriter;
-    FVideoFile: String;
-    FImageChanged: Boolean;
-    FVideoImage: TBitmap;
-    FLockVideoImage: Integer;
-    FFirstImageArrived: Boolean;
+//    FVideoRecorder: TVideoRecorder;
+//    FVideoWriter: TRMXVideoWriter;
+//    FVideoFile: String;
+//    FImageChanged: Boolean;
+//    FVideoImage: TBitmap;
+//    FLockVideoImage: Integer;
+//    FFirstImageArrived: Boolean;
     procedure DoRecordAction(Action: Integer);
     procedure RecordStart();
     procedure RecordStop();
     procedure RecordCancel();
-	  procedure RecordStopWindowProc(var Message: TMessage); message WM_STOP_RECORD;
-    procedure ModalFormRecordStopActivate(Sender: TObject);
-    procedure OnGetVideoFrame(Sender: TObject);
-    procedure OnSetScreenData(Sender: TObject; const Data: RtcString);
-    procedure LockVideoImage;
-    procedure UnlockVideoImage;
+//	  procedure RecordStopWindowProc(var Message: TMessage); message WM_STOP_RECORD;
+//    procedure ModalFormRecordStopActivate(Sender: TObject);
+//    procedure OnGetVideoFrame(Sender: TObject);
+    procedure OnSetScreenData(Sender: TObject; UserName: String; const Data: RtcString);
+    procedure LockVideoImage(UIDM: TUIDataModule);
+    procedure UnlockVideoImage(UIDM: TUIDataModule);
   protected
     LMouseX,LMouseY:integer;
     LMouseD:boolean;
@@ -272,7 +271,7 @@ type
 //    FUserPass: String;
     PFileTrans: TRtcPFileTransfer;
     PChat: TRtcPChat;
-    fFirstScreen: Boolean;
+//    fFirstScreen: Boolean;
     FormMinimized: Boolean;
     PartnerLockedState: Integer;
     PartnerServiceStarted: Boolean;
@@ -303,6 +302,7 @@ type
     function GetUIDataModule(AUserName: String): TUIDataModule;
     function RemoveUIDataModule(AUserName: String): Integer;
     procedure CloseForm;
+    procedure PaintBoxOnPaint(Sender: TObject);
   end;
 
 
@@ -328,6 +328,21 @@ implementation
 {$R *.dfm}
 
 { TrdDesktopViewer }
+
+procedure TrdDesktopViewer.PaintBoxOnPaint(Sender: TObject);
+begin
+//  if ActiveUIModule <> nil then
+  begin
+    with TPaintBox(Sender).Canvas do
+    begin
+      Brush.Color := clRed;
+      Pen.Color := clRed;
+      Ellipse(10, 10, 20, 20);
+    end;
+//    ActiveUIModule.pImgRec^.BringToFront;
+//    ActiveUIModule.pLblRecInfo^.BringToFront;
+  end;
+end;
 
 function TrdDesktopViewer.AddTab(AUserName, AUserDesc, AUserPass: String; AModule: TRtcPDesktopControl): TUIDataModule;
 var
@@ -368,17 +383,25 @@ begin
   pUIITem.pImage^.Parent := Scroll;
   pUIITem.pImage^.Align := alClient;
   pUIITem.pImage^.Color := clBlack;
+  pUIITem.pImage^.OnPaint := PaintBoxOnPaint;
 
-  pUIITem.pImgRec^ := TImage.Create(pUIITem.pImage^);
-  pUIITem.pImgRec^.Left := Width - 100;
-  pUIITem.pImgRec^.Top := 10;
-  pUIITem.pImgRec^.Visible := False;
-  pUIITem.pImgRec^.Picture.Bitmap.Assign(imgRecSource.Picture.Bitmap);
-  pUIITem.pLblRecInfo^ := TLabel.Create(pUIITem.pImage^);
-  pUIITem.pLblRecInfo^.Left := Width - 80;
+//  pUIITem.pImgRec^ := TImage.Create(Scroll);
+//  pUIITem.pImgRec^.Parent := Scroll;
+//  pUIITem.pImgRec^.Left := Scroll.Width - 100;
+//  pUIITem.pImgRec^.Top := 10;
+//  pUIITem.pImgRec^.Visible := False;
+//  pUIITem.pImgRec^.Picture.Bitmap.Assign(imgRecSource.Picture.Bitmap);
+//  pUIITem.pImgRec^.Transparent := True;
+//  pUIITem.pImgRec^.BringToFront;
+  pUIITem.pLblRecInfo^ := TLabel.Create(Scroll);
+  pUIITem.pLblRecInfo^.Parent := Scroll;
+  pUIITem.pLblRecInfo^.Left := Scroll.Width - 80;
   pUIITem.pLblRecInfo^.Top := 10;
   pUIITem.pLblRecInfo^.Caption := '00:00:00';
+  pUIITem.pLblRecInfo^.Font.Color := clRed;
+  pUIITem.pLblRecInfo^.Font.Style := [fsBold];
   pUIITem.pLblRecInfo^.Visible := False;
+//  pUIITem.pLblRecInfo^.BringToFront;
 
   pUIItem.UI.Viewer := pUIITem.pImage^;
   pUIITem.UserName := AUserName;  //К которому изначально подключались (не UserToConnect, на которого перенаправило)
@@ -515,6 +538,10 @@ begin
     begin
       TUIDataModule(UIModulesList[i]).pImage^.Align := alClient;
       TUIDataModule(UIModulesList[i]).pImage^.Visible := True;
+
+      aRecordStart.Enabled := not Assigned(TUIDataModule(UIModulesList[i]).FVideoWriter);
+      aRecordStop.Enabled := Assigned(TUIDataModule(UIModulesList[i]).FVideoWriter);
+      aRecordCancel.Enabled := Assigned(TUIDataModule(UIModulesList[i]).FVideoWriter);
     end
     else
     begin
@@ -564,20 +591,22 @@ begin
 end;
 
 procedure TrdDesktopViewer.OnSetScreenData(Sender: TObject;
-  const Data: RtcString);
+  UserName: String; const Data: RtcString);
 var
   rec: TRtcRecord;
+  UIDM: TUIDataModule;
 begin
-  if Assigned(FVideoWriter) then
+  UIDM := GetUIDataModule(GetUserToFromUserName(UserName));
+  if Assigned(UIDM.FVideoWriter) then
     begin
-      if FFirstImageArrived then
-        FVideoWriter.WriteRTCCode(Data) else
+      if UIDM.FFirstImageArrived then
+        UIDM.FVideoWriter.WriteRTCCode(Data) else
         begin
           rec := TRtcRecord.FromCode(Data);
           try
-            FFirstImageArrived := (rec.isType['res'] = rtc_Record) and (rec.isType['scrdr'] = rtc_Array);
-            if FFirstImageArrived  then
-              FVideoWriter.WriteRTCCode(Data);
+            UIDM.FFirstImageArrived := (rec.isType['res'] = rtc_Record) and (rec.isType['scrdr'] = rtc_Array);
+            if UIDM.FFirstImageArrived  then
+              UIDM.FVideoWriter.WriteRTCCode(Data);
           finally
             rec.Free;
           end;
@@ -955,8 +984,8 @@ procedure TrdDesktopViewer.FullScreen;
 
   WindowState := wsMaximized;
   BorderStyle := bsNone;
-  Left := 0;
-  Top := 0;
+//  Left := 0;
+//  Top := 0;
   Width := Screen.Width;
   Height := Screen.Height;
 
@@ -1115,7 +1144,7 @@ begin
   ActiveUIModule := nil;
   FProgressDialogsList := TList.Create;
 
-  fFirstScreen := True;
+//  fFirstScreen := True;
 
   pMain.Color := clWhite; //$00A39323;
   Scroll.Visible := False;
@@ -1127,7 +1156,7 @@ begin
   lState.Visible := True;
   lState.Left := 0;
   lState.Width := ClientWidth;
-  Scroll.Visible := False;
+//  Scroll.Visible := False;
 
   tRecord.Enabled := False;
 
@@ -1156,10 +1185,6 @@ begin
 //  lblRecInfo.Left := Width - 80;
 //  lblRecInfo.Top := 10;
 //  lblRecInfo.Visible := False;
-
-  aRecordStart.Enabled := not Assigned(FVideoWriter);
-  aRecordStop.Enabled := Assigned(FVideoWriter);
-  aRecordCancel.Enabled := Assigned(FVideoWriter);
 
   Visible := False; //позже ставим True если не отменено в пендинге
 
@@ -1194,12 +1219,10 @@ begin
 
   if ActiveUIModule <> nil then
   begin
-    ActiveUIModule.pImgRec^.Left := Width - 100;
+    ActiveUIModule.pImgRec^.Left := Scroll.Width - 100;
     ActiveUIModule.pImgRec^.Top := 10;
-    ActiveUIModule.pImgRec^.Visible := False;
-    ActiveUIModule.pLblRecInfo^.Left := Width - 80;
+    ActiveUIModule.pLblRecInfo^.Left := Scroll.Width - 80;
     ActiveUIModule.pLblRecInfo^.Top := 10;
-    ActiveUIModule.pLblRecInfo^.Visible := False;
   end;
 end;
 
@@ -1395,7 +1418,9 @@ end;
 
 procedure TrdDesktopViewer.FormDeactivate(Sender: TObject);
 begin
-  ActiveUIModule.UI.Deactivated;
+  if ActiveUIModule <> nil then
+    ActiveUIModule.UI.Deactivated;
+
   LWinDown := False;
   RWinDown := False;
   LMouseDown := False;
@@ -1437,7 +1462,7 @@ begin
   if myUI.UserDesc <> '' then
     Caption := myUI.UserDesc// + ' - Управление' // + checkControl
   else
-    Caption := RemoveUserPrefix(myUI.UserName);
+    Caption := GetUserFromFromUserName(myUI.UserName);
 end;}
 
 procedure TrdDesktopViewer.myUIOpen(Sender: TRtcPDesktopControlUI);
@@ -1569,20 +1594,24 @@ begin
 end;
 
 procedure TrdDesktopViewer.myUIData(Sender: TRtcPDesktopControlUI);
+var
+  UIDM: TUIDataModule;
 begin
-  FImageChanged := true;
-  if Assigned(FVideoRecorder) then
+  UIDM := TUIDataModule(TTimer(Sender).Owner);
+
+  UIDM.FImageChanged := True;
+  if Assigned(UIDM.FVideoRecorder) then
     begin
-      LockVideoImage;
+      LockVideoImage(UIDM);
       try
-        FVideoImage.Canvas.Draw(0, 0, Sender.Playback.Image);
+        UIDM.FVideoImage.Canvas.Draw(0, 0, Sender.Playback.Image);
       finally
-        UnlockVideoImage
+        UnlockVideoImage(UIDM);
       end;
     end;
 
   //Подгонка размера изображения
-  if fFirstScreen and Sender.HaveScreen then
+  if {fFirstScreen and} Sender.HaveScreen then
   begin
 //    if myUI.UserDesc <> '' then
 //      Caption := myUI.UserDesc// + ' - Управление' //+ checkControl
@@ -1590,7 +1619,7 @@ begin
 //      Caption := myUI.UserName;// + ' - Управление'; // + checkControl;
 //    SetCaption;
 //    sStatus.Visible:=False;
-    fFirstScreen := False;
+//    fFirstScreen := False;
 //    WindowState := wsMaximized;
 //    if Sender.ScreenWidth < ActiveUIModule.pImage.ClientWidth then
 //      ClientWidth := Sender.ScreenWidth
@@ -1617,8 +1646,6 @@ begin
 //      DragAcceptFiles(Handle, True);
     DesktopTimer.Enabled := True;
   end;
-
-  DoResizeImage;
 end;
 
 procedure TrdDesktopViewer.ScrollMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
@@ -1739,7 +1766,12 @@ procedure TrdDesktopViewer.btnSettingsClick(Sender: TObject);
 
 procedure TrdDesktopViewer.Button1Click(Sender: TObject);
 begin
-//  TimerReconnectTimer(nil);
+  ActiveUIModule.pImgRec^.Parent := Scroll;
+  ActiveUIModule.pImgRec^.Left :=Scroll.Width - 100;
+  ActiveUIModule.pImgRec^.Top := 10;
+  ActiveUIModule.pImgRec^.Visible := True;
+  ActiveUIModule.pImgRec^.Picture.Bitmap.Assign(imgRecSource.Picture.Bitmap);
+//  ActiveUIModule.pImgRec^.BringToFront;
 end;
 
 procedure TrdDesktopViewer.btnCancelClick(Sender: TObject);
@@ -1958,13 +1990,13 @@ var
   rec: TRtcRecord;
   fn: TRtcFunctionInfo;
 begin
-  if Assigned(FVideoWriter) then
+  if Assigned(ActiveUIModule.FVideoWriter) then
     raise Exception.Create('Video is recording');
-  FVideoFile := IncludeTrailingPathDelimiter(RecordsFolder);
-  ForceDirectories(FVideoFile);
-  FVideoFile := FVideoFile + 'Video_' + FormatDateTime('YYYY_MM_DD_HHNNSS', Now) + '.rmxv';
-  FVideoWriter := TRMXVideoWriter.Create(FVideoFile, TRMXVideoFileWin);
-  FFirstImageArrived := false;
+  ActiveUIModule.FVideoFile := IncludeTrailingPathDelimiter(RecordsFolder);
+  ForceDirectories(ActiveUIModule.FVideoFile);
+  ActiveUIModule.FVideoFile := ActiveUIModule.FVideoFile + 'Video_' + FormatDateTime('YYYY_MM_DD_HHNNSS', Now) + '.rmxv';
+  ActiveUIModule.FVideoWriter := TRMXVideoWriter.Create(ActiveUIModule.FVideoFile, TRMXVideoFileWin);
+  ActiveUIModule.FFirstImageArrived := false;
   ActiveUIModule.UI.Playback.ScreenDecoder.OnSetScreenData := OnSetScreenData;
   // data to send to the user ...
   fn := TRtcFunctionInfo.Create;
@@ -1977,11 +2009,12 @@ var
   frm: TForm;
   w: TRMXVideoWriter;
 begin
-  if not Assigned(FVideoWriter) then
+  if not Assigned(ActiveUIModule.FVideoWriter) then
     Exit;
+
   ActiveUIModule.UI.Playback.ScreenDecoder.OnSetScreenData := nil;
-  w := FVideoWriter;
-  FVideoWriter := nil;
+  w := ActiveUIModule.FVideoWriter;
+  ActiveUIModule.FVideoWriter := nil;
   w.Free;
 end;
 
@@ -1989,12 +2022,13 @@ procedure TrdDesktopViewer.RecordCancel;
 begin
 //  if not Assigned(FVideoRecorder) then exit;
 //  FVideoRecorder.Terminate;
-  if not Assigned(FVideoWriter) then exit;
+  if not Assigned(ActiveUIModule.FVideoWriter) then
+    Exit;
   RecordStop;
-  DeleteFile(FVideoFile);
+  DeleteFile(ActiveUIModule.FVideoFile);
 end;
 
-procedure TrdDesktopViewer.RecordStopWindowProc(var Message: TMessage);
+{procedure TrdDesktopViewer.RecordStopWindowProc(var Message: TMessage);
 var
   temp: TObject;
 begin
@@ -2014,7 +2048,8 @@ end;
 
 procedure TrdDesktopViewer.OnGetVideoFrame(Sender: TObject);
 begin
-  if not Assigned(FVideoRecorder) then exit;
+  if not Assigned(FVideoRecorder) then
+    Exit;
 //    FVideoRecorder.AddVideoFrame(FVideoImage);
   LockVideoImage;
   try
@@ -2023,17 +2058,17 @@ begin
   finally
     UnlockVideoImage;
   end;
-end;
+end;}
 
-procedure TrdDesktopViewer.LockVideoImage;
+procedure TrdDesktopViewer.LockVideoImage(UIDM: TUIDataModule);
 begin
-  while InterlockedExchange(FLockVideoImage, 1) <> 0 do
+  while InterlockedExchange(UIDM.FLockVideoImage, 1) <> 0 do
     SwitchToThread;
 end;
 
-procedure TrdDesktopViewer.UnlockVideoImage;
+procedure TrdDesktopViewer.UnlockVideoImage(UIDM: TUIDataModule);
 begin
-  InterlockedExchange(FLockVideoImage, 0);
+  InterlockedExchange(UIDM.FLockVideoImage, 0);
 end;
 
 procedure TrdDesktopViewer.aRecordStartExecute(Sender: TObject);
@@ -2075,7 +2110,9 @@ begin
   if Action = RECORD_CANCEL then
     begin
       if MessageBox(Handle, PChar('Do you want to cancel desktop recording?'),
-        PChar(Application.Title), MB_ICONASTERISK or MB_YESNO) <> IDYES  then exit;
+        PChar(Application.Title), MB_ICONASTERISK or MB_YESNO) <> IDYES  then
+        Exit;
+
       RecordCancel();
 
       if ActiveUIModule <> nil then
@@ -2110,9 +2147,9 @@ begin
       end;
     end;
 
-  aRecordStart.Enabled := not Assigned(FVideoWriter);
-  aRecordStop.Enabled := Assigned(FVideoWriter);
-  aRecordCancel.Enabled := Assigned(FVideoWriter);
+  aRecordStart.Enabled := not Assigned(ActiveUIModule.FVideoWriter);
+  aRecordStop.Enabled := Assigned(ActiveUIModule.FVideoWriter);
+  aRecordCancel.Enabled := Assigned(ActiveUIModule.FVideoWriter);
 end;
 
 procedure TrdDesktopViewer.aRecordCancelExecute(Sender: TObject);
@@ -2635,8 +2672,10 @@ procedure TrdDesktopViewer.panOptionsTimerTimer(Sender: TObject);
 begin
   if panOptionsVisible then
   begin
-    panOptionsMini.Top := panOptions.Top + panOptions.Height - 1;
-    panOptions.Top := panOptions.Top - 1;
+//    panOptionsMini.Top := panOptions.Top + panOptions.Height - 1;
+//    panOptions.Top := panOptions.Top - 1;
+    panOptionsMini.Top := 0;
+    panOptions.Top := -panOptions.Height;
 
     if panOptions.Top = -panOptions.Height then
     begin
@@ -2651,7 +2690,9 @@ begin
   end
   else
   begin
-    panOptions.Top := panOptions.Top + 1;
+//    panOptions.Top := panOptions.Top + 1;
+//    panOptionsMini.Top := panOptions.Top + panOptions.Height;
+    panOptions.Top := 0;
     panOptionsMini.Top := panOptions.Top + panOptions.Height;
 
     if panOptions.Top = 0 then
@@ -2887,7 +2928,7 @@ begin
     UIDM.pImgRec^.Visible := not UIDM.pImgRec^.Visible
   else
     UIDM.pImgRec^.Visible := False;
-  UIDM.pLblRecInfo^.Visible := Assigned(FVideoWriter);
+  UIDM.pLblRecInfo^.Visible := Assigned(UIDM.FVideoWriter);
   UIDM.pLblRecInfo^.Caption := FormatDateTime('HH:NN:SS', IncMilliSecond(0, NativeInt(GetTickCount) - NativeInt(UIDM.pLblRecInfo^.Tag)));
 end;
 

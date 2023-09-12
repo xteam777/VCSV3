@@ -13,16 +13,33 @@ uses
   function IsInternetConnected: Boolean;
   function InternetGetConnectedState(lpdwFlags: LPDWORD; dwReserved:DWORD):BOOL; stdcall; external 'wininet.dll' name 'InternetGetConnectedState';
   procedure GetProxyData(var ProxyEnabled: boolean; var ProxyServer: string; var ProxyPort: integer);
-  function RemoveUserPrefix(sUser: String): String;
+  function GetUserFromFromUserName(sUser: String): String;
+  function GetUserToFromUserName(sUser: String): String;
 
 implementation
 
-function RemoveUserPrefix(sUser: String): String;
+function GetUserFromFromUserName(sUser: String): String;
 begin
   if Pos('_', sUser) > 0 then
     Result := Copy(sUser, 1, Pos('_', sUser) - 1)
   else
     Result := sUser;
+end;
+
+function GetUserToFromUserName(sUser: String): String;
+var
+  iPos: Integer;
+begin
+  Result := sUser;
+  iPos := Pos('_', sUser);
+  if iPos > 0 then
+  begin
+    Result := Copy(sUser, iPos + 1, Length(sUser) - iPos - 1);
+
+    iPos := Pos('_', Result);
+    if iPos > 0 then
+      Result := Copy(Result, 1, iPos - 1);
+  end;
 end;
 
 procedure GetProxyData(var ProxyEnabled: boolean; var ProxyServer: string; var ProxyPort: integer);

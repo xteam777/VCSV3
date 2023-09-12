@@ -2,8 +2,8 @@ object rdFileTransferLog: TrdFileTransferLog
   Left = 0
   Top = 0
   Caption = 'File transferring log'
-  ClientHeight = 289
-  ClientWidth = 407
+  ClientHeight = 288
+  ClientWidth = 403
   Color = clBtnFace
   CustomTitleBar.CaptionAlignment = taCenter
   Font.Charset = DEFAULT_CHARSET
@@ -18,20 +18,24 @@ object rdFileTransferLog: TrdFileTransferLog
   object mLog: TMemo
     Left = 0
     Top = 0
-    Width = 407
-    Height = 248
+    Width = 403
+    Height = 247
     Align = alClient
     ReadOnly = True
     TabOrder = 0
+    ExplicitWidth = 407
+    ExplicitHeight = 248
   end
   object pBottom: TPanel
     Left = 0
-    Top = 248
-    Width = 407
+    Top = 247
+    Width = 403
     Height = 41
     Align = alBottom
     BevelOuter = bvNone
     TabOrder = 1
+    ExplicitTop = 248
+    ExplicitWidth = 407
     object bOK: TButton
       Left = 156
       Top = 6

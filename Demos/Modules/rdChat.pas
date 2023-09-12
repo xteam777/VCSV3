@@ -230,7 +230,7 @@ begin
   if myUI.UserDesc <> '' then
     pTitle.Caption := myUI.UserDesc + ' - зрђ'
   else
-    pTitle.Caption := RemoveUserPrefix(myUI.UserName) + ' - зрђ';
+    pTitle.Caption := GetUserFromFromUserName(myUI.UserName) + ' - зрђ';
 end;
 
 constructor TRdUserChatField.Create(AOwner: TComponent);
