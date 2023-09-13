@@ -11,7 +11,7 @@ interface
 {$DEFINE RtcViewer}
 
 uses
-  Windows, Messages, SysUtils, CommonData, System.Types, uProcess, ServiceMgr, rtcBlankOutForm, //BlackLayered,
+  Windows, Messages, SysUtils, CommonData, System.Types, uProcess, ServiceMgr,
   Classes, Graphics, Controls, Forms, DateUtils, CommonUtils, WtsApi, uSysAccount, ClipbrdMonitor,
   Dialogs, StdCtrls, ExtCtrls, ShellApi, rdFileTransLog, VirtualTrees.Types, SHDocVw, rtcpFileTransUI, Psapi, Winapi.SHFolder,
   ComCtrls, Registry, Math, RtcIdentification, SyncObjs, System.Net.HTTPClient, System.Net.URLClient, ActiveX, ComObj, CommCtrl,
@@ -308,7 +308,6 @@ type
     N11: TMenuItem;
     tActivateHost: TTimer;
     ApplicationEvents: TApplicationEvents;
-    tCleanConnections: TTimer;
     rDestroyClient: TRtcResult;
     Button4: TButton;
     Button1: TButton;
@@ -523,7 +522,6 @@ type
     procedure Button2Click(Sender: TObject);
     procedure tActivateHostTimer(Sender: TObject);
     procedure ApplicationEventsRestore(Sender: TObject);
-    procedure tCleanConnectionsTimer(Sender: TObject);
     procedure ePartnerIDDrawItem(Control: TWinControl; Index: Integer;
       Rect: TRect; State: TOwnerDrawState);
     procedure TimerClientConnectError(Sender: TRtcConnection; E: Exception);
@@ -1789,7 +1787,7 @@ begin
 
   if FAction = 'desk' then
   begin
-    FDesktopControl.ChgDesktop_Begin;
+{    FDesktopControl.ChgDesktop_Begin;
 //    FDesktopControl.ChgDesktop_UseMouseDriver(False);
 //    FDesktopControl.ChgDesktop_CaptureLayeredWindows(False);
     FDesktopControl.ChgDesktop_ColorLimit(rdColor8bit);
@@ -1803,7 +1801,7 @@ begin
 //      FDesktopControl.ChgDesktop_ColorLowLimit(rd_ColorHigh);
 //      FDesktopControl.ChgDesktop_ColorReducePercent(cbReduceColors.Value);
 //    FDesktopControl.ChgDesktop_SendScreenRefineDelay(grpScreen2Refine.ItemIndex);
-    FDesktopControl.Send_HideDesktop(FUserToConnect);
+    FDesktopControl.Send_HideDesktop(FUserToConnect); }
     FDesktopControl.ChgDesktop_End(FUserToConnect);
 
     FDesktopControl.Open(FUserToConnect);
@@ -2751,32 +2749,6 @@ begin
   finally
     CS_GW.Release;
   end;
-end;
-
-procedure TMainForm.tCleanConnectionsTimer(Sender: TObject);
-var
-  i: Integer;
-begin
-{  xLog('tCleanConnectionsTimer');
-  CS_GW.Acquire;
-  try
-    i := GatewayClientsList.Count - 1;
-    while i >= 1 do
-    begin
-      if PGatewayRec(GatewayClientsList[i])^.UIClosed
-        and PGatewayRec(GatewayClientsList[i])^.Stopped then
-      begin
-        FreeGatewayRec(GatewayClientsList[i]);
-
-        Dispose(GatewayClientsList[i]);
-        GatewayClientsList.Delete(i);
-      end;
-
-      i := i - 1;
-    end;
-  finally
-    CS_GW.Release;
-  end;}
 end;
 
 {procedure TMainForm.RemovePortalConnectionByUIHandle(AUIHandle: THandle);
@@ -7528,7 +7500,7 @@ end;
 
 procedure TMainForm.Button4Click(Sender: TObject);
 begin
-  BlankOutScreen(True);
+//  BlankOutScreen(True);
 
 //    PClient.Disconnect;
 ////    PClient.Active := False;

@@ -6406,13 +6406,6 @@ object MainForm: TMainForm
     Left = 142
     Top = 72
   end
-  object tCleanConnections: TTimer
-    Enabled = False
-    Interval = 5000
-    OnTimer = tCleanConnectionsTimer
-    Left = 206
-    Top = 94
-  end
   object rDestroyClient: TRtcResult
     Left = 234
     Top = 78

@@ -215,7 +215,7 @@ begin
     FormStyle := fsStayOnTop;
     if FAutoLock then
       begin
-        LockForm.ApplyLayeredWindow(true, 70);
+        LockForm.ApplyLayeredWindow(true, 100);
         LockForm.DisableWindowForRecord(true);
         LockForm.DisableInput(true);
       end;

@@ -10,7 +10,7 @@ interface
 {$POINTERMATH ON}
 
 uses
-  Windows, Messages, Classes, rtcSystem, BlackLayered, rtcBlankOutForm,
+  Windows, Messages, Classes, rtcSystem, LockFormUnit,
   SysUtils, Graphics, Controls, Forms, //rtcpDesktopHost,
   rtcInfo, rtcLog, rtcZLib, SyncObjs, rtcScrUtils, CommonData, uVircessTypes,
   //rtcXJPEGEncode,
@@ -1608,7 +1608,8 @@ begin
 //    SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 0, 0);
 //    SendMessage(MainFormHandle, WM_DRAG_FULL_WINDOWS_MESSAGE, 0, 0);
 //    SetBlankMonitor(True);
-      BlankOutScreen(True);
+//      BlankOutScreen(True);
+      ShowLockForm;
     end;
 
 
@@ -1640,7 +1641,8 @@ begin
 //    SetBlankMonitor(False);
 //    SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 1, 0);
 //    SendMessage(MainFormHandle, WM_DRAG_FULL_WINDOWS_MESSAGE, 1, 0);
-      RestoreScreen;
+//      RestoreScreen;
+      CloseLockForm;
     end;
 
 

@@ -9,8 +9,8 @@ interface
 {$INCLUDE rtcPortalDefs.inc}
 
 uses
-  Windows, Messages, Classes, SysUtils, Graphics, Controls, Forms, CommonData, BlackLayered, rtcBlankOutForm,
-  ShlObj, Clipbrd, IOUtils, DateUtils, SHDocVw, ExtCtrls, ActiveX, ShellApi, ComObj, ClipbrdMonitor, LockFormUnit,
+  Windows, Messages, Classes, SysUtils, Graphics, Controls, Forms, CommonData,
+  ShlObj, Clipbrd, IOUtils, DateUtils, SHDocVw, ExtCtrls, ActiveX, ShellApi, ComObj, ClipbrdMonitor,
 {$IFNDEF IDE_1}
   Variants,
 {$ENDIF}
@@ -744,7 +744,7 @@ begin
                 SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 1, 0);
             end
             else
-            if data.asString['s'] = 'OFFMON' then
+            {if data.asString['s'] = 'OFFMON' then
             begin
               if IsService then
                 SendIOToHelperByIPC(QT_SENDOFFMON, 0, 0, 0, 0, 0, 0, 0, '')
@@ -768,9 +768,9 @@ begin
           //    SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 1, 0);
           //    SendMessage(MainFormHandle, WM_DRAG_FULL_WINDOWS_MESSAGE, 1, 0);
                 //RestoreScreen;
-                CloseLockForm;
+//                CloseLockForm;
               end;
-            end
+            end}
             else
             if data.asString['s'] = 'OFFSYS' then
               PowerOffSystem

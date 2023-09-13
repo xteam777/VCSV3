@@ -3,7 +3,7 @@
         <ProjectGuid>{C9C9CB0C-CA8E-4DC3-B257-63F6E0ED7B84}</ProjectGuid>
         <MainSource>Remox.dpr</MainSource>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Release</Config>
+        <Config Condition="'$(Config)'==''">Debug</Config>
         <TargetedPlatforms>1</TargetedPlatforms>
         <AppType>Application</AppType>
         <FrameworkType>VCL</FrameworkType>
@@ -186,7 +186,6 @@
         <DCCReference Include="..\Modules\RtcRegistrationForm.pas">
             <Form>RegistrationForm</Form>
         </DCCReference>
-        <DCCReference Include="..\Modules\RecordThrd.pas"/>
         <DCCReference Include="..\Modules\AboutForm.pas">
             <Form>fAboutForm</Form>
         </DCCReference>
@@ -200,9 +199,6 @@
         <DCCReference Include="..\Modules\uPowerWatcher.pas"/>
         <DCCReference Include="..\Modules\rdFileTransLog.pas">
             <Form>rdFileTransferLog</Form>
-        </DCCReference>
-        <DCCReference Include="..\Modules\rtcBlankOutForm.pas">
-            <Form>fmBlankoutForm</Form>
         </DCCReference>
         <DCCReference Include="uSetup.pas"/>
         <DCCReference Include="..\Modules\uAcceptEula.pas">

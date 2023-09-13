@@ -393,14 +393,14 @@ begin
 //  pUIITem.pImgRec^.Picture.Bitmap.Assign(imgRecSource.Picture.Bitmap);
 //  pUIITem.pImgRec^.Transparent := True;
 //  pUIITem.pImgRec^.BringToFront;
-  pUIITem.pLblRecInfo^ := TLabel.Create(Scroll);
-  pUIITem.pLblRecInfo^.Parent := Scroll;
-  pUIITem.pLblRecInfo^.Left := Scroll.Width - 80;
-  pUIITem.pLblRecInfo^.Top := 10;
-  pUIITem.pLblRecInfo^.Caption := '00:00:00';
-  pUIITem.pLblRecInfo^.Font.Color := clRed;
-  pUIITem.pLblRecInfo^.Font.Style := [fsBold];
-  pUIITem.pLblRecInfo^.Visible := False;
+//  pUIITem.pLblRecInfo^ := TLabel.Create(Scroll);
+//  pUIITem.pLblRecInfo^.Parent := Scroll;
+//  pUIITem.pLblRecInfo^.Left := Scroll.Width - 80;
+//  pUIITem.pLblRecInfo^.Top := 10;
+//  pUIITem.pLblRecInfo^.Caption := '00:00:00';
+//  pUIITem.pLblRecInfo^.Font.Color := clRed;
+//  pUIITem.pLblRecInfo^.Font.Style := [fsBold];
+//  pUIITem.pLblRecInfo^.Visible := False;
 //  pUIITem.pLblRecInfo^.BringToFront;
 
   pUIItem.UI.Viewer := pUIITem.pImage^;
@@ -1217,13 +1217,13 @@ begin
   lState.Width := ClientWidth;
   lState.Top := Height * 580 div 680;
 
-  if ActiveUIModule <> nil then
-  begin
-    ActiveUIModule.pImgRec^.Left := Scroll.Width - 100;
-    ActiveUIModule.pImgRec^.Top := 10;
-    ActiveUIModule.pLblRecInfo^.Left := Scroll.Width - 80;
-    ActiveUIModule.pLblRecInfo^.Top := 10;
-  end;
+//  if ActiveUIModule <> nil then
+//  begin
+//    ActiveUIModule.pImgRec^.Left := Scroll.Width - 100;
+//    ActiveUIModule.pImgRec^.Top := 10;
+//    ActiveUIModule.pLblRecInfo^.Left := Scroll.Width - 80;
+//    ActiveUIModule.pLblRecInfo^.Top := 10;
+//  end; Доделать
 end;
 
 procedure TrdDesktopViewer.FT_UIClose(Sender: TRtcPFileTransferUI);
@@ -1610,8 +1610,10 @@ begin
       end;
     end;
 
+    Exit;
+
   //Подгонка размера изображения
-  if {fFirstScreen and} Sender.HaveScreen then
+  if (UIDM <> nil) and {fFirstScreen and} Sender.HaveScreen then
   begin
 //    if myUI.UserDesc <> '' then
 //      Caption := myUI.UserDesc// + ' - Управление' //+ checkControl
@@ -1728,8 +1730,10 @@ procedure TrdDesktopViewer.pImageMouseDown(Sender: TObject; Button: TMouseButton
 //    end
 //  else
 //    begin
-    if Button=mbLeft then LMouseDown:=True;
-    if Button=mbRight then RMouseDown:=True;
+    if Button = mbLeft then
+      LMouseDown := True;
+    if Button = mbRight then
+      RMouseDown := True;
 //    if (panOptions.Visible or panSettings.Visible) then
 //      begin
 //      // if the user clicks somewhere on the screen, auto-cancel the Settings panel
@@ -1766,10 +1770,10 @@ procedure TrdDesktopViewer.btnSettingsClick(Sender: TObject);
 
 procedure TrdDesktopViewer.Button1Click(Sender: TObject);
 begin
-  ActiveUIModule.pImgRec^.Parent := Scroll;
-  ActiveUIModule.pImgRec^.Left :=Scroll.Width - 100;
-  ActiveUIModule.pImgRec^.Top := 10;
-  ActiveUIModule.pImgRec^.Visible := True;
+//  ActiveUIModule.pImgRec^.Parent := Scroll;
+//  ActiveUIModule.pImgRec^.Left :=Scroll.Width - 100;
+//  ActiveUIModule.pImgRec^.Top := 10;
+//  ActiveUIModule.pImgRec^.Visible := True;  Доделать
 //  ActiveUIModule.pImgRec^.Picture.Bitmap.Assign(imgRecSource.Picture.Bitmap);
 //  ActiveUIModule.pImgRec^.BringToFront;
 end;
@@ -2086,9 +2090,9 @@ begin
 
       if ActiveUIModule <> nil then
       begin
-        ActiveUIModule.pImgRec^.Visible := True;
-        ActiveUIModule.pLblRecInfo^.Visible := True;
-        ActiveUIModule.pLblRecInfo^.Tag := NativeInt(GetTickCount);
+//        ActiveUIModule.pImgRec^.Visible := True;
+//        ActiveUIModule.pLblRecInfo^.Visible := True;
+//        ActiveUIModule.pLblRecInfo^.Tag := NativeInt(GetTickCount);
         ActiveUIModule.TimerRec.Enabled := True;
       end;
     end
@@ -2099,8 +2103,8 @@ begin
 
       if ActiveUIModule <> nil then
       begin
-        ActiveUIModule.pImgRec^.Visible := False;
-        ActiveUIModule.pLblRecInfo^.Visible := False;
+//        ActiveUIModule.pImgRec^.Visible := False;
+//        ActiveUIModule.pLblRecInfo^.Visible := False;
         ActiveUIModule.TimerRec.Enabled := False;
       end;
 
@@ -2117,8 +2121,8 @@ begin
 
       if ActiveUIModule <> nil then
       begin
-        ActiveUIModule.pImgRec^.Visible := False;
-        ActiveUIModule.pLblRecInfo^.Visible := False;
+//        ActiveUIModule.pImgRec^.Visible := False;
+//        ActiveUIModule.pLblRecInfo^.Visible := False;
         ActiveUIModule.TimerRec.Enabled := False;
       end;
 
@@ -2923,13 +2927,13 @@ procedure TrdDesktopViewer.TimerRecTimer(Sender: TObject);
 var
   UIDM: TUIDataModule;
 begin
-  UIDM := TUIDataModule(TTimer(Sender).Owner);
-  if Assigned(UIDM.FVideoWriter) then
-    UIDM.pImgRec^.Visible := not UIDM.pImgRec^.Visible
-  else
-    UIDM.pImgRec^.Visible := False;
-  UIDM.pLblRecInfo^.Visible := Assigned(UIDM.FVideoWriter);
-  UIDM.pLblRecInfo^.Caption := FormatDateTime('HH:NN:SS', IncMilliSecond(0, NativeInt(GetTickCount) - NativeInt(UIDM.pLblRecInfo^.Tag)));
+//  UIDM := TUIDataModule(TTimer(Sender).Owner);
+//  if Assigned(UIDM.FVideoWriter) then
+//    UIDM.pImgRec^.Visible := not UIDM.pImgRec^.Visible
+//  else
+//    UIDM.pImgRec^.Visible := False;
+//  UIDM.pLblRecInfo^.Visible := Assigned(UIDM.FVideoWriter);
+//  UIDM.pLblRecInfo^.Caption := FormatDateTime('HH:NN:SS', IncMilliSecond(0, NativeInt(GetTickCount) - NativeInt(UIDM.pLblRecInfo^.Tag)));
 end;
 
 procedure TrdDesktopViewer.PFileTransExplorerNewUI(Sender: TRtcPFileTransfer; const user: String);
