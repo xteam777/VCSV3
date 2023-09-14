@@ -1216,9 +1216,15 @@ end;
 
 procedure TrdDesktopViewer.FormResize(Sender: TObject);
 begin
-  panOptions.Left := (Width - panOptions.Width) div 2;
+//  panOptions.Left := (Width - panOptions.Width) div 2;
+//  panOptionsMini.Top := panOptions.Top + panOptions.Height;
+//  panOptionsMini.Left := panOptions.Left + panOptions.Width - panOptionsMini.Width - 15;
+
+  panOptions.Left := 0;
+  panOptions.Width := ClientWidth;
   panOptionsMini.Top := panOptions.Top + panOptions.Height;
   panOptionsMini.Left := panOptions.Left + panOptions.Width - panOptionsMini.Width - 15;
+  ammbActions.Left := Ceil((panOptions.Width - ammbActions.Width) / 2);
 
   DoResizeImage;
 
