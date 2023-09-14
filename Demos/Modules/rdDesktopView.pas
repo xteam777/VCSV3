@@ -97,11 +97,9 @@ type
     iScreenLocked: TImage;
     iPrepare: TImage;
     lState: TLabel;
-    ilMiniPanel: TImageList;
     iFullScreen: TImage;
     iMinimize: TImage;
     iShowMiniPanel: TImage;
-    iClose: TImage;
     iMiniPanelHide: TImage;
     iMiniPanelShow: TImage;
     iMove: TImage;
@@ -1029,9 +1027,9 @@ end;
 
 procedure TrdDesktopViewer.lCloseClick(Sender: TObject);
 begin
-  if not MiniPanelDraggging then
-    Close;
-  MiniPanelMouseDowned := False;
+//  if not MiniPanelDraggging then
+//    Close;
+//  MiniPanelMouseDowned := False;
 end;
 
 procedure TrdDesktopViewer.aStretchScreenExecute(Sender: TObject);
