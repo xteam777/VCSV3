@@ -35,6 +35,8 @@ type
     FVideoImage: TBitmap;
     FLockVideoImage: Integer;
     FFirstImageArrived: Boolean;
+    PartnerLockedState: Integer;
+    PartnerServiceStarted: Boolean;
     ReconnectToPartnerStart: TReconnectToPartnerStart;
 
     property Handle: THandle read FHandle;

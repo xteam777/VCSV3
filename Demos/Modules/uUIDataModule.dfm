@@ -6,6 +6,7 @@ object UIDataModule: TUIDataModule
     SmoothScale = True
     ExactCursor = True
     ControlMode = rtcpFullControl
+    HaveScreen = False
     Left = 30
     Top = 8
   end

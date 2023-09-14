@@ -10,7 +10,7 @@ interface
 
 uses
   Windows, Messages, Classes, SysUtils, Graphics, Controls, Forms, CommonData,
-  ShlObj, Clipbrd, IOUtils, DateUtils, SHDocVw, ExtCtrls, ActiveX, ShellApi, ComObj, ClipbrdMonitor,
+  ShlObj, RmxClipbrd, IOUtils, DateUtils, SHDocVw, ExtCtrls, ActiveX, ShellApi, ComObj, ClipbrdMonitor,
 {$IFNDEF IDE_1}
   Variants,
 {$ENDIF}

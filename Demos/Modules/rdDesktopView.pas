@@ -12,7 +12,7 @@ interface
 {$ifend}
 
 uses
-  Windows, Messages, SysUtils, CommonData, CommonUtils, uVircessTypes, rtcLog, ClipBrd,
+  Windows, Messages, SysUtils, CommonData, CommonUtils, uVircessTypes, rtcLog, RmxClipbrd,
   Classes, Graphics, Controls, Forms, Types, IOUtils, DateUtils,
   Dialogs, ExtCtrls, StdCtrls, ShellAPI, ProgressDialog, rtcSystem,
   rtcpChat, Math, rtcpFileTrans, rtcpFileTransUI, uUIDataModule,
@@ -110,6 +110,7 @@ type
     aRecordOpenFolder: TAction;
     aRecordCodecInfo: TAction;
     MainChromeTabs: TChromeTabs;
+    TimerResize: TTimer;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -193,6 +194,7 @@ type
     procedure MainChromeTabsActiveTabChanged(Sender: TObject; ATab: TChromeTab);
     procedure MainChromeTabsButtonCloseTabClick(Sender: TObject;
       ATab: TChromeTab; var Close: Boolean);
+    procedure TimerResizeTimer(Sender: TObject);
   private
 //    FVideoRecorder: TVideoRecorder;
 //    FVideoWriter: TRMXVideoWriter;
@@ -245,6 +247,7 @@ type
 
     // declare our DROPFILES message handler
 //    procedure AcceptFiles(var msg: TMessage); message WM_DROPFILES;
+    procedure UIHaveScreeenChanged(Sender: TObject);
     procedure DoResizeImage;
     procedure UpdateQuality;
 
@@ -257,7 +260,7 @@ type
 //    procedure ScreenRecordResume;
 //    procedure ScreenRecordStop;
 //    procedure CheckRecordState(var msg: TMessage); message WM_SETCURRENTFRAME;
-    procedure ChangeLockedState(var Message: TMessage); message WM_CHANGE_LOCKED_STATUS;
+//    procedure ChangeLockedState(var Message: TMessage); message WM_CHANGE_LOCKED_STATUS;
     procedure GetFilesFromHostClipboard(var Message: TMessage); message WM_GET_FILES_FROM_CLIPBOARD;
 //    procedure WMActivate(var Message: TMessage); message WM_ACTIVATE;
   public
@@ -272,9 +275,9 @@ type
     PChat: TRtcPChat;
 //    fFirstScreen: Boolean;
     FormMinimized: Boolean;
-    PartnerLockedState: Integer;
-    PartnerServiceStarted: Boolean;
-    ReconnectToPartnerStart: TReconnectToPartnerStart;
+//    PartnerLockedState: Integer;
+//    PartnerServiceStarted: Boolean;
+//    ReconnectToPartnerStart: TReconnectToPartnerStart;
 //    MappedFiles: array of TMappedFileRec;
 
     function SetShortcuts_Hook(fBlockInput: Boolean): Boolean;
@@ -296,8 +299,9 @@ type
     procedure RemoveProgressDialog(ATaskId: TTaskId);
     procedure RemoveProgressDialogByValue(AProgressDialog: PProgressDialog);
     procedure RemoveProgressDialogByUserName(AUserName: String);
-    function AddTab(AUserName, AUserDesc, AUserPass: String; AModule: TRtcPDesktopControl): TUIDataModule;
+    function AddNewTab(AUserName, AUserDesc, AUserPass: String; AStartLockedState: Integer; AStartServiceStarted: Boolean; AReconnectToPartnerStart: TReconnectToPartnerStart; AModule: TRtcPDesktopControl): TUIDataModule;
     procedure SetActiveTab(AUserName: String);
+    procedure ChangeLockedState(AUserName: String; ALockedState: Integer; AServiceStarted: Boolean);
     function GetUIDataModule(AUserName: String): TUIDataModule;
     function RemoveUIDataModule(AUserName: String): Integer;
     procedure CloseForm;
@@ -327,7 +331,25 @@ implementation
 
 { TrdDesktopViewer }
 
-function TrdDesktopViewer.AddTab(AUserName, AUserDesc, AUserPass: String; AModule: TRtcPDesktopControl): TUIDataModule;
+procedure TrdDesktopViewer.ChangeLockedState(AUserName: String; ALockedState: Integer; AServiceStarted: Boolean);
+var
+  UIDM: TUIDataModule;
+begin
+  if DesktopsForm = nil then
+    Exit;
+
+  UIDM := GetUIDataModule(GetUserToFromUserName(AUserName));
+  if UIDM <> nil then
+  begin
+    UIDM.PartnerLockedState := ALockedState;
+    UIDM.PartnerServiceStarted := AServiceStarted;
+
+    if UIDM = ActiveUIModule then
+      SetFormState;
+  end;
+end;
+
+function TrdDesktopViewer.AddNewTab(AUserName, AUserDesc, AUserPass: String; AStartLockedState: Integer; AStartServiceStarted: Boolean; AReconnectToPartnerStart: TReconnectToPartnerStart; AModule: TRtcPDesktopControl): TUIDataModule;
 var
   pTab: TChromeTab;
   pUIItem: TUIDataModule;
@@ -357,8 +379,9 @@ begin
     pTab.Caption := pTab.UserName;
 
   pUIITem := TUIDataModule.Create(Self);
-  pUIITem.ReconnectToPartnerStart := ReconnectToPartnerStart;
-
+  pUIItem.PartnerLockedState := AStartLockedState;
+  pUIItem.PartnerServiceStarted := AStartServiceStarted;
+  pUIITem.ReconnectToPartnerStart := AReconnectToPartnerStart;
   pUIItem.TimerRec.OnTimer := TimerRecTimer;
 
 //  pViewer := TRtcPDesktopViewer.Create(Self);
@@ -381,6 +404,7 @@ begin
   pUIItem.UI.ExactCursor := True;
   pUIItem.UI.OnOpen := myUIOpen;
   pUIItem.UI.OnData := myUIData;
+  pUIItem.UI.OnHaveScreeenChanged := UIHaveScreeenChanged;
   pUIItem.UI.OnError := myUIError;
   pUIItem.UI.OnLogout := myUILogout;
   pUIItem.UI.OnClose := myUIClose;
@@ -398,9 +422,10 @@ begin
   pUIItem.PFileTrans.Open(pTab.UserName, False, AModule);
 
   UIModulesList.Add(pUIItem);
-
   ActiveUIModule := pUIItem;
+
   MainChromeTabsActiveTabChanged(nil, pTab);
+//  SetFormState;
 
   Result := pUIItem;
 end;
@@ -483,12 +508,12 @@ var
   i: Integer;
 begin
   Result := nil;
-  for i := 0 to UIModulesList.Count - 1 do
-    if TUIDataModule(UIModulesList[i]).UserName = AUserName then
-    begin
-      Result := UIModulesList[i];
-      Break;
-    end;
+    for i := 0 to UIModulesList.Count - 1 do
+      if TUIDataModule(UIModulesList[i]).UserName = AUserName then
+      begin
+        Result := UIModulesList[i];
+        Break;
+      end;
 end;
 
 procedure TrdDesktopViewer.MainChromeTabsActiveTabChanged(Sender: TObject;
@@ -989,6 +1014,12 @@ begin
   DoResizeImage;
 end;
 
+procedure TrdDesktopViewer.UIHaveScreeenChanged(Sender: TObject);
+begin
+  if TRtcPDesktopControlUI(Sender).HaveScreen then
+    TimerResize.Enabled := True;
+end;
+
 procedure TrdDesktopViewer.DoResizeImage;
 var
   Scale: Real;
@@ -1124,7 +1155,7 @@ begin
   lState.Visible := True;
   lState.Left := 0;
   lState.Width := ClientWidth;
-//  Scroll.Visible := False;
+  Scroll.Visible := False;
 
   tRecord.Enabled := False;
 
@@ -1137,7 +1168,7 @@ begin
 
   panOptionsVisible := True;
   MiniPanelDraggging := False;
-  aStretchScreen.Checked := True;
+  aStretchScreen.Checked := False;
 
   aOptimizeSpeed.Checked := True;
 
@@ -1472,7 +1503,7 @@ begin
 //  BringWindowToTop(Handle);
 
   aHideWallpaper.Checked := True;
-//  UI.Send_HideDesktop(Sender);
+  Sender.Send_HideDesktop(Sender);
 //  aOptimalScale.Checked := UI.SmoothScale;
 
   //tell Windows that you're accepting drag and drop files
@@ -1480,6 +1511,8 @@ begin
 //    DragAcceptFiles( Handle, True );
 
 //    UpdateQuality;
+
+  DoResizeImage;
 end;
 
 procedure TrdDesktopViewer.OnProgressDialogCancel(Sender: TObject);
@@ -2196,12 +2229,12 @@ end;
 //begin
 //end;
 
-procedure TrdDesktopViewer.ChangeLockedState(var Message: TMessage);
+{procedure TrdDesktopViewer.ChangeLockedState(var Message: TMessage);
 begin
   PartnerLockedState := Message.WParam;
   PartnerServiceStarted := Boolean(Message.LParam);
   SetFormState;
-end;
+end;}
 
 procedure TrdDesktopViewer.ControlPolygons(Sender,
   ChromeTabsControl: TObject; ItemRect: TRect; ItemType: TChromeTabItemType;
@@ -2268,8 +2301,11 @@ end;
 
 procedure TrdDesktopViewer.SetFormState;
 begin
-  if ((PartnerLockedState = LCK_STATE_LOCKED) or (PartnerLockedState = LCK_STATE_SAS))
-    and (not PartnerServiceStarted) then
+  if ActiveUIModule = nil then
+    Exit;
+
+  if ((ActiveUIModule.PartnerLockedState = LCK_STATE_LOCKED) or (ActiveUIModule.PartnerLockedState = LCK_STATE_SAS))
+    and (not ActiveUIModule.PartnerServiceStarted) then
   begin
     pMain.Color := $00A39323;
     Scroll.Visible := True;
@@ -2888,6 +2924,12 @@ begin
     UIDM.pImage^.RecordCircleVisible := False;
   UIDM.pImage^.RecordInfo := FormatDateTime('HH:NN:SS', IncMilliSecond(0, NativeInt(GetTickCount) - NativeInt(UIDM.pImage^.RecordTicks)));
   UIDM.pImage^.RecordInfoVisible := Assigned(UIDM.FVideoWriter);
+end;
+
+procedure TrdDesktopViewer.TimerResizeTimer(Sender: TObject);
+begin
+  DoResizeImage;
+  TimerResize.Enabled := False;
 end;
 
 procedure TrdDesktopViewer.PFileTransExplorerNewUI(Sender: TRtcPFileTransfer; const user: String);

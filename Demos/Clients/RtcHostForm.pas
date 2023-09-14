@@ -26,7 +26,7 @@ uses
   rtcThrPool, rtcWinLogon,
 //  SasLibEx,
 
-  RtcHostSvc, Clipbrd, RunElevatedSupport,
+  RtcHostSvc, RmxClipbrd, RunElevatedSupport,
 
   rdFileTrans, rdChat, WinApi.WinSvc,
 
@@ -4366,23 +4366,26 @@ begin
 end;
 
 procedure TMainForm.Locked_Status(uname: String; aLockedStatus: Integer; aServiceStarted: Boolean);
-var
-  i: Integer;
-  pPC: PPortalConnection;
+//var
+//  i: Integer;
+//  pPC: PPortalConnection;
 begin
 //  XLog('Locked_Status');
 
-  CS_GW.Acquire;
-  try
-    for i := 0 to PortalConnectionsList.Count - 1 do
-    begin
-      pPC := PPortalConnection(PortalConnectionsList[i]);
-      if pPC^.ID = uname then
-        PostMessage(pPC^.DMHandle, WM_CHANGE_LOCKED_STATUS, aLockedStatus, Byte(aServiceStarted));
-    end;
-  finally
-    CS_GW.Release;
-  end;
+//  CS_GW.Acquire;
+//  try
+//    for i := 0 to PortalConnectionsList.Count - 1 do
+//    begin
+//      pPC := PPortalConnection(PortalConnectionsList[i]);
+//      if pPC^.ID = uname then
+//        PostMessage(pPC^.DMHandle, WM_CHANGE_LOCKED_STATUS, aLockedStatus, Byte(aServiceStarted));
+//    end;
+//  finally
+//    CS_GW.Release;
+//  end;
+
+  if DesktopsForm <> nil then
+    DesktopsForm.ChangeLockedState(uname, aLockedStatus, aServiceStarted);
 end;
 
 procedure TMainForm.LoadSetup(RecordType: String);
@@ -4392,6 +4395,9 @@ var
   info: TRtcRecord;
 begin
 //  xLog('LoadSetup: ' + RecordType);
+
+  if not File_Exists(ChangeFileExt(AppFileName,'.inf')) then
+    Exit;
 
   //Registry
   if (RecordType = 'ALL')
@@ -4509,7 +4515,7 @@ begin
   if (RecordType = 'ALL')
     or (RecordType = 'REGULAR_PASS') then
   begin
-    CfgFileName:= ChangeFileExt(AppFileName,'.inf'); //RTC_LOG_FOLDER + ChangeFileExt(ExtractFileName(Application.ExeName), '.inf');
+    CfgFileName := ChangeFileExt(AppFileName,'.inf'); //RTC_LOG_FOLDER + ChangeFileExt(ExtractFileName(Application.ExeName), '.inf');
     s := Read_File(CfgFileName, rtc_ShareDenyNone);
 
     if s <> '' then
@@ -9727,10 +9733,10 @@ begin
     if pPCItem <> nil then
     begin
       pPCItem^.DMHandle := DesktopsForm.Handle;
-      pPCItem^.DataModule := DesktopsForm.AddTab(pPCItem^.UserName, GetUserDescription(user, 'desk'), pPCItem^.UserPass, Sender);
-      DesktopsForm.PartnerLockedState := pPCItem^.StartLockedState;
-      DesktopsForm.PartnerServiceStarted := pPCItem^.StartServiceStarted;
-      DesktopsForm.ReconnectToPartnerStart := ReconnectToPartnerStart;
+      pPCItem^.DataModule := DesktopsForm.AddNewTab(pPCItem^.UserName, GetUserDescription(user, 'desk'), pPCItem^.UserPass, pPCItem^.StartLockedState, pPCItem^.StartServiceStarted, ReconnectToPartnerStart, Sender);
+//      DesktopsForm.PartnerLockedState := pPCItem^.StartLockedState;
+//      DesktopsForm.PartnerServiceStarted := pPCItem^.StartServiceStarted;
+//      DesktopsForm.ReconnectToPartnerStart := ReconnectToPartnerStart;
       DesktopsForm.SetFormState;
     end;
 

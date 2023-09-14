@@ -75,7 +75,8 @@ uses
   rmxVideoStorage in '..\..\rmxVideo\API\rmxVideoStorage.pas',
   Compressions in '..\..\rmxVideo\Compressor\Compressions.pas',
   SendDestroyToGateway in '..\Modules\SendDestroyToGateway.pas',
-  uUIDataModule in '..\Modules\uUIDataModule.pas' {UIDataModule: TDataModule};
+  uUIDataModule in '..\Modules\uUIDataModule.pas' {UIDataModule: TDataModule},
+  RmxClipbrd in '..\Modules\RmxClipbrd.pas';
 
 {$R rtcportaluac.res rtcportaluac.rc}
 {$R *.res}
@@ -395,7 +396,9 @@ begin
             PostMessage(hPrev, WM_ACTIVATE, WA_ACTIVE, 0);
             Exit;
           end;
-        end;
+        end
+        else
+        begin
   //      if FindWindow('Shell_TrayWnd', nil) = 0 then //Отключено для запуска в неактивной консольной сессии
   //        Exit;
 
@@ -403,7 +406,8 @@ begin
   //        AdjustPriviliges(SE_CREATE_GLOBAL_NAME); //В вин10 АВ. Для вин10 не нужно?. Для открытия события не нужно. Только для создания
   //      finally
   //      end;
-        StartProcessInDesktopMode;
+          StartProcessInDesktopMode;
+        end;
       end
       else
       begin

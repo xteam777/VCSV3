@@ -103,6 +103,7 @@ type
     Scr: TRtcScreenPlayback;
 
     FHaveScreen: boolean;
+    FOnHaveScreenChanged: TNotifyEvent;
 
     FCurPaint: boolean;
     FCurPaintX, FCurPaintY, FCurPaintW, FCurPaintH: Integer;
@@ -202,7 +203,7 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
-    function HaveScreen: boolean;
+    function GetHaveScreen: Boolean;
     function ScreenWidth: Integer;
     function ScreenHeight: Integer;
 
@@ -281,6 +282,8 @@ type
     procedure Send_LockSystem(Sender: TObject = nil);
     procedure Send_LogoffSystem(Sender: TObject = nil);
     procedure Send_RestartSystem(Sender: TObject = nil);
+
+    procedure SetHaveScreen(AValue: Boolean);
     //-sstuman
 
     procedure Send_AltTAB(Sender: TObject = nil);
@@ -356,6 +359,9 @@ type
     { Message received from user:
       Sender = this TRtcPDesktopControlUI object }
     property OnData: TRtcPDesktopControlUIEvent read FOnData write FOnData;
+
+    property HaveScreen: Boolean read GetHaveScreen write SetHaveScreen;
+    property OnHaveScreeenChanged: TNotifyEvent read FOnHaveScreenChanged write FOnHaveScreenChanged;
   end;
 
 implementation
@@ -367,6 +373,31 @@ implementation
 
 var
   myCursorLoaded: boolean = False;
+
+procedure TRtcPDesktopControlUI.SetHaveScreen(AValue: Boolean);
+begin
+  CS.Acquire;
+  try
+    if AValue <> FHaveScreen then
+    begin
+      FHaveScreen := AValue;
+      if Assigned(FOnHaveScreenChanged) then
+        FOnHaveScreenChanged(Self);
+    end;
+  finally
+    CS.Release;
+  end;
+end;
+
+function TRtcPDesktopControlUI.GetHaveScreen: Boolean;
+begin
+  CS.Acquire;
+  try
+    Result := FHaveScreen;
+  finally
+    CS.Release;
+  end;
+end;
 
 constructor TRtcPDesktopControlUI.Create(AOwner: TComponent);
 begin
@@ -383,7 +414,7 @@ begin
   ControlMouse := False;
   ControlKeyboard := False;
   FMouseDown := 0;
-  FHaveScreen := False;
+  HaveScreen := False;
   FCursorChanged := False;
   FScreenChanged := False;
   ControlMode := rtcpNoControl;
@@ -422,7 +453,7 @@ begin
     try
       ControlMouse := False;
       ControlKeyboard := False;
-      FHaveScreen := False;
+      HaveScreen := False;
       FMouseDown := 0;
       Scr.LoginUserName := '';
     finally
@@ -441,7 +472,7 @@ begin
     try
       ControlMouse := False;
       ControlKeyboard := False;
-      FHaveScreen := False;
+      HaveScreen := False;
       FMouseDown := 0;
       Scr.LoginUserName := '';
     finally
@@ -464,7 +495,7 @@ begin
   try
     ControlMouse := False;
     ControlKeyboard := False;
-    FHaveScreen := False;
+    HaveScreen := False;
     FMouseDown := 0;
     Scr.LoginUserName := '';
   finally
@@ -483,7 +514,7 @@ begin
   try
     ControlMouse := False;
     ControlKeyboard := False;
-    FHaveScreen := False;
+    HaveScreen := False;
     FMouseDown := 0;
     Scr.LoginUserName := '';
   finally
@@ -535,13 +566,13 @@ begin
     if Scr.PaintScreen(ScreenData) then
     begin
       FScreenChanged := True;
-      if not FHaveScreen then
+      if not HaveScreen then
       begin
-        FHaveScreen := True;
+        HaveScreen := True;
         Scr.LoginUserName := Module.Client.LoginUserName;
       end;
     end;
-    if FHaveScreen then
+    if HaveScreen then
     begin
       if Scr.PaintCursor(CursorData) then
         FCursorChanged := True;
@@ -1545,16 +1576,6 @@ begin
     FCtrlDown := False;
     FAltDown := False;
     FMouseDown := 0;
-  end;
-end;
-
-function TRtcPDesktopControlUI.HaveScreen: boolean;
-begin
-  CS.Acquire;
-  try
-    Result := FHaveScreen;
-  finally
-    CS.Release;
   end;
 end;
 

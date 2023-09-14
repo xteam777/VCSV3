@@ -7,7 +7,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes,
   Graphics, Controls, Forms, Dialogs, StdCtrls,
-  Buttons, ComCtrls, ExtCtrls, Clipbrd, IOUtils, rtcPortalMod, rtcpFileTrans,
+  Buttons, ComCtrls, ExtCtrls, RmxClipbrd, IOUtils, rtcPortalMod, rtcpFileTrans,
   rtcpFileTransUI, System.ImageList, Vcl.ImgList, Vcl.Menus, Vcl.Samples.Gauges,
   rtcpFileExplore, rtcSystem, Character,
 

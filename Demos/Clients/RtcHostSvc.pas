@@ -858,6 +858,9 @@ var
 //  len: Int64;
 //  len2: LongInt;
 begin
+  if not File_Exists(ChangeFileExt(AppFileName,'.inf')) then
+    Exit;
+
   CfgFileName := ChangeFileExt(AppFileName,'.inf'); //RTC_LOG_FOLDER + ChangeFileExt(ExtractFileName(Application.ExeName), '.inf');
 
   if ((RecordType = 'ALL')

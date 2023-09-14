@@ -10,7 +10,7 @@ interface
 uses
   Windows, Messages, SysUtils, CommonData, uVircessTypes,
   Classes, Graphics, Controls, Forms, CommonUtils,
-  Dialogs, StdCtrls, ComCtrls, ExtCtrls, Clipbrd,
+  Dialogs, StdCtrls, ComCtrls, ExtCtrls, RmxClipbrd,
 
   ShellAPI,
 

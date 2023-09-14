@@ -13,7 +13,7 @@ uses
   Messages,
   SysUtils,
   Classes,
-  Clipbrd,
+  RmxClipbrd,
   Registry,
   DWMApi,
 
