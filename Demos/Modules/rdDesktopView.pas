@@ -331,13 +331,28 @@ implementation
 
 { TrdDesktopViewer }
 
+procedure TrdDesktopViewer.Button1Click(Sender: TObject);
+var
+  i: Integer;
+begin
+//  ActiveUIModule.pImgRec^.Parent := Scroll;
+//  ActiveUIModule.pImgRec^.Left :=Scroll.Width - 100;
+//  ActiveUIModule.pImgRec^.Top := 10;
+//  ActiveUIModule.pImgRec^.Visible := True;  Доделать
+//  ActiveUIModule.pImgRec^.Picture.Bitmap.Assign(imgRecSource.Picture.Bitmap);
+//  ActiveUIModule.pImgRec^.BringToFront;
+
+//  for i := 0 to UIModulesList.Count - 1 do
+//    Memo1.Lines.Add('L: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Left)
+//      + ' T: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Top)
+//      + ' W: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Width)
+//      + ' H: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Height));
+end;
+
 procedure TrdDesktopViewer.ChangeLockedState(AUserName: String; ALockedState: Integer; AServiceStarted: Boolean);
 var
   UIDM: TUIDataModule;
 begin
-  if DesktopsForm = nil then
-    Exit;
-
   UIDM := GetUIDataModule(GetUserToFromUserName(AUserName));
   if UIDM <> nil then
   begin
@@ -531,6 +546,8 @@ begin
     begin
       TUIDataModule(UIModulesList[i]).pImage^.Align := alClient;
       TUIDataModule(UIModulesList[i]).pImage^.Visible := True;
+
+      ActiveUIModule := pUIItem;
 
       aRecordStart.Enabled := not Assigned(TUIDataModule(UIModulesList[i]).FVideoWriter);
       aRecordStop.Enabled := Assigned(TUIDataModule(UIModulesList[i]).FVideoWriter);
@@ -1635,7 +1652,7 @@ begin
 end;
 
 procedure TrdDesktopViewer.ScrollMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
-  begin
+begin
 //  if MyUI.ControlMode = rtcpNoControl then
 //    Exit;
 
@@ -1669,7 +1686,7 @@ procedure TrdDesktopViewer.ScrollMouseMove(Sender: TObject; Shift: TShiftState; 
 //    panOptions.Top:=10;
 //    panOptions.Visible:=True;
 //    end;
-  end;
+end;
 
 procedure TrdDesktopViewer.pImageMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
 begin
@@ -1703,7 +1720,7 @@ begin
 end;
 
 procedure TrdDesktopViewer.pImageMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-  begin
+begin
 //  if myUI.ControlMode=rtcpNoControl then
 //    begin
 //    if Button=mbLeft then
@@ -1725,10 +1742,10 @@ procedure TrdDesktopViewer.pImageMouseDown(Sender: TObject; Button: TMouseButton
 //      panSettings.Visible:=False;
 //      end;
 //    end;
-  end;
+end;
 
 procedure TrdDesktopViewer.btnSettingsClick(Sender: TObject);
-  begin
+begin
 //  panOptions.Visible:=False;
 
   panSettings.Left := 10;
@@ -1750,16 +1767,6 @@ procedure TrdDesktopViewer.btnSettingsClick(Sender: TObject);
 //  cbReduceColors.Value:=0;
 //  cbReduceColors.Enabled:=False;
 //  cbReduceColors.Color:=clBtnFace;
-  end;
-
-procedure TrdDesktopViewer.Button1Click(Sender: TObject);
-begin
-//  ActiveUIModule.pImgRec^.Parent := Scroll;
-//  ActiveUIModule.pImgRec^.Left :=Scroll.Width - 100;
-//  ActiveUIModule.pImgRec^.Top := 10;
-//  ActiveUIModule.pImgRec^.Visible := True;  Доделать
-//  ActiveUIModule.pImgRec^.Picture.Bitmap.Assign(imgRecSource.Picture.Bitmap);
-//  ActiveUIModule.pImgRec^.BringToFront;
 end;
 
 procedure TrdDesktopViewer.btnCancelClick(Sender: TObject);
