@@ -4002,6 +4002,13 @@ object rdDesktopViewer: TrdDesktopViewer
         TabOrder = 3
         OnClick = Button1Click
       end
+      object Memo1: TMemo
+        Left = 26
+        Top = 136
+        Width = 577
+        Height = 465
+        TabOrder = 4
+      end
     end
   end
   object MainChromeTabs: TChromeTabs

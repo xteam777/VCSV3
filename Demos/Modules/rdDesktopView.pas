@@ -110,6 +110,7 @@ type
     MainChromeTabs: TChromeTabs;
     TimerResize: TTimer;
     Button1: TButton;
+    Memo1: TMemo;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -319,6 +320,7 @@ implementation
 procedure TrdDesktopViewer.FullScreen;
 begin
   MainChromeTabs.Visible := False;
+  panOptionsVisibilityChange(False);
 
   // move to Full Screen mode
   Scroll.HorzScrollBar.Visible := False;
@@ -353,16 +355,72 @@ begin
 //      ActiveUIModule.pImage^.Top := 0;
 //  end;
 
-//  BringToFront;
+  BringToFront;
 
 //  //tell Windows that you're accepting drag and drop files
 //  DragAcceptFiles( Handle, True );
 
 end;
 
+procedure TrdDesktopViewer.InitScreen;
+begin
+  MainChromeTabs.Visible := True;
+  panOptionsVisibilityChange(True);
+
+  Scroll.HorzScrollBar.Visible := False;
+  Scroll.VertScrollBar.Visible := False;
+  Scroll.VertScrollBar.Position := 0;
+  Scroll.HorzScrollBar.Position := 0;
+
+//  ActiveUIModule.pImage^.Left:=0;
+//  ActiveUIModule.pImage^.Top:=0;
+  WindowState := wsMaximized;
+  BorderStyle := bsSizeable;
+
+{  if ActiveUIModule.UI.HaveScreen then
+  begin
+    if ActiveUIModule.UI.ScreenWidth < Screen.Width then
+      ClientWidth := ActiveUIModule.UI.ScreenWidth
+    else
+      Width:=Screen.Width;
+    if ActiveUIModule.UI.ScreenHeight < Screen.Height then
+      ClientHeight := ActiveUIModule.UI.ScreenHeight
+    else
+      Height := Screen.Height;
+    if ActiveUIModule.UI.ScreenHeight >= Screen.Height then
+    begin
+//      Left := 0;
+//      Top := 0;
+//      WindowState := wsMaximized;
+    end
+    else
+    begin
+//      Left := (Screen.Width - Width) div 2;
+//      Top := (Screen.Height - Height) div 2;
+    end;
+  end;}
+
+//  if (pImage.Align<>alClient) and myUI.HaveScreen then
+//    begin
+//    pImage.Align:=alNone;
+//    pImage.Width:=myUI.ScreenWidth;
+//    pImage.Height:=myUI.ScreenHeight;
+//    Scroll.HorzScrollBar.Visible:=True;
+//    Scroll.VertScrollBar.Visible:=True;
+//    end;
+
+  BringToFront;
+
+  // tell Windows that you're accepting drag and drop files
+//  if assigned(PFileTrans) then
+//    DragAcceptFiles( Handle, True );
+end;
+
+
 procedure TrdDesktopViewer.Button1Click(Sender: TObject);
 var
   i: Integer;
+  v: String;
 begin
 //  ActiveUIModule.pImgRec^.Parent := Scroll;
 //  ActiveUIModule.pImgRec^.Left :=Scroll.Width - 100;
@@ -371,14 +429,22 @@ begin
 //  ActiveUIModule.pImgRec^.Picture.Bitmap.Assign(imgRecSource.Picture.Bitmap);
 //  ActiveUIModule.pImgRec^.BringToFront;
 
-//  for i := 0 to UIModulesList.Count - 1 do
-//    Memo1.Lines.Add('L: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Left)
-//      + ' T: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Top)
-//      + ' W: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Width)
-//      + ' H: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Height));
+  Memo1.Lines.Clear;
+  for i := 0 to UIModulesList.Count - 1 do
+  begin
+    if TUIDataModule(UIModulesList[i]).pImage^.Visible then
+      v := 'True'
+    else
+      v := 'False';
+    Memo1.Lines.Add(TUIDataModule(UIModulesList[i]).UserName
+      + ' L: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Left)
+      + ' T: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Top)
+      + ' W: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Width)
+      + ' H: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Height)
+      + ' V: ' + v);
+  end;
 
-  MainChromeTabs.Visible := not MainChromeTabs.Visible;
-  panOptions.Visible := not panOptions.Visible;
+//  MainChromeTabs.Visible := False;
 end;
 
 procedure TrdDesktopViewer.ChangeLockedState(AUserName: String; ALockedState: Integer; AServiceStarted: Boolean);
@@ -440,6 +506,7 @@ begin
   pUIITem.pImage^.RecordInfoVisible := False;
   pUIITem.pImage^.RecordInfo := '00:00:00';
   pUIITem.pImage^.RecordTicks := 0;
+  pUIITem.pImage^.Active := True;
 
   pUIItem.UI.Viewer := pUIITem.pImage^;
   pUIITem.UserName := AUserName;  //К которому изначально подключались (не UserToConnect, на которого перенаправило)
@@ -576,8 +643,9 @@ begin
   for i := 0 to UIModulesList.Count - 1 do
     if UIModulesList[i] = pUIItem then
     begin
-      TUIDataModule(UIModulesList[i]).pImage^.Align := alClient;
+//      TUIDataModule(UIModulesList[i]).pImage^.Align := alClient;
       TUIDataModule(UIModulesList[i]).pImage^.Visible := True;
+      TUIDataModule(UIModulesList[i]).pImage^.Active := True;
 
       ActiveUIModule := pUIItem;
 
@@ -588,11 +656,12 @@ begin
     else
     begin
       TUIDataModule(UIModulesList[i]).pImage^.Visible := False;
-      TUIDataModule(UIModulesList[i]).pImage^.Align := alNone;
-      TUIDataModule(UIModulesList[i]).pImage^.Left := -1;
-      TUIDataModule(UIModulesList[i]).pImage^.Top := -1;
-      TUIDataModule(UIModulesList[i]).pImage^.Width := 1;
-      TUIDataModule(UIModulesList[i]).pImage^.Height := 1;
+      TUIDataModule(UIModulesList[i]).pImage^.Active := False;
+//      TUIDataModule(UIModulesList[i]).pImage^.Align := alNone;
+//      TUIDataModule(UIModulesList[i]).pImage^.Left := -1;
+//      TUIDataModule(UIModulesList[i]).pImage^.Top := -1;
+//      TUIDataModule(UIModulesList[i]).pImage^.Width := 1;
+//      TUIDataModule(UIModulesList[i]).pImage^.Height := 1;
     end;
 
   DoResizeImage;
@@ -956,59 +1025,6 @@ begin
 //  pImage.Repaint;
 //
 //  aShowRemoteCursor.Checked := UI.RemoteCursor;
-end;
-
-procedure TrdDesktopViewer.InitScreen;
-begin
-//  MainChromeTabs.Visible := True;
-
-  Scroll.HorzScrollBar.Visible := False;
-  Scroll.VertScrollBar.Visible := False;
-  Scroll.VertScrollBar.Position := 0;
-  Scroll.HorzScrollBar.Position := 0;
-
-//  ActiveUIModule.pImage^.Left:=0;
-//  ActiveUIModule.pImage^.Top:=0;
-  WindowState := wsMaximized;
-  BorderStyle := bsSizeable;
-
-{  if ActiveUIModule.UI.HaveScreen then
-  begin
-    if ActiveUIModule.UI.ScreenWidth < Screen.Width then
-      ClientWidth := ActiveUIModule.UI.ScreenWidth
-    else
-      Width:=Screen.Width;
-    if ActiveUIModule.UI.ScreenHeight < Screen.Height then
-      ClientHeight := ActiveUIModule.UI.ScreenHeight
-    else
-      Height := Screen.Height;
-    if ActiveUIModule.UI.ScreenHeight >= Screen.Height then
-    begin
-//      Left := 0;
-//      Top := 0;
-//      WindowState := wsMaximized;
-    end
-    else
-    begin
-//      Left := (Screen.Width - Width) div 2;
-//      Top := (Screen.Height - Height) div 2;
-    end;
-  end;}
-
-//  if (pImage.Align<>alClient) and myUI.HaveScreen then
-//    begin
-//    pImage.Align:=alNone;
-//    pImage.Width:=myUI.ScreenWidth;
-//    pImage.Height:=myUI.ScreenHeight;
-//    Scroll.HorzScrollBar.Visible:=True;
-//    Scroll.VertScrollBar.Visible:=True;
-//    end;
-
-  BringToFront;
-
-  // tell Windows that you're accepting drag and drop files
-//  if assigned(PFileTrans) then
-//    DragAcceptFiles( Handle, True );
 end;
 
 procedure TrdDesktopViewer.lCloseClick(Sender: TObject);
@@ -1788,10 +1804,6 @@ begin
   if (ActiveUIModule.UI.ScreenWidth >= Screen.Width) or
      (ActiveUIModule.UI.ScreenHeight >= Screen.Height) then
   begin
-    if aStretchScreen.Checked then
-      ActiveUIModule.pImage^.Align := alClient
-    else
-      ActiveUIModule.pImage^.Align := alNone;
     if BorderStyle <> bsNone then
       FullScreen
     else
@@ -1801,23 +1813,18 @@ begin
   begin
     if BorderStyle <> bsNone then
     begin
-//      pImage.Align:=alNone;
-      if aStretchScreen.Checked then
-        ActiveUIModule.pImage^.Align := alClient
-      else
-        ActiveUIModule.pImage^.Align := alNone;
       FullScreen;
     end
     else
     begin
-//      pImage.Align:=alClient;
-      if aStretchScreen.Checked then
-        ActiveUIModule.pImage^.Align := alClient
-      else
-        ActiveUIModule.pImage^.Align := alNone;
       InitScreen;
     end;
   end;
+
+  if aStretchScreen.Checked then
+    ActiveUIModule.pImage^.Align := alClient
+  else
+    ActiveUIModule.pImage^.Align := alNone;
 
   aFullScreen.Checked := not aFullScreen.Checked;
 end;

@@ -49,6 +49,7 @@ type
   PRtcPDesktopViewer = ^TRtcPDesktopViewer;
   TRtcPDesktopViewer = class(TPaintBox)
   private
+    FActive: Boolean;
     FUI: TRtcPDesktopControlUI;
     function GetUI: TRtcPDesktopControlUI;
     procedure SetUI(const Value: TRtcPDesktopControlUI);
@@ -72,6 +73,8 @@ type
 
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+
+    property Active: Boolean read FActive write FActive;
   end;
 
   TRtcRemoteCursorMarkStyle = (rcm_None, rcm_Circle, rcm_Square, rcm_Cross);
@@ -954,6 +957,9 @@ var
   end;
 
 begin
+  if not Viewer.Active then
+    Exit;
+
   CS.Acquire;
   try
     // By restoring screen state as it was with last data received,
