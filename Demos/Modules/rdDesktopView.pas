@@ -53,11 +53,9 @@ type
     aScreenshotToFile: TAction;
     aScreenshotToCbrd: TAction;
     aRecordStart: TAction;
-    tRecord: TTimer;
     aRecordStop: TAction;
     aRecordCancel: TAction;
     ilTopPanel: TImageList;
-    panOptionsTimer: TTimer;
     aStretchScreen: TAction;
     aLockSystemOnClose: TAction;
     aOptimizeQuality: TAction;
@@ -111,6 +109,7 @@ type
     aRecordCodecInfo: TAction;
     MainChromeTabs: TChromeTabs;
     TimerResize: TTimer;
+    Button1: TButton;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -154,10 +153,8 @@ type
     procedure aScreenshotToCbrdExecute(Sender: TObject);
     procedure aRecordStartExecute(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure tRecordTimer(Sender: TObject);
     procedure aRecordStopExecute(Sender: TObject);
     procedure aRecordCancelExecute(Sender: TObject);
-    procedure panOptionsTimerTimer(Sender: TObject);
     procedure panOptionsMiniMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure panOptionsMiniMouseUp(Sender: TObject; Button: TMouseButton;
@@ -213,6 +210,7 @@ type
     procedure OnSetScreenData(Sender: TObject; UserName: String; const Data: RtcString);
     procedure LockVideoImage(UIDM: TUIDataModule);
     procedure UnlockVideoImage(UIDM: TUIDataModule);
+    procedure panOptionsVisibilityChange(AVisible: Boolean);
   protected
     LMouseX,LMouseY:integer;
     LMouseD:boolean;
@@ -226,12 +224,6 @@ type
     ActiveUIModule: TUIDataModule;
 
     FProgressDialogsList: TList;
-
-//    RecordState: TRecordState;
-//    RecordThread: TRecordThrd;
-//    FramesCount: Integer;
-//    CurrentFrame: Integer;
-//    Avi: TAviFromBitmaps;
 
     FOnUIOpen: TUIOpenEvent;
     FOnUIClose: TUICloseEvent;
@@ -254,13 +246,6 @@ type
 //    procedure WndProc(var Msg : TMessage); override;
 
 //    function LeaseExpiresDateToDateTime(LeaseExpires: Integer): String;
-//    procedure RecordThreadOnTerminate(Sender: TObject);
-//    procedure ScreenRecordStart(AFileName: String);
-//    procedure ScreenRecordPause;
-//    procedure ScreenRecordResume;
-//    procedure ScreenRecordStop;
-//    procedure CheckRecordState(var msg: TMessage); message WM_SETCURRENTFRAME;
-//    procedure ChangeLockedState(var Message: TMessage); message WM_CHANGE_LOCKED_STATUS;
     procedure GetFilesFromHostClipboard(var Message: TMessage); message WM_GET_FILES_FROM_CLIPBOARD;
 //    procedure WMActivate(var Message: TMessage); message WM_ACTIVATE;
   public
@@ -331,6 +316,50 @@ implementation
 
 { TrdDesktopViewer }
 
+procedure TrdDesktopViewer.FullScreen;
+begin
+  MainChromeTabs.Visible := False;
+
+  // move to Full Screen mode
+  Scroll.HorzScrollBar.Visible := False;
+  Scroll.VertScrollBar.Visible := False;
+  Scroll.VertScrollBar.Position := 0;
+  Scroll.HorzScrollBar.Position := 0;
+
+  WindowState := wsNormal;;
+  BorderStyle := bsNone;
+  Left := 0;
+  Top := 0;
+  Width := Screen.Width;
+  Height := Screen.Height;
+
+  DoResizeImage;
+
+//  if (ActiveUIModule.pImage^.Align = alNone)
+//    and ActiveUIModule.UI.HaveScreen
+//    and aStretchScreen.Checked then
+//  begin
+//    ActiveUIModule.pImage^.Width := ActiveUIModule.UI.ScreenWidth;
+//    ActiveUIModule.pImage^.Height := ActiveUIModule.UI.ScreenHeight;
+//    Scroll.HorzScrollBar.Visible := True;
+//    Scroll.VertScrollBar.Visible := True;
+//    if ActiveUIModule.pImage^.Width < Screen.Width then
+//      ActiveUIModule.pImage^.Left := (Screen.Width - ActiveUIModule.pImage^.Width) div 2
+//    else
+//      ActiveUIModule.pImage^.Left := 0;
+//    if ActiveUIModule.pImage^.Height < Screen.Height then
+//      ActiveUIModule.pImage^.Top := (Screen.Height - ActiveUIModule.pImage^.Height) div 2
+//    else
+//      ActiveUIModule.pImage^.Top := 0;
+//  end;
+
+//  BringToFront;
+
+//  //tell Windows that you're accepting drag and drop files
+//  DragAcceptFiles( Handle, True );
+
+end;
+
 procedure TrdDesktopViewer.Button1Click(Sender: TObject);
 var
   i: Integer;
@@ -347,6 +376,9 @@ begin
 //      + ' T: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Top)
 //      + ' W: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Width)
 //      + ' H: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Height));
+
+  MainChromeTabs.Visible := not MainChromeTabs.Visible;
+  panOptions.Visible := not panOptions.Visible;
 end;
 
 procedure TrdDesktopViewer.ChangeLockedState(AUserName: String; ALockedState: Integer; AServiceStarted: Boolean);
@@ -928,6 +960,8 @@ end;
 
 procedure TrdDesktopViewer.InitScreen;
 begin
+//  MainChromeTabs.Visible := True;
+
   Scroll.HorzScrollBar.Visible := False;
   Scroll.VertScrollBar.Visible := False;
   Scroll.VertScrollBar.Position := 0;
@@ -984,46 +1018,6 @@ begin
   MiniPanelMouseDowned := False;
 end;
 
-procedure TrdDesktopViewer.FullScreen;
-  begin
-  // move to Full Screen mode
-  Scroll.HorzScrollBar.Visible := False;
-  Scroll.VertScrollBar.Visible := False;
-  Scroll.VertScrollBar.Position := 0;
-  Scroll.HorzScrollBar.Position := 0;
-
-  WindowState := wsMaximized;
-  BorderStyle := bsNone;
-//  Left := 0;
-//  Top := 0;
-  Width := Screen.Width;
-  Height := Screen.Height;
-
-  if (ActiveUIModule.pImage^.Align = alNone)
-    and ActiveUIModule.UI.HaveScreen
-    and aStretchScreen.Checked then
-  begin
-    ActiveUIModule.pImage^.Width := ActiveUIModule.UI.ScreenWidth;
-    ActiveUIModule.pImage^.Height := ActiveUIModule.UI.ScreenHeight;
-    Scroll.HorzScrollBar.Visible := True;
-    Scroll.VertScrollBar.Visible := True;
-    if ActiveUIModule.pImage^.Width < Screen.Width then
-      ActiveUIModule.pImage^.Left := (Screen.Width - ActiveUIModule.pImage^.Width) div 2
-    else
-      ActiveUIModule.pImage^.Left := 0;
-    if ActiveUIModule.pImage^.Height < Screen.Height then
-      ActiveUIModule.pImage^.Top := (Screen.Height - ActiveUIModule.pImage^.Height) div 2
-    else
-      ActiveUIModule.pImage^.Top := 0;
-  end;
-
-  BringToFront;
-
-//  //tell Windows that you're accepting drag and drop files
-//  DragAcceptFiles( Handle, True );
-
-end;
-
 procedure TrdDesktopViewer.aStretchScreenExecute(Sender: TObject);
 begin
   aStretchScreen.Checked := not aStretchScreen.Checked;
@@ -1041,12 +1035,12 @@ procedure TrdDesktopViewer.DoResizeImage;
 var
   Scale: Real;
 begin
+//    if iPrepare.Visible then
+      SetFormState;
+
   if (ActiveUIModule <> nil)
     and (ActiveUIModule.UI.HaveScreen) then
   begin
-    if iPrepare.Visible then
-      SetFormState;
-
     if aStretchScreen.Checked then
     begin
       ActiveUIModule.pImage^.Align := alClient;
@@ -1174,14 +1168,7 @@ begin
   lState.Width := ClientWidth;
   Scroll.Visible := False;
 
-  tRecord.Enabled := False;
-
-//  aRecordStart.Enabled := True;
-//  aRecordPauseResume.Enabled := False;
-//  aRecordPauseResume.Caption := 'Приостановить';
-//  aRecordStop.Enabled := False;
-//
-//  RecordState := RSTATE_STOPPED;
+//  MainChromeTabs.Visible := True;
 
   panOptionsVisible := True;
   MiniPanelDraggging := False;
@@ -2185,10 +2172,6 @@ begin
   ShellExecute(Handle, 'open', PWideChar(WideString(ExtractFilePath(Application.ExeName) + '\' + RecordsFolder)), '', '', SW_SHOWNORMAL);
 end;
 
-//procedure TrdDesktopViewer.RecordThreadOnTerminate(Sender: TObject);
-//begin
-//end;
-
 {function TrdDesktopViewer.LeaseExpiresDateToDateTime(LeaseExpires: Integer): String;
 var
   Remain: Integer;
@@ -2228,7 +2211,7 @@ end;
 procedure TrdDesktopViewer.lHideMiniPanelClick(Sender: TObject);
 begin
   if not MiniPanelDraggging then
-    panOptionsTimer.Enabled := True;
+    panOptionsVisibilityChange(not panOptionsVisible);
 end;
 
 procedure TrdDesktopViewer.lMinimizeClick(Sender: TObject);
@@ -2237,17 +2220,6 @@ begin
     PostMessage(Handle, WM_SYSCOMMAND, SC_MINIMIZE, 0);
   MiniPanelMouseDowned := False;
 end;
-
-//procedure TrdDesktopViewer.CheckRecordState(var msg: TMessage);
-//begin
-//end;
-
-{procedure TrdDesktopViewer.ChangeLockedState(var Message: TMessage);
-begin
-  PartnerLockedState := Message.WParam;
-  PartnerServiceStarted := Boolean(Message.LParam);
-  SetFormState;
-end;}
 
 procedure TrdDesktopViewer.ControlPolygons(Sender,
   ChromeTabsControl: TObject; ItemRect: TRect; ItemType: TChromeTabItemType;
@@ -2345,206 +2317,6 @@ begin
     Scroll.Visible := True;
   end;
 end;
-
-{procedure TrdDesktopViewer.ScreenRecordStart(AFileName: String);
-//var
-//  i: Integer;
-//var
-//    I          : Integer;
-//    Y          : Integer;
-//    H          : Integer;
-//    BackBitmap : Graphics.TBitMap;
-begin
-//    BackBitmap             := Graphics.TBitMap.Create;
-//    BackBitmap.Width       := 320;
-//    BackBitmap.Height      := 240;
-//    BackBitmap.PixelFormat := TPixelFormat.pf32bit;
-
-//  FramesCount := 0;
-//  CurrentFrame := 0;
-//  for i := 0 to Length(MappedFiles) - 1 do
-//  begin
-//    UnMapViewOfFile(MappedFiles[i].pImage);
-//    CloseHandle(MappedFiles[i].hFile);
-//  end;
-//
-//  RecordThread := TRecordThrd.Create;
-//  RecordThread.FreeOnTerminate := True;
-//  RecordThread.FileName := AFileName;
-//  RecordThread.ParentHandle := Handle;
-//  RecordThread.FramesCount := @FramesCount;
-//  RecordThread.CurrentFrame := @CurrentFrame;
-//  RecordThread.RecordState := @RecordState;
-////  RecordThread.CheckRecordStateProc := CheckRecordState;
-//  RecordThread.Avi := nil;
-//  RecordThread.ImageWidth := UI.GetScreen.Image.Width;
-//  RecordThread.ImageHeight := UI.GetScreen.Image.Height;
-//  RecordThread.OnTerminate := RecordThreadOnTerminate;
-////  RecordThread.Avi := TAviFromBitmaps.CreateAviFile(
-////    nil, AFileName,
-////    MKFOURCC('x', 'v', 'i', 'd'),// XVID (MPEG-4) compression
-////    //MKFOURCC('D', 'I', 'B', ' '),  // No compression
-////    25, 1);                         // 2 frames per second
-//  RecordThread.Resume;
-
-//    Avi := TAviFromBitmaps.CreateAviFile(
-//      nil, AFileName,
-//      //MKFOURCC('x', 'v', 'i', 'd'),// XVID (MPEG-4) compression
-//      MKFOURCC('D', 'I', 'B', ' '),  // No compression
-//      25, 1);                         // 25 frames per second
-
-  tRecord.Enabled := True;
-
-  aRecordStart.Enabled := False;
-  aRecordPauseResume.Enabled := True;
-  aRecordPauseResume.Caption := 'Приостановить';
-  aRecordStop.Enabled := True;
-
-//    // First, add a blank frame
-//    Avi.AppendNewFrame(BackBitmap.Handle);
-//    // Then add frames with text
-//    BackBitmap.Canvas.Font.Size := 20;
-//    H := (BackBitmap.Canvas.TextHeight('I') * 15) div 10;
-//    Y := (BackBitmap.Height div 2) - H;
-//    BackBitmap.Canvas.TextOut(10, Y, 'Delphi rocks!');
-//    Y := (BackBitmap.Height div 2);
-//    for I := 1 to 25 do begin
-//        BackBitmap.Canvas.TextOut(10, Y, IntToStr(I));
-//        Avi.AppendNewFrame(BackBitmap.Handle);
-//    end;
-//    // Finally, add two blank frame
-//    // (MediaPlayer doesn't show the last two frames)
-//    BackBitmap.Canvas.FillRect(Rect(0, 0,
-//      BackBitmap.Width, BackBitmap.Height));
-//    Avi.AppendNewFrame(BackBitmap.Handle);
-//    Avi.AppendNewFrame(BackBitmap.Handle);
-
-//    FreeAndNil(Avi);
-//    FreeAndNil(BackBitmap);
-
-  RecordState := RSTATE_STARTED;
-end;}
-
-procedure TrdDesktopViewer.tRecordTimer(Sender: TObject);
-var
-//  bitdc, DC: HDC;
-//  BitsMem: Pointer;
-//  BitmapInfo: TBitmapInfo;
-//  hold: HGDIOBJ;
-//  msize: Integer;
-//  hbitm: HBITMAP;
-//  hbitmap: THandle;
-//  bitimage: Pointer;
-  Bitmap: TBitmap;
-  JPEG: TJPEGImage;
-begin
-  Bitmap := TBitmap.Create;
-
-  Bitmap.SetSize(ActiveUIModule.UI.ScreenWidth, ActiveUIModule.UI.ScreenHeight);
-  ActiveUIModule.UI.DrawScreen(Bitmap.Canvas, Bitmap.Width, Bitmap.Height);
-
-//  Bitmap.Width := UI.GetScreen.Image.Width;
-//  Bitmap.Height := UI.GetScreen.Image.Height;
-//  Bitmap.Canvas.CopyRect(Rect(0, 0, UI.GetScreen.Image.Width, UI.GetScreen.Image.Height), UI.GetScreen.Image.Canvas, Rect(0, 0, UI.GetScreen.Image.Width, UI.GetScreen.Image.Height));
-
-//  Bitmap.PixelFormat := pf24bit;
-  JPEG := TJPEGImage.Create;
-  JPEG.Assign(Bitmap);
-  Bitmap.SaveToFile('_Screen.bmp');
-  JPEG.SaveToFile('_Screen.jpg');
-  JPEG.Free;
-//
-//  with BitmapInfo do
-//    with bmiHeader do
-//    begin
-//      biSize := SizeOf(bmiHeader);
-//      biWidth := UI.GetScreen.Image.Width;
-//      biHeight := UI.GetScreen.Image.Height;
-//      biPlanes:= 1;
-//      biBitCount:= 24;
-//      biCompression := BI_RGB;
-//      msize := BytesPerScanLine(biwidth, bibitcount, SizeOf(DWORD)) * biheight;
-//      biSizeImage := msize;
-//      biXPelsPerMeter := 0;
-//      biYPelsPerMeter := 0;
-//      biClrUsed := 0;
-//      biClrImportant := 0;
-//    end;
-//
-//  hbitmap := CreateFileMapping(INVALID_HANDLE_VALUE, nil, PAGE_READWRITE, 0, msize, PWideChar('ScreenFrame' + IntToStr(FramesCount))); //мапфайл для картинки
-//  bitimage := MapViewOfFile(hbitmap, FILE_MAP_ALL_ACCESS, 0, 0, msize);
-//
-//  DC := GetDC(INVALID_HANDLE_VALUE);
-//  bitdc := CreateCompatibleDC(DC);
-//  hbitm := CreateDIBSection(DC, BitmapInfo, DIB_RGB_COLORS, BitsMem, hbitmap, 0);
-//  ReleaseDC(INVALID_HANDLE_VALUE, DC);
-//  hold := SelectObject(bitdc, hbitm);
-//
-//  BitBlt(bitdc, 0, 0, UI.GetScreen.Image.Width, UI.GetScreen.Image.Height, Bitmap.Canvas.Handle, 0, 0, SRCCOPY);
-//
-//  SelectObject(bitdc, hold);
-//  DeleteObject(bitdc);
-//
-//  SetLength(MappedFiles, Length(MappedFiles) + 1);
-//  MappedFiles[Length(MappedFiles) - 1].hFile := hbitmap;
-//  MappedFiles[Length(MappedFiles) - 1].pImage := bitimage;
-
-  //Write frame
-//  Avi.AppendNewFrame(Bitmap.Handle);
-
-  Bitmap.Free;
-end;
-
-{procedure TrdDesktopViewer.ScreenRecordPause;
-begin
-  tRecord.Enabled := False;
-
-  aRecordStart.Enabled := False;
-  aRecordPauseResume.Enabled := True;
-  aRecordPauseResume.Caption := 'Продолжить';
-  aRecordStop.Enabled := True;
-
-  RecordState := RSTATE_PAUSED;
-end;}
-
-//procedure TrdDesktopViewer.ScreenRecordResume;
-//begin
-//  tRecord.Enabled := True;
-//
-//  aRecordStart.Enabled := False;
-//  aRecordPauseResume.Enabled := True;
-//  aRecordPauseResume.Caption := 'Приостановить';
-//  aRecordStop.Enabled := True;
-//
-////  RecordThread.Resume;
-//
-//  RecordState := RSTATE_STARTED;
-//end;
-
-//procedure TrdDesktopViewer.ScreenRecordStop;
-////var
-////  i: Integer;
-//begin
-//  tRecord.Enabled := False;
-//
-//  aRecordStart.Enabled := True;
-//  aRecordPauseResume.Enabled := False;
-//  aRecordPauseResume.Caption := 'Приостановить';
-//  aRecordStop.Enabled := False;
-//
-//  RecordState := RSTATE_STARTED;
-////  RecordThread.Terminate;
-//
-//  FramesCount := 0;
-//  CurrentFrame := 0;
-////  for i := 0 to Length(MappedFiles) - 1 do
-////  begin
-////    UnMapViewOfFile(MappedFiles[i].pImage);
-////    CloseHandle(MappedFiles[i].hFile);
-////  end;
-//
-////  FreeAndNil(Avi);
-//end;
 
 procedure TrdDesktopViewer.aRestartSystemExecute(Sender: TObject);
 begin
@@ -2675,18 +2447,16 @@ begin
   SendMessage(ammbActions.Handle, WM_NULL, 0, 0);
 end;
 
-procedure TrdDesktopViewer.panOptionsTimerTimer(Sender: TObject);
+procedure TrdDesktopViewer.panOptionsVisibilityChange(AVisible: Boolean);
 begin
-  if panOptionsVisible then
+  panOptionsVisible := AVisible;
+  if not panOptionsVisible then
   begin
-//    panOptionsMini.Top := panOptions.Top + panOptions.Height - 1;
-//    panOptions.Top := panOptions.Top - 1;
     panOptionsMini.Top := 0;
     panOptions.Top := -panOptions.Height;
 
     if panOptions.Top = -panOptions.Height then
     begin
-      panOptionsTimer.Enabled := False;
       panOptionsVisible := False;
       iShowMiniPanel.Picture.Assign(iMiniPanelShow.Picture);
       iShowMiniPanel.Hint := 'Показать панель действий';
@@ -2697,14 +2467,11 @@ begin
   end
   else
   begin
-//    panOptions.Top := panOptions.Top + 1;
-//    panOptionsMini.Top := panOptions.Top + panOptions.Height;
     panOptions.Top := 0;
     panOptionsMini.Top := panOptions.Top + panOptions.Height;
 
     if panOptions.Top = 0 then
     begin
-      panOptionsTimer.Enabled := False;
       panOptionsVisible := True;
       iShowMiniPanel.Picture.Assign(iMiniPanelHide.Picture);
       iShowMiniPanel.Hint := 'Скрыть панель действий';

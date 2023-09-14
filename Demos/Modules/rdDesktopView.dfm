@@ -3993,6 +3993,15 @@ object rdDesktopViewer: TrdDesktopViewer
           OnMouseUp = panOptionsMiniMouseUp
         end
       end
+      object Button1: TButton
+        Left = 184
+        Top = 108
+        Width = 75
+        Height = 25
+        Caption = 'Button1'
+        TabOrder = 3
+        OnClick = Button1Click
+      end
     end
   end
   object MainChromeTabs: TChromeTabs
@@ -4675,13 +4684,6 @@ object rdDesktopViewer: TrdDesktopViewer
     Left = 48
     Top = 56
   end
-  object tRecord: TTimer
-    Enabled = False
-    Interval = 40
-    OnTimer = tRecordTimer
-    Left = 48
-    Top = 108
-  end
   object ilTopPanel: TImageList
     DrawingStyle = dsTransparent
     Height = 24
@@ -5290,13 +5292,6 @@ object rdDesktopViewer: TrdDesktopViewer
       01C000FFE001FFC000000FFF01C000FFF003FFC000000FFF01C000FFF807FFC0
       00000FFF01C000FFFE1FFFC000000FFF00000000000000000000000000000000
       000000000000}
-  end
-  object panOptionsTimer: TTimer
-    Enabled = False
-    Interval = 1
-    OnTimer = panOptionsTimerTimer
-    Left = 8
-    Top = 108
   end
   object ilMiniPanel: TImageList
     DrawingStyle = dsTransparent
