@@ -3093,7 +3093,6 @@ object rdDesktopViewer: TrdDesktopViewer
           Top = 1
           Width = 345
           Height = 34
-          UseSystemFont = False
           ActionManager = ActionManagerTop
           Align = alNone
           Color = clMenuBar
@@ -3103,7 +3102,7 @@ object rdDesktopViewer: TrdDesktopViewer
           ColorMap.SelectedFontColor = clWhite
           ColorMap.UnusedColor = clWhite
           Font.Charset = DEFAULT_CHARSET
-          Font.Color = clBlack
+          Font.Color = clWindowText
           Font.Height = -12
           Font.Name = 'Segoe UI'
           Font.Style = []
@@ -3992,15 +3991,6 @@ object rdDesktopViewer: TrdDesktopViewer
           OnMouseMove = panOptionsMiniMouseMove
           OnMouseUp = panOptionsMiniMouseUp
         end
-      end
-      object Button1: TButton
-        Left = 200
-        Top = 158
-        Width = 75
-        Height = 25
-        Caption = 'Button1'
-        TabOrder = 3
-        OnClick = Button1Click
       end
     end
   end

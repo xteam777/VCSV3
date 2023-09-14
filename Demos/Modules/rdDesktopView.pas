@@ -110,7 +110,6 @@ type
     aRecordOpenFolder: TAction;
     aRecordCodecInfo: TAction;
     MainChromeTabs: TChromeTabs;
-    Button1: TButton;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -302,7 +301,6 @@ type
     function GetUIDataModule(AUserName: String): TUIDataModule;
     function RemoveUIDataModule(AUserName: String): Integer;
     procedure CloseForm;
-    procedure PaintBoxOnPaint(Sender: TObject);
   end;
 
 
@@ -328,21 +326,6 @@ implementation
 {$R *.dfm}
 
 { TrdDesktopViewer }
-
-procedure TrdDesktopViewer.PaintBoxOnPaint(Sender: TObject);
-begin
-//  if ActiveUIModule <> nil then
-  begin
-    with TPaintBox(Sender).Canvas do
-    begin
-      Brush.Color := clRed;
-      Pen.Color := clRed;
-      Ellipse(10, 10, 25, 25);
-    end;
-//    ActiveUIModule.pImgRec^.BringToFront;
-//    ActiveUIModule.pLblRecInfo^.BringToFront;
-  end;
-end;
 
 function TrdDesktopViewer.AddTab(AUserName, AUserDesc, AUserPass: String; AModule: TRtcPDesktopControl): TUIDataModule;
 var
@@ -383,25 +366,10 @@ begin
   pUIITem.pImage^.Parent := Scroll;
   pUIITem.pImage^.Align := alClient;
   pUIITem.pImage^.Color := clBlack;
-  pUIITem.pImage^.OnPaint := PaintBoxOnPaint;
-
-//  pUIITem.pImgRec^ := TImage.Create(Scroll);
-//  pUIITem.pImgRec^.Parent := Scroll;
-//  pUIITem.pImgRec^.Left := Scroll.Width - 100;
-//  pUIITem.pImgRec^.Top := 10;
-//  pUIITem.pImgRec^.Visible := False;
-//  pUIITem.pImgRec^.Picture.Bitmap.Assign(imgRecSource.Picture.Bitmap);
-//  pUIITem.pImgRec^.Transparent := True;
-//  pUIITem.pImgRec^.BringToFront;
-//  pUIITem.pLblRecInfo^ := TLabel.Create(Scroll);
-//  pUIITem.pLblRecInfo^.Parent := Scroll;
-//  pUIITem.pLblRecInfo^.Left := Scroll.Width - 80;
-//  pUIITem.pLblRecInfo^.Top := 10;
-//  pUIITem.pLblRecInfo^.Caption := '00:00:00';
-//  pUIITem.pLblRecInfo^.Font.Color := clRed;
-//  pUIITem.pLblRecInfo^.Font.Style := [fsBold];
-//  pUIITem.pLblRecInfo^.Visible := False;
-//  pUIITem.pLblRecInfo^.BringToFront;
+  pUIITem.pImage^.RecordCircleVisible := False;
+  pUIITem.pImage^.RecordInfoVisible := False;
+  pUIITem.pImage^.RecordInfo := '00:00:00';
+  pUIITem.pImage^.RecordTicks := 0;
 
   pUIItem.UI.Viewer := pUIITem.pImage^;
   pUIITem.UserName := AUserName;  //К которому изначально подключались (не UserToConnect, на которого перенаправило)
@@ -1179,13 +1147,6 @@ begin
 //  UI.Module.SendShortcuts := True;
   SetShortcuts_Hook(True); //Доделать
 
-//  imgRec.Left := Width - 100;
-//  imgRec.Top := 10;
-//  imgRec.Visible := False;
-//  lblRecInfo.Left := Width - 80;
-//  lblRecInfo.Top := 10;
-//  lblRecInfo.Visible := False;
-
   Visible := False; //позже ставим True если не отменено в пендинге
 
 //  PFileTrans := TRtcPFileTransfer.Create(Self);
@@ -1216,14 +1177,6 @@ begin
   lState.Left := 0;
   lState.Width := ClientWidth;
   lState.Top := Height * 580 div 680;
-
-//  if ActiveUIModule <> nil then
-//  begin
-//    ActiveUIModule.pImgRec^.Left := Scroll.Width - 100;
-//    ActiveUIModule.pImgRec^.Top := 10;
-//    ActiveUIModule.pLblRecInfo^.Left := Scroll.Width - 80;
-//    ActiveUIModule.pLblRecInfo^.Top := 10;
-//  end; Доделать
 end;
 
 procedure TrdDesktopViewer.FT_UIClose(Sender: TRtcPFileTransferUI);
@@ -1609,8 +1562,6 @@ begin
         UnlockVideoImage(UIDM);
       end;
     end;
-
-    Exit;
 
   //Подгонка размера изображения
   if (UIDM <> nil) and {fFirstScreen and} Sender.HaveScreen then
@@ -2090,9 +2041,12 @@ begin
 
       if ActiveUIModule <> nil then
       begin
-//        ActiveUIModule.pImgRec^.Visible := True;
-//        ActiveUIModule.pLblRecInfo^.Visible := True;
-//        ActiveUIModule.pLblRecInfo^.Tag := NativeInt(GetTickCount);
+        ActiveUIModule.pImage^.RecordCircleVisible := True;
+        ActiveUIModule.pImage^.RecordTicks := 0;
+        ActiveUIModule.pImage^.RecordInfo := '00:00:00';
+        ActiveUIModule.pImage^.RecordInfoVisible := True;
+        ActiveUIModule.pImage^.RecordTicks := NativeInt(GetTickCount);
+        ActiveUIModule.pImage^.RecordCircleVisible := True;
         ActiveUIModule.TimerRec.Enabled := True;
       end;
     end
@@ -2103,8 +2057,8 @@ begin
 
       if ActiveUIModule <> nil then
       begin
-//        ActiveUIModule.pImgRec^.Visible := False;
-//        ActiveUIModule.pLblRecInfo^.Visible := False;
+        ActiveUIModule.pImage^.RecordCircleVisible := False;
+        ActiveUIModule.pImage^.RecordInfoVisible := False;
         ActiveUIModule.TimerRec.Enabled := False;
       end;
 
@@ -2121,8 +2075,8 @@ begin
 
       if ActiveUIModule <> nil then
       begin
-//        ActiveUIModule.pImgRec^.Visible := False;
-//        ActiveUIModule.pLblRecInfo^.Visible := False;
+        ActiveUIModule.pImage^.RecordCircleVisible := False;
+        ActiveUIModule.pImage^.RecordInfoVisible := False;
         ActiveUIModule.TimerRec.Enabled := False;
       end;
 
@@ -2927,13 +2881,13 @@ procedure TrdDesktopViewer.TimerRecTimer(Sender: TObject);
 var
   UIDM: TUIDataModule;
 begin
-//  UIDM := TUIDataModule(TTimer(Sender).Owner);
-//  if Assigned(UIDM.FVideoWriter) then
-//    UIDM.pImgRec^.Visible := not UIDM.pImgRec^.Visible
-//  else
-//    UIDM.pImgRec^.Visible := False;
-//  UIDM.pLblRecInfo^.Visible := Assigned(UIDM.FVideoWriter);
-//  UIDM.pLblRecInfo^.Caption := FormatDateTime('HH:NN:SS', IncMilliSecond(0, NativeInt(GetTickCount) - NativeInt(UIDM.pLblRecInfo^.Tag)));
+  UIDM := TUIDataModule(TTimer(Sender).Owner);
+  if Assigned(UIDM.FVideoWriter) then
+    UIDM.pImage^.RecordCircleVisible := not UIDM.pImage^.RecordCircleVisible
+  else
+    UIDM.pImage^.RecordCircleVisible := False;
+  UIDM.pImage^.RecordInfo := FormatDateTime('HH:NN:SS', IncMilliSecond(0, NativeInt(GetTickCount) - NativeInt(UIDM.pImage^.RecordTicks)));
+  UIDM.pImage^.RecordInfoVisible := Assigned(UIDM.FVideoWriter);
 end;
 
 procedure TrdDesktopViewer.PFileTransExplorerNewUI(Sender: TRtcPFileTransfer; const user: String);

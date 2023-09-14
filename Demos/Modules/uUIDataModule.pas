@@ -27,8 +27,6 @@ type
   public
     { Public declarations }
     pImage: PRtcPDesktopViewer;
-    pImgRec: PImage;
-    pLblRecInfo: PLabel;
     UserName, UserDesc, UserPass: String;
     FVideoRecorder: TVideoRecorder;
     FVideoWriter: TRMXVideoWriter;
@@ -73,8 +71,6 @@ begin
   FHandle := AllocateHWND(WndProc);
 
   New(pImage);
-  New(pImgRec);
-  New(pLblRecInfo);
 
   TimerReconnect.Enabled := False;
 end;
@@ -85,8 +81,6 @@ begin
   FreeAndNil(pImage^);
 
   Dispose(pImage);
-  Dispose(pImgRec);
-  Dispose(pLblRecInfo);
 
   inherited;
 end;

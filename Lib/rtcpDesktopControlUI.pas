@@ -66,6 +66,10 @@ type
     property UI: TRtcPDesktopControlUI read GetUI write SetUI;
 
   public
+    RecordCircleVisible, RecordInfoVisible: Boolean;
+    RecordInfo: String;
+    RecordTicks: Int64;
+
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
   end;
@@ -1172,6 +1176,29 @@ begin
           end;
         end;
       end;
+
+      if Viewer.RecordInfoVisible then
+        with Viewer.Canvas do
+        begin
+          Viewer.Canvas.FillRect(Rect(0, 0, 10, 100));
+          if Viewer.RecordCircleVisible then
+          begin
+            Brush.Color := clRed;
+            Brush.Style := bsSolid;
+            Pen.Color := clRed;
+            Font.Size := 10;
+            Ellipse(Viewer.ClientWidth - 100, 10, Viewer.ClientWidth - 85, 25);
+          end;
+          if Viewer.RecordInfoVisible then
+          begin
+            Brush.Color := clBlack;
+            Brush.Style := bsSolid;
+            Pen.Color := clWhite;
+            Font.Size := 10;
+            Font.Color := clWhite;
+            TextOut(Viewer.ClientWidth - 80, 10, Viewer.RecordInfo);
+          end;
+        end;
     end
     else if not HaveScreen then
     begin

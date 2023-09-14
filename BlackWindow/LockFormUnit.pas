@@ -72,6 +72,7 @@ resourcestring
 
 procedure ShowLockForm();
 begin
+  if Assigned(LockForm) then exit;
   while InterlockedExchange(lock, 1) <> 0 do
     begin
       SwitchToThread;
@@ -85,9 +86,9 @@ begin
         begin
           LockForm := TLockForm.Create(Application);
           LockForm.AutoLock := true;
+          // show modal
+          PostMessage(LockForm.Handle, WM_SHOW_FORM, 0, 0);
         end;
-      //LockForm.ShowModal;
-      PostMessage(LockForm.Handle, WM_SHOW_FORM, 0, 0);
     end
     );
 
@@ -98,6 +99,8 @@ end;
 
 procedure CloseLockForm();
 begin
+  if not Assigned(LockForm) then exit;
+  
   while InterlockedExchange(lock, 1) <> 0 do
     begin
       SwitchToThread;
@@ -210,6 +213,9 @@ end;
 
 procedure TLockForm.WmShowForm(var Message: TMessage);
 begin
+  if Visible then
+    Exit;
+
   Application.NormalizeAllTopMosts;
   try
     FormStyle := fsStayOnTop;
