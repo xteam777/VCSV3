@@ -14,7 +14,6 @@ unit RmxClipbrd;
 
 interface
 
-
 uses
 {$IF DEFINED(CLR)}
   WinUtils, System.Runtime.InteropServices, System.Security.Permissions,
