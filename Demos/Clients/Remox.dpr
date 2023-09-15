@@ -12,17 +12,6 @@
 {$R *.dres}
 
 uses
-  {$IFDEF EurekaLog}
-  EMemLeaks,
-  EResLeaks,
-  EDebugExports,
-  EDebugJCL,
-  EFixSafeCallException,
-  EMapWin32,
-  EAppService,
-  EAppNonVisual,
-  ExceptionLog7,
-  {$ENDIF EurekaLog}
   rtcLog,
   Classes,
   SysUtils,
@@ -424,6 +413,7 @@ begin
     xLog('ERROR ' + E.ClassName + ': ' + E.Message);
   end;
 end.
+
 
 
 
