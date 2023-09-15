@@ -1909,6 +1909,8 @@ var
 begin
 //  XLog('Power pause');
 
+  i := 0;
+
 //  DeleteAllPendingRequests;
 //  CloseAllActiveUI;
 //
