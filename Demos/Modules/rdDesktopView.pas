@@ -107,8 +107,6 @@ type
     aRecordCodecInfo: TAction;
     MainChromeTabs: TChromeTabs;
     TimerResize: TTimer;
-    Button1: TButton;
-    Memo1: TMemo;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -261,8 +259,8 @@ type
     FormMinimized: Boolean;
 //    PartnerLockedState: Integer;
 //    PartnerServiceStarted: Boolean;
-//    ReconnectToPartnerStart: TReconnectToPartnerStart;
 //    MappedFiles: array of TMappedFileRec;
+    ReconnectToPartnerStart: TReconnectToPartnerStart;
 
     function SetShortcuts_Hook(fBlockInput: Boolean): Boolean;
 
@@ -284,12 +282,13 @@ type
     procedure RemoveProgressDialogByValue(AProgressDialog: PProgressDialog);
     procedure RemoveProgressDialogByUserName(AUserName: String);
     function GetTab(AUserName: String): TChromeTab;
-    function AddNewTab(AUserName, AUserDesc, AUserPass: String; AStartLockedState: Integer; AStartServiceStarted: Boolean; AReconnectToPartnerStart: TReconnectToPartnerStart; AModule: TRtcPDesktopControl): TUIDataModule;
+    function AddNewTab(AUserName, AUserDesc, AUserPass: String; AStartLockedState: Integer; AStartServiceStarted: Boolean; AModule: TRtcPDesktopControl): TUIDataModule;
     procedure SetActiveTab(AUserName: String);
     procedure ChangeLockedState(AUserName: String; ALockedState: Integer; AServiceStarted: Boolean);
     function GetUIDataModule(AUserName: String): TUIDataModule;
     function RemoveUIDataModule(AUserName: String): Integer;
     procedure CloseForm;
+    procedure DoReconnectToPartnerStart(user, username, pass, action: String);
   end;
 
 
@@ -315,6 +314,61 @@ implementation
 {$R *.dfm}
 
 { TrdDesktopViewer }
+
+procedure TrdDesktopViewer.SetFormState;
+begin
+  if ActiveUIModule = nil then
+    Exit;
+
+  if (ActiveUIModule.TimerReconnect.Enabled) then
+  begin
+    pMain.Color := $00A39323;
+    Scroll.Visible := True;
+    iPrepare.Visible := False;
+    panOptions.Visible := True;
+    panOptionsMini.Visible := True;
+    iScreenLocked.Visible := False;
+    lState.Caption := 'Выполняется переподключение...';
+    lState.Visible := True;
+    lState.Invalidate;
+    Scroll.Visible := False;
+  end
+  else
+  if ((ActiveUIModule.PartnerLockedState = LCK_STATE_LOCKED) or (ActiveUIModule.PartnerLockedState = LCK_STATE_SAS))
+    and (not ActiveUIModule.PartnerServiceStarted) then
+  begin
+    pMain.Color := $00A39323;
+    Scroll.Visible := True;
+    iPrepare.Visible := False;
+    panOptions.Visible := True;
+    panOptionsMini.Visible := True;
+    iScreenLocked.Visible := True;
+    lState.Caption := 'Удаленный компьютер заблокирован';
+    lState.Visible := True;
+    lState.Invalidate;
+    Scroll.Visible := False;
+  end
+  else
+  begin
+    pMain.Color := $00151515;
+    Scroll.Visible := True;
+    iPrepare.Visible := False;
+    panOptions.Visible := True;
+    panOptionsMini.Visible := True;
+    iScreenLocked.Visible := False;
+    lState.Caption := '';
+    lState.Visible := False;
+    lState.Invalidate;
+    Scroll.Visible := True;
+  end;
+end;
+
+procedure TrdDesktopViewer.DoReconnectToPartnerStart(user, username, pass, action: String);
+begin
+  SetFormState;
+
+  ReconnectToPartnerStart(user, username, pass, action);
+end;
 
 procedure TrdDesktopViewer.FullScreen;
 begin
@@ -428,20 +482,20 @@ begin
 //  ActiveUIModule.pImgRec^.Picture.Bitmap.Assign(imgRecSource.Picture.Bitmap);
 //  ActiveUIModule.pImgRec^.BringToFront;
 
-  Memo1.Lines.Clear;
-  for i := 0 to UIModulesList.Count - 1 do
-  begin
-    if TUIDataModule(UIModulesList[i]).pImage^.Visible then
-      v := 'True'
-    else
-      v := 'False';
-    Memo1.Lines.Add(TUIDataModule(UIModulesList[i]).UserName
-      + ' L: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Left)
-      + ' T: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Top)
-      + ' W: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Width)
-      + ' H: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Height)
-      + ' V: ' + v);
-  end;
+//  Memo1.Lines.Clear;
+//  for i := 0 to UIModulesList.Count - 1 do
+//  begin
+//    if TUIDataModule(UIModulesList[i]).pImage^.Visible then
+//      v := 'True'
+//    else
+//      v := 'False';
+//    Memo1.Lines.Add(TUIDataModule(UIModulesList[i]).UserName
+//      + ' L: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Left)
+//      + ' T: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Top)
+//      + ' W: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Width)
+//      + ' H: ' + IntToStr(TUIDataModule(UIModulesList[i]).pImage^.Height)
+//      + ' V: ' + v);
+//  end;
 
 //  MainChromeTabs.Visible := False;
 end;
@@ -475,7 +529,7 @@ begin
     end;
 end;
 
-function TrdDesktopViewer.AddNewTab(AUserName, AUserDesc, AUserPass: String; AStartLockedState: Integer; AStartServiceStarted: Boolean; AReconnectToPartnerStart: TReconnectToPartnerStart; AModule: TRtcPDesktopControl): TUIDataModule;
+function TrdDesktopViewer.AddNewTab(AUserName, AUserDesc, AUserPass: String; AStartLockedState: Integer; AStartServiceStarted: Boolean; AModule: TRtcPDesktopControl): TUIDataModule;
 var
   pTab: TChromeTab;
   pUIItem: TUIDataModule;
@@ -518,9 +572,9 @@ begin
     pUIITem := TUIDataModule.Create(Self);
   pUIItem.PartnerLockedState := AStartLockedState;
   pUIItem.PartnerServiceStarted := AStartServiceStarted;
-  pUIITem.ReconnectToPartnerStart := AReconnectToPartnerStart;
+  pUIITem.ReconnectToPartnerStart := DoReconnectToPartnerStart;
   pUIItem.TimerRec.OnTimer := TimerRecTimer;
-  pUIItem.TimerRec.Enabled := False;
+  pUIItem.TimerReconnect.Enabled := False;
 
   if not fIsReconnection then
     pUIITem.pImage^ := TRtcPDesktopViewer.Create(Scroll);
@@ -1260,7 +1314,12 @@ begin
 
   lState.Left := 0;
   lState.Width := ClientWidth;
-  lState.Top := Height * 580 div 680;
+
+  if (ActiveUIModule <> nil)
+    and (ActiveUIModule.TimerReconnect.Enabled) then
+    lState.Top := Height div 2
+  else
+    lState.Top := Height * 580 div 680;
 end;
 
 procedure TrdDesktopViewer.FT_UIClose(Sender: TRtcPFileTransferUI);
@@ -2316,40 +2375,6 @@ begin
 
 //  for i := 0 to CB_DataObject.FCount - 1 do
 //    FT_UI.Fetch(CB_DataObject.FFiles[i].filePath, String(Message.LParam));
-end;
-
-procedure TrdDesktopViewer.SetFormState;
-begin
-  if ActiveUIModule = nil then
-    Exit;
-
-  if ((ActiveUIModule.PartnerLockedState = LCK_STATE_LOCKED) or (ActiveUIModule.PartnerLockedState = LCK_STATE_SAS))
-    and (not ActiveUIModule.PartnerServiceStarted) then
-  begin
-    pMain.Color := $00A39323;
-    Scroll.Visible := True;
-    iPrepare.Visible := False;
-    panOptions.Visible := True;
-    panOptionsMini.Visible := True;
-    iScreenLocked.Visible := True;
-    lState.Caption := 'Удаленный компьютер заблокирован';
-    lState.Visible := True;
-    lState.Invalidate;
-    Scroll.Visible := False;
-  end
-  else
-  begin
-    pMain.Color := $00151515;
-    Scroll.Visible := True;
-    iPrepare.Visible := False;
-    panOptions.Visible := True;
-    panOptionsMini.Visible := True;
-    iScreenLocked.Visible := False;
-    lState.Caption := '';
-    lState.Visible := False;
-    lState.Invalidate;
-    Scroll.Visible := True;
-  end;
 end;
 
 procedure TrdDesktopViewer.aRestartSystemExecute(Sender: TObject);

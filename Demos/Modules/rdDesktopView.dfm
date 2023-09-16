@@ -2985,8 +2985,10 @@ object rdDesktopViewer: TrdDesktopViewer
       TabOrder = 0
       StyleElements = [seFont, seBorder]
       OnMouseMove = ScrollMouseMove
-      ExplicitWidth = 1058
-      ExplicitHeight = 634
+      ExplicitLeft = 712
+      ExplicitTop = 264
+      ExplicitWidth = 346
+      ExplicitHeight = 370
       object iMiniPanelHide: TImage
         Left = 10
         Top = 304
@@ -3925,22 +3927,6 @@ object rdDesktopViewer: TrdDesktopViewer
           OnMouseMove = panOptionsMiniMouseMove
           OnMouseUp = panOptionsMiniMouseUp
         end
-      end
-      object Button1: TButton
-        Left = 184
-        Top = 108
-        Width = 75
-        Height = 25
-        Caption = 'Button1'
-        TabOrder = 3
-        OnClick = Button1Click
-      end
-      object Memo1: TMemo
-        Left = 26
-        Top = 136
-        Width = 577
-        Height = 465
-        TabOrder = 4
       end
     end
   end

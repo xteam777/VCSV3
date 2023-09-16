@@ -9642,6 +9642,7 @@ begin
     DesktopsForm.OnUIOpen := OnUIOpen;
     DesktopsForm.OnUIClose := OnUIClose;
     DesktopsForm.DoStartFileTransferring := StartFileTransferring;
+    DesktopsForm.ReconnectToPartnerStart := ReconnectToPartnerStart;
 
     //  DesktopsForm.Parent := Self;
       //DesktopsForm.ParentWindow := GetDesktopWindow;
@@ -9734,10 +9735,9 @@ begin
     if pPCItem <> nil then
     begin
       pPCItem^.DMHandle := DesktopsForm.Handle;
-      pPCItem^.DataModule := DesktopsForm.AddNewTab(pPCItem^.UserName, GetUserDescription(user, 'desk'), pPCItem^.UserPass, pPCItem^.StartLockedState, pPCItem^.StartServiceStarted, ReconnectToPartnerStart, Sender);
+      pPCItem^.DataModule := DesktopsForm.AddNewTab(pPCItem^.UserName, GetUserDescription(user, 'desk'), pPCItem^.UserPass, pPCItem^.StartLockedState, pPCItem^.StartServiceStarted, Sender);
 //      DesktopsForm.PartnerLockedState := pPCItem^.StartLockedState;
 //      DesktopsForm.PartnerServiceStarted := pPCItem^.StartServiceStarted;
-//      DesktopsForm.ReconnectToPartnerStart := ReconnectToPartnerStart;
       DesktopsForm.SetFormState;
     end;
 
