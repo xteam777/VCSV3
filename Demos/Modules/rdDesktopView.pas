@@ -520,6 +520,7 @@ begin
   pUIItem.PartnerServiceStarted := AStartServiceStarted;
   pUIITem.ReconnectToPartnerStart := AReconnectToPartnerStart;
   pUIItem.TimerRec.OnTimer := TimerRecTimer;
+  pUIItem.TimerRec.Enabled := False;
 
   if not fIsReconnection then
     pUIITem.pImage^ := TRtcPDesktopViewer.Create(Scroll);
