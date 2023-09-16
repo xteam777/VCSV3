@@ -564,7 +564,6 @@ type
     function GetUniqueString: String;
     function GetUserDescription(aUserName, aAction: String): String;
     function GetUserPassword(aUserName: String): String;
-    function UIIsPending(username: String): Boolean;
     function AddPendingRequest(uname, desc, action: String; fIsReconnection: Boolean): PPendingRequestItem;
     procedure DeletePendingRequest(uname, action: String);
     function GetPendingItemByUserName(uname, action: String): PPendingRequestItem;
@@ -598,7 +597,7 @@ type
     procedure SetScreenLockedState(AValue: Integer);
 //    procedure CheckSAS(value : Boolean; name : String);
 
-    procedure OnUIOpen(UserName, Action: String; var IsPending: Boolean);
+    procedure OnUIOpen(UserName, Action: String; var IsPending, fIsReconnection: Boolean);
     procedure OnUIClose(AAction, AUserName: String);
 
     procedure OnCustomFormOpen(AForm: PForm);
@@ -7842,7 +7841,7 @@ begin
     PRItem^.IsReconnection := True;
   end
   else
-    AddPendingRequest(user, username, action, False);
+    AddPendingRequest(user, username, action, True);
 
   DoGetDeviceState(eAccountUserName.Text,
     LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll])),
@@ -10730,27 +10729,6 @@ begin
   end;
 end;
 
-function TMainForm.UIIsPending(username: String): Boolean;
-var
-  i: Integer;
-begin
-//  xLog('UIIsPending');
-
-  Result := False;
-
-  CS_Pending.Acquire;
-  try
-    for i := 0 to PendingRequests.Count - 1 do
-      if (PPendingRequestItem(PendingRequests[i])^.UserName = username) then
-      begin
-        Result := True;
-        Break;
-      end;
-  finally
-    CS_Pending.Release;
-  end;
-end;
-
 function TMainForm.AddPendingRequest(uname, desc, action: String; fIsReconnection: Boolean): PPendingRequestItem;
 var
   PRItem: PPendingRequestItem;
@@ -11021,14 +10999,21 @@ begin
   OpenedModalForm := nil;
 end;
 
-procedure TMainForm.OnUIOpen(UserName, Action: String; var IsPending: Boolean);
+procedure TMainForm.OnUIOpen(UserName, Action: String; var IsPending, fIsReconnection: Boolean);
+var
+  PRItem: PPendingRequestItem;
 begin
 //  xLog('OnUIOpen');
 
   if IsClosing then
     Exit;
 
-  IsPending := UIIsPending(UserName);
+  PRItem := GetPendingItemByUserName(UserName, Action);
+  if PRItem = nil then
+    Exit;
+
+  IsPending := True;
+  fIsReconnection := PRItem^.IsReconnection;
   if IsPending then
   begin
     DeletePendingRequest(UserName, Action);

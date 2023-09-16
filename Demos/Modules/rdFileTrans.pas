@@ -554,13 +554,13 @@ end;
 
 procedure TrdFileTransfer.myUIOpen(Sender: TRtcPFileTransferUI);
   var
-    fIsPending: Boolean;
+    fIsPending, fIsReconnection: Boolean;
 begin
 
   fIsPending := true;
 
   if Assigned(FOnUIOpen) then
-    FOnUIOpen(myUI.UserName, 'file', fIsPending);
+    FOnUIOpen(myUI.UserName, 'file', fIsPending, fIsReconnection);
 
   if not fIsPending then
   begin

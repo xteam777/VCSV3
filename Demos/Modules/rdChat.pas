@@ -1161,10 +1161,10 @@ procedure TrdChatForm.Close_Form(const mode: string);
   var
     a:integer;
     user:string;
-    fIsPending: Boolean;
+    fIsPending, fIsReconnection: Boolean;
   begin
   if Assigned(FOnUIOpen) then
-    FOnUIOpen(myUI.UserName, 'chat', fIsPending);
+    FOnUIOpen(myUI.UserName, 'chat', fIsPending, fIsReconnection);
 
   if not fIsPending then
   begin

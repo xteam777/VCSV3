@@ -283,6 +283,7 @@ type
     procedure RemoveProgressDialog(ATaskId: TTaskId);
     procedure RemoveProgressDialogByValue(AProgressDialog: PProgressDialog);
     procedure RemoveProgressDialogByUserName(AUserName: String);
+    function GetTab(AUserName: String): TChromeTab;
     function AddNewTab(AUserName, AUserDesc, AUserPass: String; AStartLockedState: Integer; AStartServiceStarted: Boolean; AReconnectToPartnerStart: TReconnectToPartnerStart; AModule: TRtcPDesktopControl): TUIDataModule;
     procedure SetActiveTab(AUserName: String);
     procedure ChangeLockedState(AUserName: String; ALockedState: Integer; AServiceStarted: Boolean);
@@ -460,17 +461,36 @@ begin
   end;
 end;
 
+function TrdDesktopViewer.GetTab(AUserName: String): TChromeTab;
+var
+  i: Integer;
+begin
+  Result := nil;
+
+  for i := 0 to MainChromeTabs.Tabs.Count - 1 do
+    if MainChromeTabs.Tabs[i].UserName = AUserName then
+    begin
+      Result := MainChromeTabs.Tabs[i];
+      Break;
+    end;
+end;
+
 function TrdDesktopViewer.AddNewTab(AUserName, AUserDesc, AUserPass: String; AStartLockedState: Integer; AStartServiceStarted: Boolean; AReconnectToPartnerStart: TReconnectToPartnerStart; AModule: TRtcPDesktopControl): TUIDataModule;
 var
   pTab: TChromeTab;
   pUIItem: TUIDataModule;
 //  pViewer: TRtcPDesktopViewer;
-  fIsPending: Boolean;
+  fIsPending, fIsReconnection: Boolean;
 begin
   if Assigned(FOnUIOpen) then
-    FOnUIOpen(AUserName, 'desk', fIsPending);
+    FOnUIOpen(AUserName, 'desk', fIsPending, fIsReconnection);
 
-  if not fIsPending then //Если подключение отменено закрываем
+  pUIItem := GetUIDataModule(AUserName);
+  if fIsReconnection
+    and (pUIItem = nil) then
+    Exit;
+
+  if not fIsPending then //Если подключение отменено, выходим
     Exit
   else
   begin
@@ -480,8 +500,13 @@ begin
     SetForegroundWindow(Handle);
   end;
 
-  pTab := MainChromeTabs.Tabs.Add;
-  pTab.UserName := AUserName;  //К которому изначально подключались (не UserToConnect, на которого перенаправило)
+  if not fIsReconnection then
+  begin
+    pTab := MainChromeTabs.Tabs.Add;
+    pTab.UserName := AUserName;  //К которому изначально подключались (не UserToConnect, на которого перенаправило)
+  end
+  else
+    pTab := GetTab(AUserName);
   pTab.UserDesc := AUserDesc;
   pTab.UserPass := AUserPass;
   if pTab.UserDesc <> '' then
@@ -489,14 +514,15 @@ begin
   else
     pTab.Caption := pTab.UserName;
 
-  pUIITem := TUIDataModule.Create(Self);
+  if not fIsReconnection then
+    pUIITem := TUIDataModule.Create(Self);
   pUIItem.PartnerLockedState := AStartLockedState;
   pUIItem.PartnerServiceStarted := AStartServiceStarted;
   pUIITem.ReconnectToPartnerStart := AReconnectToPartnerStart;
   pUIItem.TimerRec.OnTimer := TimerRecTimer;
 
-//  pViewer := TRtcPDesktopViewer.Create(Self);
-  pUIITem.pImage^ := TRtcPDesktopViewer.Create(Scroll);
+  if not fIsReconnection then
+    pUIITem.pImage^ := TRtcPDesktopViewer.Create(Scroll);
   pUIITem.pImage^.Parent := Scroll;
   pUIITem.pImage^.Align := alClient;
   pUIITem.pImage^.Color := clBlack;
@@ -506,7 +532,8 @@ begin
   pUIITem.pImage^.RecordTicks := 0;
   pUIITem.pImage^.Active := True;
 
-  pUIItem.UI.Viewer := pUIITem.pImage^;
+  if not fIsReconnection then
+    pUIItem.UI.Viewer := pUIITem.pImage^;
   pUIITem.UserName := AUserName;  //К которому изначально подключались (не UserToConnect, на которого перенаправило)
   pUIITem.UserDesc := AUserDesc;
   pUIITem.UserPass := AUserPass;
@@ -533,7 +560,8 @@ begin
   pUIItem.PFileTrans.OnNewUI := PFileTransExplorerNewUI;
   pUIItem.PFileTrans.Open(pTab.UserName, False, AModule);
 
-  UIModulesList.Add(pUIItem);
+  if not fIsReconnection then
+    UIModulesList.Add(pUIItem);
   ActiveUIModule := pUIItem;
 
   MainChromeTabsActiveTabChanged(nil, pTab);

@@ -39,7 +39,7 @@ type
   end;
   PPendingRequestItem = ^TPendingRequestItem;
 
-  TUIOpenEvent = procedure(UserName, Action: String; var IsPending: Boolean) of Object;
+  TUIOpenEvent = procedure(UserName, Action: String; var IsPending, fIsReconnection: Boolean) of Object;
   TUICloseEvent = procedure(Action, UserName: String) of Object;
   TOnCustomFormEvent = procedure of Object;
   TDoStartFileTransferring = procedure(AUser, AUserName, APassword: String; ANeedGetPass: Boolean = False) of Object;
