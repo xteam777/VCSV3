@@ -19,8 +19,8 @@ type
     TimerReconnect: TTimer;
     TimerRec: TTimer;
     procedure TimerReconnectTimer(Sender: TObject);
-  protected
-    procedure WndProc(var Message: TMessage); virtual;
+//  protected
+//    procedure WndProc(var Message: TMessage); virtual;
   private
     { Private declarations }
     FHandle: THandle;
@@ -39,7 +39,7 @@ type
     PartnerServiceStarted: Boolean;
     ReconnectToPartnerStart: TReconnectToPartnerStart;
 
-    property Handle: THandle read FHandle;
+//    property Handle: THandle read FHandle;
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
   end;
@@ -55,22 +55,22 @@ implementation
 
 procedure TUIDataModule.TimerReconnectTimer(Sender: TObject);
 begin
-//  ReconnectToPartnerStart(UserName, UserDesc, UserPass,  'desk');
+  ReconnectToPartnerStart(UserName, UserDesc, UserPass,  'desk');
 end;
 
-procedure TUIDataModule.WndProc(var Message: TMessage);
+{procedure TUIDataModule.WndProc(var Message: TMessage);
 begin
 //  if(Message.Msg = UM_TEST) then
 //  begin
 //    ShowMessage('Test');
 //  end;
-end;
+end;}
 
 constructor TUIDataModule.Create(AOwner: TComponent);
 begin
   inherited;
 
-  FHandle := AllocateHWND(WndProc);
+//  FHandle := AllocateHWND(WndProc);
 
   New(pImage);
 
@@ -79,7 +79,7 @@ end;
 
 destructor TUIDataModule.Destroy;
 begin
-  DeallocateHWND(FHandle);
+//  DeallocateHWND(FHandle);
   FreeAndNil(pImage^);
 
   Dispose(pImage);
