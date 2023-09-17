@@ -574,8 +574,8 @@ begin
 
   if Assigned(ScrFull) then
   begin
-    ScreenWidth := 0;
-    ScreenHeight := 0;
+    FScreenWidth := 0;
+    FScreenHeight := 0;
     // —брасываем информацию о экране
   end;
 
