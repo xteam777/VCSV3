@@ -80,6 +80,9 @@ type
     property MovedRCnt: Integer read FMovedRCnt write FMovedRCnt;
   end;
 
+const
+  ERROR_WAIT_TIMEOUT = -2005270489;
+
 implementation
 
 { TDesktopDuplicationWrapper }
@@ -274,6 +277,16 @@ begin
   FDuplicate.ReleaseFrame;
   Sleep(1);
   FError := FDuplicate.AcquireNextFrame(0, FrameInfo, DesktopResource);
+  if FError = ERROR_WAIT_TIMEOUT then
+  begin
+    Result := true;
+    time := GetTickCount - time;
+    Debug.Log('cap time: ' + IntToStr(time));
+    Debug.Log('AcquireNextFrame ERROR_WAIT_TIMEOUT');
+
+    Exit;
+  end
+  else
   if Failed(FError) then
   begin
     Debug.Log('AcquireNextFrame Error: ' + IntToStr(FError));
