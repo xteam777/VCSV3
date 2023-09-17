@@ -273,7 +273,7 @@ begin
 
   FDuplicate.ReleaseFrame;
   Sleep(1);
-  FError := FDuplicate.AcquireNextFrame(50, FrameInfo, DesktopResource);
+  FError := FDuplicate.AcquireNextFrame(0, FrameInfo, DesktopResource);
   if Failed(FError) then
   begin
     Debug.Log('AcquireNextFrame Error: ' + IntToStr(FError));
