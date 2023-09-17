@@ -710,8 +710,10 @@ begin
   begin
     if TUIDataModule(UIModulesList[i]).UserName = AUserName then
     begin
-      TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
-      TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
+      TUIDataModule(UIModulesList[i]).UI.Close; //AndClear;
+      TUIDataModule(UIModulesList[i]).FT_UI.Close; //AndClear;
+      TUIDataModule(UIModulesList[i]).UI.Module.Close(AUserName);
+      TUIDataModule(UIModulesList[i]).FT_UI.Close;
       FreeAndNil(TUIDataModule(UIModulesList[i]));
       UIModulesList.Delete(i);
 
@@ -1271,8 +1273,10 @@ begin
   for i := 0 to UIModulesList.Count - 1 do
   begin
     FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
-    TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
-    TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
+    TUIDataModule(UIModulesList[i]).UI.Close; //AndClear;
+    TUIDataModule(UIModulesList[i]).FT_UI.Close; //AndClear;
+    TUIDataModule(UIModulesList[i]).UI.Module.Close(TUIDataModule(UIModulesList[i]).UserName);
+    TUIDataModule(UIModulesList[i]).FT_UI.Close;
 //    FreeAndNil(TUIDataModule(UIModulesList[i]));
   end;
 
