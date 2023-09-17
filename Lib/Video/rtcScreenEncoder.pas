@@ -574,7 +574,8 @@ begin
 
   if Assigned(ScrFull) then
   begin
-    FScreenWidth := 0; FScreenHeight := 0;
+    ScreenWidth := 0;
+    ScreenHeight := 0;
     // —брасываем информацию о экране
   end;
 
@@ -614,8 +615,8 @@ time := GetTickCount;
   InfoChanged := ScreenInfoChanged;
   {$IFDEF DEBUG}
   if InfoChanged then
-    Debug.Log('ScreenInfo Changed to ' + IntToStr(FScreenWidth) + 'x' +
-      IntToStr(FScreenHeight) + 'x' + IntToStr(FBitsPerPixel));
+    Debug.Log('ScreenInfo Changed to ' + IntToStr(ScreenWidth) + 'x' +
+      IntToStr(ScreenHeight) + 'x' + IntToStr(BitsPerPixel));
   {$ENDIF}
 
   {$IFDEF DEBUG}
