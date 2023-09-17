@@ -244,10 +244,10 @@ begin
   Debug.Log('Capturing screen');
   time := GetTickCount;
 
-  desk_dc := GetDC(0); //рисую пиксель в левом нижнем углу экрана
-  desk_pixel_color := InvertColor(desk_pixel_color);
-  SetPixel(desk_dc, 0, FScreenHeight, desk_pixel_color);
-  ReleaseDC(0, desk_dc);
+//  desk_dc := GetDC(0); //рисую пиксель в левом нижнем углу экрана
+//  desk_pixel_color := InvertColor(desk_pixel_color);
+//  SetPixel(desk_dc, 0, FScreenHeight, desk_pixel_color);
+//  ReleaseDC(0, desk_dc);
 
   BadAttempt := False;
   AttemptId := 1;
@@ -255,7 +255,7 @@ begin
 //  if (not DDExists) or (not DDCaptureScreen) or (not DDReceiveRects) then
 //  if (not CreateDD) or (not DDCaptureScreen) or (not DDReceiveRects) then
  // begin
-  //  Result := false;
+  //  Result := False;
   //end;
  //fNeedRecreate := False;
   if not DDExists then
