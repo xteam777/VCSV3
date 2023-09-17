@@ -318,8 +318,19 @@ implementation
 procedure TrdDesktopViewer.SetFormState;
 begin
   if ActiveUIModule = nil then
-    Exit;
-
+  begin
+    pMain.Color := $00A39323;
+    Scroll.Visible := True;
+    iPrepare.Visible := False;
+    panOptions.Visible := True;
+    panOptionsMini.Visible := True;
+    iScreenLocked.Visible := True;
+    lState.Caption := 'Удаленный компьютер заблокирован';
+    lState.Visible := True;
+    lState.Invalidate;
+    Scroll.Visible := False;
+  end
+  else
   if (ActiveUIModule.TimerReconnect.Enabled) then
   begin
     pMain.Color := $00A39323;
@@ -344,6 +355,20 @@ begin
     panOptionsMini.Visible := True;
     iScreenLocked.Visible := True;
     lState.Caption := 'Удаленный компьютер заблокирован';
+    lState.Visible := True;
+    lState.Invalidate;
+    Scroll.Visible := False;
+  end
+  else
+  if not ActiveUIModule.UI.HaveScreen then
+  begin
+    pMain.Color := $00A39323;
+    Scroll.Visible := True;
+    iPrepare.Visible := False;
+    panOptions.Visible := True;
+    panOptionsMini.Visible := True;
+    iScreenLocked.Visible := False;
+    lState.Caption := 'Инициализация изображения...';
     lState.Visible := True;
     lState.Invalidate;
     Scroll.Visible := False;
@@ -1135,6 +1160,20 @@ begin
 //    if iPrepare.Visible then
       SetFormState;
 
+  lState.Left := 0;
+  lState.Width := ClientWidth;
+
+  if (ActiveUIModule <> nil) then
+  begin
+    if ActiveUIModule.TimerReconnect.Enabled
+      or (not ActiveUIModule.UI.HaveScreen) then
+      lState.Top := Height div 2
+    else
+      lState.Top := Height * 580 div 680;
+  end
+  else
+    lState.Top := Height * 580 div 680;
+
   if (ActiveUIModule <> nil)
     and (ActiveUIModule.UI.HaveScreen) then
   begin
@@ -1311,15 +1350,6 @@ begin
   ammbActions.Left := Ceil((panOptions.Width - ammbActions.Width) / 2);
 
   DoResizeImage;
-
-  lState.Left := 0;
-  lState.Width := ClientWidth;
-
-  if (ActiveUIModule <> nil)
-    and (ActiveUIModule.TimerReconnect.Enabled) then
-    lState.Top := Height div 2
-  else
-    lState.Top := Height * 580 div 680;
 end;
 
 procedure TrdDesktopViewer.FT_UIClose(Sender: TRtcPFileTransferUI);

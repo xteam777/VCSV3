@@ -48,6 +48,9 @@ type
 
     DDExists : Boolean;
 
+    light_black: Boolean;
+    desk_pixel_color: Cardinal;
+
     function CreateDD : Boolean;
     procedure DestroyDD;
     function GetScreenInfoChanged: Boolean;
@@ -60,6 +63,8 @@ type
     destructor Destroy; override;
     function DDCaptureScreen : Boolean;
     function DDReceiveRects : Boolean;
+
+    function InvertColor(clr: TColor): TColor;
 
     property Error: HRESULT read FError;
     property ScreenWidth : Integer read FScreenWidth;
@@ -216,6 +221,14 @@ begin
   end;
 end;
 
+function TDesktopDuplicationWrapper.InvertColor(clr: TColor): TColor;
+begin
+  Result := RGB(
+    255 - GetRValue(clr),
+    255 - GetGValue(clr),
+    255 - GetBValue(clr));
+end;
+
 function TDesktopDuplicationWrapper.DDCaptureScreen : Boolean;
 var
  // DesktopResource: IDXGIResource;
@@ -226,11 +239,17 @@ var
   AttemptId: Integer;
   ResourceDesc: TDXGI_OUTDUPL_DESC;
   time: DWORD;
+  desk_dc: HDC;
  // BufLen : Integer;
   label CaptureStart, ErrorInCapture, FailedCapture, AttemptFinish;
 begin
   Debug.Log('Capturing screen');
   time := GetTickCount;
+
+  desk_dc := GetDC(0); //рисую пиксель в левом нижнем углу экрана
+  desk_pixel_color := InvertColor(desk_pixel_color);
+  SetPixel(desk_dc, 0, FScreenHeight, desk_pixel_color);
+  ReleaseDC(0, desk_dc);
 
   BadAttempt := false;
   AttemptId := 1;
