@@ -61,8 +61,8 @@ type
 
     constructor Create;
     destructor Destroy; override;
-    function DDCaptureScreen : Boolean;
-    function DDReceiveRects : Boolean;
+    function DDCaptureScreen: Boolean;
+    function DDReceiveRects: Boolean;
 
     function InvertColor(clr: TColor): TColor;
 
@@ -108,19 +108,17 @@ var
   GO: IDXGIOutput;
   O1: IDXGIOutput1;
 begin
-  Result := false;
+  Result := False;
   DDExists := False;
 
   //!!!!!!!!!!!!!!fTexture := NIL;
 
   Debug.Log('Creating DesktopDuplication');
 
-  FTexture := NIL;
-  FDuplicate := NIL;
-
-  FContext := NIL;
-
-  FDevice := NIL;
+  FTexture := nil;
+  FDuplicate := nil;
+  FContext := nil;
+  FDevice := nil;
   // DGI
 
   //DXGI_ERROR_SESSION_DISCONNECTED
@@ -179,8 +177,7 @@ begin
   FError := GO.QueryInterface(IID_IDXGIOutput1, O1);
   if Failed(FError) then
   begin
-    Debug.Log('QueryInterface IID_IDXGIOutput1 Error: '
-      + IntToStr(FError));
+    Debug.Log('QueryInterface IID_IDXGIOutput1 Error: ' + IntToStr(FError));
     Exit;
   end;
 
@@ -189,28 +186,26 @@ begin
   FError := O1.DuplicateOutput(FDevice, FDuplicate);
   if Failed(FError) then
   begin
-    Debug.Log('DuplicateOutput Error: ' +
-      IntToStr(FError));
+    Debug.Log('DuplicateOutput Error: ' + IntToStr(FError));
     Exit;
   end;
   // DXGI_ERROR_NOT_CURRENTLY_AVAILABLE
    // E_ACCESSDENIED
   Debug.Log('DesktopDupilcation object created');
-  DDExists := true;
+  DDExists := True;
   Result := True;
 end;
 
 procedure TDesktopDuplicationWrapper.DestroyDD;
 begin
-  DDExists := false;
+  DDExists := False;
 
-  if (FContext <> NIL) and (FTexture <> NIL) then
+  if (FContext <> nil) and (FTexture <> nil) then
     FContext.Unmap(FTexture, 0);
 
   FTexture := nil;
-
-  FTempTexture := NIL;
-  DesktopResource := NIL;
+  FTempTexture := nil;
+  DesktopResource := nil;
 
 //  if Assigned(FTexture) then
 //  begin
@@ -220,7 +215,7 @@ begin
   if Assigned(FDuplicate) then
   begin
     FDuplicate.ReleaseFrame;
-    FDuplicate := NIL;
+    FDuplicate := nil;
   end;
 end;
 
@@ -232,7 +227,7 @@ begin
     255 - GetBValue(clr));
 end;
 
-function TDesktopDuplicationWrapper.DDCaptureScreen : Boolean;
+function TDesktopDuplicationWrapper.DDCaptureScreen: Boolean;
 var
  // DesktopResource: IDXGIResource;
  // Desc: TD3D11_TEXTURE2D_DESC;
@@ -254,7 +249,7 @@ begin
   SetPixel(desk_dc, 0, FScreenHeight, desk_pixel_color);
   ReleaseDC(0, desk_dc);
 
-  BadAttempt := false;
+  BadAttempt := False;
   AttemptId := 1;
 
 //  if (not DDExists) or (not DDCaptureScreen) or (not DDReceiveRects) then
@@ -263,11 +258,17 @@ begin
   //  Result := false;
   //end;
  //fNeedRecreate := False;
-  if not DDExists then goto ErrorInCapture;
+  if not DDExists then
+  begin
+    Debug.Log('DDExists is not eists');
+
+    goto ErrorInCapture;
+  end;
 
   CaptureStart:
 
-  if FDuplicate = nil then goto ErrorInCapture;
+  if FDuplicate = nil then
+    goto ErrorInCapture;
   //else
    // FDuplicate.ReleaseFrame;
 
@@ -275,11 +276,11 @@ begin
 
 
   FDuplicate.ReleaseFrame;
-  Sleep(1);
+//  Sleep(1);
   FError := FDuplicate.AcquireNextFrame(0, FrameInfo, DesktopResource);
   if FError = ERROR_WAIT_TIMEOUT then
   begin
-    Result := true;
+    Result := True;
     time := GetTickCount - time;
     Debug.Log('cap time: ' + IntToStr(time));
     Debug.Log('AcquireNextFrame ERROR_WAIT_TIMEOUT');
@@ -305,6 +306,7 @@ begin
   if Failed(FError) then
   begin
     Debug.Log('QueryInterface.IID_ID3D11Texture2D Error: ' + IntToStr(FError));
+
     goto ErrorInCapture;
   end;
 
@@ -370,28 +372,30 @@ begin
   //Move(Resource.pData^, ScreenBuff^, 1280 * 1024 * 4);
  // ScreenBuff^:= 0;
 
-  if not DDReceiveRects then ;//goto ErrorInCapture;
+//  if not DDReceiveRects then ;//goto ErrorInCapture;
 
 AttemptFinish:
   if BadAttempt then
   begin
-    if (FContext <> NIL) and (FTexture <> NIL) then FContext.Unmap(FTexture, 0); //
+    if (FContext <> nil) and (FTexture <> nil) then
+      FContext.Unmap(FTexture, 0); //
     FTexture := nil;
 
-    FTempTexture := NIL;
-    DesktopResource := NIL;
+    FTempTexture := nil;
+    DesktopResource := nil;
 
   if AttemptId > 1 then goto FailedCapture;
 
     Inc(AttemptId);
-    BadAttempt := false;
+    BadAttempt := False;
 
-    if not CreateDD then goto FailedCapture;
+    if not CreateDD then
+      goto FailedCapture;
 
     goto CaptureStart;
   end;
 
-  Result := true;
+  Result := True;
   time := GetTickCount - time;
   Debug.Log('cap time: ' + IntToStr(time));
   Debug.Log('Screen successfully captured');
@@ -399,15 +403,15 @@ AttemptFinish:
   Exit;
 
 ErrorInCapture:
-  BadAttempt := true;
+  BadAttempt := True;
   goto AttemptFinish;
 
 FailedCapture:
   Debug.Log('Failed to capture screen');
-  Result := false;
+  Result := False;
 end;
 
-function TDesktopDuplicationWrapper.DDReceiveRects : Boolean;
+function TDesktopDuplicationWrapper.DDReceiveRects: Boolean;
 var
   i, j, S1, S2, SU, SI : Integer;
   BytesRecieved : UInt;
