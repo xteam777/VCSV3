@@ -2305,6 +2305,9 @@ procedure TrdDesktopViewer.lHideMiniPanelClick(Sender: TObject);
 begin
   if not MiniPanelDraggging then
     panOptionsVisibilityChange(not panOptionsVisible);
+
+  if ActiveUIModule <> nil then
+    ActiveUIModule.UI.DrawScreen(ActiveUIModule.pImage^.Canvas, ActiveUIModule.pImage^.Width, ActiveUIModule.pImage^.Height);
 end;
 
 procedure TrdDesktopViewer.lMinimizeClick(Sender: TObject);
