@@ -277,9 +277,12 @@ begin
 
   FDuplicate.ReleaseFrame;
 //  Sleep(1);
-  FError := FDuplicate.AcquireNextFrame(0, FrameInfo, DesktopResource);
+  FError := FDuplicate.AcquireNextFrame(1000, FrameInfo, DesktopResource);
   if FError = ERROR_WAIT_TIMEOUT then //Изменений нет
   begin
+//    if not CreateDD then
+//    begin
+//      goto FailedCapture;
     FDirtyRCnt := 0;
     FMovedRCnt := 0;
 
@@ -289,6 +292,7 @@ begin
     Debug.Log('AcquireNextFrame ERROR_WAIT_TIMEOUT');
 
     Exit;
+//    end;
   end
   else
   if Failed(FError) then
@@ -377,6 +381,13 @@ begin
 
 //  if not DDReceiveRects then ;//goto ErrorInCapture;
 
+  if {(not DDExists) or (not DDCaptureScreen) or} (not DDReceiveRects) then
+//  if (not CreateDD) or (not DDCaptureScreen) or (not DDReceiveRects) then
+  begin
+    Debug.Log('Rects is not received');
+    Result := False;
+  end;
+
 AttemptFinish:
   if BadAttempt then
   begin
@@ -445,7 +456,9 @@ begin
     //Result := false;
    // Exit;
     FMovedRCnt := 0;
-  end else FMovedRCnt := (BytesRecieved div SizeOf(TDXGI_OUTDUPL_MOVE_RECT));
+  end
+  else
+    FMovedRCnt := (BytesRecieved div SizeOf(TDXGI_OUTDUPL_MOVE_RECT));
 
   for i := 0 to FMovedRCnt - 1 do
   begin

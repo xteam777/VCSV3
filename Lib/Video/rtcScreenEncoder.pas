@@ -737,8 +737,9 @@ time := GetTickCount;
       ScrDelta^ := Str;
      // FDuplicate.ReleaseFrame;
       //Exit;
-    end else
-    if {$IFDEF DEBUG} true or {$ENDIF} (DirtyRCnt + MovedRCnt > 0) then
+    end
+    else
+    if (DirtyRCnt + MovedRCnt > 0) then
     begin
       Rec := TRtcRecord.Create;
 
