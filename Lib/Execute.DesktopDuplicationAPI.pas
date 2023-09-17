@@ -278,8 +278,11 @@ begin
   FDuplicate.ReleaseFrame;
 //  Sleep(1);
   FError := FDuplicate.AcquireNextFrame(0, FrameInfo, DesktopResource);
-  if FError = ERROR_WAIT_TIMEOUT then
+  if FError = ERROR_WAIT_TIMEOUT then //Изменений нет
   begin
+    FDirtyRCnt := 0;
+    FMovedRCnt := 0;
+
     Result := True;
     time := GetTickCount - time;
     Debug.Log('cap time: ' + IntToStr(time));
