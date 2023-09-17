@@ -381,13 +381,14 @@ AttemptFinish:
   if BadAttempt then
   begin
     if (FContext <> nil) and (FTexture <> nil) then
-      FContext.Unmap(FTexture, 0); //
+      FContext.Unmap(FTexture, 0);
     FTexture := nil;
 
     FTempTexture := nil;
     DesktopResource := nil;
 
-  if AttemptId > 1 then goto FailedCapture;
+  if AttemptId > 1 then
+    goto FailedCapture;
 
     Inc(AttemptId);
     BadAttempt := False;
