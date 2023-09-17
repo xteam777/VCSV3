@@ -62,8 +62,6 @@ type
     aOptimizeSpeed: TAction;
     pMain: TPanel;
     Scroll: TScrollBox;
-    panOptions: TPanel;
-    ammbActions: TActionMainMenuBar;
     panSettings: TPanel;
     Label2: TLabel;
     Label3: TLabel;
@@ -92,21 +90,23 @@ type
     grpScreenLimit: TComboBox;
     grpScreenBlocks2: TComboBox;
     grpScreen2Refine: TComboBox;
-    panOptionsMini: TNFPanel;
     aSendShortcuts: TAction;
     iScreenLocked: TImage;
     iPrepare: TImage;
     lState: TLabel;
-    iFullScreen: TImage;
-    iMinimize: TImage;
-    iShowMiniPanel: TImage;
-    iMiniPanelHide: TImage;
-    iMiniPanelShow: TImage;
-    iMove: TImage;
     aRecordOpenFolder: TAction;
     aRecordCodecInfo: TAction;
     MainChromeTabs: TChromeTabs;
     TimerResize: TTimer;
+    panOptions: TPanel;
+    ammbActions: TActionMainMenuBar;
+    panOptionsMini: TNFPanel;
+    iFullScreen: TImage;
+    iMinimize: TImage;
+    iShowMiniPanel: TImage;
+    iMove: TImage;
+    iMiniPanelShow: TImage;
+    iMiniPanelHide: TImage;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -299,7 +299,6 @@ const
   RECORD_CODEC_INFO = 3;
 
 var
-  panOptionsVisible: Boolean;
   MiniPanelDraggging, MiniPanelMouseDowned: Boolean;
   MiniPanelCurX: Integer;
   KeyboardShortcutsHook: HWND;
@@ -322,8 +321,8 @@ begin
     pMain.Color := $00A39323;
     Scroll.Visible := True;
     iPrepare.Visible := False;
-    panOptions.Visible := True;
-    panOptionsMini.Visible := True;
+//    panOptions.Visible := True;
+//    panOptionsMini.Visible := True;
     iScreenLocked.Visible := True;
     lState.Caption := 'Удаленный компьютер заблокирован';
     lState.Visible := True;
@@ -336,8 +335,8 @@ begin
     pMain.Color := $00A39323;
     Scroll.Visible := True;
     iPrepare.Visible := False;
-    panOptions.Visible := True;
-    panOptionsMini.Visible := True;
+//    panOptions.Visible := True;
+//    panOptionsMini.Visible := True;
     iScreenLocked.Visible := False;
     lState.Caption := 'Выполняется переподключение...';
     lState.Visible := True;
@@ -351,8 +350,8 @@ begin
     pMain.Color := $00A39323;
     Scroll.Visible := True;
     iPrepare.Visible := False;
-    panOptions.Visible := True;
-    panOptionsMini.Visible := True;
+//    panOptions.Visible := True;
+//    panOptionsMini.Visible := True;
     iScreenLocked.Visible := True;
     lState.Caption := 'Удаленный компьютер заблокирован';
     lState.Visible := True;
@@ -365,8 +364,8 @@ begin
     pMain.Color := $00A39323;
     Scroll.Visible := True;
     iPrepare.Visible := False;
-    panOptions.Visible := True;
-    panOptionsMini.Visible := True;
+//    panOptions.Visible := True;
+//    panOptionsMini.Visible := True;
     iScreenLocked.Visible := False;
     lState.Caption := 'Инициализация изображения...';
     lState.Visible := True;
@@ -378,8 +377,8 @@ begin
     pMain.Color := $00151515;
     Scroll.Visible := True;
     iPrepare.Visible := False;
-    panOptions.Visible := True;
-    panOptionsMini.Visible := True;
+//    panOptions.Visible := True;
+//    panOptionsMini.Visible := True;
     iScreenLocked.Visible := False;
     lState.Caption := '';
     lState.Visible := False;
@@ -406,7 +405,7 @@ begin
   Scroll.VertScrollBar.Position := 0;
   Scroll.HorzScrollBar.Position := 0;
 
-  WindowState := wsNormal;;
+  WindowState := wsNormal;
   BorderStyle := bsNone;
   Left := 0;
   Top := 0;
@@ -500,6 +499,10 @@ var
   i: Integer;
   v: String;
 begin
+  panOptionsMini.Update;
+  panOptionsMini.BringToFront;
+  panOptionsMini.Left := 1000;
+  panOptionsMini.Top := 40;
 //  ActiveUIModule.pImgRec^.Parent := Scroll;
 //  ActiveUIModule.pImgRec^.Left :=Scroll.Width - 100;
 //  ActiveUIModule.pImgRec^.Top := 10;
@@ -604,7 +607,7 @@ begin
   if not fIsReconnection then
     pUIITem.pImage^ := TRtcPDesktopViewer.Create(Scroll);
   pUIITem.pImage^.Parent := Scroll;
-  pUIITem.pImage^.Align := alClient;
+//  pUIITem.pImage^.Align := alClient;
   pUIITem.pImage^.Color := clBlack;
   pUIITem.pImage^.RecordCircleVisible := False;
   pUIITem.pImage^.RecordInfoVisible := False;
@@ -710,12 +713,14 @@ begin
   begin
     if TUIDataModule(UIModulesList[i]).UserName = AUserName then
     begin
-      TUIDataModule(UIModulesList[i]).UI.Close; //AndClear;
-      TUIDataModule(UIModulesList[i]).FT_UI.Close; //AndClear;
+      TUIDataModule(UIModulesList[i]).UI.Active := False;
       TUIDataModule(UIModulesList[i]).UI.Module.Close(AUserName);
+      TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
+      TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
       TUIDataModule(UIModulesList[i]).FT_UI.Close;
       FreeAndNil(TUIDataModule(UIModulesList[i]));
       UIModulesList.Delete(i);
+      FOnUIClose('desk', AUserName);
 
       Result := i;
       Break;
@@ -1165,6 +1170,20 @@ begin
   lState.Left := 0;
   lState.Width := ClientWidth;
 
+  panOptionsMini.Top := 0;
+  ammbActions.Left := Ceil((ClientWidth - ammbActions.Width) / 2);
+
+  if (panOptionsMini.Left < (ClientWidth * 5 div 100)) then
+    panOptionsMini.Left := (ClientWidth * 5 div 100)
+  else
+  if (panOptionsMini.Left > (ClientWidth - ClientWidth * 5 div 100) - panOptionsMini.Width) then
+    panOptionsMini.Left := ClientWidth - (ClientWidth * 5 div 100) - panOptionsMini.Width;
+
+//  Scroll.Left := 0;
+//  Scroll.Top := panOptions.Top + panOptions.Height;
+//  Scroll.Width := ClientWidth;
+//  Scroll.Height := ClientHeight - panOptions.Top + panOptions.Height;
+
   if (ActiveUIModule <> nil) then
   begin
     if ActiveUIModule.TimerReconnect.Enabled
@@ -1253,31 +1272,29 @@ var
 begin
 //  Hide;
 
-  if ActiveUIModule <> nil then
+  for i := 0 to UIModulesList.Count - 1 do
   begin
     if aHideWallpaper.Checked then
 //    try
 //      if ActiveUIModule.UI.Active then
-        ActiveUIModule.UI.Send_ShowDesktop;
+        TUIDataModule(UIModulesList[i]).UI.Send_ShowDesktop;
 //    except
 //    end;
 
     if aLockSystemOnClose.Checked then
 //    try
 //      if ActiveUIModule.UI.Active then
-        ActiveUIModule.UI.Send_LockSystem;
+        TUIDataModule(UIModulesList[i]).UI.Send_LockSystem;
 //    except
 //    end;
-  end;
 
-  for i := 0 to UIModulesList.Count - 1 do
-  begin
-    FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
-    TUIDataModule(UIModulesList[i]).UI.Close; //AndClear;
-    TUIDataModule(UIModulesList[i]).FT_UI.Close; //AndClear;
+    TUIDataModule(UIModulesList[i]).UI.Active := False;
     TUIDataModule(UIModulesList[i]).UI.Module.Close(TUIDataModule(UIModulesList[i]).UserName);
+    TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
+    TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
     TUIDataModule(UIModulesList[i]).FT_UI.Close;
 //    FreeAndNil(TUIDataModule(UIModulesList[i]));
+    FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
   end;
 
   DesktopTimer.Enabled := False;
@@ -1299,8 +1316,7 @@ begin
   pMain.Color := clWhite; //$00A39323;
   Scroll.Visible := False;
   iPrepare.Visible := True;
-  panOptions.Visible := False;
-  panOptionsMini.Visible := False;
+  panOptionsMini.Left := ClientWidth - (ClientWidth * 5 div 100);
   iScreenLocked.Visible := False;
   lState.Caption := 'Инициализация изображения...';
   lState.Visible := True;
@@ -1310,7 +1326,7 @@ begin
 
 //  MainChromeTabs.Visible := True;
 
-  panOptionsVisible := True;
+  panOptions.Visible := True;
   MiniPanelDraggging := False;
   aStretchScreen.Checked := False;
 
@@ -1343,15 +1359,7 @@ end;
 
 procedure TrdDesktopViewer.FormResize(Sender: TObject);
 begin
-//  panOptions.Left := (Width - panOptions.Width) div 2;
-//  panOptionsMini.Top := panOptions.Top + panOptions.Height;
-//  panOptionsMini.Left := panOptions.Left + panOptions.Width - panOptionsMini.Width - 15;
-
-  panOptions.Left := 0;
-  panOptions.Width := ClientWidth;
-  panOptionsMini.Top := panOptions.Top + panOptions.Height;
-  panOptionsMini.Left := panOptions.Left + panOptions.Width - panOptionsMini.Width - 15;
-  ammbActions.Left := Ceil((panOptions.Width - ammbActions.Width) / 2);
+  panOptionsMini.Left := ClientWidth - (ClientWidth * 5 div 100);
 
   DoResizeImage;
 end;
@@ -1504,10 +1512,10 @@ begin
     end
     else if Key = Ord('S') then
     begin
-      if aStretchScreen.Checked then
-        ActiveUIModule.pImage^.Align := alClient
-      else
-        ActiveUIModule.pImage.Align := alNone;
+//      if aStretchScreen.Checked then
+//        ActiveUIModule.pImage^.Align := alClient
+//      else
+//        ActiveUIModule.pImage.Align := alNone;
       if (ActiveUIModule.UI.ScreenWidth >= Screen.Width) or
          (ActiveUIModule.UI.ScreenHeight >= Screen.Height) then
       begin
@@ -1518,6 +1526,9 @@ begin
         end
       else
         InitScreen;
+
+      DoResizeImage;
+
       Exit;
     end;
   end;
@@ -1577,7 +1588,6 @@ begin
 
   for i := 0 to UIModulesList.Count - 1 do
   begin
-    FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
 //    TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
 //    TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
     FreeAndNil(TUIDataModule(UIModulesList[i]));
@@ -1941,10 +1951,12 @@ begin
     end;
   end;
 
-  if aStretchScreen.Checked then
-    ActiveUIModule.pImage^.Align := alClient
-  else
-    ActiveUIModule.pImage^.Align := alNone;
+//  if aStretchScreen.Checked then
+//    ActiveUIModule.pImage^.Align := alClient
+//  else
+//    ActiveUIModule.pImage^.Align := alNone;
+
+  DoResizeImage;
 
   aFullScreen.Checked := not aFullScreen.Checked;
 end;
@@ -2338,7 +2350,9 @@ end;
 procedure TrdDesktopViewer.lHideMiniPanelClick(Sender: TObject);
 begin
   if not MiniPanelDraggging then
-    panOptionsVisibilityChange(not panOptionsVisible);
+    panOptionsVisibilityChange(not panOptions.Visible);
+
+  DoResizeImage;
 
   if ActiveUIModule <> nil then
     ActiveUIModule.UI.DrawScreen(ActiveUIModule.pImage^.Canvas, ActiveUIModule.pImage^.Width, ActiveUIModule.pImage^.Height);
@@ -2516,10 +2530,13 @@ begin
     p.X := X;
     p.Y := Y;
     p := panOptionsMini.ClientToScreen(p);
-    if ((panOptionsMini.Left - MiniPanelCurX + p.X + panOptionsMini.Width) < (panOptions.Left + panOptions.Width - 15))
-      and ((panOptionsMini.Left - MiniPanelCurX + p.X) > (panOptions.Left + 15)) then
+    if ((panOptionsMini.Left - MiniPanelCurX + p.X + panOptionsMini.Width) < (ClientWidth - panOptionsMini.Width - ClientWidth * 5 div 100))
+      and ((panOptionsMini.Left - MiniPanelCurX + p.X) > (ClientWidth * 5 div 100)) then
       panOptionsMini.Left := panOptionsMini.Left - MiniPanelCurX + p.X;
     MiniPanelCurX := p.X;
+
+//    if ActiveUIModule <> nil then
+//      ActiveUIModule.UI.DrawScreen(ActiveUIModule.pImage^.Canvas, ActiveUIModule.pImage^.Width, ActiveUIModule.pImage^.Height);
   end;
 end;
 
@@ -2535,7 +2552,7 @@ begin
   p.Y := Y;
   p := panOptionsMini.ClientToScreen(p);
   if p.X = MiniPanelCurX then
-    //Перенести сюда события OnClick кнопок
+    //Перенести сюда события OnClick кнопок?
 end;
 
 procedure TrdDesktopViewer.panOptionsMouseLeave(Sender: TObject);
@@ -2545,36 +2562,22 @@ end;
 
 procedure TrdDesktopViewer.panOptionsVisibilityChange(AVisible: Boolean);
 begin
-  panOptionsVisible := AVisible;
-  if not panOptionsVisible then
+  panOptions.Visible := AVisible;
+  if not panOptions.Visible then
   begin
-    panOptionsMini.Top := 0;
-    panOptions.Top := -panOptions.Height;
+    iShowMiniPanel.Picture.Assign(iMiniPanelShow.Picture);
+    iShowMiniPanel.Hint := 'Показать панель действий';
 
-    if panOptions.Top = -panOptions.Height then
-    begin
-      panOptionsVisible := False;
-      iShowMiniPanel.Picture.Assign(iMiniPanelShow.Picture);
-      iShowMiniPanel.Hint := 'Показать панель действий';
-
-      MiniPanelMouseDowned := False;
-      MiniPanelDraggging := False;
-    end;
+    MiniPanelMouseDowned := False;
+    MiniPanelDraggging := False;
   end
   else
   begin
-    panOptions.Top := 0;
-    panOptionsMini.Top := panOptions.Top + panOptions.Height;
+    iShowMiniPanel.Picture.Assign(iMiniPanelHide.Picture);
+    iShowMiniPanel.Hint := 'Скрыть панель действий';
 
-    if panOptions.Top = 0 then
-    begin
-      panOptionsVisible := True;
-      iShowMiniPanel.Picture.Assign(iMiniPanelHide.Picture);
-      iShowMiniPanel.Hint := 'Скрыть панель действий';
-
-      MiniPanelMouseDowned := False;
-      MiniPanelDraggging := False;
-    end;
+    MiniPanelMouseDowned := False;
+    MiniPanelDraggging := False;
   end;
 end;
 
