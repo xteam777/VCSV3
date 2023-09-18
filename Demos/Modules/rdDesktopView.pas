@@ -13,7 +13,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, CommonData, CommonUtils, uVircessTypes, rtcLog, RmxClipbrd,
-  Classes, Graphics, Controls, Forms, Types, IOUtils, DateUtils,
+  Classes, Graphics, Controls, Forms, Types, IOUtils, DateUtils, rtcPortalHttpCli,
   Dialogs, ExtCtrls, StdCtrls, ShellAPI, ProgressDialog, rtcSystem,
   rtcpChat, Math, rtcpFileTrans, rtcpFileTransUI, uUIDataModule,
   System.ImageList, Vcl.ImgList, Vcl.ActnMan, Vcl.ActnColorMaps, System.Actions,
@@ -575,6 +575,7 @@ begin
   if not fIsPending then //Если подключение отменено, выходим
     Exit
   else
+  if not fIsReconnection then
   begin
     Show;
     BringToFront;
@@ -714,6 +715,8 @@ begin
     if TUIDataModule(UIModulesList[i]).UserName = AUserName then
     begin
       TUIDataModule(UIModulesList[i]).UI.Active := False;
+      TRtcHTTPPortalClient(TUIDataModule(UIModulesList[i]).UI.Module.Client).Active := False;
+      TRtcHTTPPortalClient(TUIDataModule(UIModulesList[i]).UI.Module.Client).Stop;
       TUIDataModule(UIModulesList[i]).UI.Module.Close(AUserName);
       TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
       TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
@@ -1289,6 +1292,8 @@ begin
 //    end;
 
     TUIDataModule(UIModulesList[i]).UI.Active := False;
+    TRtcHTTPPortalClient(TUIDataModule(UIModulesList[i]).UI.Module.Client).Active := False;
+    TRtcHTTPPortalClient(TUIDataModule(UIModulesList[i]).UI.Module.Client).Stop;
     TUIDataModule(UIModulesList[i]).UI.Module.Close(TUIDataModule(UIModulesList[i]).UserName);
     TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
     TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;

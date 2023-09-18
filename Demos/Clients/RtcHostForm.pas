@@ -1817,7 +1817,7 @@ end;
 
 destructor TPortalThread.Destroy;
 begin
-  FGatewayClient.Disconnect;
+  FGatewayClient.Stop;
   FGatewayClient.Active := False;
   FDesktopControl.Free;
   FFileTransfer.Free;
