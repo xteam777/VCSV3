@@ -1,4 +1,4 @@
-﻿unit rdDesktopView;
+﻿ unit rdDesktopView;
 
 interface
 
@@ -107,6 +107,7 @@ type
     iMove: TImage;
     iMiniPanelShow: TImage;
     iMiniPanelHide: TImage;
+    tCloseForm: TTimer;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -189,6 +190,7 @@ type
     procedure MainChromeTabsButtonCloseTabClick(Sender: TObject;
       ATab: TChromeTab; var Close: Boolean);
     procedure TimerResizeTimer(Sender: TObject);
+    procedure tCloseFormTimer(Sender: TObject);
   private
 //    FVideoRecorder: TVideoRecorder;
 //    FVideoWriter: TRMXVideoWriter;
@@ -289,7 +291,6 @@ type
     procedure ChangeLockedState(AUserName: String; ALockedState: Integer; AServiceStarted: Boolean);
     function GetUIDataModule(AUserName: String): TUIDataModule;
     function RemoveUIDataModule(AUserName: String): Integer;
-    procedure CloseForm;
     procedure DoReconnectToPartnerStart(user, username, pass, action: String);
   end;
 
@@ -330,7 +331,7 @@ begin
   if UIModulesList.Count = 0 then
   begin
     ActiveUIModule := nil;
-    CloseForm;
+    tCloseForm.Enabled := True;
   end
   else
   if RemovedInd > 1 then
@@ -718,11 +719,6 @@ procedure TrdDesktopViewer.MainChromeTabsButtonAddClick(Sender: TObject;
 begin
   BringWindowToTop(MainFormHandle);
   Handled := True;
-end;
-
-procedure TrdDesktopViewer.CloseForm;
-begin
-  Close;
 end;
 
 function TrdDesktopViewer.RemoveUIDataModule(AUserName: String): Integer;
@@ -1269,14 +1265,42 @@ begin
 end;
 
 procedure TrdDesktopViewer.FormClose(Sender: TObject; var Action: TCloseAction);
+var
+  i: Integer;
 begin
   DesktopTimer.Enabled := False;
-  Action := caFree;
+  Action := caHide;
 
 //  if not aRecordStart.Enabled then
 //    Avi.Free;
 
   RecordCancel;
+
+  SetShortcuts_Hook(False); //Доделать
+
+  FreeAndNil(PFileTrans);
+
+  MainChromeTabs.Tabs.Clear;
+
+  for i := 0 to FProgressDialogsList.Count - 1 do
+  begin
+    FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
+    Dispose(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog);
+    Dispose(FProgressDialogsList[i]);
+  end;
+  FProgressDialogsList.Clear;
+//  FreeAndNil(FProgressDialogsList);
+
+  ActiveUIModule := nil;
+
+  for i := 0 to UIModulesList.Count - 1 do
+  begin
+//    TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
+//    TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
+    FreeAndNil(TUIDataModule(UIModulesList[i]));
+  end;
+  UIModulesList.Clear;
+//  FreeAndNil(UIModulesList);
 end;
 
 procedure TrdDesktopViewer.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -1574,7 +1598,7 @@ end;
 
 procedure TrdDesktopViewer.FormDeactivate(Sender: TObject);
 begin
-  if ActiveUIModule <> nil then
+  if (ActiveUIModule <> nil) then
     ActiveUIModule.UI.Deactivated;
 
   LWinDown := False;
@@ -1586,27 +1610,25 @@ begin
 end;
 
 procedure TrdDesktopViewer.FormDestroy(Sender: TObject);
-var
-  i: Integer;
+//var
+//  i: Integer;
 begin
-  SetShortcuts_Hook(False); //Доделать
-
-  FreeAndNil(PFileTrans);
-
-  for i := 0 to FProgressDialogsList.Count - 1 do
-  begin
-    FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
-    Dispose(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog);
-    Dispose(FProgressDialogsList[i]);
-  end;
+//  for i := 0 to FProgressDialogsList.Count - 1 do
+//  begin
+//    FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
+//    Dispose(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog);
+//    Dispose(FProgressDialogsList[i]);
+//  end;
+//  FProgressDialogsList.Clear;
   FreeAndNil(FProgressDialogsList);
 
-  for i := 0 to UIModulesList.Count - 1 do
-  begin
-//    TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
-//    TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
-    FreeAndNil(TUIDataModule(UIModulesList[i]));
-  end;
+//  for i := 0 to UIModulesList.Count - 1 do
+//  begin
+////    TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
+////    TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
+//    FreeAndNil(TUIDataModule(UIModulesList[i]));
+//  end;
+//  UIModulesList.Clear;
   FreeAndNil(UIModulesList);
 end;
 
@@ -2162,8 +2184,10 @@ procedure TrdDesktopViewer.RecordCancel;
 begin
 //  if not Assigned(FVideoRecorder) then exit;
 //  FVideoRecorder.Terminate;
-  if not Assigned(ActiveUIModule.FVideoWriter) then
+  if (ActiveUIModule = nil)
+    or (not Assigned(ActiveUIModule.FVideoWriter)) then
     Exit;
+
   RecordStop;
   DeleteFile(ActiveUIModule.FVideoFile);
 end;
@@ -2803,6 +2827,12 @@ begin
     if err <> 0 then
       xLog(Format('SetShortcuts. Error: %s', [SysErrorMessage(err)]));
   end;
+end;
+
+procedure TrdDesktopViewer.tCloseFormTimer(Sender: TObject);
+begin
+  tCloseForm.Enabled := False;
+  Close;
 end;
 
 procedure TrdDesktopViewer.TimerRecTimer(Sender: TObject);

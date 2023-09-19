@@ -5221,4 +5221,11 @@ object rdDesktopViewer: TrdDesktopViewer
     Left = 8
     Top = 111
   end
+  object tCloseForm: TTimer
+    Enabled = False
+    Interval = 50
+    OnTimer = tCloseFormTimer
+    Left = 8
+    Top = 256
+  end
 end
