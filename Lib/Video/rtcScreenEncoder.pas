@@ -148,34 +148,34 @@ end;
 
 function TRtcScreenEncoder.GetScreenInfoChanged: Boolean;
 begin
-  if IsService then
+//  if IsService then
     Result := FScreenInfoChanged
-  else
-    Result := FDesktopDuplicator.GetScreenInfoChanged(FScreenWidth, FScreenHeight, FBitsPerPixel);
+//  else
+//    Result := FDesktopDuplicator.ScreenInfoChanged;
 end;
 
 function TRtcScreenEncoder.GetScreenWidth: Integer;
 begin
-  if IsService then
+//  if IsService then
     Result := FScreenWidth
-  else
-    Result := FDesktopDuplicator.ScreenWidth;
+//  else
+//    Result := FDesktopDuplicator.ScreenWidth;
 end;
 
 function TRtcScreenEncoder.GetScreenHeight: Integer;
 begin
-  if IsService then
+//  if IsService then
     Result := FScreenHeight
-  else
-    Result := FDesktopDuplicator.ScreenHeight;
+//  else
+//    Result := FDesktopDuplicator.ScreenHeight;
 end;
 
 function TRtcScreenEncoder.GetBitsPerPixel: Integer;
 begin
-  if IsService then
+//  if IsService then
     Result := FBitsPerPixel
-  else
-    Result := FDesktopDuplicator.BitsPerPixel;
+//  else
+//    Result := FDesktopDuplicator.BitsPerPixel;
 end;
 
 function TRtcScreenEncoder.GetMouseFlags: Integer;
@@ -196,18 +196,18 @@ end;
 
 function TRtcScreenEncoder.GetClipRect: TRect;
 begin
-  if IsService then
+//  if IsService then
     Result := FClipRect
-  else
-    Result := FDesktopDuplicator.ClipRect;
+//  else
+//    Result := FDesktopDuplicator.ClipRect;
 end;
 
 procedure TRtcScreenEncoder.SetClipRect(Value: TRect);
 begin
-  if IsService then
+//  if IsService then
     FClipRect := Value
-  else
-    FDesktopDuplicator.ClipRect := Value;
+//  else
+//    FDesktopDuplicator.ClipRect := Value;
 end;
 
 function TRtcScreenEncoder.GetMovedRCnt: Integer;
@@ -306,8 +306,10 @@ var
  i : integer;
 begin
   FDesktopDuplicator := TDesktopDuplicationWrapper.Create();
-
-  FDesktopDuplicator.ClipRect := TRect.Create(0, 0, 0, 0);
+  FDesktopDuplicator.pScreenWidth := @FScreenWidth;
+  FDesktopDuplicator.pScreenHeight := @FScreenHeight;
+  FDesktopDuplicator.pBitsPerPixel := @FBitsPerPixel;
+  FDesktopDuplicator.pClipRect := @FClipRect;
 
   DataCS := TCriticalSection.Create;
   HelperCS := TCriticalSection.Create;

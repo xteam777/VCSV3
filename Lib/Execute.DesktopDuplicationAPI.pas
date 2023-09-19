@@ -35,10 +35,9 @@ type
     DesktopResource: IDXGIResource;
     FTempTexture: ID3D11Texture2D;
 
-    FScreenWidth, FScreenHeight, FBitsPerPixel, FMouseFlags, FMouseCursor: Integer;
+    FMouseFlags, FMouseCursor: Integer;
 
     FFullScreen: Boolean;
-    FClipRect : TRect;
 
     FScreenBuff : PByte;
 
@@ -53,9 +52,10 @@ type
 
     function CreateDD : Boolean;
     procedure DestroyDD;
-//    function GetScreenInfoChanged: Boolean;
+    function GetScreenInfoChanged: Boolean;
     procedure SetClipRect(const Rect : TRect);
   public
+    pScreenWidth, pScreenHeight, pBitsPerPixel, pClipRect: Pointer;
     DirtyR, MovedR : array [0..10000] of TRect;
     MovedRP : array [0..10000] of TPoint;
 
@@ -66,16 +66,11 @@ type
 
     function InvertColor(clr: TColor): TColor;
 
-    function GetScreenInfoChanged(var AScreenWidth, AScreenHeight, ABitsPerPixel: Integer): Boolean;
     property Error: HRESULT read FError;
-    property ScreenWidth : Integer read FScreenWidth;
-    property ScreenHeight : Integer read FScreenHeight;
-    property BitsPerPixel : Integer read FBitsPerPixel;
     property MouseFlags : Integer read FMouseFlags;
     property MouseCursor : Integer read FMouseCursor;
-//    property ScreenInfoChanged : Boolean read GetScreenInfoChanged;
+    property ScreenInfoChanged : Boolean read GetScreenInfoChanged;
     property FullScreen: Boolean read FFullScreen write FFullScreen;
-    property ClipRect : TRect read FClipRect write SetClipRect;
     property ScreenBuff : PByte read FScreenBuff;
     property DirtyRCnt: Integer read FDirtyRCnt write FDirtyRCnt;
     property MovedRCnt: Integer read FMovedRCnt write FMovedRCnt;
@@ -90,6 +85,11 @@ implementation
 
 constructor TDesktopDuplicationWrapper.Create;
 begin
+  New(pScreenWidth);
+  New(pScreenHeight);
+  New(pBitsPerPixel);
+  New(pClipRect);
+
   inherited;
 
   CreateDD;
@@ -97,6 +97,11 @@ end;
 
 destructor TDesktopDuplicationWrapper.Destroy;
 begin
+  Dispose(pScreenWidth);
+  Dispose(pScreenHeight);
+  Dispose(pBitsPerPixel);
+  Dispose(pClipRect);
+
   inherited;
 
   DestroyDD;
@@ -247,7 +252,7 @@ begin
 
 //  desk_dc := GetDC(0); //рисую пиксель в левом нижнем углу экрана
 //  desk_pixel_color := InvertColor(desk_pixel_color);
-//  SetPixel(desk_dc, 0, FScreenHeight, desk_pixel_color);
+//  SetPixel(desk_dc, 0, pScreenHeight, desk_pixel_color);
 //  ReleaseDC(0, desk_dc);
 
   BadAttempt := False;
@@ -506,9 +511,9 @@ begin
   end;
 
   // ќтсекаем части пр€моугольников из DirtyRecs, выход€щие за ClipRect
-  if (ClipRect.Width <> 0) and (ClipRect.Height <> 0) then
+  if (TRect(pClipRect^).Width <> 0) and (TRect(pClipRect^).Height <> 0) then
     for i := 0 to FDirtyRCnt - 1 do
-      DirtyR[i] := TRect.Intersect(DirtyR[i], ClipRect);
+      DirtyR[i] := TRect.Intersect(DirtyR[i], TRect(pClipRect^));
 
   time := GetTickCount - time;
   Debug.Log('enc time: ' + IntToStr(time));
@@ -521,34 +526,34 @@ begin
   for i := 0 to FMovedRCnt - 1 do
     with MovedR[i], MovedRP[i] do
     begin
-      CLeft := (X < Left) and (X < ClipRect.Left); // нужно перерисовать область слева от окна
-      CTop := (Y < Top) and (Y < ClipRect.Top); // сверху
-      CRight := (X >= Left) and (X + Width >= ClipRect.Right); // справа
-      CBottom := (Y >= Bottom) and (Y + Height >= ClipRect.Bottom); // снизу
+      CLeft := (X < Left) and (X < TRect(pClipRect^).Left); // нужно перерисовать область слева от окна
+      CTop := (Y < Top) and (Y < TRect(pClipRect^).Top); // сверху
+      CRight := (X >= Left) and (X + Width >= TRect(pClipRect^).Right); // справа
+      CBottom := (Y >= Bottom) and (Y + Height >= TRect(pClipRect^).Bottom); // снизу
 
       // √оризонтальные или вертикальные области по боковым гран€м окна
       if CLeft then
       begin
-        DirtyR[FDirtyRCnt] := TRect.Create(ClipRect.Left, Top,
-          ClipRect.Left + Left - X + 1, Bottom);
+        DirtyR[FDirtyRCnt] := TRect.Create(TRect(pClipRect^).Left, Top,
+          TRect(pClipRect^).Left + Left - X + 1, Bottom);
         Inc(FDirtyRCnt);
       end;
       if CTop then
       begin
-        DirtyR[FDirtyRCnt] := TRect.Create(Left, ClipRect.Top,
-          Right, ClipRect.Top + Top - Y + 1);
+        DirtyR[FDirtyRCnt] := TRect.Create(Left, TRect(pClipRect^).Top,
+          Right, TRect(pClipRect^).Top + Top - Y + 1);
         Inc(FDirtyRCnt);
       end;
       if CRight then
       begin
-        DirtyR[FDirtyRCnt] := TRect.Create(ClipRect.Right - (X - Left) - 1,
-          Top, ClipRect.Right, Bottom);
+        DirtyR[FDirtyRCnt] := TRect.Create(TRect(pClipRect^).Right - (X - Left) - 1,
+          Top, TRect(pClipRect^).Right, Bottom);
         Inc(FDirtyRCnt);
       end;
       if CBottom then
       begin
-        DirtyR[FDirtyRCnt] := TRect.Create(Left, ClipRect.Bottom - (Y - Bottom) - 1,
-          Right, ClipRect.Bottom);
+        DirtyR[FDirtyRCnt] := TRect.Create(Left, TRect(pClipRect^).Bottom - (Y - Bottom) - 1,
+          Right, TRect(pClipRect^).Bottom);
         Inc(FDirtyRCnt);
       end;
 
@@ -556,35 +561,35 @@ begin
       // нужно если перемещение было по обоим ос€м сразу
       if CLeft and CTop then
       begin
-        DirtyR[FDirtyRCnt] := TRect.Create(ClipRect.Left, ClipRect.Top,
-          ClipRect.Left + Left - X, ClipRect.Top + Top - Y);
+        DirtyR[FDirtyRCnt] := TRect.Create(TRect(pClipRect^).Left, TRect(pClipRect^).Top,
+          TRect(pClipRect^).Left + Left - X, TRect(pClipRect^).Top + Top - Y);
         Inc(FDirtyRCnt);
       end;
       if CLeft and CBottom then
       begin
-        DirtyR[FDirtyRCnt] := TRect.Create(ClipRect.Left,
-          ClipRect.Bottom - (Y - Top) - 1,
-          ClipRect.Left + Left - X, ClipRect.Bottom);
+        DirtyR[FDirtyRCnt] := TRect.Create(TRect(pClipRect^).Left,
+          TRect(pClipRect^).Bottom - (Y - Top) - 1,
+          TRect(pClipRect^).Left + Left - X, TRect(pClipRect^).Bottom);
         Inc(FDirtyRCnt);
       end;
       if CRight and CTop then
       begin
-        DirtyR[FDirtyRCnt] := TRect.Create(ClipRect.Right - (X - Left) - 1,
-          ClipRect.Top, ClipRect.Right, ClipRect.Top + Top - Y);
+        DirtyR[FDirtyRCnt] := TRect.Create(TRect(pClipRect^).Right - (X - Left) - 1,
+          TRect(pClipRect^).Top, TRect(pClipRect^).Right, TRect(pClipRect^).Top + Top - Y);
         Inc(FDirtyRCnt);
       end;
       if CRight and CBottom then
       begin
-        DirtyR[FDirtyRCnt] := TRect.Create(ClipRect.Right - (X - Left) - 1,
-          ClipRect.Bottom - (Y - Top) - 1, ClipRect.Right, ClipRect.Bottom);
+        DirtyR[FDirtyRCnt] := TRect.Create(TRect(pClipRect^).Right - (X - Left) - 1,
+          TRect(pClipRect^).Bottom - (Y - Top) - 1, TRect(pClipRect^).Right, TRect(pClipRect^).Bottom);
         Inc(FDirtyRCnt);
       end;
 
       //  орректируем MoveR и MoveRP чтобы они не выходили за ClipRect
-      if CLeft then begin Left := ClipRect.Left + Left - X; X := ClipRect.Left; end;
-      if CTop then begin Top := ClipRect.Top + Top - Y; Y := ClipRect.Top; end;
-      if CRight then begin Right := ClipRect.Right - (X - Left); X := ClipRect.Left + (X - Left); end;
-      if CBottom then begin Bottom := ClipRect.Bottom - (Y - Bottom); Y := ClipRect.Top + (Y - Top); end;
+      if CLeft then begin Left := TRect(pClipRect^).Left + Left - X; X := TRect(pClipRect^).Left; end;
+      if CTop then begin Top := TRect(pClipRect^).Top + Top - Y; Y := TRect(pClipRect^).Top; end;
+      if CRight then begin Right := TRect(pClipRect^).Right - (X - Left); X := TRect(pClipRect^).Left + (X - Left); end;
+      if CBottom then begin Bottom := TRect(pClipRect^).Bottom - (Y - Bottom); Y := TRect(pClipRect^).Top + (Y - Top); end;
     end;
 
 
@@ -622,26 +627,26 @@ begin
   Debug.Log('enc time: ' + IntToStr(time));
 end;
 
-{function TDesktopDuplicationWrapper.GetScreenInfoChanged: Boolean;
+function TDesktopDuplicationWrapper.GetScreenInfoChanged: Boolean;
 var
   NewBitsPerPixel : Integer;
 begin
   Result := false;
 
-  if FScreenWidth <> Desc.Width then
+  if Integer(pScreenWidth^) <> Desc.Width then
   begin
-    FScreenWidth := Desc.Width;
+    Integer(pScreenWidth^) := Desc.Width;
     Result := true;
   end;
 
-  if FScreenHeight <> Desc.Height then
+  if Integer(pScreenHeight^) <> Desc.Height then
   begin
-    FScreenHeight := Desc.Height;
+    Integer(pScreenHeight^) := Desc.Height;
     Result := true;
   end;
 
   if Result and FFullScreen then
-    FClipRect := TRect.Create(0, 0, FScreenWidth, FScreenHeight);
+    TRect(pClipRect^) := TRect.Create(0, 0, Integer(pScreenWidth^), Integer(pScreenHeight^));
 
   case Desc.Format of
     DXGI_FORMAT_R8G8B8A8_TYPELESS,
@@ -657,57 +662,9 @@ begin
     DXGI_FORMAT_B8G8R8X8_TYPELESS,
     DXGI_FORMAT_B8G8R8X8_UNORM_SRGB : NewBitsPerPixel := 32;
   end;
-  if FBitsPerPixel <> NewBitsPerPixel then
+  if Integer(pBitsPerPixel^) <> NewBitsPerPixel then
   begin
-    FBitsPerPixel := NewBitsPerPixel;
-    Result := true;
-  end;
-end;}
-
-function TDesktopDuplicationWrapper.GetScreenInfoChanged(var AScreenWidth, AScreenHeight, ABitsPerPixel: Integer): Boolean;
-var
-  NewBitsPerPixel : Integer;
-begin
-  Result := false;
-
-  if not DDExists then
-    Exit;
-
-  if AScreenWidth <> Desc.Width then
-  begin
-    AScreenWidth := Desc.Width;
-    FScreenWidth := Desc.Width;
-    Result := true;
-  end;
-
-  if AScreenHeight <> Desc.Height then
-  begin
-    AScreenHeight := Desc.Height;
-    FScreenHeight := Desc.Height;
-    Result := true;
-  end;
-
-  if Result and FFullScreen then
-    FClipRect := TRect.Create(0, 0, FScreenWidth, FScreenHeight);
-
-  case Desc.Format of
-    DXGI_FORMAT_R8G8B8A8_TYPELESS,
-    DXGI_FORMAT_R8G8B8A8_UNORM,
-    DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
-    DXGI_FORMAT_R8G8B8A8_UINT,
-    DXGI_FORMAT_R8G8B8A8_SNORM,
-    DXGI_FORMAT_R8G8B8A8_SINT,
-    DXGI_FORMAT_B8G8R8A8_UNORM,
-    DXGI_FORMAT_B8G8R8X8_UNORM,
-    DXGI_FORMAT_B8G8R8A8_TYPELESS,
-    DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
-    DXGI_FORMAT_B8G8R8X8_TYPELESS,
-    DXGI_FORMAT_B8G8R8X8_UNORM_SRGB : NewBitsPerPixel := 32;
-  end;
-  if ABitsPerPixel <> NewBitsPerPixel then
-  begin
-    ABitsPerPixel := NewBitsPerPixel;
-    FBitsPerPixel := NewBitsPerPixel;
+    Integer(pBitsPerPixel^) := NewBitsPerPixel;
     Result := true;
   end;
 end;
@@ -717,11 +674,11 @@ begin
   if (Rect.Width = 0) or (Rect.Height = 0) then
   begin
     FullScreen := true;
-    FClipRect := TRect.Create(0, 0, FScreenWidth, FScreenHeight);
+    TRect(pClipRect^) := TRect.Create(0, 0, Integer(pScreenWidth^), Integer(pScreenHeight^));
   end else
   begin
     FullScreen := false;
-    FClipRect := Rect;
+    TRect(pClipRect^) := Rect;
   end;
 end;
 
