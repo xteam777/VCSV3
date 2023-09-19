@@ -151,7 +151,7 @@ begin
   if IsService then
     Result := FScreenInfoChanged
   else
-    Result := FDesktopDuplicator.ScreenInfoChanged;
+    Result := FDesktopDuplicator.GetScreenInfoChanged(FScreenWidth, FScreenHeight, FBitsPerPixel);
 end;
 
 function TRtcScreenEncoder.GetScreenWidth: Integer;
