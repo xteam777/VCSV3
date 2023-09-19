@@ -283,6 +283,8 @@ type
     procedure RemoveProgressDialogByUserName(AUserName: String);
     function GetTab(AUserName: String): TChromeTab;
     function AddNewTab(AUserName, AUserDesc, AUserPass: String; AStartLockedState: Integer; AStartServiceStarted: Boolean; AModule: TRtcPDesktopControl): TUIDataModule;
+    procedure CloseTab(AUserName: String);
+    procedure SetReconnectInterval(AUserName: String; AInterval: Integer);
     procedure SetActiveTab(AUserName: String);
     procedure ChangeLockedState(AUserName: String; ALockedState: Integer; AServiceStarted: Boolean);
     function GetUIDataModule(AUserName: String): TUIDataModule;
@@ -314,6 +316,37 @@ implementation
 
 { TrdDesktopViewer }
 
+procedure TrdDesktopViewer.CloseTab(AUserName: String);
+var
+  pUIItem: TUIDataModule;
+  RemovedInd: Integer;
+begin
+  pUIItem := GetUIDataModule(AUserName);
+
+  if Assigned(FOnUIClose) then
+    FOnUIClose('desk', AUserName); //ThreadID
+
+  RemovedInd := RemoveUIDataModule(AUserName);
+  if UIModulesList.Count = 0 then
+  begin
+    ActiveUIModule := nil;
+    CloseForm;
+  end
+  else
+  if RemovedInd > 1 then
+    ActiveUIModule := UIModulesList[RemovedInd - 1]
+  else
+    ActiveUIModule := UIModulesList[0];
+
+  DoResizeImage;
+end;
+
+procedure TrdDesktopViewer.MainChromeTabsButtonCloseTabClick(Sender: TObject;
+  ATab: TChromeTab; var Close: Boolean);
+begin
+  CloseTab(ATab.UserName);
+end;
+
 procedure TrdDesktopViewer.SetFormState;
 begin
   if ActiveUIModule = nil then
@@ -325,6 +358,7 @@ begin
 //    panOptionsMini.Visible := True;
     iScreenLocked.Visible := True;
     lState.Caption := 'Удаленный компьютер заблокирован';
+    lState.Top := Height * 580 div 680;
     lState.Visible := True;
     lState.Invalidate;
     Scroll.Visible := False;
@@ -339,6 +373,7 @@ begin
 //    panOptionsMini.Visible := True;
     iScreenLocked.Visible := False;
     lState.Caption := 'Выполняется переподключение...';
+    lState.Top := Height div 2;
     lState.Visible := True;
     lState.Invalidate;
     Scroll.Visible := False;
@@ -354,6 +389,7 @@ begin
 //    panOptionsMini.Visible := True;
     iScreenLocked.Visible := True;
     lState.Caption := 'Удаленный компьютер заблокирован';
+    lState.Top := Height * 580 div 680;
     lState.Visible := True;
     lState.Invalidate;
     Scroll.Visible := False;
@@ -368,6 +404,7 @@ begin
 //    panOptionsMini.Visible := True;
     iScreenLocked.Visible := False;
     lState.Caption := 'Инициализация изображения...';
+    lState.Top := Height div 2;
     lState.Visible := True;
     lState.Invalidate;
     Scroll.Visible := False;
@@ -380,6 +417,7 @@ begin
 //    panOptions.Visible := True;
 //    panOptionsMini.Visible := True;
     iScreenLocked.Visible := False;
+    lState.Top := Height * 580 div 680;
     lState.Caption := '';
     lState.Visible := False;
     lState.Invalidate;
@@ -528,6 +566,15 @@ begin
 //  MainChromeTabs.Visible := False;
 end;
 
+procedure TrdDesktopViewer.SetReconnectInterval(AUserName: String; AInterval: Integer);
+var
+  UIDM: TUIDataModule;
+begin
+  UIDM := GetUIDataModule(GetUserToFromUserName(AUserName));
+  if UIDM <> nil then
+    UIDM.TimerReconnect.Interval := AInterval;
+end;
+
 procedure TrdDesktopViewer.ChangeLockedState(AUserName: String; ALockedState: Integer; AServiceStarted: Boolean);
 var
   UIDM: TUIDataModule;
@@ -671,32 +718,6 @@ procedure TrdDesktopViewer.MainChromeTabsButtonAddClick(Sender: TObject;
 begin
   BringWindowToTop(MainFormHandle);
   Handled := True;
-end;
-
-procedure TrdDesktopViewer.MainChromeTabsButtonCloseTabClick(Sender: TObject;
-  ATab: TChromeTab; var Close: Boolean);
-var
-  pUIItem: TUIDataModule;
-  RemovedInd: Integer;
-begin
-  pUIItem := GetUIDataModule(ATab.UserName);
-
-  if Assigned(FOnUIClose) then
-    FOnUIClose('desk', ATab.UserName); //ThreadID
-
-  RemovedInd := RemoveUIDataModule(ATab.UserName);
-  if UIModulesList.Count = 0 then
-  begin
-    ActiveUIModule := nil;
-    CloseForm;
-  end
-  else
-  if RemovedInd > 1 then
-    ActiveUIModule := UIModulesList[RemovedInd - 1]
-  else
-    ActiveUIModule := UIModulesList[0];
-
-  DoResizeImage;
 end;
 
 procedure TrdDesktopViewer.CloseForm;
@@ -1187,17 +1208,6 @@ begin
 //  Scroll.Width := ClientWidth;
 //  Scroll.Height := ClientHeight - panOptions.Top + panOptions.Height;
 
-  if (ActiveUIModule <> nil) then
-  begin
-    if ActiveUIModule.TimerReconnect.Enabled
-      or (not ActiveUIModule.UI.HaveScreen) then
-      lState.Top := Height div 2
-    else
-      lState.Top := Height * 580 div 680;
-  end
-  else
-    lState.Top := Height * 580 div 680;
-
   if (ActiveUIModule <> nil)
     and (ActiveUIModule.UI.HaveScreen) then
   begin
@@ -1598,8 +1608,6 @@ begin
     FreeAndNil(TUIDataModule(UIModulesList[i]));
   end;
   FreeAndNil(UIModulesList);
-
-  SendMessage(MainFormHandle, WM_UIFORMCLOSED, 0, 0);
 end;
 
 {procedure TrdDesktopViewer.SetCaption;

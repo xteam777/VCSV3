@@ -4226,7 +4226,6 @@ object rdDesktopViewer: TrdDesktopViewer
     Height = 34
     Align = alTop
     BevelOuter = bvNone
-    Color = clWhite
     ParentBackground = False
     ParentShowHint = False
     ShowHint = False
@@ -4238,11 +4237,17 @@ object rdDesktopViewer: TrdDesktopViewer
       Top = 0
       Width = 350
       Height = 34
+      UseSystemFont = False
       ActionManager = ActionManagerTop
       Align = alNone
-      ColorMap = XPColorMap1
+      Color = clMenuBar
+      ColorMap.DisabledFontColor = 10461087
+      ColorMap.HighlightColor = clWhite
+      ColorMap.BtnSelectedFont = clWhite
+      ColorMap.SelectedFontColor = clWhite
+      ColorMap.UnusedColor = clWhite
       Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
+      Font.Color = clBlack
       Font.Height = -12
       Font.Name = 'Segoe UI'
       Font.Style = []

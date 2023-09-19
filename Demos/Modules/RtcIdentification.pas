@@ -23,12 +23,14 @@ type
     procedure ePasswordKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
     FOnCustomFormClose: TOnCustomFormEvent;
   public
     { Public declarations }
     user: String;
+    Active: Boolean;
 
     property OnCustomFormClose: TOnCustomFormEvent read FOnCustomFormClose write FOnCustomFormClose;
   end;
@@ -91,6 +93,11 @@ procedure TfIdentification.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   if Assigned(FOnCustomFormClose) then
     FOnCustomFormClose;
+end;
+
+procedure TfIdentification.FormCreate(Sender: TObject);
+begin
+  Active := False;
 end;
 
 procedure TfIdentification.FormShow(Sender: TObject);

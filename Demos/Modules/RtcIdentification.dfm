@@ -13,6 +13,7 @@ object fIdentification: TfIdentification
   Font.Style = []
   Position = poScreenCenter
   OnClose = FormClose
+  OnCreate = FormCreate
   OnShow = FormShow
   TextHeight = 13
   object Image1: TImage

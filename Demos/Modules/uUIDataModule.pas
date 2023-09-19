@@ -55,7 +55,7 @@ implementation
 
 procedure TUIDataModule.TimerReconnectTimer(Sender: TObject);
 begin
-//  ReconnectToPartnerStart(UserName, UserDesc, UserPass,  'desk');
+  ReconnectToPartnerStart(UserName, UserDesc, UserPass,  'desk');
 end;
 
 {procedure TUIDataModule.WndProc(var Message: TMessage);
@@ -79,6 +79,9 @@ end;
 
 destructor TUIDataModule.Destroy;
 begin
+  TimerReconnect.Enabled := False;
+  TimerRec.Enabled := False;
+
 //  DeallocateHWND(FHandle);
   FreeAndNil(pImage^);
 

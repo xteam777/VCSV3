@@ -20,7 +20,7 @@ object UIDataModule: TUIDataModule
   end
   object TimerReconnect: TTimer
     Enabled = False
-    Interval = 20000
+    Interval = 60000
     OnTimer = TimerReconnectTimer
     Left = 164
     Top = 8

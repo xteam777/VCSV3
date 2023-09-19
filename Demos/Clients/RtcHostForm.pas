@@ -325,7 +325,6 @@ type
     { Private-Deklarationen }
 //    procedure WMLogEvent(var Message: TMessage); message WM_LOGEVENT;
     procedure WMTaskbarEvent(var Message: TMessage); message WM_TASKBAREVENT;
-    procedure WMUIFormClosed(var Message: TMessage); message WM_UIFORMCLOSED;
     procedure WMWTSSESSIONCHANGE(var Message: TMessage); message WM_WTSSESSION_CHANGE;
 //    procedure WMActivate(var Message: TMessage); message WM_ACTIVATE;
 //    procedure WMBlockInput_Message(var Message: TMessage); message WM_BLOCK_INPUT_MESSAGE;
@@ -655,6 +654,7 @@ type
     FRegisteredSessionNotification: Boolean;
 
     OpenedModalForm: PForm;
+    PassForm: TfIdentification;
 
     function GetCurrentExplorerDirectory(var ADir: String; var AHandle: THandle): Boolean;
     procedure SetFilesToClipboard(var Message: TMessage); message WM_SET_FILES_TO_CLIPBOARD;
@@ -2549,11 +2549,6 @@ end;
 //  end;
 //end;
 
-procedure TMainForm.WMUIFormClosed(var Message: TMessage);
-begin
-  DesktopsForm := nil;
-end;
-
 procedure TMainForm.WMTaskbarEvent(var Message: TMessage);
 var
   WindowPlacement: TWindowPlacement;
@@ -3306,6 +3301,14 @@ begin
   DeviceId := '';
   ConsoleId := '';
 
+  DesktopsForm := TrdDesktopViewer.Create(Self);
+  DesktopsForm.OnUIOpen := OnUIOpen;
+  DesktopsForm.OnUIClose := OnUIClose;
+  DesktopsForm.DoStartFileTransferring := StartFileTransferring;
+  DesktopsForm.ReconnectToPartnerStart := ReconnectToPartnerStart;
+
+  PassForm := TfIdentification.Create(Self);
+
   ActivationInProcess := False;
   AccountLoginInProcess := False;
 
@@ -3556,6 +3559,9 @@ begin
     Dispose(FProgressDialogsList[i]);
   end;
   FreeAndNil(FProgressDialogsList);
+
+  PassForm.Free;
+  DesktopsForm.Free;
 end;
 
 procedure TMainForm.FormHide(Sender: TObject);
@@ -4385,8 +4391,7 @@ begin
 //    CS_GW.Release;
 //  end;
 
-  if DesktopsForm <> nil then
-    DesktopsForm.ChangeLockedState(uname, aLockedStatus, aServiceStarted);
+  DesktopsForm.ChangeLockedState(uname, aLockedStatus, aServiceStarted);
 end;
 
 procedure TMainForm.LoadSetup(RecordType: String);
@@ -7695,7 +7700,7 @@ var
   username, sUID: String;
   PortalThread: TPortalThread;
   mResult: TModalResult;
-  PassForm: TfIdentification;
+//  PassForm: TfIdentification;
   PRItem: PPendingRequestItem;
   TempPass: String;
 begin
@@ -7726,6 +7731,9 @@ begin
 
       RemovePortalConnection(asWideString['user'], asString['action'], True);
       DeletePendingRequest(asWideString['user'], asString['action']);
+
+      if asString['action'] = 'desk' then
+        DesktopsForm.SetReconnectInterval(asWideString['user'], 10000);
 
 //      DoGetDeviceState(eAccountUserName.Text,
 //        PClient.LoginUserName,
@@ -7777,6 +7785,9 @@ begin
       AddPasswordsRecord(asWideString['user'], asWideString['Pass']);
 
 //      ConnectToPartner(GatewayRec, asWideString['user'], username, asString['action']);
+
+      if asString['action'] = 'desk' then
+        DesktopsForm.SetReconnectInterval(asWideString['user'], 60000);
     end
     else
     if asString['Result'] = 'PASS_NOT_VALID' then
@@ -7788,12 +7799,11 @@ begin
       username := GetUserNameByID(asWideString['user']);
 
       TempPass := '';
-      PassForm := TfIdentification.Create(Self);
-      try
-//      PassForm.Parent := Self;
 
-        if PassForm.user <> asWideString['user'] then
-          PassForm.ePassword.Text := '';
+//    PassForm.Parent := Self;
+
+      if PassForm.user <> asWideString['user'] then
+        PassForm.ePassword.Text := '';
 
 //      if StorePasswords then
 //      begin
@@ -7805,20 +7815,24 @@ begin
 //          end;
 //      end;
 
-        PassForm.user := asWideString['user'];
-        PassForm.OnCustomFormClose := OnCustomFormClose;
-        OnCustomFormOpen(@PassForm);
-        PassForm.ShowModal;
-        mResult := PassForm.ModalResult;
-        TempPass := PassForm.ePassword.Text;
-      finally
-        PassForm.Free;
-      end;
+      PassForm.user := asWideString['user'];
+      PassForm.OnCustomFormClose := OnCustomFormClose;
+      OnCustomFormOpen(@PassForm);
+      DesktopsForm.SetReconnectInterval(asWideString['user'], 999999999);
+      PassForm.ShowModal;
+      mResult := PassForm.ModalResult;
+      TempPass := PassForm.ePassword.Text;
       if mResult = mrOk then
-        ConnectToPartnerStart(asWideString['user'], username, TempPass, asString['action'])
+      begin
+        ConnectToPartnerStart(asWideString['user'], username, TempPass, asString['action']);
+        DesktopsForm.SetReconnectInterval(asWideString['user'], 60000);
+      end
       else
       begin
+      begin
         DeletePendingRequest(asWideString['user'], asString['action']);
+        DesktopsForm.CloseTab(asWideString['user']);
+      end;
 
 //        if GetPendingRequestsCount > 0 then
 //          SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
@@ -7957,7 +7971,6 @@ begin
       username := GetUserNameByID(asWideString['user']);
 
       TempPass := '';
-      PassForm := TfIdentification.Create(Self);
       try
 //      PassForm.Parent := Self;
 
@@ -9636,26 +9649,26 @@ begin
 //    if pPCItem^.UIHandle <> 0 then
 //      Exit;
 
-  if DesktopsForm = nil then
-  begin
-    DesktopsForm := TrdDesktopViewer.Create(Self);
-    DesktopsForm.OnUIOpen := OnUIOpen;
-    DesktopsForm.OnUIClose := OnUIClose;
-    DesktopsForm.DoStartFileTransferring := StartFileTransferring;
-    DesktopsForm.ReconnectToPartnerStart := ReconnectToPartnerStart;
-
-    //  DesktopsForm.Parent := Self;
-      //DesktopsForm.ParentWindow := GetDesktopWindow;
-  end
-  else
-  begin
-//    CDesk := PrdDesktopViewer(pPCItem^.UIForm);
-
-//    DesktopsForm.myUI.CloseAndClear;
-//    DesktopsForm.myUI.Free;
-//    DesktopsForm.FT_UI.CloseAndClear;
-//    DesktopsForm.FT_UI.Free;
-  end;
+//  if DesktopsForm = nil then
+//  begin
+//    DesktopsForm := TrdDesktopViewer.Create(Self);
+//    DesktopsForm.OnUIOpen := OnUIOpen;
+//    DesktopsForm.OnUIClose := OnUIClose;
+//    DesktopsForm.DoStartFileTransferring := StartFileTransferring;
+//    DesktopsForm.ReconnectToPartnerStart := ReconnectToPartnerStart;
+//
+//    //  DesktopsForm.Parent := Self;
+//      //DesktopsForm.ParentWindow := GetDesktopWindow;
+//  end
+//  else
+//  begin
+////    CDesk := PrdDesktopViewer(pPCItem^.UIForm);
+//
+////    DesktopsForm.myUI.CloseAndClear;
+////    DesktopsForm.myUI.Free;
+////    DesktopsForm.FT_UI.CloseAndClear;
+////    DesktopsForm.FT_UI.Free;
+//  end;
 
 //  pTab := DesktopsForm.MainChromeTabs.Tabs.Add;
 //  pTab.UserName := pPCItem^.UserName;  //К которому изначально подключались (не UserToConnect, на которого перенаправило)
@@ -10823,6 +10836,13 @@ begin
     end;
   finally
     CS_Pending.Release;
+  end;
+
+  //Делаем после удаления пендинга
+  if PassForm.Active then
+  begin
+    PassForm.ModalResult := mrCancel;
+    PassForm.Close;
   end;
 
 //  UpdatePendingStatus;
