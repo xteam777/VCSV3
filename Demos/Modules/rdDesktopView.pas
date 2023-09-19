@@ -2850,8 +2850,8 @@ end;
 
 procedure TrdDesktopViewer.TimerResizeTimer(Sender: TObject);
 begin
-  DoResizeImage;
   TimerResize.Enabled := False;
+  DoResizeImage;
 end;
 
 procedure TrdDesktopViewer.PFileTransExplorerNewUI(Sender: TRtcPFileTransfer; const user: String);
