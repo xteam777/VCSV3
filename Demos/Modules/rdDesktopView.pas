@@ -1325,6 +1325,8 @@ begin
 //    except
 //    end;
 
+    Sleep(100);
+
     TUIDataModule(UIModulesList[i]).UI.Active := False;
 //    TRtcHTTPPortalClient(TUIDataModule(UIModulesList[i]).UI.Module.Client).Active := False;
 //    TRtcHTTPPortalClient(TUIDataModule(UIModulesList[i]).UI.Module.Client).Stop;
