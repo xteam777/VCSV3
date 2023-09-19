@@ -350,7 +350,7 @@ end;
 
 procedure TrdDesktopViewer.SetFormState;
 begin
-  if ActiveUIModule = nil then
+{  if ActiveUIModule = nil then
   begin
     pMain.Color := $00A39323;
     Scroll.Visible := True;
@@ -410,7 +410,7 @@ begin
     lState.Invalidate;
     Scroll.Visible := False;
   end
-  else
+  else}
   begin
     pMain.Color := $00151515;
     Scroll.Visible := True;
