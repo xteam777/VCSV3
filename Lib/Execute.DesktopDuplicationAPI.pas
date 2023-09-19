@@ -84,11 +84,6 @@ implementation
 
 constructor TDesktopDuplicationWrapper.Create;
 begin
-  New(pScreenWidth);
-  New(pScreenHeight);
-  New(pBitsPerPixel);
-  New(pClipRect);
-
   inherited;
 
   FFullScreen := True;
@@ -98,11 +93,6 @@ end;
 
 destructor TDesktopDuplicationWrapper.Destroy;
 begin
-  Dispose(pScreenWidth);
-  Dispose(pScreenHeight);
-  Dispose(pBitsPerPixel);
-  Dispose(pClipRect);
-
   inherited;
 
   DestroyDD;
