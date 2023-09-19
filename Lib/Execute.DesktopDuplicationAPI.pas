@@ -511,9 +511,9 @@ begin
   end;
 
   // ќтсекаем части пр€моугольников из DirtyRecs, выход€щие за ClipRect
-  if (TRect(pClipRect^).Width <> 0) and (TRect(pClipRect^).Height <> 0) then
+  if (PRect(pClipRect)^.Width <> 0) and (PRect(pClipRect)^.Height <> 0) then
     for i := 0 to FDirtyRCnt - 1 do
-      DirtyR[i] := TRect.Intersect(DirtyR[i], TRect(pClipRect^));
+      DirtyR[i] := TRect.Intersect(DirtyR[i], PRect(pClipRect)^);
 
   time := GetTickCount - time;
   Debug.Log('enc time: ' + IntToStr(time));
@@ -526,34 +526,34 @@ begin
   for i := 0 to FMovedRCnt - 1 do
     with MovedR[i], MovedRP[i] do
     begin
-      CLeft := (X < Left) and (X < TRect(pClipRect^).Left); // нужно перерисовать область слева от окна
-      CTop := (Y < Top) and (Y < TRect(pClipRect^).Top); // сверху
-      CRight := (X >= Left) and (X + Width >= TRect(pClipRect^).Right); // справа
-      CBottom := (Y >= Bottom) and (Y + Height >= TRect(pClipRect^).Bottom); // снизу
+      CLeft := (X < Left) and (X < PRect(pClipRect)^.Left); // нужно перерисовать область слева от окна
+      CTop := (Y < Top) and (Y < PRect(pClipRect)^.Top); // сверху
+      CRight := (X >= Left) and (X + Width >= PRect(pClipRect)^.Right); // справа
+      CBottom := (Y >= Bottom) and (Y + Height >= PRect(pClipRect)^.Bottom); // снизу
 
       // √оризонтальные или вертикальные области по боковым гран€м окна
       if CLeft then
       begin
-        DirtyR[FDirtyRCnt] := TRect.Create(TRect(pClipRect^).Left, Top,
-          TRect(pClipRect^).Left + Left - X + 1, Bottom);
+        DirtyR[FDirtyRCnt] := TRect.Create(PRect(pClipRect)^.Left, Top,
+          PRect(pClipRect)^.Left + Left - X + 1, Bottom);
         Inc(FDirtyRCnt);
       end;
       if CTop then
       begin
-        DirtyR[FDirtyRCnt] := TRect.Create(Left, TRect(pClipRect^).Top,
-          Right, TRect(pClipRect^).Top + Top - Y + 1);
+        DirtyR[FDirtyRCnt] := TRect.Create(Left, PRect(pClipRect)^.Top,
+          Right, PRect(pClipRect)^.Top + Top - Y + 1);
         Inc(FDirtyRCnt);
       end;
       if CRight then
       begin
-        DirtyR[FDirtyRCnt] := TRect.Create(TRect(pClipRect^).Right - (X - Left) - 1,
-          Top, TRect(pClipRect^).Right, Bottom);
+        DirtyR[FDirtyRCnt] := TRect.Create(PRect(pClipRect)^.Right - (X - Left) - 1,
+          Top, PRect(pClipRect)^.Right, Bottom);
         Inc(FDirtyRCnt);
       end;
       if CBottom then
       begin
-        DirtyR[FDirtyRCnt] := TRect.Create(Left, TRect(pClipRect^).Bottom - (Y - Bottom) - 1,
-          Right, TRect(pClipRect^).Bottom);
+        DirtyR[FDirtyRCnt] := TRect.Create(Left, PRect(pClipRect)^.Bottom - (Y - Bottom) - 1,
+          Right, PRect(pClipRect)^.Bottom);
         Inc(FDirtyRCnt);
       end;
 
@@ -561,35 +561,35 @@ begin
       // нужно если перемещение было по обоим ос€м сразу
       if CLeft and CTop then
       begin
-        DirtyR[FDirtyRCnt] := TRect.Create(TRect(pClipRect^).Left, TRect(pClipRect^).Top,
-          TRect(pClipRect^).Left + Left - X, TRect(pClipRect^).Top + Top - Y);
+        DirtyR[FDirtyRCnt] := TRect.Create(PRect(pClipRect)^.Left, PRect(pClipRect)^.Top,
+          PRect(pClipRect)^.Left + Left - X, PRect(pClipRect)^.Top + Top - Y);
         Inc(FDirtyRCnt);
       end;
       if CLeft and CBottom then
       begin
-        DirtyR[FDirtyRCnt] := TRect.Create(TRect(pClipRect^).Left,
-          TRect(pClipRect^).Bottom - (Y - Top) - 1,
-          TRect(pClipRect^).Left + Left - X, TRect(pClipRect^).Bottom);
+        DirtyR[FDirtyRCnt] := TRect.Create(PRect(pClipRect)^.Left,
+          PRect(pClipRect)^.Bottom - (Y - Top) - 1,
+          PRect(pClipRect)^.Left + Left - X, PRect(pClipRect)^.Bottom);
         Inc(FDirtyRCnt);
       end;
       if CRight and CTop then
       begin
-        DirtyR[FDirtyRCnt] := TRect.Create(TRect(pClipRect^).Right - (X - Left) - 1,
-          TRect(pClipRect^).Top, TRect(pClipRect^).Right, TRect(pClipRect^).Top + Top - Y);
+        DirtyR[FDirtyRCnt] := TRect.Create(PRect(pClipRect)^.Right - (X - Left) - 1,
+          PRect(pClipRect)^.Top, PRect(pClipRect)^.Right, PRect(pClipRect)^.Top + Top - Y);
         Inc(FDirtyRCnt);
       end;
       if CRight and CBottom then
       begin
-        DirtyR[FDirtyRCnt] := TRect.Create(TRect(pClipRect^).Right - (X - Left) - 1,
-          TRect(pClipRect^).Bottom - (Y - Top) - 1, TRect(pClipRect^).Right, TRect(pClipRect^).Bottom);
+        DirtyR[FDirtyRCnt] := TRect.Create(PRect(pClipRect)^.Right - (X - Left) - 1,
+          PRect(pClipRect)^.Bottom - (Y - Top) - 1, PRect(pClipRect)^.Right, PRect(pClipRect)^.Bottom);
         Inc(FDirtyRCnt);
       end;
 
       //  орректируем MoveR и MoveRP чтобы они не выходили за ClipRect
-      if CLeft then begin Left := TRect(pClipRect^).Left + Left - X; X := TRect(pClipRect^).Left; end;
-      if CTop then begin Top := TRect(pClipRect^).Top + Top - Y; Y := TRect(pClipRect^).Top; end;
-      if CRight then begin Right := TRect(pClipRect^).Right - (X - Left); X := TRect(pClipRect^).Left + (X - Left); end;
-      if CBottom then begin Bottom := TRect(pClipRect^).Bottom - (Y - Bottom); Y := TRect(pClipRect^).Top + (Y - Top); end;
+      if CLeft then begin Left := PRect(pClipRect)^.Left + Left - X; X := PRect(pClipRect)^.Left; end;
+      if CTop then begin Top := PRect(pClipRect)^.Top + Top - Y; Y := PRect(pClipRect)^.Top; end;
+      if CRight then begin Right := PRect(pClipRect)^.Right - (X - Left); X := PRect(pClipRect)^.Left + (X - Left); end;
+      if CBottom then begin Bottom := PRect(pClipRect)^.Bottom - (Y - Bottom); Y := PRect(pClipRect)^.Top + (Y - Top); end;
     end;
 
 
@@ -633,20 +633,20 @@ var
 begin
   Result := false;
 
-  if Integer(pScreenWidth^) <> Desc.Width then
+  if PInteger(pScreenWidth)^ <> Desc.Width then
   begin
-    Integer(pScreenWidth^) := Desc.Width;
+    PInteger(pScreenWidth)^ := Desc.Width;
     Result := true;
   end;
 
-  if Integer(pScreenHeight^) <> Desc.Height then
+  if PInteger(pScreenHeight)^ <> Desc.Height then
   begin
-    Integer(pScreenHeight^) := Desc.Height;
+    PInteger(pScreenHeight)^ := Desc.Height;
     Result := true;
   end;
 
   if Result and FFullScreen then
-    TRect(pClipRect^) := TRect.Create(0, 0, Integer(pScreenWidth^), Integer(pScreenHeight^));
+    PRect(pClipRect)^ := TRect.Create(0, 0, PInteger(pScreenWidth)^, PInteger(pScreenHeight)^);
 
   case Desc.Format of
     DXGI_FORMAT_R8G8B8A8_TYPELESS,
@@ -662,9 +662,9 @@ begin
     DXGI_FORMAT_B8G8R8X8_TYPELESS,
     DXGI_FORMAT_B8G8R8X8_UNORM_SRGB : NewBitsPerPixel := 32;
   end;
-  if Integer(pBitsPerPixel^) <> NewBitsPerPixel then
+  if PInteger(pBitsPerPixel)^ <> NewBitsPerPixel then
   begin
-    Integer(pBitsPerPixel^) := NewBitsPerPixel;
+    PInteger(pBitsPerPixel)^ := NewBitsPerPixel;
     Result := true;
   end;
 end;
@@ -674,11 +674,11 @@ begin
   if (Rect.Width = 0) or (Rect.Height = 0) then
   begin
     FullScreen := true;
-    TRect(pClipRect^) := TRect.Create(0, 0, Integer(pScreenWidth^), Integer(pScreenHeight^));
+    PRect(pClipRect)^ := TRect.Create(0, 0, PInteger(pScreenWidth)^, PInteger(pScreenHeight)^);
   end else
   begin
     FullScreen := false;
-    TRect(pClipRect^) := Rect;
+    PRect(pClipRect)^ := Rect;
   end;
 end;
 
