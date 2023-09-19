@@ -53,7 +53,7 @@ type
 
     function CreateDD : Boolean;
     procedure DestroyDD;
-    function GetScreenInfoChanged: Boolean;
+//    function GetScreenInfoChanged: Boolean;
     procedure SetClipRect(const Rect : TRect);
   public
     DirtyR, MovedR : array [0..10000] of TRect;
@@ -66,13 +66,14 @@ type
 
     function InvertColor(clr: TColor): TColor;
 
+    function GetScreenInfoChanged(var AScreenWidth, AScreenHeight, ABitsPerPixel: Integer): Boolean;
     property Error: HRESULT read FError;
     property ScreenWidth : Integer read FScreenWidth;
     property ScreenHeight : Integer read FScreenHeight;
     property BitsPerPixel : Integer read FBitsPerPixel;
     property MouseFlags : Integer read FMouseFlags;
     property MouseCursor : Integer read FMouseCursor;
-    property ScreenInfoChanged : Boolean read GetScreenInfoChanged;
+//    property ScreenInfoChanged : Boolean read GetScreenInfoChanged;
     property FullScreen: Boolean read FFullScreen write FFullScreen;
     property ClipRect : TRect read FClipRect write SetClipRect;
     property ScreenBuff : PByte read FScreenBuff;
@@ -621,7 +622,7 @@ begin
   Debug.Log('enc time: ' + IntToStr(time));
 end;
 
-function TDesktopDuplicationWrapper.GetScreenInfoChanged: Boolean;
+{function TDesktopDuplicationWrapper.GetScreenInfoChanged: Boolean;
 var
   NewBitsPerPixel : Integer;
 begin
@@ -658,6 +659,54 @@ begin
   end;
   if FBitsPerPixel <> NewBitsPerPixel then
   begin
+    FBitsPerPixel := NewBitsPerPixel;
+    Result := true;
+  end;
+end;}
+
+function TDesktopDuplicationWrapper.GetScreenInfoChanged(var AScreenWidth, AScreenHeight, ABitsPerPixel: Integer): Boolean;
+var
+  NewBitsPerPixel : Integer;
+begin
+  Result := false;
+
+  if not DDExists then
+    Exit;
+
+  if AScreenWidth <> Desc.Width then
+  begin
+    AScreenWidth := Desc.Width;
+    FScreenWidth := Desc.Width;
+    Result := true;
+  end;
+
+  if AScreenHeight <> Desc.Height then
+  begin
+    AScreenHeight := Desc.Height;
+    FScreenHeight := Desc.Height;
+    Result := true;
+  end;
+
+  if Result and FFullScreen then
+    FClipRect := TRect.Create(0, 0, FScreenWidth, FScreenHeight);
+
+  case Desc.Format of
+    DXGI_FORMAT_R8G8B8A8_TYPELESS,
+    DXGI_FORMAT_R8G8B8A8_UNORM,
+    DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+    DXGI_FORMAT_R8G8B8A8_UINT,
+    DXGI_FORMAT_R8G8B8A8_SNORM,
+    DXGI_FORMAT_R8G8B8A8_SINT,
+    DXGI_FORMAT_B8G8R8A8_UNORM,
+    DXGI_FORMAT_B8G8R8X8_UNORM,
+    DXGI_FORMAT_B8G8R8A8_TYPELESS,
+    DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+    DXGI_FORMAT_B8G8R8X8_TYPELESS,
+    DXGI_FORMAT_B8G8R8X8_UNORM_SRGB : NewBitsPerPixel := 32;
+  end;
+  if ABitsPerPixel <> NewBitsPerPixel then
+  begin
+    ABitsPerPixel := NewBitsPerPixel;
     FBitsPerPixel := NewBitsPerPixel;
     Result := true;
   end;
