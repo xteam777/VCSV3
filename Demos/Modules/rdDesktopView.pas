@@ -350,7 +350,7 @@ end;
 
 procedure TrdDesktopViewer.SetFormState;
 begin
-{  if ActiveUIModule = nil then
+  if ActiveUIModule = nil then
   begin
     pMain.Color := $00A39323;
     Scroll.Visible := True;
@@ -410,7 +410,7 @@ begin
     lState.Invalidate;
     Scroll.Visible := False;
   end
-  else}
+  else
   begin
     pMain.Color := $00151515;
     Scroll.Visible := True;
@@ -1326,12 +1326,24 @@ begin
 //    end;
 
     TUIDataModule(UIModulesList[i]).UI.Active := False;
-    TRtcHTTPPortalClient(TUIDataModule(UIModulesList[i]).UI.Module.Client).Active := False;
-    TRtcHTTPPortalClient(TUIDataModule(UIModulesList[i]).UI.Module.Client).Stop;
-    TUIDataModule(UIModulesList[i]).UI.Module.Close(TUIDataModule(UIModulesList[i]).UserName);
-    TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
-    TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
-    TUIDataModule(UIModulesList[i]).FT_UI.Close;
+//    TRtcHTTPPortalClient(TUIDataModule(UIModulesList[i]).UI.Module.Client).Active := False;
+//    TRtcHTTPPortalClient(TUIDataModule(UIModulesList[i]).UI.Module.Client).Stop;
+    try
+      TUIDataModule(UIModulesList[i]).UI.Module.Close(TUIDataModule(UIModulesList[i]).UserName);
+    except
+    end;
+    try
+      TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
+    except
+    end;
+    try
+      TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
+    except
+    end;
+    try
+      TUIDataModule(UIModulesList[i]).FT_UI.Close;
+    except
+    end;
 //    FreeAndNil(TUIDataModule(UIModulesList[i]));
     FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
   end;
