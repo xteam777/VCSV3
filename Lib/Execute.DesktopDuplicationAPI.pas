@@ -53,7 +53,6 @@ type
     function CreateDD : Boolean;
     procedure DestroyDD;
     function GetScreenInfoChanged: Boolean;
-    procedure SetClipRect(const Rect : TRect);
   public
     pScreenWidth, pScreenHeight, pBitsPerPixel, pClipRect: Pointer;
     DirtyR, MovedR : array [0..10000] of TRect;
@@ -85,23 +84,15 @@ implementation
 
 constructor TDesktopDuplicationWrapper.Create;
 begin
-  New(pScreenWidth);
-  New(pScreenHeight);
-  New(pBitsPerPixel);
-  New(pClipRect);
-
   inherited;
+
+  FFullScreen := True;
 
   CreateDD;
 end;
 
 destructor TDesktopDuplicationWrapper.Destroy;
 begin
-  Dispose(pScreenWidth);
-  Dispose(pScreenHeight);
-  Dispose(pBitsPerPixel);
-  Dispose(pClipRect);
-
   inherited;
 
   DestroyDD;
@@ -631,18 +622,18 @@ function TDesktopDuplicationWrapper.GetScreenInfoChanged: Boolean;
 var
   NewBitsPerPixel : Integer;
 begin
-  Result := false;
+  Result := False;
 
   if PInteger(pScreenWidth)^ <> Desc.Width then
   begin
     PInteger(pScreenWidth)^ := Desc.Width;
-    Result := true;
+    Result := True;
   end;
 
   if PInteger(pScreenHeight)^ <> Desc.Height then
   begin
     PInteger(pScreenHeight)^ := Desc.Height;
-    Result := true;
+    Result := True;
   end;
 
   if Result and FFullScreen then
@@ -665,21 +656,22 @@ begin
   if PInteger(pBitsPerPixel)^ <> NewBitsPerPixel then
   begin
     PInteger(pBitsPerPixel)^ := NewBitsPerPixel;
-    Result := true;
+    Result := True;
   end;
 end;
 
-procedure TDesktopDuplicationWrapper.SetClipRect(const Rect : TRect);
-begin
-  if (Rect.Width = 0) or (Rect.Height = 0) then
-  begin
-    FullScreen := true;
-    PRect(pClipRect)^ := TRect.Create(0, 0, PInteger(pScreenWidth)^, PInteger(pScreenHeight)^);
-  end else
-  begin
-    FullScreen := false;
-    PRect(pClipRect)^ := Rect;
-  end;
-end;
+//procedure TDesktopDuplicationWrapper.SetClipRect(const Rect : TRect);
+//begin
+//  if (Rect.Width = 0) or (Rect.Height = 0) then
+//  begin
+//    FullScreen := True;
+//    PRect(pClipRect)^ := TRect.Create(0, 0, PInteger(pScreenWidth)^, PInteger(pScreenHeight)^);
+//  end
+//  else
+//  begin
+//    FullScreen := False;
+//    PRect(pClipRect)^ := Rect;
+//  end;
+//end;
 
 end.
