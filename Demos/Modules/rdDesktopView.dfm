@@ -20,7 +20,6 @@ object rdDesktopViewer: TrdDesktopViewer
   PrintScale = poNone
   Scaled = False
   ShowHint = True
-  WindowState = wsMaximized
   OnClose = FormClose
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
@@ -3886,6 +3885,15 @@ object rdDesktopViewer: TrdDesktopViewer
           OnMouseUp = panOptionsMiniMouseUp
         end
       end
+      object Button1: TButton
+        Left = 314
+        Top = 166
+        Width = 75
+        Height = 25
+        Caption = 'Button1'
+        TabOrder = 2
+        OnClick = Button1Click
+      end
     end
   end
   object MainChromeTabs: TChromeTabs
@@ -4226,6 +4234,7 @@ object rdDesktopViewer: TrdDesktopViewer
     Height = 34
     Align = alTop
     BevelOuter = bvNone
+    Color = clMenuBar
     ParentBackground = False
     ParentShowHint = False
     ShowHint = False

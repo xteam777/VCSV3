@@ -108,6 +108,7 @@ type
     iMiniPanelShow: TImage;
     iMiniPanelHide: TImage;
     tCloseForm: TTimer;
+    Button1: TButton;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -451,6 +452,9 @@ begin
   Width := Screen.Width;
   Height := Screen.Height;
 
+  GlassFrame.Enabled := False;
+  MainChromeTabs.Visible := False;
+
   DoResizeImage;
 
 //  if (ActiveUIModule.pImage^.Align = alNone)
@@ -490,8 +494,11 @@ begin
 
 //  ActiveUIModule.pImage^.Left:=0;
 //  ActiveUIModule.pImage^.Top:=0;
-  WindowState := wsMaximized;
-  BorderStyle := bsSizeable;
+//  WindowState := wsMaximized;
+//  BorderStyle := bsSizeable;
+
+  GlassFrame.Enabled := True;
+  MainChromeTabs.Visible := True;
 
 {  if ActiveUIModule.UI.HaveScreen then
   begin
@@ -538,10 +545,15 @@ var
   i: Integer;
   v: String;
 begin
-  panOptionsMini.Update;
-  panOptionsMini.BringToFront;
-  panOptionsMini.Left := 1000;
-  panOptionsMini.Top := 40;
+  GlassFrame.Enabled := not GlassFrame.Enabled;
+  MainChromeTabs.Visible := GlassFrame.Enabled;
+  WindowState := TWindowState.wsNormal;
+  BorderStyle := bsSizeable;
+  Position := poDefault;
+//  panOptionsMini.Update;
+//  panOptionsMini.BringToFront;
+//  panOptionsMini.Left := 1000;
+//  panOptionsMini.Top := 40;
 //  ActiveUIModule.pImgRec^.Parent := Scroll;
 //  ActiveUIModule.pImgRec^.Left :=Scroll.Width - 100;
 //  ActiveUIModule.pImgRec^.Top := 10;
@@ -658,6 +670,9 @@ begin
   pUIITem.pImage^.Parent := Scroll;
 //  pUIITem.pImage^.Align := alClient;
   pUIITem.pImage^.Color := clBlack;
+  pUIITem.pImage^.OnMouseMove := pImageMouseMove;
+  pUIITem.pImage^.OnMouseDown := pImageMouseDown;
+  pUIITem.pImage^.OnMouseUp := pImageMouseUp;
   pUIITem.pImage^.RecordCircleVisible := False;
   pUIITem.pImage^.RecordInfoVisible := False;
   pUIITem.pImage^.RecordInfo := '00:00:00';
@@ -861,7 +876,8 @@ end;
 procedure TrdDesktopViewer.CreateParams(var params: TCreateParams);
 begin
   inherited CreateParams(params);
-  params.ExStyle := params.ExStyle or WS_EX_APPWINDOW;
+  params.ExStyle := params.ExStyle or WS_EX_APPWINDOW;// or WS_EX_STATICEDGE or WS_SIZEBOX;
+  //params.Style := params.Style;// or WS_SIZEBOX or WS_THICKFRAME or WS_DLGFRAME;
   params.WndParent := GetDesktopWindow;
 end;
 
@@ -1184,8 +1200,7 @@ procedure TrdDesktopViewer.DoResizeImage;
 var
   Scale: Real;
 begin
-//    if iPrepare.Visible then
-      SetFormState;
+  SetFormState;
 
   lState.Left := 0;
   lState.Width := ClientWidth;
@@ -1697,8 +1712,8 @@ begin
 //  sStatus.Caption := 'Подготовка рабочего стола. Пожалуйста подождите ...';
 //  sStatus.Visible := True;
 
-  WindowState := wsMaximized;
-  BorderStyle := bsSizeable;
+//  WindowState := wsMaximized;
+//  BorderStyle := bsSizeable;
 //  Width := 400;
 //  Height := 90;
   Scroll.HorzScrollBar.Position := 0;
