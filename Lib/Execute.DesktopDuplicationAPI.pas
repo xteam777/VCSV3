@@ -134,7 +134,7 @@ begin
 
   if Failed(FError) then
   begin
-    Debug.Log('D3D11CreateDevice Error: ' + IntToStr(FError));//SysErrorMessage(FError));
+    Debug.Log('D3D11CreateDevice Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));//SysErrorMessage(FError));
     Exit;
   end;
 
@@ -142,7 +142,7 @@ begin
   FError := FDevice.QueryInterface(IID_IDXGIDevice, GI);
   if Failed(FError) then
   begin
-    Debug.Log('QueryInterface IID_IDXGIDevice Error: ' + IntToStr(FError));
+    Debug.Log('QueryInterface IID_IDXGIDevice Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
     Exit;
   end;
 
@@ -150,7 +150,7 @@ begin
   FError := GI.GetParent(IID_IDXGIAdapter, Pointer(GA));
   if Failed(FError) then
   begin
-    Debug.Log('GI.GetParent Error: ' + IntToStr(FError));
+    Debug.Log('GI.GetParent Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
     Exit;
   end;
 
@@ -158,7 +158,7 @@ begin
   FError := GA.EnumOutputs(0, GO);
   if Failed(FError) then
   begin
-    Debug.Log('EnumOutputs Error: ' + IntToStr(FError));
+    Debug.Log('EnumOutputs Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
     Exit;
   end;
 
@@ -166,7 +166,7 @@ begin
   FError := GO.GetDesc(FOutput);
   if Failed(FError) then
   begin
-    Debug.Log('GetDesc Error: ' + IntToStr(FError));
+    Debug.Log('GetDesc Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
     Exit;
   end;
 
@@ -174,16 +174,15 @@ begin
   FError := GO.QueryInterface(IID_IDXGIOutput1, O1);
   if Failed(FError) then
   begin
-    Debug.Log('QueryInterface IID_IDXGIOutput1 Error: ' + IntToStr(FError));
+    Debug.Log('QueryInterface IID_IDXGIOutput1 Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
     Exit;
   end;
 
-  Debug.Log('O1.DuplicateOutput(FDevice, FDuplicate) '
-    + IntToStr(Integer(O1)) + ' ' + IntToStr(Integer(FDevice)));
+  Debug.Log('O1.DuplicateOutput(FDevice, FDuplicate) ' + IntToStr(Integer(O1)) + ' ' + IntToStr(Integer(FDevice)));
   FError := O1.DuplicateOutput(FDevice, FDuplicate);
   if Failed(FError) then
   begin
-    Debug.Log('DuplicateOutput Error: ' + IntToStr(FError));
+    Debug.Log('DuplicateOutput Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
     Exit;
   end;
   // DXGI_ERROR_NOT_CURRENTLY_AVAILABLE
@@ -294,7 +293,7 @@ begin
   else
   if Failed(FError) then
   begin
-    Debug.Log('AcquireNextFrame Error: ' + IntToStr(FError));
+    Debug.Log('AcquireNextFrame Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
 //    if FError = DXGI_ERROR_ACCESS_LOST then
    //   fNeedRecreate := True;
     goto ErrorInCapture;
@@ -309,7 +308,7 @@ begin
   DesktopResource := nil;
   if Failed(FError) then
   begin
-    Debug.Log('QueryInterface.IID_ID3D11Texture2D Error: ' + IntToStr(FError));
+    Debug.Log('QueryInterface.IID_ID3D11Texture2D Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
 
     goto ErrorInCapture;
   end;
@@ -340,7 +339,7 @@ begin
   FError := FDevice.CreateTexture2D(@Desc, nil, FTempTexture);
   if Failed(FError) then
   begin
-    Debug.Log('CreateTexture2D Error: ' + IntToStr(FError));
+    Debug.Log('CreateTexture2D Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
    // FTexture := nil;
    // FDuplicate.ReleaseFrame;
 
@@ -351,7 +350,7 @@ begin
   FContext.CopyResource(FTempTexture, FTexture);
   if Failed(FError) then
   begin
-    Debug.Log('FContext.CopyResource Error: ' + IntToStr(FError));
+    Debug.Log('FContext.CopyResource Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
 
     goto ErrorInCapture;
   end;
@@ -360,7 +359,7 @@ begin
   FError := FContext.Map(FTempTexture, 0, D3D11_MAP_READ_WRITE, 0, Resource);
   if Failed(FError) then
   begin
-    Debug.Log('FContext.Map Error: ' + IntToStr(FError));
+    Debug.Log('FContext.Map Error: ' + IntToStr(FError) + ': ' + SysErrorMessage(FError));
   //  FTexture := nil;
     //FDuplicate.ReleaseFrame;
 
