@@ -1704,7 +1704,9 @@ begin
   FGatewayClient.OnUserLoggedIn := MainForm.PClientUserLoggedIn;
   FGatewayClient.OnUserLoggedOut := MainForm.PClientUserLoggedOut;
   FGatewayClient.Tag := ThreadID;
-  FGatewayClient.Module.AutoSessions := False;
+  FGatewayClient.Module.AutoSessions := True;
+  FGatewayClient.Module.AutoSessionMode := rsm_Query;
+  FGatewayClient.Module.AutoSessionsPing := 1;
 
   xLog('Created gateway client: ' + 'PClient_' + FUID);
 

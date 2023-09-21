@@ -5929,10 +5929,11 @@ object MainForm: TMainForm
     SecureKey = '2240897'
     ForceEncryption = True
     AutoSessions = True
+    AutoSessionsPing = 1
     AutoRepost = 2
     ModuleFileName = '/gatefunc'
-    Left = 73
-    Top = 80
+    Left = 155
+    Top = 192
   end
   object hcAccounts: TRtcHttpClient
     MultiThreaded = True
@@ -5954,8 +5955,8 @@ object MainForm: TMainForm
     MaxResponseSize = 128000
     MaxHeaderSize = 16000
     TimeoutsOfAPI.ConnectTimeout = 5
-    Left = 17
-    Top = 108
+    Left = 9
+    Top = 112
   end
   object rActivate: TRtcResult
     OnReturn = rActivateReturn
@@ -6109,8 +6110,8 @@ object MainForm: TMainForm
     MaxResponseSize = 128000
     MaxHeaderSize = 16000
     TimeoutsOfAPI.ConnectTimeout = 5
-    Left = 44
-    Top = 109
+    Left = 52
+    Top = 95
   end
   object pingTimer: TTimer
     Enabled = False
@@ -6148,11 +6149,12 @@ object MainForm: TMainForm
     SecureKey = '2240897'
     ForceEncryption = True
     AutoSessions = True
+    AutoSessionsPing = 1
     AutoRepost = 2
     ModuleFileName = '/gatefunc'
     OnResponseAbort = TimerModuleResponseAbort
-    Left = 74
-    Top = 108
+    Left = 24
+    Top = 194
   end
   object HostTimerClient: TRtcHttpClient
     MultiThreaded = True
@@ -6169,8 +6171,8 @@ object MainForm: TMainForm
     MaxResponseSize = 128000
     MaxHeaderSize = 16000
     TimeoutsOfAPI.ConnectTimeout = 5
-    Left = 16
-    Top = 85
+    Left = 12
+    Top = 83
   end
   object HostTimerModule: TRtcClientModule
     AutoSyncEvents = True
@@ -6181,11 +6183,12 @@ object MainForm: TMainForm
     SecureKey = '2240897'
     ForceEncryption = True
     AutoSessions = True
+    AutoSessionsPing = 1
     AutoRepost = 2
     ModuleFileName = '/gatefunc'
     OnResponseAbort = HostTimerModuleResponseAbort
-    Left = 44
-    Top = 82
+    Left = 82
+    Top = 196
   end
   object HostPingTimer: TTimer
     Enabled = False
