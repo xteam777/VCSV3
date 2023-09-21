@@ -1783,8 +1783,8 @@ begin
 
   if FAction = 'desk' then
   begin
-{    FDesktopControl.ChgDesktop_Begin;
-//    FDesktopControl.ChgDesktop_UseMouseDriver(False);
+//    FDesktopControl.ChgDesktop_Begin;
+{//    FDesktopControl.ChgDesktop_UseMouseDriver(False);
 //    FDesktopControl.ChgDesktop_CaptureLayeredWindows(False);
     FDesktopControl.ChgDesktop_ColorLimit(rdColor8bit);
     FDesktopControl.ChgDesktop_ColorLowLimit(rd_ColorHigh);
@@ -1796,9 +1796,9 @@ begin
 //      begin
 //      FDesktopControl.ChgDesktop_ColorLowLimit(rd_ColorHigh);
 //      FDesktopControl.ChgDesktop_ColorReducePercent(cbReduceColors.Value);
-//    FDesktopControl.ChgDesktop_SendScreenRefineDelay(grpScreen2Refine.ItemIndex);
-    FDesktopControl.Send_HideDesktop(FUserToConnect); }
-    FDesktopControl.ChgDesktop_End(FUserToConnect);
+//    FDesktopControl.ChgDesktop_SendScreenRefineDelay(grpScreen2Refine.ItemIndex);}
+//    FDesktopControl.Send_HideDesktop(FUserToConnect);
+//    FDesktopControl.ChgDesktop_End(FUserToConnect);
 
     FDesktopControl.Open(FUserToConnect);
   end
