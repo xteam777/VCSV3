@@ -226,7 +226,7 @@ type
     FProgressDialogsList: TList;
 
     FOnUIOpen: TUIOpenEvent;
-    FOnUIClose: TUICloseEvent;
+    FOnUICloseDesktop: TUICloseDesktopEvent;
 
     FDoStartFileTransferring: TDoStartFileTransferring;
 
@@ -275,7 +275,7 @@ type
     procedure SetFormState;
 
     property OnUIOpen: TUIOpenEvent read FOnUIOpen write FOnUIOpen;
-    property OnUIClose: TUICloseEvent read FOnUIClose write FOnUIClose;
+    property OnUICloseDesktop: TUICloseDesktopEvent read FOnUICloseDesktop write FOnUICloseDesktop;
     property DoStartFileTransferring: TDoStartFileTransferring read FDoStartFileTransferring write FDoStartFileTransferring;
 
     function AddProgressDialog(ATaskId: TTaskId; AUserName: String): PProgressDialogData;
@@ -325,8 +325,8 @@ var
 begin
   pUIItem := GetUIDataModule(AUserName);
 
-  if Assigned(FOnUIClose) then
-    FOnUIClose('desk', AUserName); //ThreadID
+  if Assigned(FOnUICloseDesktop) then
+    FOnUICloseDesktop(AUserName, pUIItem); //ThreadID
 
   RemovedInd := RemoveUIDataModule(AUserName);
   if UIModulesList.Count = 0 then
@@ -453,7 +453,6 @@ begin
   Height := Screen.Height;
 
   GlassFrame.Enabled := False;
-  MainChromeTabs.Visible := False;
 
   DoResizeImage;
 
@@ -498,7 +497,6 @@ begin
 //  BorderStyle := bsSizeable;
 
   GlassFrame.Enabled := True;
-  MainChromeTabs.Visible := True;
 
 {  if ActiveUIModule.UI.HaveScreen then
   begin
@@ -755,7 +753,7 @@ begin
       TUIDataModule(UIModulesList[i]).FT_UI.Close;
       FreeAndNil(TUIDataModule(UIModulesList[i]));
       UIModulesList.Delete(i);
-      FOnUIClose('desk', AUserName);
+      FOnUICloseDesktop(AUserName, UIModulesList[i]);
 
       Result := i;
       Break;
@@ -770,12 +768,12 @@ var
   i: Integer;
 begin
   Result := nil;
-    for i := 0 to UIModulesList.Count - 1 do
-      if TUIDataModule(UIModulesList[i]).UserName = AUserName then
-      begin
-        Result := UIModulesList[i];
-        Break;
-      end;
+  for i := 0 to UIModulesList.Count - 1 do
+    if TUIDataModule(UIModulesList[i]).UserName = AUserName then
+    begin
+      Result := UIModulesList[i];
+      Break;
+    end;
 end;
 
 procedure TrdDesktopViewer.MainChromeTabsActiveTabChanged(Sender: TObject;
@@ -1362,7 +1360,7 @@ begin
     except
     end;
 //    FreeAndNil(TUIDataModule(UIModulesList[i]));
-    FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
+    FOnUICloseDesktop(TUIDataModule(UIModulesList[i]).UserName, UIModulesList[i]);
   end;
 
   DesktopTimer.Enabled := False;
@@ -1391,8 +1389,6 @@ begin
   lState.Left := 0;
   lState.Width := ClientWidth;
   Scroll.Visible := False;
-
-//  MainChromeTabs.Visible := True;
 
   panOptions.Visible := True;
   MiniPanelDraggging := False;

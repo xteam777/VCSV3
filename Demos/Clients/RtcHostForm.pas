@@ -111,7 +111,6 @@ type
     UserPass: String;
     ID: String;
     Action: String;
-    DMHandle: THandle;
     DataModule: TUIDataModule;
     StartLockedState: Integer;
     StartServiceStarted: Boolean;
@@ -583,8 +582,8 @@ type
     procedure AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; AThread: PPortalThread);
     function GetPortalConnectionByThreadId(AThreadID: Cardinal): PPortalConnection;
     function GetPortalConnection(AAction: String; AUserName: String): PPortalConnection;
-    //procedure RemovePortalConnectionByUIHandle(AUIHandle: THandle);                         f
-    procedure RemovePortalConnection(AID, AAction: String; ACloseFUI: Boolean);
+    //procedure RemovePortalConnectionByUIHandle(AUIHandle: THandle);
+    procedure RemovePortalConnection(AID, AAction: String; ACloseFUI: Boolean; ApUIDataModule: Pointer = nil);
     procedure RemovePortalConnectionByThreadId(AThreadId: Cardinal; ACloseFUI: Boolean);
     procedure RemovePortalConnectionByUser(ID: String; ACloseFUI: Boolean);
 //    function GetActiveUICountByGatewayRec(AGatewayRec: PGatewayRec): Integer;
@@ -598,6 +597,7 @@ type
 
     procedure OnUIOpen(UserName, Action: String; var IsPending, fIsReconnection: Boolean);
     procedure OnUIClose(AAction, AUserName: String);
+    procedure OnUICloseDesktop(AUserName: String; ApUIDataModule: Pointer);
 
     procedure OnCustomFormOpen(AForm: PForm);
     procedure OnCustomFormClose;
@@ -991,7 +991,7 @@ begin
   if pPc <> nil then
   begin
     if GetCurrentExplorerDirectory(CurExplorerDir, CurExplorerHandle) then
-      SendMessage(pPc^.DMHandle, WM_GET_FILES_FROM_CLIPBOARD, WPARAM(CurExplorerHandle), LPARAM(CurExplorerDir));
+      SendMessage(pPc^.DataModule.Handle, WM_GET_FILES_FROM_CLIPBOARD, WPARAM(CurExplorerHandle), LPARAM(CurExplorerDir));
   end
   else
   if tPHostThread.FFileTransfer.isSubscriber(AUserName) then  //Если мы хост, то с контроля-овнера-клибоарда тянем файлы
@@ -2718,7 +2718,7 @@ begin
     pPC^.UserPass := AUserPass;
     pPC^.ID := AUserToConnect;
     pPC^.ThisThread := AThread;
-    pPC^.DMHandle := 0;
+    pPC^.DataModule := nil;
     PortalConnectionsList.Add(pPC);
   finally
     CS_GW.Release;
@@ -2778,7 +2778,7 @@ begin
 //    Application.Restore;
 end;}
 
-procedure TMainForm.RemovePortalConnection(AID, AAction: String; ACloseFUI: Boolean);
+procedure TMainForm.RemovePortalConnection(AID, AAction: String; ACloseFUI: Boolean; ApUIDataModule: Pointer = nil);
 var
   i: Integer;
 begin
@@ -2802,7 +2802,7 @@ begin
 //        end;
         PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, 0, 0); //Закрываем поток с пклиентом
         if ACloseFUI then
-          PostMessage(PPortalConnection(PortalConnectionsList[i])^.DMHandle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
+          PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
 
 //        Dispose(PPortalConnection(PortalConnectionsList[i])^.UIForm);
         Dispose(PortalConnectionsList[i]);
@@ -2842,7 +2842,7 @@ begin
 //        end;
         PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, 0, 0); //Закрываем поток с пклиентом
         if ACloseFUI then
-          PostMessage(PPortalConnection(PortalConnectionsList[i])^.DMHandle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
+          PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
 
 //        Dispose(PPortalConnection(PortalConnectionsList[i])^.UIForm);
         Dispose(PortalConnectionsList[i]);
@@ -2881,7 +2881,7 @@ begin
 //        end;
         PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, 0, 0); //Закрываем поток с пклиентом
         if ACloseFUI then
-          PostMessage(PPortalConnection(PortalConnectionsList[i])^.DMHandle, WM_CLOSE, 0, 0); //Закрываем форму UI
+          PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0); //Закрываем форму UI
 
 //        Dispose(PPortalConnection(PortalConnectionsList[i])^.UIForm);
         Dispose(PortalConnectionsList[i]);
@@ -3303,7 +3303,7 @@ begin
 
   DesktopsForm := TrdDesktopViewer.Create(Self);
   DesktopsForm.OnUIOpen := OnUIOpen;
-  DesktopsForm.OnUIClose := OnUIClose;
+  DesktopsForm.OnUICloseDesktop := OnUICloseDesktop;
   DesktopsForm.DoStartFileTransferring := StartFileTransferring;
   DesktopsForm.ReconnectToPartnerStart := ReconnectToPartnerStart;
 
@@ -9358,7 +9358,7 @@ begin
     pPCItem := GetPortalConnection('file', user);
     if pPCItem <> nil then
     begin
-      pPCItem^.DMHandle := FWin.Handle;
+//      pPCItem^.DMHandle := FWin.Handle;
       FWin.PartnerLockedState := pPCItem^.StartLockedState;
       FWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
       FWin.SetFormState;
@@ -9425,7 +9425,7 @@ begin
     pPCItem := GetPortalConnectionByThreadId(Sender.Tag);
     if pPCItem <> nil then
     begin
-      pPCItem^.DMHandle := FWin.Handle;
+//      pPCItem^.DMHandle := FWin.Handle;
       FWin.PartnerLockedState := pPCItem^.StartLockedState;
       FWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
       FWin.SetFormState;
@@ -9493,7 +9493,7 @@ begin
     pPCItem := GetPortalConnectionByThreadId(Sender.Tag);
     if pPCItem <> nil then
     begin
-      pPCItem^.DMHandle := FWin.Handle;
+//      pPCItem^.DMHandle := FWin.Handle;
 //      FWin.PartnerLockedState := pPCItem^.StartLockedState;
 //      FWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
 //      FWin.SetFormState;
@@ -9566,7 +9566,7 @@ begin
     pPCItem := GetPortalConnectionByThreadId(Sender.Tag);
     if pPCItem <> nil then
     begin
-      pPCItem^.DMHandle := CWin.Handle;
+//      pPCItem^.DMHandle := CWin.Handle;
       CWin.PartnerLockedState := pPCItem^.StartLockedState;
       CWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
       CWin.SetFormState;
@@ -9747,7 +9747,6 @@ begin
     pPCItem := GetPortalConnectionByThreadId(Sender.Tag);
     if pPCItem <> nil then
     begin
-      pPCItem^.DMHandle := DesktopsForm.Handle;
       pPCItem^.DataModule := DesktopsForm.AddNewTab(pPCItem^.UserName, GetUserDescription(user, 'desk'), pPCItem^.UserPass, pPCItem^.StartLockedState, pPCItem^.StartServiceStarted, Sender);
 //      DesktopsForm.PartnerLockedState := pPCItem^.StartLockedState;
 //      DesktopsForm.PartnerServiceStarted := pPCItem^.StartServiceStarted;
@@ -9941,7 +9940,7 @@ begin
     i := PortalConnectionsList.Count - 1;
     while i >= 0 do
     begin
-      PostMessage(PPortalConnection(PortalConnectionsList[i])^.DMHandle, WM_CLOSE, 0, 0);
+      PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0);
       Dispose(PortalConnectionsList[i]);
       PortalConnectionsList.Delete(i);
 
@@ -11053,6 +11052,17 @@ begin
 
   DeletePendingRequest(AUserName, AAction);
   RemovePortalConnection(AUserName, AAction, False);
+end;
+
+procedure TMainForm.OnUICloseDesktop(AUserName: String; ApUIDataModule: Pointer);
+begin
+  //xLog('OnUICloseDesktop');
+
+//  if IsClosing then
+//    Exit;
+
+  DeletePendingRequest(AUserName, 'desk');
+  RemovePortalConnection(AUserName, 'desk', False, ApUIDataModule);
 end;
 
 function TMainForm.GetPendingRequestsCount: Integer;
