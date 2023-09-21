@@ -42,7 +42,9 @@ type
 
     FScreenWidth, FScreenHeight, FScreenBPP,
 
-      FBPPWidth, FBlockSize: integer;
+    FBPPWidth, FBlockSize: integer;
+
+    FScreenInfoChanged: Boolean;
 
     FImage: TBitmap;
     FOnSetScreenData: TOnSetScreenData;
@@ -75,6 +77,7 @@ type
     property ScreenWidth: Integer read FScreenWidth;
     property ScreenHeight: Integer read FScreenHeight;
     property ScreenBPP: Integer read FScreenBPP;
+    property ScreenInfoChanged: Boolean read FScreenInfoChanged write FScreenInfoChanged;
     property OnSetScreenData: TOnSetScreenData read FOnSetScreenData write FOnSetScreenData;
 
   end;
@@ -284,18 +287,21 @@ var
   a: integer;
   Scr, Atr: TRtcArray;
 begin
+  FScreenInfoChanged := False;
   Result := False;
   if assigned(Data) then
   begin
     if Data.isType['res'] = rtc_Record then
     begin
       SetScreenInfo(Data.asRecord['res']);
+      FScreenInfoChanged := True;
       Result := True;
     end;
 
     if Data.isType['pal'] = rtc_String then
     begin
       SetPalette(RtcStringToBytes(Data.asString['pal']));
+      FScreenInfoChanged := True;
       Result := True;
     end;
 

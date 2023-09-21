@@ -666,7 +666,7 @@ begin
   if not fIsReconnection then
     pUIITem.pImage^ := TRtcPDesktopViewer.Create(Scroll);
   pUIITem.pImage^.Parent := Scroll;
-//  pUIITem.pImage^.Align := alClient;
+  pUIITem.pImage^.Align := alClient;
   pUIITem.pImage^.Color := clBlack;
   pUIITem.pImage^.OnMouseMove := pImageMouseMove;
   pUIITem.pImage^.OnMouseDown := pImageMouseDown;
@@ -1215,9 +1215,17 @@ begin
   begin
     if aStretchScreen.Checked then
     begin
+//      if (ActiveUIModule.UI.ScreenWidth <= ClientWidth)
+//        and (ActiveUIModule.UI.ScreenHeight <= ClientHeight) then
+//      begin
+//      ActiveUIModule.pImage^.Align := alNone;
+//      ActiveUIModule.pImage^.Width := ActiveUIModule.UI.ScreenWidth;
+//      ActiveUIModule.pImage^.Height := ActiveUIModule.UI.ScreenHeight;
+//      Scroll.HorzScrollBar.Visible := False;
+//      Scroll.VertScrollBar.Visible := False;
+//      end
+//      else
       ActiveUIModule.pImage^.Align := alClient;
-//      pImage.Width := myUI.ScreenWidth;
-//      pImage.Height := myUI.ScreenHeight;
       Scroll.HorzScrollBar.Visible := False;
       Scroll.VertScrollBar.Visible := False;
 //      if pImage.Width < Screen.Width then
@@ -1231,11 +1239,10 @@ begin
     end
     else
     begin
-      ActiveUIModule.pImage^.Align := alNone;
-
       if (ActiveUIModule.UI.ScreenWidth <= ClientWidth)
         and (ActiveUIModule.UI.ScreenHeight <= ClientHeight) then
       begin
+        ActiveUIModule.pImage^.Align := alNone;
         ActiveUIModule.pImage^.Width := ActiveUIModule.UI.ScreenWidth;
         ActiveUIModule.pImage^.Height := ActiveUIModule.UI.ScreenHeight;
         ActiveUIModule.pImage^.Left := (ClientWidth - ActiveUIModule.UI.ScreenWidth) div 2;
@@ -1245,24 +1252,35 @@ begin
       begin
         if (ActiveUIModule.UI.ScreenWidth > ClientWidth)
           or (ActiveUIModule.UI.ScreenHeight > ClientHeight) then
-        begin
-          if ClientWidth / ActiveUIModule.UI.ScreenWidth < ClientHeight / ActiveUIModule.UI.ScreenHeight then
-            Scale := ClientWidth / ActiveUIModule.UI.ScreenWidth
-          else
-            Scale := ClientHeight / ActiveUIModule.UI.ScreenHeight;
-        end
-        else
-        begin
-          if ClientWidth / ActiveUIModule.UI.ScreenWidth > ClientHeight / ActiveUIModule.UI.ScreenHeight then
-            Scale := ClientWidth / ActiveUIModule.UI.ScreenWidth
-          else
-            Scale := ClientHeight / ActiveUIModule.UI.ScreenHeight;
-        end;
-        ActiveUIModule.pImage^.Width := Floor(ClientWidth * Scale);
-        ActiveUIModule.pImage^.Height := Floor(ClientHeight * Scale);
-        ActiveUIModule.pImage^.Left := (ClientWidth - ActiveUIModule.pImage^.Width) div 2;
-        ActiveUIModule.pImage^.Top := (ClientHeight - ActiveUIModule.pImage^.Height) div 2;
+        ActiveUIModule.pImage^.Align := alClient;
       end;
+//            Scale := 1
+//        else
+//        if (ActiveUIModule.UI.ScreenWidth > ClientWidth)
+//          or (ActiveUIModule.UI.ScreenHeight > ClientHeight) then
+//        begin
+////          if ClientWidth / ActiveUIModule.UI.ScreenWidth < ClientHeight / ActiveUIModule.UI.ScreenHeight then
+////            Scale := ClientWidth / ActiveUIModule.UI.ScreenWidth
+////          else
+////            Scale := ClientHeight / ActiveUIModule.UI.ScreenHeight;
+////            Scale := 1
+//        end
+//        else
+//        begin
+////          if ClientWidth / ActiveUIModule.UI.ScreenWidth > ClientHeight / ActiveUIModule.UI.ScreenHeight then
+////            Scale := ClientWidth / ActiveUIModule.UI.ScreenWidth
+////          else
+////            Scale := ClientHeight / ActiveUIModule.UI.ScreenHeight;
+//Scale := 1
+//        ActiveUIModule.pImage^.Width := Floor(ClientWidth * Scale);
+//        end;
+//        ActiveUIModule.pImage^.Width := ClientWidth;
+//        ActiveUIModule.pImage^.Height := Floor(ClientHeight * ClientWidth / ActiveUIModule.UI.ScreenWidth);
+////        ActiveUIModule.pImage^.Width := Floor(ClientWidth * Scale);
+////        ActiveUIModule.pImage^.Height := Floor(ClientHeight * Scale);
+//        ActiveUIModule.pImage^.Left := (ClientWidth - ActiveUIModule.pImage^.Width) div 2;
+//        ActiveUIModule.pImage^.Top := (ClientHeight - ActiveUIModule.pImage^.Height) div 2;
+//      end;
 
       Scroll.HorzScrollBar.Visible := False;
       Scroll.VertScrollBar.Visible := False;
@@ -1774,7 +1792,7 @@ procedure TrdDesktopViewer.myUIData(Sender: TRtcPDesktopControlUI);
 var
   UIDM: TUIDataModule;
 begin
-  UIDM := TUIDataModule(TTimer(Sender).Owner);
+  UIDM := TUIDataModule(Sender.Owner);
 
   UIDM.FImageChanged := True;
   if Assigned(UIDM.FVideoRecorder) then
@@ -1823,6 +1841,9 @@ begin
 //      DragAcceptFiles(Handle, True);
     DesktopTimer.Enabled := True;
   end;
+
+  if Sender.ScreenInfoChanged then
+    DoResizeImage;
 end;
 
 procedure TrdDesktopViewer.ScrollMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);

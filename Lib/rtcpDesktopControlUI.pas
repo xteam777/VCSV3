@@ -202,6 +202,8 @@ type
     procedure StoreScreenState;
     procedure RestoreScreenState;
 
+    function GetScreenInfoChanged: Boolean;
+
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -365,6 +367,8 @@ type
 
     property HaveScreen: Boolean read GetHaveScreen write SetHaveScreen;
     property OnHaveScreeenChanged: TNotifyEvent read FOnHaveScreenChanged write FOnHaveScreenChanged;
+
+    property ScreenInfoChanged: Boolean read GetScreenInfoChanged;
   end;
 
 implementation
@@ -376,6 +380,11 @@ implementation
 
 var
   myCursorLoaded: boolean = False;
+
+function TRtcPDesktopControlUI.GetScreenInfoChanged: Boolean;
+begin
+  Result := Scr.ScreenDecoder.ScreenInfoChanged;
+end;
 
 procedure TRtcPDesktopControlUI.SetHaveScreen(AValue: Boolean);
 begin
@@ -1008,6 +1017,12 @@ begin
       end;
 //      else if Container.Cursor <> 200 then
 //        Container.Cursor := 200;
+    end;
+
+    if ScreenInfoChanged then
+    begin
+      Viewer.Canvas.Brush.Color := Viewer.Color;
+      Viewer.Canvas.FillRect(Rect(0, 0, Viewer.Width, Viewer.Height));
     end;
 
     if HaveScreen and (FullRepaint or ScreenChanged or CursorChanged) then

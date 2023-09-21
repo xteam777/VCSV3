@@ -1239,12 +1239,12 @@ object fAboutForm: TfAboutForm
     IsControl = True
   end
   object ProductName: TLabel
-    Left = 314
+    Left = 312
     Top = 16
-    Width = 43
+    Width = 45
     Height = 16
     Alignment = taRightJustify
-    Caption = 'Remox'
+    Caption = 'REMOX'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = 3947580
     Font.Height = -13
