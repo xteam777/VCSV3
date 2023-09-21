@@ -968,7 +968,13 @@ begin
 end;
 
 procedure TRtcPortalCli.DoErrorGet(Sender: TObject; Msg: TRtcValue);
+  var
+  Result:TRtcHugeString;
 begin
+  Result := TRtcHugeString.Create;
+  Msg.to_Code(Result) ;
+  Result.Free;
+
   // error in GET will also log out the PUT client.
   FStarting := False;
   FParamsLoaded := False;

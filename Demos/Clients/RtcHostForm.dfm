@@ -6190,8 +6190,8 @@ object MainForm: TMainForm
   object HostPingTimer: TTimer
     Enabled = False
     OnTimer = HostPingTimerTimer
-    Left = 121
-    Top = 94
+    Left = 581
+    Top = 44
   end
   object resHostLogin: TRtcResult
     OnReturn = resHostLoginReturn
@@ -6223,8 +6223,8 @@ object MainForm: TMainForm
   end
   object pmPassword: TPopupMenu
     OwnerDraw = True
-    Left = 115
-    Top = 71
+    Left = 205
+    Top = 83
     object nCopyPass: TMenuItem
       Caption = #1057#1082#1086#1087#1080#1088#1086#1074#1072#1090#1100' '#1074' '#1073#1091#1092#1077#1088' '#1086#1073#1084#1077#1085#1072
       OnClick = nCopyPassClick

@@ -584,8 +584,8 @@ type
     function GetPortalConnectionByThreadId(AThreadID: Cardinal): PPortalConnection;
     function GetPortalConnection(AAction: String; AUserName: String): PPortalConnection;
     procedure RemovePortalConnection(AID, AAction: String; ACloseFUI: Boolean);
-    procedure RemovePortalConnectionByThreadId(AThreadId: Cardinal; ACloseFUI: Boolean);
-    procedure RemovePortalConnectionByUser(ID: String; ACloseFUI: Boolean);
+//    procedure RemovePortalConnectionByThreadId(AThreadId: Cardinal; ACloseFUI: Boolean);
+//    procedure RemovePortalConnectionByUser(ID: String; ACloseFUI: Boolean);
 
     procedure StartFileTransferring(AUser, AUserName, APassword: String; ANeedGetPass: Boolean = False);
     function CheckAccountFields: Boolean;
@@ -1704,6 +1704,7 @@ begin
   FGatewayClient.OnUserLoggedIn := MainForm.PClientUserLoggedIn;
   FGatewayClient.OnUserLoggedOut := MainForm.PClientUserLoggedOut;
   FGatewayClient.Tag := ThreadID;
+  FGatewayClient.Module.AutoSessions := False;
 
   xLog('Created gateway client: ' + 'PClient_' + FUID);
 
@@ -2792,7 +2793,7 @@ begin
 //    Application.Restore;
 end;
 
-procedure TMainForm.RemovePortalConnectionByThreadId(AThreadId: Cardinal; ACloseFUI: Boolean);
+{procedure TMainForm.RemovePortalConnectionByThreadId(AThreadId: Cardinal; ACloseFUI: Boolean);
 var
   i: Integer;
 begin
@@ -2830,9 +2831,9 @@ begin
 
 //  if GatewayClientsList.Count = 1 then
 //    Application.Restore;
-end;
+end;}
 
-procedure TMainForm.RemovePortalConnectionByUser(ID: String; ACloseFUI: Boolean);
+{procedure TMainForm.RemovePortalConnectionByUser(ID: String; ACloseFUI: Boolean);
 var
   i: Integer;
 begin
@@ -2869,7 +2870,7 @@ begin
 
 //  if GatewayClientsList.Count = 1 then
 //    Application.Restore;
-end;
+end;}
 
 procedure TMainForm.aFeedBackExecute(Sender: TObject);
 var

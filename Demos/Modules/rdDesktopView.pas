@@ -1352,6 +1352,7 @@ begin
 
 //    FreeAndNil(TUIDataModule(UIModulesList[i]));
 //    FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
+//      TRtcClientModule(TUIDataModule(UIModulesList[i]).UI.Module).WaitForCompletion(False, 2);  //uses rtcCliModule
   end;
 
   Sleep(100);
@@ -1406,6 +1407,7 @@ procedure TrdDesktopViewer.myUILogOut(Sender: TRtcPDesktopControlUI);
 begin
 //  Memo1.Lines.Add('myUILogOut');
 //  Close;
+  Tag := Tag;
 end;
 
 procedure TrdDesktopViewer.FormMouseWheel(Sender: TObject; Shift: TShiftState; WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
@@ -1784,7 +1786,9 @@ begin
   //tell Windows that you're accepting drag and drop files
 //  DragAcceptFiles(Handle, False);
 
-//  myUI.Active := True;
+  ActiveUIModule.TimerReconnect.Enabled := True;
+
+//  Sender.Active := True;
 //  Close; //Доделать
 end;
 
