@@ -581,7 +581,6 @@ type
     function CheckService(bServiceFilename: Boolean = True {False = Service Name} ): String;
 //
     procedure AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; AThread: PPortalThread);
-    function GetPortalConnectionByThreadId(AThreadID: Cardinal): PPortalConnection;
     function GetPortalConnection(AAction: String; AUserName: String): PPortalConnection;
     procedure RemovePortalConnection(AID, AAction: String; ACloseFUI: Boolean);
 //    procedure RemovePortalConnectionByThreadId(AThreadId: Cardinal; ACloseFUI: Boolean);
@@ -1816,18 +1815,30 @@ begin
 end;
 
 destructor TPortalThread.Destroy;
+var
+  UIDM: TUIDataModule;
 begin
+  UIDM := DesktopsForm.GetRemovedUIDataModule(FUserName);
+  if UIDM <> nil then
+  begin
+    if UIDM.RestoreBackgroundOnExit then
+      UIDM.UI.Send_ShowDesktop;
+    if UIDM.LockSystemOnExit then
+      UIDM.UI.Send_LockSystem;
+  end;
+
+  FGatewayClient.Module.WaitForCompletion(False, 2);
+
   FGatewayClient.Stop;
   FGatewayClient.Active := False;
   FDesktopControl.Free;
   FFileTransfer.Free;
   FChat.Free;
   FGatewayClient.Free;
+  FDataModule.Free;
 
   if FNeedCloseUI then
-    FDataModule.Free;
-//  PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0);
-
+    PostMessage(DesktopsForm.Handle, WM_CLOSE_UI, WPARAM(PChar(FUserName)), 0);
 
 //  try
 //    FGatewayClient.Disconnect;
@@ -2690,25 +2701,6 @@ begin
     end;
   finally
     reg.Free;
-  end;
-end;
-
-function TMainForm.GetPortalConnectionByThreadId(AThreadID: Cardinal): PPortalConnection;
-var
-  i: Integer;
-begin
-  Result := nil;
-
-  CS_GW.Acquire;
-  try
-    for i := 0 to PortalConnectionsList.Count - 1 do
-      if (PPortalConnection(PortalConnectionsList[i])^.ThreadID = AThreadID) then
-      begin
-        Result := PortalConnectionsList[i];
-        Break;
-      end;
-  finally
-    CS_GW.Release;
   end;
 end;
 
@@ -9388,7 +9380,7 @@ begin
     FWin.UI.Module := Sender;
     FWin.UI.Tag := Sender.Tag; //ThreadID
 
-    pPCItem := GetPortalConnectionByThreadId(Sender.Tag);
+    pPCItem := GetPortalConnection('file', user);
     if pPCItem <> nil then
     begin
 //      pPCItem^.DMHandle := FWin.Handle;
@@ -9456,7 +9448,7 @@ begin
     FWin.UI.Module := Sender;
     FWin.UI.Tag := Sender.Tag; //ThreadID
 
-    pPCItem := GetPortalConnectionByThreadId(Sender.Tag);
+    pPCItem := GetPortalConnection('file', user);
     if pPCItem <> nil then
     begin
 //      pPCItem^.DMHandle := FWin.Handle;
@@ -9529,7 +9521,7 @@ begin
     CWin.UI.Module := Sender;
     CWin.UI.Tag := Sender.Tag; //ThreadID
 
-    pPCItem := GetPortalConnectionByThreadId(Sender.Tag);
+    pPCItem := GetPortalConnection('chat', user);
     if pPCItem <> nil then
     begin
 //      pPCItem^.DMHandle := CWin.Handle;
@@ -9610,7 +9602,7 @@ procedure TMainForm.PDesktopControlNewUI(Sender: TRtcPDesktopControl; const user
 begin
   //xLog('PDesktopControlNewUI');
 
-  pPCItem := GetPortalConnection('desk', user);
+//  pPCItem := GetPortalConnection('desk', user);
 //  if pPCItem <> nil then
 //    if pPCItem^.UIHandle <> 0 then
 //      Exit;
@@ -9710,7 +9702,7 @@ begin
 //    DesktopsForm.UI.ControlMode := rtcpFullControl;
     //{$ENDIF}
 
-    pPCItem := GetPortalConnectionByThreadId(Sender.Tag);
+    pPCItem := GetPortalConnection('desk', user);
     if pPCItem <> nil then
     begin
       pPCItem^.DataModule := DesktopsForm.AddNewTab(pPCItem^.UserName, GetUserDescription(user, 'desk'), pPCItem^.UserPass, pPCItem^.StartLockedState, pPCItem^.StartServiceStarted, Sender);

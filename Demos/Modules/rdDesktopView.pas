@@ -204,9 +204,7 @@ type
     procedure RecordStart();
     procedure RecordStop();
     procedure RecordCancel();
-//	  procedure RecordStopWindowProc(var Message: TMessage); message WM_STOP_RECORD;
-//    procedure ModalFormRecordStopActivate(Sender: TObject);
-//    procedure OnGetVideoFrame(Sender: TObject);
+	  procedure WMCloseUI(var Message: TMessage); message WM_CLOSE_UI;
     procedure OnSetScreenData(Sender: TObject; UserName: String; const Data: RtcString);
     procedure LockVideoImage(UIDM: TUIDataModule);
     procedure UnlockVideoImage(UIDM: TUIDataModule);
@@ -290,8 +288,10 @@ type
     procedure SetReconnectInterval(AUserName: String; AInterval: Integer);
     procedure SetActiveTab(AUserName: String);
     procedure ChangeLockedState(AUserName: String; ALockedState: Integer; AServiceStarted: Boolean);
+    function GetRemovedUIDataModule(AUserName: String): TUIDataModule;
     function GetUIDataModule(AUserName: String): TUIDataModule;
     function RemoveUIDataModule(AUserName: String): Integer;
+    function FreeUIDataModule(AUserName: String): Integer;
     procedure DoReconnectToPartnerStart(user, username, pass, action: String);
   end;
 
@@ -318,15 +318,17 @@ implementation
 
 { TrdDesktopViewer }
 
+procedure TrdDesktopViewer.WMCloseUI(var Message: TMessage);
+begin
+  FreeUIDataModule(StrPas(PChar(Message.wParam)));
+end;
+
 procedure TrdDesktopViewer.CloseTab(AUserName: String);
 var
-  pUIItem: TUIDataModule;
   RemovedInd: Integer;
 begin
-  pUIItem := GetUIDataModule(AUserName);
-
   if Assigned(FOnUIClose) then
-    FOnUIClose('desk', AUserName); //ThreadID
+    FOnUIClose('desk', AUserName);
 
   RemovedInd := RemoveUIDataModule(AUserName);
   if UIModulesList.Count = 0 then
@@ -656,7 +658,11 @@ begin
     pTab.Caption := pTab.UserName;
 
   if not fIsReconnection then
+  begin
     pUIITem := TUIDataModule.Create(Self);
+    pUIItem.RestoreBackgroundOnExit := True;
+    pUIItem.LockSystemOnExit := False;
+  end;
   pUIItem.PartnerLockedState := AStartLockedState;
   pUIItem.PartnerServiceStarted := AStartServiceStarted;
   pUIITem.ReconnectToPartnerStart := DoReconnectToPartnerStart;
@@ -742,10 +748,34 @@ begin
   i := UIModulesList.Count - 1;
   while i >= 0 do
   begin
-    if TUIDataModule(UIModulesList[i]).UserName = AUserName then
+    if (not TUIDataModule(UIModulesList[i]).NeedFree)
+      and (TUIDataModule(UIModulesList[i]).UserName = AUserName) then
     begin
+      TUIDataModule(UIModulesList[i]).NeedFree := True;
       FOnUIClose('desk', AUserName);
 //      FreeAndNil(TUIDataModule(UIModulesList[i]));
+//      UIModulesList.Delete(i);
+
+      Result := i;
+      Break;
+    end;
+
+    i := i - 1;
+  end;
+end;
+
+function TrdDesktopViewer.FreeUIDataModule(AUserName: String): Integer;
+var
+  i: Integer;
+begin
+  Result := -1;
+  i := UIModulesList.Count - 1;
+  while i >= 0 do
+  begin
+    if (TUIDataModule(UIModulesList[i]).NeedFree)
+      and (TUIDataModule(UIModulesList[i]).UserName = AUserName) then
+    begin
+      FreeAndNil(TUIDataModule(UIModulesList[i]));
       UIModulesList.Delete(i);
 
       Result := i;
@@ -756,13 +786,28 @@ begin
   end;
 end;
 
+function TrdDesktopViewer.GetRemovedUIDataModule(AUserName: String): TUIDataModule;
+var
+  i: Integer;
+begin
+  Result := nil;
+  for i := 0 to UIModulesList.Count - 1 do
+    if (TUIDataModule(UIModulesList[i]).NeedFree)
+      and (TUIDataModule(UIModulesList[i]).UserName = AUserName) then
+    begin
+      Result := UIModulesList[i];
+      Break;
+    end;
+end;
+
 function TrdDesktopViewer.GetUIDataModule(AUserName: String): TUIDataModule;
 var
   i: Integer;
 begin
   Result := nil;
   for i := 0 to UIModulesList.Count - 1 do
-    if TUIDataModule(UIModulesList[i]).UserName = AUserName then
+    if (not TUIDataModule(UIModulesList[i]).NeedFree)
+      and (TUIDataModule(UIModulesList[i]).UserName = AUserName) then
     begin
       Result := UIModulesList[i];
       Break;
@@ -1319,12 +1364,13 @@ begin
 
   for i := 0 to UIModulesList.Count - 1 do
   begin
-      FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
+    TUIDataModule(UIModulesList[i]).NeedFree := True;
+    FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
 //    TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
 //    TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
 //    FreeAndNil(TUIDataModule(UIModulesList[i]));
   end;
-  UIModulesList.Clear;
+//  UIModulesList.Clear;
 //  FreeAndNil(UIModulesList);
 end;
 
@@ -1334,7 +1380,7 @@ var
 begin
 //  Hide;
 
-  for i := 0 to UIModulesList.Count - 1 do
+{  for i := 0 to UIModulesList.Count - 1 do
   begin
     if aHideWallpaper.Checked then
 //    try
@@ -1351,11 +1397,10 @@ begin
 //    end;
 
 //    FreeAndNil(TUIDataModule(UIModulesList[i]));
+//    TUIDataModule(UIModulesList[i]).NeedFree := True;
 //    FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
 //      TRtcClientModule(TUIDataModule(UIModulesList[i]).UI.Module).WaitForCompletion(False, 2);  //uses rtcCliModule
-  end;
-
-  Sleep(100);
+  end;}
 
   DesktopTimer.Enabled := False;
 end;
@@ -2216,38 +2261,6 @@ begin
   RecordStop;
   DeleteFile(ActiveUIModule.FVideoFile);
 end;
-
-{procedure TrdDesktopViewer.RecordStopWindowProc(var Message: TMessage);
-var
-  temp: TObject;
-begin
-  temp := FVideoRecorder;
-  FVideoRecorder := nil;
-  temp.Free;
-  FVideoImage.Free;
-  FVideoImage := nil;
-  Message.Result := 0;
-  TForm(Message.LParam).ModalResult := mrOk;
-end;
-
-procedure TrdDesktopViewer.ModalFormRecordStopActivate(Sender: TObject);
-begin
-  PostMessage(Handle, WM_STOP_RECORD, 0, LPARAM(Sender));
-end;
-
-procedure TrdDesktopViewer.OnGetVideoFrame(Sender: TObject);
-begin
-  if not Assigned(FVideoRecorder) then
-    Exit;
-//    FVideoRecorder.AddVideoFrame(FVideoImage);
-  LockVideoImage;
-  try
-    TVideoRecorder(Sender).AddVideoFrame(FVideoImage, FImageChanged);
-    FImageChanged := false;
-  finally
-    UnlockVideoImage;
-  end;
-end;}
 
 procedure TrdDesktopViewer.LockVideoImage(UIDM: TUIDataModule);
 begin

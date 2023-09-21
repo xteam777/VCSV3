@@ -98,26 +98,11 @@ end;
 
 destructor TSendDestroyClientToGatewayThread.Destroy;
 begin
-  try
-    rtcClient.Disconnect;
-  finally
-  end;
-  try
-    FreeAndNil(rtcModule);
-  finally
-  end;
-  try
-    FreeAndNil(rtcClient);
-  finally
-  end;
-  try
-    FreeAndNil(rtcRes);
-  finally
-  end;
-  try
-    FreeAndNil(FDataModule);
-  finally
-  end;
+  rtcClient.Disconnect;
+  FreeAndNil(rtcModule);
+  FreeAndNil(rtcClient);
+  FreeAndNil(rtcRes);
+  FreeAndNil(FDataModule);
 end;
 
 procedure TSendDestroyClientToGatewayThread.Execute;

@@ -38,6 +38,9 @@ type
     PartnerLockedState: Integer;
     PartnerServiceStarted: Boolean;
     ReconnectToPartnerStart: TReconnectToPartnerStart;
+    RestoreBackgroundOnExit: Boolean;
+    LockSystemOnExit: Boolean;
+    NeedFree: Boolean;
 
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -84,10 +87,11 @@ begin
   TimerRec.Enabled := False;
 
   UI.Active := False;
-  UI.Module.Close(UserName);
-  UI.CloseAndClear;
-  FT_UI.CloseAndClear;
-  FT_UI.Close;
+//  UI.Module.Close(UserName);
+//  UI.CloseAndClear;
+//  UI.Close;
+//  FT_UI.CloseAndClear;
+//  FT_UI.Close;
 
   DeallocateHWND(FHandle);
   FreeAndNil(pImage^);
