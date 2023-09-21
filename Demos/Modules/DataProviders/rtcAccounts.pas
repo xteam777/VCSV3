@@ -236,7 +236,7 @@ begin
 //  UserListFileName:=UserDataFileName+'\Users.list';
   UserDataFileName := UserDataFileName + '\';
 
-  FPingTimeout := 30;
+  FPingTimeout := 10;
 
   //  LoadUserList;
 end;
