@@ -226,7 +226,7 @@ type
     FProgressDialogsList: TList;
 
     FOnUIOpen: TUIOpenEvent;
-    FOnUICloseDesktop: TUICloseDesktopEvent;
+    FOnUIClose: TUICloseEvent;
 
     FDoStartFileTransferring: TDoStartFileTransferring;
 
@@ -275,7 +275,7 @@ type
     procedure SetFormState;
 
     property OnUIOpen: TUIOpenEvent read FOnUIOpen write FOnUIOpen;
-    property OnUICloseDesktop: TUICloseDesktopEvent read FOnUICloseDesktop write FOnUICloseDesktop;
+    property OnUIClose: TUICloseEvent read FOnUIClose write FOnUIClose;
     property DoStartFileTransferring: TDoStartFileTransferring read FDoStartFileTransferring write FDoStartFileTransferring;
 
     function AddProgressDialog(ATaskId: TTaskId; AUserName: String): PProgressDialogData;
@@ -325,8 +325,8 @@ var
 begin
   pUIItem := GetUIDataModule(AUserName);
 
-  if Assigned(FOnUICloseDesktop) then
-    FOnUICloseDesktop(AUserName, pUIItem); //ThreadID
+  if Assigned(FOnUIClose) then
+    FOnUIClose('desk', AUserName); //ThreadID
 
   RemovedInd := RemoveUIDataModule(AUserName);
   if UIModulesList.Count = 0 then
@@ -744,16 +744,9 @@ begin
   begin
     if TUIDataModule(UIModulesList[i]).UserName = AUserName then
     begin
-      TUIDataModule(UIModulesList[i]).UI.Active := False;
-      TRtcHTTPPortalClient(TUIDataModule(UIModulesList[i]).UI.Module.Client).Active := False;
-      TRtcHTTPPortalClient(TUIDataModule(UIModulesList[i]).UI.Module.Client).Stop;
-      TUIDataModule(UIModulesList[i]).UI.Module.Close(AUserName);
-      TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
-      TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
-      TUIDataModule(UIModulesList[i]).FT_UI.Close;
-      FreeAndNil(TUIDataModule(UIModulesList[i]));
+      FOnUIClose('desk', AUserName);
+//      FreeAndNil(TUIDataModule(UIModulesList[i]));
       UIModulesList.Delete(i);
-      FOnUICloseDesktop(AUserName, UIModulesList[i]);
 
       Result := i;
       Break;
@@ -1308,9 +1301,10 @@ begin
 
   for i := 0 to UIModulesList.Count - 1 do
   begin
+      FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
 //    TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
 //    TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
-    FreeAndNil(TUIDataModule(UIModulesList[i]));
+//    FreeAndNil(TUIDataModule(UIModulesList[i]));
   end;
   UIModulesList.Clear;
 //  FreeAndNil(UIModulesList);
@@ -1338,30 +1332,11 @@ begin
 //    except
 //    end;
 
-    Sleep(100);
-
-    TUIDataModule(UIModulesList[i]).UI.Active := False;
-//    TRtcHTTPPortalClient(TUIDataModule(UIModulesList[i]).UI.Module.Client).Active := False;
-//    TRtcHTTPPortalClient(TUIDataModule(UIModulesList[i]).UI.Module.Client).Stop;
-    try
-      TUIDataModule(UIModulesList[i]).UI.Module.Close(TUIDataModule(UIModulesList[i]).UserName);
-    except
-    end;
-    try
-      TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
-    except
-    end;
-    try
-      TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
-    except
-    end;
-    try
-      TUIDataModule(UIModulesList[i]).FT_UI.Close;
-    except
-    end;
 //    FreeAndNil(TUIDataModule(UIModulesList[i]));
-    FOnUICloseDesktop(TUIDataModule(UIModulesList[i]).UserName, UIModulesList[i]);
+//    FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
   end;
+
+  Sleep(100);
 
   DesktopTimer.Enabled := False;
 end;
@@ -2547,7 +2522,7 @@ end;
 
 procedure TrdDesktopViewer.DesktopTimerTimer(Sender: TObject);
 begin
-  if assigned(ActiveUIModule.UI) and ActiveUIModule.UI.InControl and (GetForegroundWindow <> Handle) then
+  if (ActiveUIModule <> nil) and Assigned(ActiveUIModule.UI) and ActiveUIModule.UI.InControl and (GetForegroundWindow <> Handle) then
     FormDeactivate(nil);
 end;
 

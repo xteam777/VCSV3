@@ -41,7 +41,6 @@ type
 
   TUIOpenEvent = procedure(UserName, Action: String; var IsPending, fIsReconnection: Boolean) of Object;
   TUICloseEvent = procedure(Action, UserName: String) of Object;
-  TUICloseDesktopEvent = procedure(UserName: String; ApUIDataModule: Pointer) of Object;
   TOnCustomFormEvent = procedure of Object;
   TDoStartFileTransferring = procedure(AUser, AUserName, APassword: String; ANeedGetPass: Boolean = False) of Object;
   TReconnectToPartnerStart = procedure(user, username, pass, action: String) of Object;

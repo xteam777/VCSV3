@@ -93,6 +93,7 @@ type
     FDesktopControl: TRtcPDesktopControl;
     FFileTransfer: TRtcPFileTransfer;
     FChat: TRtcPChat;
+    FNeedCloseUI: Boolean;
     { Private declarations }
   public
     constructor Create(CreateSuspended: Boolean; AAction, AUserName, AUserPass, AUserToConnect, AGateway: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; UIVisible: Boolean); overload;
@@ -582,11 +583,9 @@ type
     procedure AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; AThread: PPortalThread);
     function GetPortalConnectionByThreadId(AThreadID: Cardinal): PPortalConnection;
     function GetPortalConnection(AAction: String; AUserName: String): PPortalConnection;
-    //procedure RemovePortalConnectionByUIHandle(AUIHandle: THandle);
-    procedure RemovePortalConnection(AID, AAction: String; ACloseFUI: Boolean; ApUIDataModule: Pointer = nil);
+    procedure RemovePortalConnection(AID, AAction: String; ACloseFUI: Boolean);
     procedure RemovePortalConnectionByThreadId(AThreadId: Cardinal; ACloseFUI: Boolean);
     procedure RemovePortalConnectionByUser(ID: String; ACloseFUI: Boolean);
-//    function GetActiveUICountByGatewayRec(AGatewayRec: PGatewayRec): Integer;
 
     procedure StartFileTransferring(AUser, AUserName, APassword: String; ANeedGetPass: Boolean = False);
     function CheckAccountFields: Boolean;
@@ -597,7 +596,6 @@ type
 
     procedure OnUIOpen(UserName, Action: String; var IsPending, fIsReconnection: Boolean);
     procedure OnUIClose(AAction, AUserName: String);
-    procedure OnUICloseDesktop(AUserName: String; ApUIDataModule: Pointer);
 
     procedure OnCustomFormOpen(AForm: PForm);
     procedure OnCustomFormClose;
@@ -737,7 +735,6 @@ type
     procedure ShowAboutForm;
     procedure DoDeleteDeviceGroup(AUID: String);
     procedure DoExit;
-//    procedure CloseAllActiveUIByGatewayClient(Sender: TAbsPortalClient);
     procedure CloseAllActiveUI;
 
     procedure ChangePort(AClient: TRtcHttpClient);
@@ -1823,7 +1820,11 @@ begin
   FFileTransfer.Free;
   FChat.Free;
   FGatewayClient.Free;
-  FDataModule.Free;
+
+  if FNeedCloseUI then
+    FDataModule.Free;
+//  PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0);
+
 
 //  try
 //    FGatewayClient.Disconnect;
@@ -1875,7 +1876,10 @@ begin
       if not Terminated then
       begin
         if (MSG.message = WM_CLOSE) then
-          Terminate
+        begin
+          FNeedCloseUI := Boolean(msg.wParam);
+          Terminate;
+        end
         else
           ProcessMessage(msg);
       end;
@@ -2747,38 +2751,7 @@ begin
   end;
 end;
 
-{procedure TMainForm.RemovePortalConnectionByUIHandle(AUIHandle: THandle);
-var
-  i: Integer;
-begin
-  XLog('RemovePortalConnectionByUIHandle');
-
-  CS_GW.Acquire;
-  try
-    i := PortalConnectionsList.Count - 1;
-    while i >= 0 do
-    begin
-      if PPortalConnection(PortalConnectionsList[i])^.UIHandle = AUIHandle then
-      begin
-        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_DESTROY, 0, 0); //Закрываем поток с пклиентом
-        PostMessage(PPortalConnection(PortalConnectionsList[i])^.UIHandle, WM_CLOSE, 0, 0); //Закрываем форму UI
-
-        Dispose(PPortalConnection(PortalConnectionsList[i])^.IUForm);
-        Dispose(PortalConnectionsList[i]);
-        PortalConnectionsList.Delete(i);
-      end;
-
-      i := i - 1;
-    end;
-  finally
-    CS_GW.Release;
-  end;
-
-//  if GatewayClientsList.Count = 1 then
-//    Application.Restore;
-end;}
-
-procedure TMainForm.RemovePortalConnection(AID, AAction: String; ACloseFUI: Boolean; ApUIDataModule: Pointer = nil);
+procedure TMainForm.RemovePortalConnection(AID, AAction: String; ACloseFUI: Boolean);
 var
   i: Integer;
 begin
@@ -2800,9 +2773,9 @@ begin
 ////          PPortalConnection(PortalConnectionsList[i])^.ThisThread := nil;
 //          FreeAndNil(PPortalConnection(PortalConnectionsList[i])^.ThisThread);
 //        end;
-        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, 0, 0); //Закрываем поток с пклиентом
-        if ACloseFUI then
-          PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
+        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, WPARAM(ACloseFUI), 0); //Закрываем поток с пклиентом
+//        if ACloseFUI then
+//          PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
 
 //        Dispose(PPortalConnection(PortalConnectionsList[i])^.UIForm);
         Dispose(PortalConnectionsList[i]);
@@ -2840,9 +2813,9 @@ begin
 ////          PPortalConnection(PortalConnectionsList[i])^.ThisThread := nil;
 //          FreeAndNil(PPortalConnection(PortalConnectionsList[i])^.ThisThread);
 //        end;
-        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, 0, 0); //Закрываем поток с пклиентом
-        if ACloseFUI then
-          PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
+        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, WPARAM(ACloseFUI), 0); //Закрываем поток с пклиентом
+//        if ACloseFUI then
+//          PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
 
 //        Dispose(PPortalConnection(PortalConnectionsList[i])^.UIForm);
         Dispose(PortalConnectionsList[i]);
@@ -2879,9 +2852,9 @@ begin
 //          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Free;
 //          PPortalConnection(PortalConnectionsList[i])^.ThisThread := nil;
 //        end;
-        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, 0, 0); //Закрываем поток с пклиентом
-        if ACloseFUI then
-          PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0); //Закрываем форму UI
+        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, WPARAM(ACloseFUI), 0); //Закрываем поток с пклиентом
+//        if ACloseFUI then
+//          PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0); //Закрываем форму UI
 
 //        Dispose(PPortalConnection(PortalConnectionsList[i])^.UIForm);
         Dispose(PortalConnectionsList[i]);
@@ -2897,16 +2870,6 @@ begin
 //  if GatewayClientsList.Count = 1 then
 //    Application.Restore;
 end;
-
-{//function TMainForm.GetActiveUICountByGatewayRec(AGatewayRec: PGatewayRec): Integer;
-//var
-//  i: Integer;
-//begin
-//  Result := 0;
-//  for i := 0 to ActiveUIList.Count - 1 do
-//    if PActiveUIRec(ActiveUIList[i])^.GatewayRec = AGatewayRec then
-//      Result := Result + 1;
-//end;}
 
 procedure TMainForm.aFeedBackExecute(Sender: TObject);
 var
@@ -3303,7 +3266,7 @@ begin
 
   DesktopsForm := TrdDesktopViewer.Create(Self);
   DesktopsForm.OnUIOpen := OnUIOpen;
-  DesktopsForm.OnUICloseDesktop := OnUICloseDesktop;
+  DesktopsForm.OnUIClose := OnUIClose;
   DesktopsForm.DoStartFileTransferring := StartFileTransferring;
   DesktopsForm.ReconnectToPartnerStart := ReconnectToPartnerStart;
 
@@ -9940,7 +9903,8 @@ begin
     i := PortalConnectionsList.Count - 1;
     while i >= 0 do
     begin
-      PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0);
+        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, WPARAM(True), 0); //Закрываем поток с пклиентом
+//      PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0);
       Dispose(PortalConnectionsList[i]);
       PortalConnectionsList.Delete(i);
 
@@ -11051,18 +11015,7 @@ begin
 //    Exit;
 
   DeletePendingRequest(AUserName, AAction);
-  RemovePortalConnection(AUserName, AAction, False);
-end;
-
-procedure TMainForm.OnUICloseDesktop(AUserName: String; ApUIDataModule: Pointer);
-begin
-  //xLog('OnUICloseDesktop');
-
-//  if IsClosing then
-//    Exit;
-
-  DeletePendingRequest(AUserName, 'desk');
-  RemovePortalConnection(AUserName, 'desk', False, ApUIDataModule);
+  RemovePortalConnection(AUserName, AAction, True);
 end;
 
 function TMainForm.GetPendingRequestsCount: Integer;

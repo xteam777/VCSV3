@@ -83,6 +83,12 @@ begin
   TimerReconnect.Enabled := False;
   TimerRec.Enabled := False;
 
+  UI.Active := False;
+  UI.Module.Close(UserName);
+  UI.CloseAndClear;
+  FT_UI.CloseAndClear;
+  FT_UI.Close;
+
   DeallocateHWND(FHandle);
   FreeAndNil(pImage^);
 
