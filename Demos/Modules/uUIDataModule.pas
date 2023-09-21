@@ -56,7 +56,7 @@ implementation
 
 procedure TUIDataModule.TimerReconnectTimer(Sender: TObject);
 begin
-//  ReconnectToPartnerStart(UserName, UserDesc, UserPass,  'desk');
+  ReconnectToPartnerStart(UserName, UserDesc, UserPass,  'desk');
 end;
 
 procedure TUIDataModule.WndProc(var Message: TMessage);
