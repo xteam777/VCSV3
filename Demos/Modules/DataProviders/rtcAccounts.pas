@@ -1492,7 +1492,7 @@ var
   i: Integer;
 begin
   userCS.Acquire;
-  try
+  try  ;
     i := HostsList.Count - 1;
     while (i >= 0) do
     begin
