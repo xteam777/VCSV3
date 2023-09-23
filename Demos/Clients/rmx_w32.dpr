@@ -176,6 +176,8 @@ var
 
   time: DWORD;
 
+  HelperIOData: THelperIOData;
+
   function RpcRevertToSelf: RPC_STATUS; stdcall; external 'rpcrt4.dll';
   function RpcImpersonateClient(BindingHandle: RPC_BINDING_HANDLE): RPC_STATUS; stdcall; external 'rpcrt4.dll';
   function ProcessIdToSessionId(dwProcessId: DWORD; out pSessionId: DWORD): BOOL; stdcall; external 'kernel32.dll';
@@ -2628,7 +2630,6 @@ var
   hProc: THandle;
   numberWrite : SIZE_T;
   i: Integer;
-  HelperIOData: THelperIOData;
 begin
   WaitTimeout := 1000; //INFINITE;
 //  ipBase_Screen := nil;
@@ -2641,11 +2642,11 @@ begin
   GetCursorInfo(ci);
 
   //Записываем выходные параметры
-  HelperIOData.BitmapSize := FDesktopDuplicator.ScreenHeight * FDesktopDuplicator.ScreenWidth * 4;
+//  HelperIOData.ScreenWidth := FDesktopDuplicator.ScreenWidth;
+//  HelperIOData.ScreenHeight := FDesktopDuplicator.ScreenHeight;
+//  HelperIOData.BitsPerPixel := FDesktopDuplicator.BitsPerPixel;
+  HelperIOData.BitmapSize := HelperIOData.ScreenHeight * HelperIOData.ScreenWidth * 4;
   HelperIOData.HaveScreen := fHaveScreen;
-  HelperIOData.ScreenWidth := FDesktopDuplicator.ScreenWidth;
-  HelperIOData.ScreenHeight := FDesktopDuplicator.ScreenHeight;
-  HelperIOData.BitsPerPixel := FDesktopDuplicator.BitsPerPixel;
   HelperIOData.MouseFlags := ci.flags;
   HelperIOData.MouseCursor := ci.hCursor;
   HelperIOData.MouseX := ci.ptScreenPos.X;
@@ -2846,6 +2847,9 @@ function ScreenShotThreadProc(pParam: Pointer): DWORD; stdcall;
 begin
   try
     FDesktopDuplicator := TDesktopDuplicationWrapper.Create;
+    FDesktopDuplicator.pScreenWidth := @HelperIOData.ScreenWidth;
+    FDesktopDuplicator.pScreenHeight := @HelperIOData.ScreenHeight;
+    FDesktopDuplicator.pBitsPerPixel := @HelperIOData.BitsPerPixel;
 
     while True do
     begin

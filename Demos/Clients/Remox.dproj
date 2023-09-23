@@ -120,7 +120,6 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
         <DCC_RemoteDebug>true</DCC_RemoteDebug>
-        <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
         <Icon_MainIcon>Remox_Icon1.ico</Icon_MainIcon>
         <BRCC_IncludePath>D:\Base_1C\vircess.com\V10;$(BRCC_IncludePath)</BRCC_IncludePath>
         <DCC_RangeChecking>true</DCC_RangeChecking>
@@ -132,8 +131,9 @@
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_DebugInfoInExe>true</DCC_DebugInfoInExe>
         <BT_BuildType>Debug</BT_BuildType>
-        <UWP_DelphiLogo44>C:\_vircess\VCSV3\Demos\Clients\48x48-3.png</UWP_DelphiLogo44>
-        <UWP_DelphiLogo150>C:\_vircess\VCSV3\Demos\Clients\240x240-3.png</UWP_DelphiLogo150>
+        <UWP_DelphiLogo44>48x48-3.png</UWP_DelphiLogo44>
+        <UWP_DelphiLogo150>240x240-3.png</UWP_DelphiLogo150>
+        <AppDPIAwarenessMode>none</AppDPIAwarenessMode>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
         <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
@@ -253,6 +253,13 @@
                 <DeployFile LocalName="..\..\..\Design\20160117\240x240-3.png" Configuration="Debug" Class="UWP_DelphiLogo150"/>
                 <DeployFile LocalName="..\..\..\Design\20160117\48x48-3.png" Configuration="Debug" Class="UWP_DelphiLogo44"/>
                 <DeployFile LocalName="240x240-3.png" Configuration="Debug" Class="UWP_DelphiLogo150"/>
+                <DeployFile LocalName="240x240-3.png" Configuration="Debug" Class="UWP_DelphiLogo150">
+                    <Platform Name="Win32">
+                        <RemoteDir>Assets\</RemoteDir>
+                        <RemoteName>Logo150x150.png</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="240x240-3.png" Configuration="Release" Class="UWP_DelphiLogo150">
                     <Platform Name="Win32">
                         <RemoteDir>Assets\</RemoteDir>
@@ -261,6 +268,13 @@
                     </Platform>
                 </DeployFile>
                 <DeployFile LocalName="48x48-3.png" Configuration="Debug" Class="UWP_DelphiLogo44"/>
+                <DeployFile LocalName="48x48-3.png" Configuration="Debug" Class="UWP_DelphiLogo44">
+                    <Platform Name="Win32">
+                        <RemoteDir>Assets\</RemoteDir>
+                        <RemoteName>Logo44x44.png</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="48x48-3.png" Configuration="Release" Class="UWP_DelphiLogo44">
                     <Platform Name="Win32">
                         <RemoteDir>Assets\</RemoteDir>

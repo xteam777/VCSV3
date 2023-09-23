@@ -1818,14 +1818,14 @@ destructor TPortalThread.Destroy;
 var
   UIDM: TUIDataModule;
 begin
-  UIDM := DesktopsForm.GetRemovedUIDataModule(FUserName);
-  if UIDM <> nil then
-  begin
-    if UIDM.RestoreBackgroundOnExit then
-      UIDM.UI.Send_ShowDesktop;
-    if UIDM.LockSystemOnExit then
-      UIDM.UI.Send_LockSystem;
-  end;
+//  UIDM := DesktopsForm.GetRemovedUIDataModule(FUserName);
+//  if UIDM <> nil then
+//  begin
+//    if UIDM.RestoreBackgroundOnExit then
+//      UIDM.UI.Send_ShowDesktop;
+//    if UIDM.LockSystemOnExit then
+//      UIDM.UI.Send_LockSystem;
+//  end;
 
   FGatewayClient.Module.WaitForCompletion(False, 2);
 
@@ -1838,7 +1838,7 @@ begin
   FDataModule.Free;
 
   if FNeedCloseUI then
-    PostMessage(DesktopsForm.Handle, WM_CLOSE_UI, WPARAM(PChar(FUserName)), 0);
+    PostMessage(DesktopsForm.Handle, WM_CLOSE_UI, WPARAM(PChar(FUserName)), LPARAM(ThreadID));
 
 //  try
 //    FGatewayClient.Disconnect;
@@ -9704,12 +9704,12 @@ begin
 
     pPCItem := GetPortalConnection('desk', user);
     if pPCItem <> nil then
-    begin
-      pPCItem^.DataModule := DesktopsForm.AddNewTab(pPCItem^.UserName, GetUserDescription(user, 'desk'), pPCItem^.UserPass, pPCItem^.StartLockedState, pPCItem^.StartServiceStarted, Sender);
+    //begin
+      pPCItem^.DataModule := DesktopsForm.AddNewTab(pPCItem^.UserName, GetUserDescription(user, 'desk'), pPCItem^.UserPass, pPCItem^.ThreadID, pPCItem^.StartLockedState, pPCItem^.StartServiceStarted, Sender);
 //      DesktopsForm.PartnerLockedState := pPCItem^.StartLockedState;
 //      DesktopsForm.PartnerServiceStarted := pPCItem^.StartServiceStarted;
-      DesktopsForm.SetFormState;
-    end;
+//      DesktopsForm.SetFormState;
+    //end;
 
 //    GatewayRec := GetGatewayRecByDesktopControl(Sender);
 //    GatewayRec^.ID := user;
@@ -9898,7 +9898,7 @@ begin
     i := PortalConnectionsList.Count - 1;
     while i >= 0 do
     begin
-        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, WPARAM(True), 0); //Закрываем поток с пклиентом
+        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, WPARAM(True), 0); //Закрываем поток с пклиентом и UIDataModule
 //      PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0);
       Dispose(PortalConnectionsList[i]);
       PortalConnectionsList.Delete(i);

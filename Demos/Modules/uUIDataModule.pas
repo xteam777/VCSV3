@@ -41,6 +41,7 @@ type
     RestoreBackgroundOnExit: Boolean;
     LockSystemOnExit: Boolean;
     NeedFree: Boolean;
+    ThreadID: Cardinal;
 
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;

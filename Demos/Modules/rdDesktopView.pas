@@ -14,7 +14,7 @@ interface
 uses
   Windows, Messages, SysUtils, CommonData, CommonUtils, uVircessTypes, rtcLog, RmxClipbrd,
   Classes, Graphics, Controls, Forms, Types, IOUtils, DateUtils, rtcPortalHttpCli,
-  Dialogs, ExtCtrls, StdCtrls, ShellAPI, ProgressDialog, rtcSystem,
+  Dialogs, ExtCtrls, StdCtrls, ShellAPI, ProgressDialog, rtcSystem, SyncObjs,
   rtcpChat, Math, rtcpFileTrans, rtcpFileTransUI, uUIDataModule,
   System.ImageList, Vcl.ImgList, Vcl.ActnMan, Vcl.ActnColorMaps, System.Actions,
   Vcl.ActnList, Vcl.PlatformDefaultStyleActnCtrls, rtcPortalMod,
@@ -283,7 +283,7 @@ type
     procedure RemoveProgressDialogByValue(AProgressDialog: PProgressDialog);
     procedure RemoveProgressDialogByUserName(AUserName: String);
     function GetTab(AUserName: String): TChromeTab;
-    function AddNewTab(AUserName, AUserDesc, AUserPass: String; AStartLockedState: Integer; AStartServiceStarted: Boolean; AModule: TRtcPDesktopControl): TUIDataModule;
+    function AddNewTab(AUserName, AUserDesc, AUserPass: String; AThreadID: Cardinal; AStartLockedState: Integer; AStartServiceStarted: Boolean; AModule: TRtcPDesktopControl): TUIDataModule;
     procedure CloseTab(AUserName: String);
     procedure SetReconnectInterval(AUserName: String; AInterval: Integer);
     procedure SetActiveTab(AUserName: String);
@@ -291,7 +291,7 @@ type
     function GetRemovedUIDataModule(AUserName: String): TUIDataModule;
     function GetUIDataModule(AUserName: String): TUIDataModule;
     function RemoveUIDataModule(AUserName: String): Integer;
-    function FreeUIDataModule(AUserName: String): Integer;
+    function FreeUIDataModule(AUserName: String; AThreadID: Cardinal): Integer;
     procedure DoReconnectToPartnerStart(user, username, pass, action: String);
   end;
 
@@ -307,6 +307,7 @@ var
   MiniPanelCurX: Integer;
   KeyboardShortcutsHook: HWND;
   FormHandle: HWND;
+  UI_CS: TCriticalSection;
 
   //    UIDataModule: TUIDataModule;
   //  UIDataModule := TUIDataModule.Create(nil);
@@ -320,7 +321,7 @@ implementation
 
 procedure TrdDesktopViewer.WMCloseUI(var Message: TMessage);
 begin
-  FreeUIDataModule(StrPas(PChar(Message.wParam)));
+  FreeUIDataModule(StrPas(PChar(Message.wParam)), Cardinal(Message.lParam));
 end;
 
 procedure TrdDesktopViewer.CloseTab(AUserName: String);
@@ -330,17 +331,22 @@ begin
   if Assigned(FOnUIClose) then
     FOnUIClose('desk', AUserName);
 
-  RemovedInd := RemoveUIDataModule(AUserName);
-  if UIModulesList.Count = 0 then
-  begin
-    ActiveUIModule := nil;
-    tCloseForm.Enabled := True;
-  end
-  else
-  if RemovedInd > 1 then
-    ActiveUIModule := UIModulesList[RemovedInd - 1]
-  else
-    ActiveUIModule := UIModulesList[0];
+  UI_CS.Acquire;
+  try
+    RemovedInd := RemoveUIDataModule(AUserName);
+    if UIModulesList.Count = 0 then
+    begin
+      ActiveUIModule := nil;
+      tCloseForm.Enabled := True;
+    end
+    else
+    if RemovedInd > 1 then
+      ActiveUIModule := UIModulesList[RemovedInd - 1]
+    else
+      ActiveUIModule := UIModulesList[0];
+  finally
+    UI_CS.Release;
+  end;
 
   DoResizeImage;
 end;
@@ -617,7 +623,7 @@ begin
     end;
 end;
 
-function TrdDesktopViewer.AddNewTab(AUserName, AUserDesc, AUserPass: String; AStartLockedState: Integer; AStartServiceStarted: Boolean; AModule: TRtcPDesktopControl): TUIDataModule;
+function TrdDesktopViewer.AddNewTab(AUserName, AUserDesc, AUserPass: String; AThreadID: Cardinal; AStartLockedState: Integer; AStartServiceStarted: Boolean; AModule: TRtcPDesktopControl): TUIDataModule;
 var
   pTab: TChromeTab;
   pUIItem: TUIDataModule;
@@ -643,77 +649,83 @@ begin
     SetForegroundWindow(Handle);
   end;
 
-  if not fIsReconnection then
-  begin
-    pTab := MainChromeTabs.Tabs.Add;
-    pTab.UserName := AUserName;  //К которому изначально подключались (не UserToConnect, на которого перенаправило)
-  end
-  else
-    pTab := GetTab(AUserName);
-  pTab.UserDesc := AUserDesc;
-  pTab.UserPass := AUserPass;
-  if pTab.UserDesc <> '' then
-    pTab.Caption := pTab.UserDesc
-  else
-    pTab.Caption := pTab.UserName;
+  UI_CS.Acquire;
+  try
+    if not fIsReconnection then
+    begin
+      pTab := MainChromeTabs.Tabs.Add;
+      pTab.UserName := AUserName;  //К которому изначально подключались (не UserToConnect, на которого перенаправило)
+    end
+    else
+      pTab := GetTab(AUserName);
+    pTab.UserDesc := AUserDesc;
+    pTab.UserPass := AUserPass;
+    if pTab.UserDesc <> '' then
+      pTab.Caption := pTab.UserDesc
+    else
+      pTab.Caption := pTab.UserName;
 
-  if not fIsReconnection then
-  begin
-    pUIITem := TUIDataModule.Create(Self);
-    pUIItem.RestoreBackgroundOnExit := True;
-    pUIItem.LockSystemOnExit := False;
+    if not fIsReconnection then
+    begin
+      pUIITem := TUIDataModule.Create(Self);
+      pUIItem.RestoreBackgroundOnExit := True;
+      pUIItem.LockSystemOnExit := False;
+    end;
+    pUIItem.ThreadID := AThreadID;
+    pUIItem.PartnerLockedState := AStartLockedState;
+    pUIItem.PartnerServiceStarted := AStartServiceStarted;
+    pUIITem.ReconnectToPartnerStart := DoReconnectToPartnerStart;
+    pUIItem.TimerRec.OnTimer := TimerRecTimer;
+    pUIItem.TimerReconnect.Enabled := False;
+
+    if not fIsReconnection then
+      pUIITem.pImage^ := TRtcPDesktopViewer.Create(Scroll);
+    pUIITem.pImage^.Parent := Scroll;
+    pUIITem.pImage^.Align := alClient;
+    pUIITem.pImage^.Color := clBlack;
+    pUIITem.pImage^.OnMouseMove := pImageMouseMove;
+    pUIITem.pImage^.OnMouseDown := pImageMouseDown;
+    pUIITem.pImage^.OnMouseUp := pImageMouseUp;
+    pUIITem.pImage^.RecordCircleVisible := False;
+    pUIITem.pImage^.RecordInfoVisible := False;
+    pUIITem.pImage^.RecordInfo := '00:00:00';
+    pUIITem.pImage^.RecordTicks := 0;
+    pUIITem.pImage^.Active := True;
+
+    if not fIsReconnection then
+      pUIItem.UI.Viewer := pUIITem.pImage^;
+    pUIITem.UserName := AUserName;  //К которому изначально подключались (не UserToConnect, на которого перенаправило)
+    pUIITem.UserDesc := AUserDesc;
+    pUIITem.UserPass := AUserPass;
+  //  pUIItem.UI := TRtcPDesktopControlUI.Create(DesktopsForm);
+    pUIItem.UI.MapKeys := True;
+    pUIItem.UI.SmoothScale := True;
+    pUIItem.UI.ExactCursor := True;
+    pUIItem.UI.OnOpen := myUIOpen;
+    pUIItem.UI.OnData := myUIData;
+    pUIItem.UI.OnHaveScreeenChanged := UIHaveScreeenChanged;
+    pUIItem.UI.OnError := myUIError;
+    pUIItem.UI.OnLogout := myUILogout;
+    pUIItem.UI.OnClose := myUIClose;
+    pUIItem.UI.ControlMode := rtcpFullControl;
+    pUIItem.UI.UserName := pTab.UserName;
+    pUIItem.UI.UserDesc := pTab.UserDesc;
+    // Always set UI.Module *after* setting UI.UserName !!!
+    pUIItem.UI.Module := AModule;
+  //    pUIItem.UI.Tag := Sender.Tag; //ThreadID
+  //  if Assigned(PFileTrans.Client) then
+  //    PFileTrans.Close(PFileTrans.Client.LoginUserName);
+  //  pUIItem.PFileTrans := TRtcPFileTransfer.Create(DesktopsForm);
+    pUIItem.PFileTrans.Client := AModule.Client;
+    pUIItem.PFileTrans.OnNewUI := PFileTransExplorerNewUI;
+    pUIItem.PFileTrans.Open(pTab.UserName, False, AModule);
+
+    if not fIsReconnection then
+      UIModulesList.Add(pUIItem);
+    ActiveUIModule := pUIItem;
+  finally
+    UI_CS.Release;
   end;
-  pUIItem.PartnerLockedState := AStartLockedState;
-  pUIItem.PartnerServiceStarted := AStartServiceStarted;
-  pUIITem.ReconnectToPartnerStart := DoReconnectToPartnerStart;
-  pUIItem.TimerRec.OnTimer := TimerRecTimer;
-  pUIItem.TimerReconnect.Enabled := False;
-
-  if not fIsReconnection then
-    pUIITem.pImage^ := TRtcPDesktopViewer.Create(Scroll);
-  pUIITem.pImage^.Parent := Scroll;
-  pUIITem.pImage^.Align := alClient;
-  pUIITem.pImage^.Color := clBlack;
-  pUIITem.pImage^.OnMouseMove := pImageMouseMove;
-  pUIITem.pImage^.OnMouseDown := pImageMouseDown;
-  pUIITem.pImage^.OnMouseUp := pImageMouseUp;
-  pUIITem.pImage^.RecordCircleVisible := False;
-  pUIITem.pImage^.RecordInfoVisible := False;
-  pUIITem.pImage^.RecordInfo := '00:00:00';
-  pUIITem.pImage^.RecordTicks := 0;
-  pUIITem.pImage^.Active := True;
-
-  if not fIsReconnection then
-    pUIItem.UI.Viewer := pUIITem.pImage^;
-  pUIITem.UserName := AUserName;  //К которому изначально подключались (не UserToConnect, на которого перенаправило)
-  pUIITem.UserDesc := AUserDesc;
-  pUIITem.UserPass := AUserPass;
-//  pUIItem.UI := TRtcPDesktopControlUI.Create(DesktopsForm);
-  pUIItem.UI.MapKeys := True;
-  pUIItem.UI.SmoothScale := True;
-  pUIItem.UI.ExactCursor := True;
-  pUIItem.UI.OnOpen := myUIOpen;
-  pUIItem.UI.OnData := myUIData;
-  pUIItem.UI.OnHaveScreeenChanged := UIHaveScreeenChanged;
-  pUIItem.UI.OnError := myUIError;
-  pUIItem.UI.OnLogout := myUILogout;
-  pUIItem.UI.OnClose := myUIClose;
-  pUIItem.UI.ControlMode := rtcpFullControl;
-  pUIItem.UI.UserName := pTab.UserName;
-  pUIItem.UI.UserDesc := pTab.UserDesc;
-  // Always set UI.Module *after* setting UI.UserName !!!
-  pUIItem.UI.Module := AModule;
-//    pUIItem.UI.Tag := Sender.Tag; //ThreadID
-//  if Assigned(PFileTrans.Client) then
-//    PFileTrans.Close(PFileTrans.Client.LoginUserName);
-//  pUIItem.PFileTrans := TRtcPFileTransfer.Create(DesktopsForm);
-  pUIItem.PFileTrans.Client := AModule.Client;
-  pUIItem.PFileTrans.OnNewUI := PFileTransExplorerNewUI;
-  pUIItem.PFileTrans.Open(pTab.UserName, False, AModule);
-
-  if not fIsReconnection then
-    UIModulesList.Add(pUIItem);
-  ActiveUIModule := pUIItem;
 
   MainChromeTabsActiveTabChanged(nil, pTab);
 //  SetFormState;
@@ -745,44 +757,57 @@ var
   i: Integer;
 begin
   Result := -1;
-  i := UIModulesList.Count - 1;
-  while i >= 0 do
-  begin
-    if (not TUIDataModule(UIModulesList[i]).NeedFree)
-      and (TUIDataModule(UIModulesList[i]).UserName = AUserName) then
+
+  UI_CS.Acquire;
+  try
+    i := UIModulesList.Count - 1;
+    while i >= 0 do
     begin
-      TUIDataModule(UIModulesList[i]).NeedFree := True;
-      FOnUIClose('desk', AUserName);
-//      FreeAndNil(TUIDataModule(UIModulesList[i]));
-//      UIModulesList.Delete(i);
+      if (not TUIDataModule(UIModulesList[i]).NeedFree)
+        and (TUIDataModule(UIModulesList[i]).UserName = AUserName) then
+      begin
+        TUIDataModule(UIModulesList[i]).NeedFree := True;
+        FOnUIClose('desk', AUserName);
+  //      FreeAndNil(TUIDataModule(UIModulesList[i]));
+  //      UIModulesList.Delete(i);
 
-      Result := i;
-      Break;
+        Result := i;
+        Break;
+      end;
+
+      i := i - 1;
     end;
-
-    i := i - 1;
+  finally
+    UI_CS.Release;
   end;
 end;
 
-function TrdDesktopViewer.FreeUIDataModule(AUserName: String): Integer;
+function TrdDesktopViewer.FreeUIDataModule(AUserName: String; AThreadID: Cardinal): Integer;
 var
   i: Integer;
 begin
   Result := -1;
-  i := UIModulesList.Count - 1;
-  while i >= 0 do
-  begin
-    if (TUIDataModule(UIModulesList[i]).NeedFree)
-      and (TUIDataModule(UIModulesList[i]).UserName = AUserName) then
+
+  UI_CS.Acquire;
+  try
+    i := UIModulesList.Count - 1;
+    while i >= 0 do
     begin
-      FreeAndNil(TUIDataModule(UIModulesList[i]));
-      UIModulesList.Delete(i);
+      if (TUIDataModule(UIModulesList[i]).NeedFree)
+        and (TUIDataModule(UIModulesList[i]).UserName = AUserName)
+        and (TUIDataModule(UIModulesList[i]).ThreadID = AThreadID) then
+      begin
+        FreeAndNil(TUIDataModule(UIModulesList[i]));
+        UIModulesList.Delete(i);
 
-      Result := i;
-      Break;
+        Result := i;
+        Break;
+      end;
+
+      i := i - 1;
     end;
-
-    i := i - 1;
+  finally
+    UI_CS.Release;
   end;
 end;
 
@@ -791,13 +816,19 @@ var
   i: Integer;
 begin
   Result := nil;
-  for i := 0 to UIModulesList.Count - 1 do
-    if (TUIDataModule(UIModulesList[i]).NeedFree)
-      and (TUIDataModule(UIModulesList[i]).UserName = AUserName) then
-    begin
-      Result := UIModulesList[i];
-      Break;
-    end;
+
+  UI_CS.Acquire;
+  try
+    for i := 0 to UIModulesList.Count - 1 do
+      if (TUIDataModule(UIModulesList[i]).NeedFree)
+        and (TUIDataModule(UIModulesList[i]).UserName = AUserName) then
+      begin
+        Result := UIModulesList[i];
+        Break;
+      end;
+  finally
+    UI_CS.Release;
+  end;
 end;
 
 function TrdDesktopViewer.GetUIDataModule(AUserName: String): TUIDataModule;
@@ -805,13 +836,19 @@ var
   i: Integer;
 begin
   Result := nil;
-  for i := 0 to UIModulesList.Count - 1 do
-    if (not TUIDataModule(UIModulesList[i]).NeedFree)
-      and (TUIDataModule(UIModulesList[i]).UserName = AUserName) then
-    begin
-      Result := UIModulesList[i];
-      Break;
-    end;
+
+  UI_CS.Acquire;
+  try
+    for i := 0 to UIModulesList.Count - 1 do
+      if (not TUIDataModule(UIModulesList[i]).NeedFree)
+        and (TUIDataModule(UIModulesList[i]).UserName = AUserName) then
+      begin
+        Result := UIModulesList[i];
+        Break;
+      end;
+  finally
+    UI_CS.Release;
+  end;
 end;
 
 procedure TrdDesktopViewer.MainChromeTabsActiveTabChanged(Sender: TObject;
@@ -823,30 +860,35 @@ begin
   if ATab.Caption = '' then
     Exit;
 
-  pUIItem := GetUIDataModule(ATab.UserName);
-  for i := 0 to UIModulesList.Count - 1 do
-    if UIModulesList[i] = pUIItem then
-    begin
-//      TUIDataModule(UIModulesList[i]).pImage^.Align := alClient;
-      TUIDataModule(UIModulesList[i]).pImage^.Visible := True;
-      TUIDataModule(UIModulesList[i]).pImage^.Active := True;
+  UI_CS.Acquire;
+  try
+    pUIItem := GetUIDataModule(ATab.UserName);
+    for i := 0 to UIModulesList.Count - 1 do
+      if UIModulesList[i] = pUIItem then
+      begin
+  //      TUIDataModule(UIModulesList[i]).pImage^.Align := alClient;
+        TUIDataModule(UIModulesList[i]).pImage^.Visible := True;
+        TUIDataModule(UIModulesList[i]).pImage^.Active := True;
 
-      ActiveUIModule := pUIItem;
+        ActiveUIModule := pUIItem;
 
-      aRecordStart.Enabled := not Assigned(TUIDataModule(UIModulesList[i]).FVideoWriter);
-      aRecordStop.Enabled := Assigned(TUIDataModule(UIModulesList[i]).FVideoWriter);
-      aRecordCancel.Enabled := Assigned(TUIDataModule(UIModulesList[i]).FVideoWriter);
-    end
-    else
-    begin
-      TUIDataModule(UIModulesList[i]).pImage^.Visible := False;
-      TUIDataModule(UIModulesList[i]).pImage^.Active := False;
-//      TUIDataModule(UIModulesList[i]).pImage^.Align := alNone;
-//      TUIDataModule(UIModulesList[i]).pImage^.Left := -1;
-//      TUIDataModule(UIModulesList[i]).pImage^.Top := -1;
-//      TUIDataModule(UIModulesList[i]).pImage^.Width := 1;
-//      TUIDataModule(UIModulesList[i]).pImage^.Height := 1;
-    end;
+        aRecordStart.Enabled := not Assigned(TUIDataModule(UIModulesList[i]).FVideoWriter);
+        aRecordStop.Enabled := Assigned(TUIDataModule(UIModulesList[i]).FVideoWriter);
+        aRecordCancel.Enabled := Assigned(TUIDataModule(UIModulesList[i]).FVideoWriter);
+      end
+      else
+      begin
+        TUIDataModule(UIModulesList[i]).pImage^.Visible := False;
+        TUIDataModule(UIModulesList[i]).pImage^.Active := False;
+  //      TUIDataModule(UIModulesList[i]).pImage^.Align := alNone;
+  //      TUIDataModule(UIModulesList[i]).pImage^.Left := -1;
+  //      TUIDataModule(UIModulesList[i]).pImage^.Top := -1;
+  //      TUIDataModule(UIModulesList[i]).pImage^.Width := 1;
+  //      TUIDataModule(UIModulesList[i]).pImage^.Height := 1;
+      end;
+  finally
+    UI_CS.Release;
+  end;
 
   DoResizeImage;
 
@@ -1362,16 +1404,21 @@ begin
 
   ActiveUIModule := nil;
 
-  for i := 0 to UIModulesList.Count - 1 do
-  begin
-    TUIDataModule(UIModulesList[i]).NeedFree := True;
-    FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
-//    TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
-//    TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
-//    FreeAndNil(TUIDataModule(UIModulesList[i]));
+  UI_CS.Acquire;
+  try
+    for i := 0 to UIModulesList.Count - 1 do
+    begin
+      TUIDataModule(UIModulesList[i]).NeedFree := True;
+      FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
+  //    TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
+  //    TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
+  //    FreeAndNil(TUIDataModule(UIModulesList[i]));
+    end;
+  //  UIModulesList.Clear;
+  //  FreeAndNil(UIModulesList);
+  finally
+    UI_CS.Release;
   end;
-//  UIModulesList.Clear;
-//  FreeAndNil(UIModulesList);
 end;
 
 procedure TrdDesktopViewer.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -2904,6 +2951,12 @@ begin
   pUIItem.FT_UI.Module := Sender;
   pUIItem.FT_UI.Module.AccessControl := False;
 end;
+
+initialization
+  UI_CS := TCriticalSection.Create;
+
+finalization
+  UI_CS.Free;
 
 
 end.
