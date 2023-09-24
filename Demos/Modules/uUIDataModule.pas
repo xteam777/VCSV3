@@ -51,8 +51,8 @@ type
     PartnerLockedState: Integer;
     PartnerServiceStarted: Boolean;
     ReconnectToPartnerStart: TReconnectToPartnerStart;
-    RestoreBackgroundOnExit: Boolean;
-    LockSystemOnExit: Boolean;
+//    RestoreBackgroundOnExit: Boolean;
+    LockSystemOnClose, ShowRemoteCursor, SendShortcuts, BlockKeyboardMouse, PowerOffMonitor, OptimizeQuality, OptimizeSpeed, StretchScreen, HideWallpaper: Boolean;
     NeedFree: Boolean;
     ThreadID: Cardinal;
     pMainForm: PForm;

@@ -4587,6 +4587,7 @@ object rdDesktopViewer: TrdDesktopViewer
     end
     object aSendShortcuts: TAction
       Caption = #1055#1077#1088#1077#1076#1072#1074#1072#1090#1100' '#1089#1086#1095#1077#1090#1072#1085#1080#1103' '#1082#1083#1072#1074#1080#1096
+      Checked = True
       OnExecute = aSendShortcutsExecute
     end
     object aRecordOpenFolder: TAction

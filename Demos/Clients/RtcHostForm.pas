@@ -1818,14 +1818,14 @@ destructor TPortalThread.Destroy;
 var
   UIDM: TUIDataModule;
 begin
-//  UIDM := DesktopsForm.GetRemovedUIDataModule(FUserName);
-//  if UIDM <> nil then
-//  begin
-//    if UIDM.RestoreBackgroundOnExit then
+  UIDM := DesktopsForm.GetRemovedUIDataModule(FUserName);
+  if UIDM <> nil then
+  begin
+//    if UIDM.HideWallpaper then
 //      UIDM.UI.Send_ShowDesktop;
-//    if UIDM.LockSystemOnExit then
-//      UIDM.UI.Send_LockSystem;
-//  end;
+    if UIDM.LockSystemOnClose then
+      UIDM.UI.Send_LockSystem;
+  end;
 
   FGatewayClient.Module.WaitForCompletion(False, 2);
 

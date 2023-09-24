@@ -652,8 +652,15 @@ begin
     if not fIsReconnection then
     begin
       pUIItem := TUIDataModule.Create(Self);
-      pUIItem.RestoreBackgroundOnExit := True;
-      pUIItem.LockSystemOnExit := False;
+      pUIItem.LockSystemOnClose := False;
+      pUIItem.ShowRemoteCursor := False;
+      pUIItem.SendShortcuts := True;
+      pUIItem.BlockKeyboardMouse := False;
+      pUIItem.PowerOffMonitor := False;
+      pUIItem.OptimizeQuality := True;
+      pUIItem.OptimizeSpeed := False;
+      pUIItem.StretchScreen := False;
+      pUIItem.HideWallpaper := True;
     end;
     pUIItem.ThreadID := AThreadID;
     pUIItem.PartnerLockedState := AStartLockedState;
@@ -856,6 +863,16 @@ begin
 
         ActiveUIModule := pUIItem;
 
+        aLockSystemOnClose.Checked := pUIItem.LockSystemOnClose;
+        aShowRemoteCursor.Checked := pUIItem.ShowRemoteCursor;
+        aSendShortcuts.Checked := pUIItem.SendShortcuts;
+        aBlockKeyboardMouse.Checked := pUIItem.BlockKeyboardMouse;
+        aPowerOffMonitor.Checked := pUIItem.PowerOffMonitor;
+        aOptimizeQuality.Checked := pUIItem.OptimizeQuality;
+        aOptimizeSpeed.Checked := pUIItem.OptimizeSpeed;
+        aStretchScreen.Checked := pUIItem.StretchScreen;
+        aHideWallpaper.Checked := pUIItem.HideWallpaper;
+
         aRecordStart.Enabled := not Assigned(TUIDataModule(UIModulesList[i]).FVideoWriter);
         aRecordStop.Enabled := Assigned(TUIDataModule(UIModulesList[i]).FVideoWriter);
         aRecordCancel.Enabled := Assigned(TUIDataModule(UIModulesList[i]).FVideoWriter);
@@ -1017,6 +1034,7 @@ end;
 procedure TrdDesktopViewer.aBlockKeyboardMouseExecute(Sender: TObject);
 begin
   aBlockKeyboardMouse.Checked := not aBlockKeyboardMouse.Checked;
+  ActiveUIModule.BlockKeyboardMouse := aBlockKeyboardMouse.Checked;
 
   if aBlockKeyboardMouse.Checked then
     ActiveUIModule.UI.Send_BlockKeyboardAndMouse
@@ -1126,8 +1144,12 @@ end;
 
 procedure TrdDesktopViewer.aSendShortcutsExecute(Sender: TObject);
 begin
+  if ActiveUIModule = nil then
+    Exit;
+
   aSendShortcuts.Checked := not aSendShortcuts.Checked;
   ActiveUIModule.UI.Module.SendShortcuts := aSendShortcuts.Checked;
+  ActiveUIModule.SendShortcuts := aSendShortcuts.Checked;
   SetShortcuts_Hook(aSendShortcuts.Checked);
 end;
 
@@ -1137,9 +1159,10 @@ begin
     Exit;
 
   ActiveUIModule.UI.RemoteCursor := not ActiveUIModule.UI.RemoteCursor;
-  ActiveUIModule.pImage^.Repaint;
+//  ActiveUIModule.pImage^.Repaint;
 
   aShowRemoteCursor.Checked := ActiveUIModule.UI.RemoteCursor;
+  ActiveUIModule.ShowRemoteCursor := ActiveUIModule.UI.RemoteCursor;
 end;
 
 procedure TrdDesktopViewer.lCloseClick(Sender: TObject);
@@ -1151,7 +1174,11 @@ end;
 
 procedure TrdDesktopViewer.aStretchScreenExecute(Sender: TObject);
 begin
+  if ActiveUIModule = nil then
+    Exit;
+
   aStretchScreen.Checked := not aStretchScreen.Checked;
+  ActiveUIModule.StretchScreen := aStretchScreen.Checked;
 
   DoResizeImage;
 end;
@@ -1903,12 +1930,16 @@ end;
 
 procedure TrdDesktopViewer.aHideWallpaperExecute(Sender: TObject);
 begin
+  if ActiveUIModule = nil then
+    Exit;
+
   if not aHideWallpaper.Checked then
     ActiveUIModule.UI.Send_HideDesktop(Sender)
   else
     ActiveUIModule.UI.Send_ShowDesktop(Sender);
 
   aHideWallpaper.Checked := not aHideWallpaper.Checked;
+  ActiveUIModule.HideWallpaper := not aHideWallpaper.Checked;
 end;
 
 procedure TrdDesktopViewer.aLockSystemExecute(Sender: TObject);
@@ -1918,7 +1949,11 @@ end;
 
 procedure TrdDesktopViewer.aLockSystemOnCloseExecute(Sender: TObject);
 begin
+  if ActiveUIModule = nil then
+    Exit;
+
   aLockSystemOnClose.Checked := not aLockSystemOnClose.Checked;
+  ActiveUIModule.LockSystemOnClose := aLockSystemOnClose.Checked;
 end;
 
 procedure TrdDesktopViewer.aLogoffExecute(Sender: TObject);
@@ -1982,10 +2017,15 @@ end;
 
 procedure TrdDesktopViewer.aOptimizeQualityExecute(Sender: TObject);
 begin
+  if ActiveUIModule = nil then
+    Exit;
+
   if not aOptimizeQuality.Checked then
   begin
     aOptimizeQuality.Checked := not aOptimizeQuality.Checked;
     aOptimizeSpeed.Checked := not aOptimizeQuality.Checked;
+    ActiveUIModule.OptimizeQuality := aOptimizeQuality.Checked;
+    ActiveUIModule.OptimizeSpeed := aOptimizeSpeed.Checked;
 
     UpdateQuality;
   end;
@@ -1993,10 +2033,15 @@ end;
 
 procedure TrdDesktopViewer.aOptimizeSpeedExecute(Sender: TObject);
 begin
+  if ActiveUIModule = nil then
+    Exit;
+
   if not aOptimizeSpeed.Checked then
   begin
     aOptimizeSpeed.Checked := not aOptimizeSpeed.Checked;
     aOptimizeQuality.Checked := not aOptimizeSpeed.Checked;
+    ActiveUIModule.OptimizeQuality := aOptimizeQuality.Checked;
+    ActiveUIModule.OptimizeSpeed := aOptimizeSpeed.Checked;
 
     UpdateQuality;
   end;
@@ -2004,9 +2049,14 @@ end;
 
 procedure TrdDesktopViewer.aPowerOffMonitorExecute(Sender: TObject);
 begin
+  if ActiveUIModule = nil then
+    Exit;
+
   aPowerOffMonitor.Checked := not aPowerOffMonitor.Checked;
   aBlockKeyboardMouse.Checked := aPowerOffMonitor.Checked;
   aBlockKeyboardMouse.Enabled := not aPowerOffMonitor.Checked;
+  ActiveUIModule.PowerOffMonitor := aPowerOffMonitor.Checked;
+  ActiveUIModule.BlockKeyboardMouse := aBlockKeyboardMouse.Checked;
 
   if aPowerOffMonitor.Checked then
     ActiveUIModule.UI.Send_PowerOffMonitor(Sender)
@@ -2016,6 +2066,9 @@ end;
 
 procedure TrdDesktopViewer.aPowerOffSystemExecute(Sender: TObject);
 begin
+  if ActiveUIModule = nil then
+    Exit;
+
   ActiveUIModule.UI.Send_PowerOffSystem(Sender);
 end;
 
