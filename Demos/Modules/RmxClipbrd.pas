@@ -177,9 +177,10 @@ begin
       FClipboardWindow := AllocateHWnd(MainWndProc);
       FAllocated := True;
     end;
-//    if not OpenClipboard(FClipboardWindow) then //sstuman
+    if not OpenClipboard(FClipboardWindow) then
 //      raise EClipboardException.CreateResFmt({$IFNDEF CLR}@{$ENDIF}SCannotOpenClipboard,
 //        [SysErrorMessage(GetLastError)]);
+      Exit;
     FEmptied := False;
   end;
   Inc(FOpenRefCount);

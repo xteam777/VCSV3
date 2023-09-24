@@ -10,7 +10,7 @@ interface
 {$POINTERMATH ON}
 
 uses
-  Windows, Messages, Classes, rtcSystem, LockFormUnit,
+  Windows, Messages, Classes, rtcSystem, LockWindowUnit,
   SysUtils, Graphics, Controls, Forms, //rtcpDesktopHost,
   rtcInfo, rtcLog, rtcZLib, SyncObjs, rtcScrUtils, CommonData, uVircessTypes,
   //rtcXJPEGEncode,

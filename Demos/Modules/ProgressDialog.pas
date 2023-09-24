@@ -171,7 +171,10 @@ Begin
   begin
     try
       try
-        mHasUserCancelled := fOwner.iiProgressDialog.HasUserCancelled;
+        if fOwner.iiProgressDialog = nil then 
+          mHasUserCancelled := 1
+        else
+          mHasUserCancelled := fOwner.iiProgressDialog.HasUserCancelled;
       except
         mHasUserCancelled := 1;
 

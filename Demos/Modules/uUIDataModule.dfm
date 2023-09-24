@@ -11,6 +11,9 @@ object UIDataModule: TUIDataModule
     Top = 8
   end
   object FT_UI: TRtcPFileTransferUI
+    OnClose = FT_UIClose
+    OnLogOut = FT_UILogOut
+    NotifyFileBatchSend = FT_UINotifyFileBatchSend
     Left = 76
     Top = 8
   end

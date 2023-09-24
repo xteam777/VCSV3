@@ -176,9 +176,6 @@ type
 //    procedure FT_UIRecv(Sender: TRtcPFileTransferUI);
 //    procedure FT_UIRecvCancel(Sender: TRtcPFileTransferUI);
 //    procedure FT_UIRecvStop(Sender: TRtcPFileTransferUI);
-    procedure FT_UINotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);
-    procedure FT_UIClose(Sender: TRtcPFileTransferUI);
-    procedure FT_UILogOut(Sender: TRtcPFileTransferUI);
     procedure TimerRecTimer(Sender: TObject);
     procedure aRecordOpenFolderExecute(Sender: TObject);
     procedure aRecordCodecInfoExecute(Sender: TObject);
@@ -221,15 +218,10 @@ type
     UIModulesList: TList;
     ActiveUIModule: TUIDataModule;
 
-    FProgressDialogsList: TList;
-
     FOnUIOpen: TUIOpenEvent;
     FOnUIClose: TUICloseEvent;
 
     FDoStartFileTransferring: TDoStartFileTransferring;
-
-    FLastActiveExplorerHandle: THandle;
-    procedure OnProgressDialogCancel(Sender: TObject);
 
 //    procedure SetCaption;
 
@@ -244,7 +236,6 @@ type
 //    procedure WndProc(var Msg : TMessage); override;
 
 //    function LeaseExpiresDateToDateTime(LeaseExpires: Integer): String;
-    procedure GetFilesFromHostClipboard(var Message: TMessage); message WM_GET_FILES_FROM_CLIPBOARD;
 //    procedure WMActivate(var Message: TMessage); message WM_ACTIVATE;
   public
     { Public declarations }
@@ -254,8 +245,8 @@ type
 //    FUserName: String;
 //    FUserDesc: String;
 //    FUserPass: String;
-    PFileTrans: TRtcPFileTransfer;
-    PChat: TRtcPChat;
+//    PFileTrans: TRtcPFileTransfer;
+//    PChat: TRtcPChat;
 //    fFirstScreen: Boolean;
     FormMinimized: Boolean;
 //    PartnerLockedState: Integer;
@@ -276,12 +267,6 @@ type
     property OnUIClose: TUICloseEvent read FOnUIClose write FOnUIClose;
     property DoStartFileTransferring: TDoStartFileTransferring read FDoStartFileTransferring write FDoStartFileTransferring;
 
-    function AddProgressDialog(ATaskId: TTaskId; AUserName: String): PProgressDialogData;
-    function GetProgressDialogData(ATaskId: TTaskId): PProgressDialogData; overload;
-    function GetProgressDialogData(AProgressDialog: PProgressDialog): PProgressDialogData; overload;
-    procedure RemoveProgressDialog(ATaskId: TTaskId);
-    procedure RemoveProgressDialogByValue(AProgressDialog: PProgressDialog);
-    procedure RemoveProgressDialogByUserName(AUserName: String);
     function GetTab(AUserName: String): TChromeTab;
     function AddNewTab(AUserName, AUserDesc, AUserPass: String; AThreadID: Cardinal; AStartLockedState: Integer; AStartServiceStarted: Boolean; AModule: TRtcPDesktopControl): TUIDataModule;
     procedure CloseTab(AUserName: String);
@@ -667,7 +652,7 @@ begin
 
     if not fIsReconnection then
     begin
-      pUIITem := TUIDataModule.Create(Self);
+      pUIItem := TUIDataModule.Create(Self);
       pUIItem.RestoreBackgroundOnExit := True;
       pUIItem.LockSystemOnExit := False;
     end;
@@ -957,105 +942,6 @@ begin
   params.ExStyle := params.ExStyle or WS_EX_APPWINDOW;// or WS_EX_STATICEDGE or WS_SIZEBOX;
   //params.Style := params.Style;// or WS_SIZEBOX or WS_THICKFRAME or WS_DLGFRAME;
   params.WndParent := GetDesktopWindow;
-end;
-
-function TrdDesktopViewer.AddProgressDialog(ATaskId: TTaskId; AUserName: String): PProgressDialogData;
-begin
-  New(Result);
-  Result^.taskId := ATaskId;
-  New(Result^.ProgressDialog);
-  Result^.ProgressDialog^ := TProgressDialog.Create(Self);
-  Result^.UserName := AUserName;
-
-  FProgressDialogsList.Add(Result);
-end;
-
-function TrdDesktopViewer.GetProgressDialogData(ATaskId: TTaskId): PProgressDialogData;
-var
-  i: Integer;
-begin
-  Result := nil;
-
-  for i := 0 to FProgressDialogsList.Count - 1 do
-    if PProgressDialogData(FProgressDialogsList[i])^.taskId = ATaskId then
-    begin
-      Result := FProgressDialogsList[i];
-      Exit;
-    end;
-end;
-
-function TrdDesktopViewer.GetProgressDialogData(AProgressDialog: PProgressDialog): PProgressDialogData;
-var
-  i: Integer;
-begin
-  Result := nil;
-
-  for i := 0 to FProgressDialogsList.Count - 1 do
-    if PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^ = AProgressDialog^ then
-    begin
-      Result := FProgressDialogsList[i];
-      Exit;
-    end;
-end;
-
-procedure TrdDesktopViewer.RemoveProgressDialog(ATaskId: TTaskId);
-var
-  i: Integer;
-begin
-  i := FProgressDialogsList.Count - 1;
-  while i >= 0 do
-  begin
-    if PProgressDialogData(FProgressDialogsList[i])^.taskId = ATaskId then
-    begin
-      FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
-      Dispose(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog);
-      Dispose(FProgressDialogsList[i]);
-      FProgressDialogsList.Delete(i);
-      Break;
-    end;
-
-    i := i - 1;
-  end;
-end;
-
-procedure TrdDesktopViewer.RemoveProgressDialogByValue(AProgressDialog: PProgressDialog);
-var
-  i: Integer;
-begin
-  i := FProgressDialogsList.Count - 1;
-  while i >= 0 do
-  begin
-    if PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog = AProgressDialog then
-    begin
-      FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
-      Dispose(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog);
-      Dispose(FProgressDialogsList[i]);
-      FProgressDialogsList.Delete(i);
-      Break;
-    end;
-
-    i := i - 1;
-  end;
-end;
-
-procedure TrdDesktopViewer.RemoveProgressDialogByUserName(AUserName: String);
-var
-  i: Integer;
-begin
-  i := FProgressDialogsList.Count - 1;
-  while i >= 0 do
-  begin
-    if PProgressDialogData(FProgressDialogsList[i])^.UserName = AUserName then
-    begin
-      FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
-      Dispose(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog);
-      Dispose(FProgressDialogsList[i]);
-      FProgressDialogsList.Delete(i);
-      Break;
-    end;
-
-    i := i - 1;
-  end;
 end;
 
 //procedure TrdDesktopViewer.WMActivate(var Message: TMessage);
@@ -1389,18 +1275,9 @@ begin
 
   SetShortcuts_Hook(False); //Доделать
 
-  FreeAndNil(PFileTrans);
+//  FreeAndNil(PFileTrans);
 
   MainChromeTabs.Tabs.Clear;
-
-  for i := 0 to FProgressDialogsList.Count - 1 do
-  begin
-    FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
-    Dispose(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog);
-    Dispose(FProgressDialogsList[i]);
-  end;
-  FProgressDialogsList.Clear;
-//  FreeAndNil(FProgressDialogsList);
 
   ActiveUIModule := nil;
 
@@ -1461,7 +1338,6 @@ begin
   {$ENDIF}
 
   ActiveUIModule := nil;
-  FProgressDialogsList := TList.Create;
 
 //  fFirstScreen := True;
 
@@ -1513,86 +1389,6 @@ begin
   panOptionsMini.Left := ClientWidth - (ClientWidth * 5 div 100);
 
   DoResizeImage;
-end;
-
-procedure TrdDesktopViewer.FT_UIClose(Sender: TRtcPFileTransferUI);
-begin
-  RemoveProgressDialogByUserName(Sender.UserName);
-end;
-
-procedure TrdDesktopViewer.FT_UILogOut(Sender: TRtcPFileTransferUI);
-begin
-  RemoveProgressDialogByUserName(Sender.UserName);
-end;
-
-procedure TrdDesktopViewer.FT_UINotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);
-var
-  pPDData: PProgressDialogData;
-begin
-//  Memo1.Lines.Add(IntToStr(Sender.Recv_FileCount) + ' - ' + Sender.Recv_FileName + ' - ' + IntToStr(Sender.Recv_BytesComplete) + ' - '+ IntToStr(Sender.Recv_BytesTotal));
-
-  if task.Direction <> dbtFetch then
-    Exit;
-
-  case mode of
-    mbsFileStart, mbsFileData, mbsFileStop:
-    begin
-      pPDData := GetProgressDialogData(task.Id);
-      if pPDData = nil then
-        Exit;
-
-      pPDData^.ProgressDialog^.TextLine1 := task.Files[task.Current].file_path;
-
-      pPDData^.ProgressDialog^.Position := Round(task.Progress * 100);
-
-//      if task.size > 1024 * 1024 * 1024 then
-//        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / (1024 * 1024 * 1024)) + ' GB из ' + FormatFloat('0.00', task.size / (1024 * 1024 * 1024)) + ' GB'
-//      else
-//      if Sender.Recv_BytesTotal > 1024 * 1024 then
-//        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / (1024 * 1024)) + ' MB из ' + FormatFloat('0.00', task.size / (1024 * 1024)) + ' MB'
-//      else
-//        FProgressDialog.TextFooter := FormatFloat('0.00', task.SentSize / 1024) + ' KB из ' + FormatFloat('0.00', task.size / 1024) + ' KB';
-    end;
-    mbsTaskStart:
-    begin
-//      New(FProgressDialog);
-      pPDData := AddProgressDialog(task.Id, task.User);
-
-      pPDData^.ProgressDialog^.Title := 'Копирование';
-      pPDData^.ProgressDialog^.CommonAVI := TCommonAVI.aviCopyFiles;
-      pPDData^.ProgressDialog^.TextLine1 := task.Files[task.Current].file_path;
-      pPDData^.ProgressDialog^.TextLine2 := task.LocalFolder;
-      pPDData^.ProgressDialog^.Max := 100;
-      pPDData^.ProgressDialog^.Position := 0;
-      pPDData^.ProgressDialog^.TextCancel := 'Прерывание...';
-      pPDData^.ProgressDialog^.OnCancel := OnProgressDialogCancel;
-      pPDData^.ProgressDialog^.AutoCalcFooter := True;
-      pPDData^.ProgressDialog^.fHwndParent := FLastActiveExplorerHandle;
-      pPDData^.ProgressDialog^.Execute;
-    end;
-    mbsTaskFinished:
-    begin
-      pPDData := GetProgressDialogData(task.Id);
-      if pPDData = nil then
-        Exit;
-
-      pPDData^.ProgressDialog^.Stop;
-      RemoveProgressDialog(task.Id);
-    end;
-    mbsTaskError:
-    begin
-      pPDData := GetProgressDialogData(task.Id);
-      if pPDData = nil then
-        Exit;
-
-      pPDData^.ProgressDialog^.Stop;
-      RemoveProgressDialog(task.Id);
-    end;
-  end;
-
-
-//  if Sender.Recv_BytesTotal = Sender.Recv_BytesComplete then
-//    FProgressDialog.Stop;
 end;
 
 {procedure TrdDesktopViewer.FT_UIRecv(Sender: TRtcPFileTransferUI);
@@ -1732,7 +1528,7 @@ begin
 //    Dispose(FProgressDialogsList[i]);
 //  end;
 //  FProgressDialogsList.Clear;
-  FreeAndNil(FProgressDialogsList);
+//  FreeAndNil(FProgressDialogsList);
 
 //  for i := 0 to UIModulesList.Count - 1 do
 //  begin
@@ -1816,18 +1612,6 @@ begin
 //    UpdateQuality;
 
   DoResizeImage;
-end;
-
-procedure TrdDesktopViewer.OnProgressDialogCancel(Sender: TObject);
-var
-  pPDData: PProgressDialogData;
-begin
-  pPDData := GetProgressDialogData(PProgressDialog(@Sender));
-  if pPDData <> nil then
-    ActiveUIModule.FT_UI.Module.CancelBatch(ActiveUIModule.FT_UI.Module, pPDData^.taskId);
-
-  TProgressDialog(Sender).Stop;
-  RemoveProgressDialogByValue(@Sender);
 end;
 
 procedure TrdDesktopViewer.myUIClose(Sender: TRtcPDesktopControlUI);
@@ -2067,7 +1851,9 @@ end;
 
 procedure TrdDesktopViewer.aChatExecute(Sender: TObject);
 begin
-  PChat.Open(ActiveUIModule.UI.UserName, Sender);
+////  PChat.Open(ActiveUIModule.UI.UserName, Sender);
+//  if Assigned(FDoStartFileTransferring) then
+//    FDoStartChat(ActiveUIModule.UI.UserName, ActiveUIModule.UI.UserDesc, '', True);
 end;
 
 procedure TrdDesktopViewer.aCtrlAltDelExecute(Sender: TObject);
@@ -2516,38 +2302,6 @@ begin
                                  nil,
                                  nil);
   end;
-end;
-
-procedure TrdDesktopViewer.GetFilesFromHostClipboard(var Message: TMessage);
-var
-  i: Integer;
-  FileList: TStringList;
-  temp_id: TTaskID;
-begin
-  try
-    FLastActiveExplorerHandle := THandle(Message.WParam);
-
-    FileList := TStringList.Create;
-    for i := 0 to CB_DataObject.FCount - 1 do
-      FileList.Add(CB_DataObject.FFiles[i].filePath);
-
-  //  TRtcPFileTransfer(myUI.Module).NotifyFileBatchSend :=FT_UINotifyFileBatchSend;
-    try
-      temp_id := ActiveUIModule.FT_UI.Module.FetchBatch(ActiveUIModule.FT_UI.UserName,
-                          FileList, ExtractFilePath(CB_DataObject.FFiles[0].filePath), String(Message.LParam), nil);
-    except
-  //  on E: Exception do
-  //    begin
-  //      add_lg(TimeToStr(now) + ':  [ERROR] '+E.Message );
-  //      raise;
-  //    end;
-    end;
-  finally
-    FileList.Free;
-  end;
-
-//  for i := 0 to CB_DataObject.FCount - 1 do
-//    FT_UI.Fetch(CB_DataObject.FFiles[i].filePath, String(Message.LParam));
 end;
 
 procedure TrdDesktopViewer.aRestartSystemExecute(Sender: TObject);

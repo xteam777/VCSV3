@@ -100,6 +100,9 @@ end;
 
 function TDesktopDuplicationWrapper.CreateDD : Boolean;
 var
+//  Factory: IDXGIFactory1;
+//  Adapter: IDXGIAdapter1;
+//  AdapterIndex: UINT;
   GI: IDXGIDevice;
   GA: IDXGIAdapter;
   GO: IDXGIOutput;
@@ -116,20 +119,38 @@ begin
   FDuplicate := nil;
   FContext := nil;
   FDevice := nil;
-  // DGI
+
+//  // Создаем экземпляр IDXGIFactory1 для доступа к адаптерам
+//  if Succeeded(CreateDXGIFactory1(IID_IDXGIFactory1, Factory)) then
+//  begin
+//    // Перечисляем доступные адаптеры
+//    AdapterIndex := 0;
+//    while Factory.EnumAdapters1(AdapterIndex, Adapter) = S_OK do
+//    begin
+//      // В этой части можно получать информацию о каждом адаптере, если необходимо
+//      Break;
+//      Inc(AdapterIndex);
+//    end;
+//  end
+//  else
+//  begin
+//    Debug.Log('Ошибка создания IDXGIFactory1');
+//    Exit;
+//  end;
 
   //DXGI_ERROR_SESSION_DISCONNECTED
 //  Sleep(10000);
   FError := D3D11CreateDevice(
-    nil, // Default adapter
-    D3D_DRIVER_TYPE_HARDWARE, // A hardware driver, which implements Direct3D features in hardware.
-    0,
-    Ord(D3D11_CREATE_DEVICE_SINGLETHREADED),
-    nil, 0, // default feature
-    D3D11_SDK_VERSION,
-    FDevice,
-    FFeatureLevel,
-    FContext
+    nil {Adapter}, // Адаптер, nil для использования "первого" адаптера
+    D3D_DRIVER_TYPE_HARDWARE, // Тип драйвера (или D3D_DRIVER_TYPE_WARP для WARP-устройства)
+    0, // Software Rasterizer, 0 или D3D11_CREATE_DEVICE_SOFTWARE_ADAPTER
+    Ord(D3D11_CREATE_DEVICE_SINGLETHREADED), //D3D11_CREATE_DEVICE_DEBUG // Флаги создания
+    nil, // Массив поддерживаемых версий
+    0, // Количество элементов в массиве поддерживаемых версий
+    D3D11_SDK_VERSION, // Версия SDK
+    FDevice, // Указатель на созданное устройство
+    FFeatureLevel, // Поддерживаемый уровень функций
+    FContext // Указатель на контекст устройства
   );
 
   if Failed(FError) then
