@@ -1133,10 +1133,13 @@ end;
 
 procedure TrdDesktopViewer.aShowRemoteCursorExecute(Sender: TObject);
 begin
-//  UI.RemoteCursor := not UI.RemoteCursor;
-//  pImage.Repaint;
-//
-//  aShowRemoteCursor.Checked := UI.RemoteCursor;
+  if ActiveUIModule = nil then
+    Exit;
+
+  ActiveUIModule.UI.RemoteCursor := not ActiveUIModule.UI.RemoteCursor;
+  ActiveUIModule.pImage^.Repaint;
+
+  aShowRemoteCursor.Checked := ActiveUIModule.UI.RemoteCursor;
 end;
 
 procedure TrdDesktopViewer.lCloseClick(Sender: TObject);
