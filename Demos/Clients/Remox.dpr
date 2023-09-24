@@ -64,7 +64,6 @@ uses
   rmxVideoStorage in '..\..\rmxVideo\API\rmxVideoStorage.pas',
   Compressions in '..\..\rmxVideo\Compressor\Compressions.pas',
   SendDestroyToGateway in '..\Modules\SendDestroyToGateway.pas',
-  RmxClipbrd in '..\Modules\RmxClipbrd.pas',
   uUIDataModule in '..\Modules\uUIDataModule.pas' {UIDataModule};
 
 {$R rtcportaluac.res rtcportaluac.rc}

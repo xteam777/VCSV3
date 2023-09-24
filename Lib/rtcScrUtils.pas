@@ -13,7 +13,7 @@ uses
   Messages,
   SysUtils,
   Classes,
-  RmxClipbrd,
+  Clipbrd,
   Registry,
   DWMApi,
 
@@ -232,7 +232,15 @@ var
 begin
   MyClip := TRtcDataSet.Create;
   try
-    Clipboard.Open;
+    try
+      Clipboard.Open;
+    except
+      on E: Exception do
+      begin
+        xLog('Failed to open clipboard');
+        Exit;
+      end;
+    end;
     try
       fHasHDROP := False;
       fmt := EnumClipboardFormats(0);
@@ -363,7 +371,15 @@ begin
   tmp := nil;
   CB_Closed := False;
   try
-    Clipboard.Open;
+    try
+      Clipboard.Open;
+    except
+      on E: Exception do
+      begin
+        xLog('Failed to open clipboard');
+        Exit;
+      end;
+    end;
     EmptyClipboard;
 
     if s <> '' then

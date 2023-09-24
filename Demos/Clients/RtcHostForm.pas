@@ -26,7 +26,7 @@ uses
   rtcThrPool, rtcWinLogon,
 //  SasLibEx,
 
-  RtcHostSvc, RmxClipbrd, RunElevatedSupport,
+  RtcHostSvc, Clipbrd, RunElevatedSupport,
 
   rdFileTrans, rdChat, WinApi.WinSvc,
 
@@ -7624,6 +7624,7 @@ begin
   end;
 
   AddPendingRequest(user, username, action, False);
+  SetStatusStringDelayed('');
 
   DoGetDeviceState(eAccountUserName.Text,
     LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll])),

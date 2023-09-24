@@ -12,7 +12,7 @@ interface
 {$ifend}
 
 uses
-  Windows, Messages, SysUtils, CommonData, CommonUtils, uVircessTypes, rtcLog, RmxClipbrd,
+  Windows, Messages, SysUtils, CommonData, CommonUtils, uVircessTypes, rtcLog, Clipbrd,
   Classes, Graphics, Controls, Forms, Types, IOUtils, DateUtils, rtcPortalHttpCli,
   Dialogs, ExtCtrls, StdCtrls, ShellAPI, ProgressDialog, rtcSystem, SyncObjs,
   rtcpChat, Math, rtcpFileTrans, rtcpFileTransUI, uUIDataModule,
