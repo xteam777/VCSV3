@@ -108,7 +108,6 @@ type
     iMiniPanelShow: TImage;
     iMiniPanelHide: TImage;
     tCloseForm: TTimer;
-    Button1: TButton;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -532,15 +531,15 @@ end;
 
 
 procedure TrdDesktopViewer.Button1Click(Sender: TObject);
-var
-  i: Integer;
-  v: String;
+//var
+//  i: Integer;
+//  v: String;
 begin
-  GlassFrame.Enabled := not GlassFrame.Enabled;
-  MainChromeTabs.Visible := GlassFrame.Enabled;
-  WindowState := TWindowState.wsNormal;
-  BorderStyle := bsSizeable;
-  Position := poDefault;
+//  GlassFrame.Enabled := not GlassFrame.Enabled;
+//  MainChromeTabs.Visible := GlassFrame.Enabled;
+//  WindowState := TWindowState.wsNormal;
+//  BorderStyle := bsSizeable;
+//  Position := poDefault;
 //  panOptionsMini.Update;
 //  panOptionsMini.BringToFront;
 //  panOptionsMini.Left := 1000;

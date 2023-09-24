@@ -3885,15 +3885,6 @@ object rdDesktopViewer: TrdDesktopViewer
           OnMouseUp = panOptionsMiniMouseUp
         end
       end
-      object Button1: TButton
-        Left = 314
-        Top = 166
-        Width = 75
-        Height = 25
-        Caption = 'Button1'
-        TabOrder = 2
-        OnClick = Button1Click
-      end
     end
   end
   object MainChromeTabs: TChromeTabs
@@ -4246,7 +4237,6 @@ object rdDesktopViewer: TrdDesktopViewer
       Top = 0
       Width = 350
       Height = 34
-      UseSystemFont = False
       ActionManager = ActionManagerTop
       Align = alNone
       Color = clMenuBar
@@ -4256,7 +4246,7 @@ object rdDesktopViewer: TrdDesktopViewer
       ColorMap.SelectedFontColor = clWhite
       ColorMap.UnusedColor = clWhite
       Font.Charset = DEFAULT_CHARSET
-      Font.Color = clBlack
+      Font.Color = clWindowText
       Font.Height = -12
       Font.Name = 'Segoe UI'
       Font.Style = []
