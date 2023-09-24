@@ -3,16 +3,12 @@ unit uUIDataModule;
 interface
 
 uses
-  Messages, System.SysUtils, System.Classes, Vcl.Controls, Vcl.StdCtrls, Vcl.Graphics, rtcpFileTrans, rtcpFileTransUI,
-  rtcpDesktopControl, rtcpDesktopControlUI, ChromeTabsClasses, rtcPortalMod, Vcl.ComCtrls, Vcl.Forms,
-  Vcl.ExtCtrls, uVircessTypes, VideoRecorder, rmxVideoStorage, CommonData, ProgressDialog;
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics, Vcl.ComCtrls,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, rtcPortalMod, ProgressDialog, uVircessTypes, CommonData,
+  rtcpFileTrans, rtcpFileTransUI, rtcpDesktopControl, rtcpDesktopControlUI, VideoRecorder, rmxVideoStorage;
 
 type
-  PImage = ^TImage;
-  PLabel = ^TLabel;
-
-  PUIDataModule = ^TUIDataModule;
-  TUIDataModule = class(TDataModule)
+  TUIDataModule = class(TForm)
     UI: TRtcPDesktopControlUI;
     FT_UI: TRtcPFileTransferUI;
     PFileTrans: TRtcPFileTransfer;
@@ -37,7 +33,6 @@ type
     procedure OnProgressDialogCancel(Sender: TObject);
   private
     { Private declarations }
-    FHandle: THandle;
   public
     { Public declarations }
     pImage: PRtcPDesktopViewer;
@@ -60,16 +55,12 @@ type
 
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-
-    property Handle: THandle read FHandle;
   end;
 
 var
   UIDataModule: TUIDataModule;
 
 implementation
-
-{%CLASSGROUP 'Vcl.Controls.TControl'}
 
 {$R *.dfm}
 
@@ -311,8 +302,6 @@ constructor TUIDataModule.Create(AOwner: TComponent);
 begin
   inherited;
 
-  FHandle := AllocateHWND(WndProc);
-
   New(pImage);
 
   TimerReconnect.Enabled := False;
@@ -336,7 +325,6 @@ begin
 //  FT_UI.CloseAndClear;
 //  FT_UI.Close;
 
-  DeallocateHWND(FHandle);
   FreeAndNil(pImage^);
 
   Dispose(pImage);

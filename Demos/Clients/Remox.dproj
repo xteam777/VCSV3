@@ -210,11 +210,11 @@
         <DCCReference Include="..\..\rmxVideo\API\rmxVideoStorage.pas"/>
         <DCCReference Include="..\..\rmxVideo\Compressor\Compressions.pas"/>
         <DCCReference Include="..\Modules\SendDestroyToGateway.pas"/>
+        <DCCReference Include="..\Modules\RmxClipbrd.pas"/>
         <DCCReference Include="..\Modules\uUIDataModule.pas">
             <Form>UIDataModule</Form>
-            <DesignClass>TDataModule</DesignClass>
+            <FormType>dfm</FormType>
         </DCCReference>
-        <DCCReference Include="..\Modules\RmxClipbrd.pas"/>
         <RcItem Include="rmx_w32.exe">
             <ContainerId>ResourceItem</ContainerId>
             <ResourceType>RCDATA</ResourceType>

@@ -64,8 +64,8 @@ uses
   rmxVideoStorage in '..\..\rmxVideo\API\rmxVideoStorage.pas',
   Compressions in '..\..\rmxVideo\Compressor\Compressions.pas',
   SendDestroyToGateway in '..\Modules\SendDestroyToGateway.pas',
-  uUIDataModule in '..\Modules\uUIDataModule.pas' {UIDataModule: TDataModule},
-  RmxClipbrd in '..\Modules\RmxClipbrd.pas';
+  RmxClipbrd in '..\Modules\RmxClipbrd.pas',
+  uUIDataModule in '..\Modules\uUIDataModule.pas' {UIDataModule};
 
 {$R rtcportaluac.res rtcportaluac.rc}
 {$R *.res}
@@ -110,6 +110,7 @@ begin
   Application.Title := 'Remox';
   Forms.Application.ShowMainForm := (Pos('/SILENT', UpperCase(CmdLine)) = 0);
   Forms.Application.CreateForm(TMainForm, MainForm);
+  Application.CreateForm(TUIDataModule, UIDataModule);
   Forms.Application.Run;
 //    else
 //    begin

@@ -1,36 +1,41 @@
 object UIDataModule: TUIDataModule
-  Height = 210
-  Width = 290
+  Left = 0
+  Top = 0
+  ClientHeight = 103
+  ClientWidth = 267
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
+  Font.Style = []
+  TextHeight = 15
   object UI: TRtcPDesktopControlUI
     MapKeys = True
     SmoothScale = True
     ExactCursor = True
     ControlMode = rtcpFullControl
     HaveScreen = False
-    Left = 30
+    Left = 46
     Top = 8
   end
   object FT_UI: TRtcPFileTransferUI
-    OnClose = FT_UIClose
-    OnLogOut = FT_UILogOut
-    NotifyFileBatchSend = FT_UINotifyFileBatchSend
     Left = 76
     Top = 8
   end
   object PFileTrans: TRtcPFileTransfer
-    Left = 122
+    Left = 120
     Top = 8
   end
   object TimerReconnect: TTimer
     Enabled = False
     Interval = 60000
-    OnTimer = TimerReconnectTimer
-    Left = 164
-    Top = 8
+    Left = 158
+    Top = 10
   end
   object TimerRec: TTimer
     Enabled = False
-    Left = 206
-    Top = 8
+    Left = 198
+    Top = 12
   end
 end
