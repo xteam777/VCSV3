@@ -3,12 +3,16 @@ unit uUIDataModule;
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics, Vcl.ComCtrls,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, rtcPortalMod, ProgressDialog, uVircessTypes, CommonData,
-  rtcpFileTrans, rtcpFileTransUI, rtcpDesktopControl, rtcpDesktopControlUI, VideoRecorder, rmxVideoStorage;
+  Messages, System.SysUtils, System.Classes, Vcl.Controls, Vcl.StdCtrls, Vcl.Graphics, rtcpFileTrans, rtcpFileTransUI,
+  rtcpDesktopControl, rtcpDesktopControlUI, ChromeTabsClasses, rtcPortalMod, Vcl.ComCtrls, Vcl.Forms,
+  Vcl.ExtCtrls, uVircessTypes, VideoRecorder, rmxVideoStorage, CommonData, ProgressDialog;
 
 type
-  TUIDataModule = class(TForm)
+  PImage = ^TImage;
+  PLabel = ^TLabel;
+
+  PUIDataModule = ^TUIDataModule;
+  TUIDataModule = class(TDataModule)
     UI: TRtcPDesktopControlUI;
     FT_UI: TRtcPFileTransferUI;
     PFileTrans: TRtcPFileTransfer;
@@ -19,7 +23,6 @@ type
     procedure FT_UILogOut(Sender: TRtcPFileTransferUI);
     procedure FT_UINotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);
   protected
-    FPDForm: TForm;
     FProgressDialogsList: TList;
     FLastActiveExplorerHandle: THandle;
     procedure WndProc(var Message: TMessage); virtual;
@@ -33,6 +36,7 @@ type
     procedure OnProgressDialogCancel(Sender: TObject);
   private
     { Private declarations }
+    FHandle: THandle;
   public
     { Public declarations }
     pImage: PRtcPDesktopViewer;
@@ -55,12 +59,16 @@ type
 
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+
+    property Handle: THandle read FHandle;
   end;
 
 var
   UIDataModule: TUIDataModule;
 
 implementation
+
+{%CLASSGROUP 'Vcl.Controls.TControl'}
 
 {$R *.dfm}
 
@@ -149,7 +157,7 @@ begin
   New(Result);
   Result^.taskId := ATaskId;
   New(Result^.ProgressDialog);
-  Result^.ProgressDialog^ := TProgressDialog.Create(FPDForm);
+  Result^.ProgressDialog^ := TProgressDialog.Create(Owner);
   Result^.UserName := AUserName;
 
   FProgressDialogsList.Add(Result);
@@ -302,19 +310,18 @@ constructor TUIDataModule.Create(AOwner: TComponent);
 begin
   inherited;
 
+  FHandle := AllocateHWND(WndProc);
+
   New(pImage);
 
   TimerReconnect.Enabled := False;
   FProgressDialogsList := TList.Create;
-  FPDForm := TForm.Create(nil);
-  FPDForm.Visible := False;
 end;
 
 destructor TUIDataModule.Destroy;
 var
   i: Integer;
 begin
-  FPDForm.Free;
   TimerReconnect.Enabled := False;
   TimerRec.Enabled := False;
 
@@ -325,6 +332,7 @@ begin
 //  FT_UI.CloseAndClear;
 //  FT_UI.Close;
 
+  DeallocateHWND(FHandle);
   FreeAndNil(pImage^);
 
   Dispose(pImage);
