@@ -143,7 +143,7 @@ end;
 
 procedure TfUpdater.FormCreate(Sender: TObject);
 begin
-  FURL := 'https://remox.support/';
+  FURL := 'https://remox.com/';
   FFileName := 'remox.exe';
   FClient := THTTPClient.Create;
 

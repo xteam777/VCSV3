@@ -67,7 +67,7 @@ end;
 
 procedure TfAcceptEULA.lEULAClick(Sender: TObject);
 begin
-  ShellExecute(Handle, 'open', 'https://remox.support/eula', '', '', SW_SHOWNORMAL);
+  ShellExecute(Handle, 'open', 'https://remox.com/eula', '', '', SW_SHOWNORMAL);
 end;
 
 procedure TfAcceptEULA.lEULAMouseEnter(Sender: TObject);
