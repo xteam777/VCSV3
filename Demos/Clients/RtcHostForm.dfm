@@ -60,8 +60,6 @@ object MainForm: TMainForm
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
-    ExplicitWidth = 811
-    ExplicitHeight = 483
     DesignSize = (
       840
       484)
@@ -3557,7 +3555,7 @@ object MainForm: TMainForm
       DoubleBuffered = True
       ParentBackground = False
       ParentDoubleBuffered = False
-      TabOrder = 0
+      TabOrder = 2
       StyleElements = [seFont, seBorder]
       object Bevel1: TBevel
         Left = 10
@@ -5219,537 +5217,501 @@ object MainForm: TMainForm
         OnClick = rbFileTransClick
       end
     end
-    object pDevAcc: TPanel
+    object pcDevAcc: TPageControl
       Left = 542
       Top = 6
       Width = 298
       Height = 455
-      Margins.Top = 6
-      Margins.Right = 5
-      Margins.Bottom = 5
-      BevelInner = bvSpace
-      BevelOuter = bvNone
-      Color = clWhite
-      ParentBackground = False
-      ShowCaption = False
-      TabOrder = 2
-      StyleElements = [seFont, seBorder]
-      object pAccount: TPanel
-        Left = 1
-        Top = 1
-        Width = 296
-        Height = 453
-        Margins.Left = 5
-        Margins.Top = 6
-        Margins.Right = 5
-        Margins.Bottom = 24
-        Align = alClient
-        Anchors = []
-        BevelOuter = bvNone
-        Color = clWhite
-        ParentBackground = False
-        TabOrder = 0
-        StyleElements = [seFont, seBorder]
-        object Label6: TLabel
-          Left = 28
-          Top = 179
-          Width = 227
-          Height = 16
-          AutoSize = False
-          Caption = #1055#1072#1088#1086#1083#1100
-          Color = clWhite
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -13
-          Font.Name = 'Arial'
-          Font.Style = []
-          ParentColor = False
-          ParentFont = False
-          Transparent = True
-        end
-        object Label5: TLabel
-          Left = 28
-          Top = 121
-          Width = 225
-          Height = 16
-          AutoSize = False
-          Caption = 'E-mail'
-          Color = clWhite
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -13
-          Font.Name = 'Arial'
-          Font.Style = []
-          ParentColor = False
-          ParentFont = False
-          Transparent = True
-        end
-        object lRestorePassword: TLabel
-          Left = 28
-          Top = 344
-          Width = 225
-          Height = 15
-          Cursor = crHandPoint
-          Alignment = taCenter
-          AutoSize = False
-          Caption = #1053#1072#1087#1086#1084#1085#1080#1090#1100' '#1087#1072#1088#1086#1083#1100
-          Color = clWhite
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = 10720035
-          Font.Height = -13
-          Font.Name = 'Arial'
-          Font.Style = [fsUnderline]
-          ParentColor = False
-          ParentFont = False
-          Transparent = True
-          StyleElements = [seClient, seBorder]
-          OnClick = lRestorePasswordClick
-          OnMouseEnter = lRegistrationMouseEnter
-          OnMouseLeave = lRegistrationMouseLeave
-        end
-        object Label11: TLabel
-          Left = 66
-          Top = 285
-          Width = 171
-          Height = 16
-          Alignment = taCenter
-          AutoSize = False
-          Caption = ' '#1042#1093#1086#1076#1080#1090#1100' '#1072#1074#1090#1086#1084#1072#1090#1080#1095#1077#1089#1082#1080
-          Color = clWhite
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -13
-          Font.Name = 'Arial'
-          Font.Style = []
-          ParentColor = False
-          ParentFont = False
-          Transparent = True
-          OnClick = Label11Click
-        end
-        object btnAccountLogin: TColorSpeedButton
-          Tag = 1
-          Left = 28
-          Top = 238
-          Width = 226
-          Height = 34
-          Caption = #1042#1054#1049#1058#1048
-          Color = 10720035
-          Flat = True
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWhite
-          Font.Height = -13
-          Font.Name = 'Arial'
-          Font.Style = [fsBold]
-          Margin = 1
-          ParentFont = False
-          Spacing = 1
-          Transparent = False
-          OnClick = btnAccountLoginClick
-          OnMouseEnter = btnNewConnectionMouseEnter
-          OnMouseLeave = btnNewConnectionMouseLeave
-        end
-        object lRegistration: TLabel
-          Left = 28
-          Top = 370
-          Width = 227
-          Height = 15
-          Cursor = crHandPoint
-          Alignment = taCenter
-          AutoSize = False
-          Caption = #1056#1077#1075#1080#1089#1090#1088#1072#1094#1080#1103
-          Color = clWhite
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = 10720035
-          Font.Height = -13
-          Font.Name = 'Arial'
-          Font.Style = [fsUnderline]
-          ParentColor = False
-          ParentFont = False
-          StyleElements = [seClient, seBorder]
-          OnClick = lRegistrationClick
-          OnMouseEnter = lRegistrationMouseEnter
-          OnMouseLeave = lRegistrationMouseLeave
-        end
-        object eAccountUserName: TEdit
-          Left = 28
-          Top = 143
-          Width = 225
-          Height = 26
-          Alignment = taCenter
-          Color = clWhite
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clBlack
-          Font.Height = -16
-          Font.Name = 'Arial'
-          Font.Style = []
-          MaxLength = 150
-          ParentFont = False
-          TabOrder = 0
-          OnKeyDown = eAccountUserNameKeyDown
-          OnKeyUp = eAccountUserNameKeyUp
-        end
-        object eAccountPassword: TEdit
-          Left = 28
-          Top = 201
-          Width = 226
-          Height = 26
-          Alignment = taCenter
-          Color = clWhite
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clBlack
-          Font.Height = -16
-          Font.Name = 'Arial'
-          Font.Style = []
-          MaxLength = 50
-          ParentFont = False
-          PasswordChar = '*'
-          TabOrder = 1
-          OnKeyDown = eAccountUserNameKeyDown
-          OnKeyUp = eAccountUserNameKeyUp
-        end
-        object cbRememberAccount: TCheckBox
-          Left = 50
-          Top = 284
-          Width = 16
-          Height = 16
-          Color = clWhite
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = cl3DDkShadow
-          Font.Height = -13
-          Font.Name = 'Arial'
-          Font.Style = [fsBold]
-          ParentColor = False
-          ParentFont = False
-          TabOrder = 2
-          OnKeyDown = eAccountUserNameKeyUp
-        end
-      end
-      object pDevices: TPanel
-        Left = 1
-        Top = 1
-        Width = 296
-        Height = 453
-        Margins.Left = 5
-        Margins.Top = 6
-        Margins.Right = 5
-        Margins.Bottom = 24
-        Align = alClient
-        Anchors = []
-        BevelOuter = bvNone
-        Color = clWhite
-        ParentBackground = False
-        TabOrder = 1
-        StyleElements = [seFont, seBorder]
-        object GridPanel1: TGridPanel
+      ActivePage = tsMyDevices
+      TabOrder = 0
+      object tsMyDevices: TTabSheet
+        Caption = #1052#1086#1080' '#1091#1089#1090#1088#1086#1081#1089#1090#1074#1072
+        ImageIndex = 1
+        object pAccount: TPanel
           Left = 0
           Top = 0
-          Width = 296
-          Height = 453
-          Margins.Left = 0
-          Margins.Top = 0
+          Width = 290
+          Height = 426
+          Margins.Left = 5
+          Margins.Top = 6
           Margins.Right = 5
-          Margins.Bottom = 0
+          Margins.Bottom = 24
           Align = alClient
-          Anchors = [akLeft, akTop, akRight]
+          Anchors = []
           BevelOuter = bvNone
-          ColumnCollection = <
-            item
-              SizeStyle = ssAbsolute
-              Value = 5.000000000000000000
-            end
-            item
-              SizeStyle = ssAbsolute
-              Value = 35.000000000000000000
-            end
-            item
-              SizeStyle = ssAbsolute
-              Value = 5.000000000000000000
-            end
-            item
-              Value = 100.000000000000000000
-            end
-            item
-              SizeStyle = ssAbsolute
-              Value = 5.000000000000000000
-            end>
-          ControlCollection = <
-            item
-              Column = 1
-              ColumnSpan = 3
-              Control = twDevices
-              Row = 3
-            end
-            item
-              Column = 3
-              Control = eDeviceName
-              Row = 1
-            end
-            item
-              Column = 1
-              Control = btnAccount
-              Row = 1
-            end>
+          Color = clWhite
           ParentBackground = False
-          ParentColor = True
-          RowCollection = <
-            item
-              SizeStyle = ssAbsolute
-              Value = 5.000000000000000000
-            end
-            item
-              SizeStyle = ssAbsolute
-              Value = 28.000000000000000000
-            end
-            item
-              SizeStyle = ssAbsolute
-              Value = 5.000000000000000000
-            end
-            item
-              Value = 100.000000000000000000
-            end
-            item
-              SizeStyle = ssAbsolute
-              Value = 5.000000000000000000
-            end>
           TabOrder = 0
-          DesignSize = (
-            296
-            453)
-          object twDevices: TVirtualStringTree
-            Left = 5
-            Top = 38
-            Width = 286
-            Height = 410
-            Margins.Left = 5
-            Margins.Top = 73
-            Margins.Right = 5
-            Margins.Bottom = 5
-            Align = alClient
-            BorderStyle = bsNone
-            ButtonStyle = bsTriangle
-            Color = 16645629
-            Colors.BorderColor = 15987699
-            Colors.DisabledColor = clGray
-            Colors.DropMarkColor = 15385233
-            Colors.DropTargetColor = 15385233
-            Colors.DropTargetBorderColor = 15385233
-            Colors.FocusedSelectionColor = 15385233
-            Colors.FocusedSelectionBorderColor = 15385233
-            Colors.GridLineColor = 15987699
-            Colors.HeaderHotColor = clBlack
-            Colors.HotColor = clBlack
-            Colors.SelectionRectangleBlendColor = 15385233
-            Colors.SelectionRectangleBorderColor = 15385233
-            Colors.SelectionTextColor = clBlack
-            Colors.TreeLineColor = 9471874
-            Colors.UnfocusedColor = clGray
-            Colors.UnfocusedSelectionColor = 13421772
-            Colors.UnfocusedSelectionBorderColor = 13421772
-            DefaultNodeHeight = 24
-            Font.Charset = DEFAULT_CHARSET
-            Font.Color = 3947580
-            Font.Height = -11
-            Font.Name = 'Arial'
-            Font.Style = [fsBold]
-            Header.AutoSizeIndex = 0
-            Header.Options = [hoAutoResize, hoColumnResize, hoDrag, hoShowSortGlyphs]
-            Indent = 16
-            ParentFont = False
-            PopupMenu = pmDevice
-            TabOrder = 0
-            TreeOptions.AutoOptions = [toAutoDropExpand, toAutoScroll, toAutoScrollOnExpand, toAutoSort, toAutoTristateTracking, toAutoDeleteMovedNodes, toAutoChangeScale]
-            TreeOptions.PaintOptions = [toShowButtons, toShowDropmark, toShowRoot, toUseBlendedImages]
-            TreeOptions.SelectionOptions = [toFullRowSelect, toRightClickSelect]
-            OnBeforeItemPaint = twDevicesBeforeItemPaint
-            OnCompareNodes = twDevicesCompareNodes
-            OnDblClick = miDesktopControlClick
-            OnFocusChanged = twDevicesFocusChanged
-            OnGetHint = twDevicesGetHint
-            OnKeyDown = twDevicesKeyDown
-            OnMouseDown = twDevicesMouseDown
-            OnMouseMove = twDevicesMouseMove
-            OnMouseUp = twDevicesMouseUp
-            OnMouseLeave = twDevicesMouseLeave
-            Touch.InteractiveGestures = [igPan, igPressAndTap]
-            Touch.InteractiveGestureOptions = [igoPanSingleFingerHorizontal, igoPanSingleFingerVertical, igoPanInertia, igoPanGutter, igoParentPassthrough]
-            Columns = <
-              item
-                Position = 0
-                Width = 286
-              end>
-          end
-          object eDeviceName: TEdit
-            Left = 45
-            Top = 5
-            Width = 246
-            Height = 28
-            Margins.Left = 46
-            Margins.Top = 45
-            Margins.Right = 5
-            Align = alClient
+          StyleElements = [seFont, seBorder]
+          object Label6: TLabel
+            Left = 28
+            Top = 179
+            Width = 227
+            Height = 16
             AutoSize = False
-            BevelInner = bvNone
-            BevelKind = bkFlat
-            BevelOuter = bvNone
-            DoubleBuffered = True
+            Caption = #1055#1072#1088#1086#1083#1100
+            Color = clWhite
             Font.Charset = DEFAULT_CHARSET
             Font.Color = clWindowText
+            Font.Height = -13
+            Font.Name = 'Arial'
+            Font.Style = []
+            ParentColor = False
+            ParentFont = False
+            Transparent = True
+          end
+          object Label5: TLabel
+            Left = 28
+            Top = 121
+            Width = 225
+            Height = 16
+            AutoSize = False
+            Caption = 'E-mail'
+            Color = clWhite
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -13
+            Font.Name = 'Arial'
+            Font.Style = []
+            ParentColor = False
+            ParentFont = False
+            Transparent = True
+          end
+          object lRestorePassword: TLabel
+            Left = 28
+            Top = 344
+            Width = 225
+            Height = 15
+            Cursor = crHandPoint
+            Alignment = taCenter
+            AutoSize = False
+            Caption = #1053#1072#1087#1086#1084#1085#1080#1090#1100' '#1087#1072#1088#1086#1083#1100
+            Color = clWhite
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = 10720035
+            Font.Height = -13
+            Font.Name = 'Arial'
+            Font.Style = [fsUnderline]
+            ParentColor = False
+            ParentFont = False
+            Transparent = True
+            StyleElements = [seClient, seBorder]
+            OnClick = lRestorePasswordClick
+            OnMouseEnter = lRegistrationMouseEnter
+            OnMouseLeave = lRegistrationMouseLeave
+          end
+          object Label11: TLabel
+            Left = 66
+            Top = 285
+            Width = 171
+            Height = 16
+            Alignment = taCenter
+            AutoSize = False
+            Caption = ' '#1042#1093#1086#1076#1080#1090#1100' '#1072#1074#1090#1086#1084#1072#1090#1080#1095#1077#1089#1082#1080
+            Color = clWhite
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWindowText
+            Font.Height = -13
+            Font.Name = 'Arial'
+            Font.Style = []
+            ParentColor = False
+            ParentFont = False
+            Transparent = True
+            OnClick = Label11Click
+          end
+          object btnAccountLogin: TColorSpeedButton
+            Tag = 1
+            Left = 28
+            Top = 238
+            Width = 226
+            Height = 34
+            Caption = #1042#1054#1049#1058#1048
+            Color = 10720035
+            Flat = True
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWhite
+            Font.Height = -13
+            Font.Name = 'Arial'
+            Font.Style = [fsBold]
+            Margin = 1
+            ParentFont = False
+            Spacing = 1
+            Transparent = False
+            OnClick = btnAccountLoginClick
+            OnMouseEnter = btnNewConnectionMouseEnter
+            OnMouseLeave = btnNewConnectionMouseLeave
+          end
+          object lRegistration: TLabel
+            Left = 28
+            Top = 370
+            Width = 227
+            Height = 15
+            Cursor = crHandPoint
+            Alignment = taCenter
+            AutoSize = False
+            Caption = #1056#1077#1075#1080#1089#1090#1088#1072#1094#1080#1103
+            Color = clWhite
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = 10720035
+            Font.Height = -13
+            Font.Name = 'Arial'
+            Font.Style = [fsUnderline]
+            ParentColor = False
+            ParentFont = False
+            StyleElements = [seClient, seBorder]
+            OnClick = lRegistrationClick
+            OnMouseEnter = lRegistrationMouseEnter
+            OnMouseLeave = lRegistrationMouseLeave
+          end
+          object eAccountUserName: TEdit
+            Left = 28
+            Top = 143
+            Width = 225
+            Height = 26
+            Alignment = taCenter
+            Color = clWhite
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clBlack
             Font.Height = -16
             Font.Name = 'Arial'
             Font.Style = []
-            ParentDoubleBuffered = False
+            MaxLength = 150
             ParentFont = False
-            TabOrder = 1
-            OnChange = eDeviceNameChange
+            TabOrder = 0
+            OnKeyDown = eAccountUserNameKeyDown
+            OnKeyUp = eAccountUserNameKeyUp
           end
-          object btnAccount: TColorSpeedButton
-            Left = 5
-            Top = 5
-            Width = 35
-            Height = 28
-            Anchors = []
-            Color = clGray
-            Flat = True
-            Glyph.Data = {
-              060C0000424D060C0000000000003600000028000000230000001C0000000100
-              180000000000D00B0000120B0000120B00000000000000000000808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              808080BE00808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080800000008080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080800000008080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              80808080808080000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000FFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00
-              0000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFF000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080800000008080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              80808080808080808080808080808074BFFF8080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080800000008080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              80808080808080000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000FFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF74
-              00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFF000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080800000008080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080800000008080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080800000008080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              80808080808080000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000FFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00
-              0000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFF000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-              FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080800000008080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080800000008080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080800000008080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              8080808080808080808080808080808080808080808080808080808080808080
-              80808080808080000000}
-            Layout = blGlyphRight
-            Transparent = False
-            OnClick = bAccount0Click
-            ExplicitLeft = -2
-            ExplicitTop = 11
+          object eAccountPassword: TEdit
+            Left = 28
+            Top = 201
+            Width = 226
+            Height = 26
+            Alignment = taCenter
+            Color = clWhite
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clBlack
+            Font.Height = -16
+            Font.Name = 'Arial'
+            Font.Style = []
+            MaxLength = 50
+            ParentFont = False
+            PasswordChar = '*'
+            TabOrder = 1
+            OnKeyDown = eAccountUserNameKeyDown
+            OnKeyUp = eAccountUserNameKeyUp
+          end
+          object cbRememberAccount: TCheckBox
+            Left = 50
+            Top = 284
+            Width = 16
+            Height = 16
+            Color = clWhite
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = cl3DDkShadow
+            Font.Height = -13
+            Font.Name = 'Arial'
+            Font.Style = [fsBold]
+            ParentColor = False
+            ParentFont = False
+            TabOrder = 2
+            OnKeyDown = eAccountUserNameKeyUp
+          end
+        end
+        object pDevices: TPanel
+          Left = 0
+          Top = 0
+          Width = 290
+          Height = 426
+          Margins.Left = 5
+          Margins.Top = 6
+          Margins.Right = 5
+          Margins.Bottom = 24
+          Align = alClient
+          Anchors = []
+          BevelOuter = bvNone
+          Color = clWhite
+          ParentBackground = False
+          TabOrder = 1
+          StyleElements = [seFont, seBorder]
+          object GridPanel1: TGridPanel
+            Left = 0
+            Top = 0
+            Width = 290
+            Height = 426
+            Margins.Left = 0
+            Margins.Top = 0
+            Margins.Right = 5
+            Margins.Bottom = 0
+            Align = alClient
+            Anchors = [akLeft, akTop, akRight]
+            BevelOuter = bvNone
+            ColumnCollection = <
+              item
+                SizeStyle = ssAbsolute
+                Value = 5.000000000000000000
+              end
+              item
+                SizeStyle = ssAbsolute
+                Value = 35.000000000000000000
+              end
+              item
+                SizeStyle = ssAbsolute
+                Value = 5.000000000000000000
+              end
+              item
+                Value = 100.000000000000000000
+              end
+              item
+                SizeStyle = ssAbsolute
+                Value = 5.000000000000000000
+              end>
+            ControlCollection = <
+              item
+                Column = 1
+                ColumnSpan = 3
+                Control = twDevices
+                Row = 3
+              end
+              item
+                Column = 3
+                Control = eDeviceName
+                Row = 1
+              end
+              item
+                Column = 1
+                Control = btnAccount
+                Row = 1
+              end>
+            ParentBackground = False
+            ParentColor = True
+            RowCollection = <
+              item
+                SizeStyle = ssAbsolute
+                Value = 5.000000000000000000
+              end
+              item
+                SizeStyle = ssAbsolute
+                Value = 28.000000000000000000
+              end
+              item
+                SizeStyle = ssAbsolute
+                Value = 5.000000000000000000
+              end
+              item
+                Value = 100.000000000000000000
+              end
+              item
+                SizeStyle = ssAbsolute
+                Value = 5.000000000000000000
+              end>
+            TabOrder = 0
+            DesignSize = (
+              290
+              426)
+            object twDevices: TVirtualStringTree
+              Left = 5
+              Top = 38
+              Width = 280
+              Height = 383
+              Margins.Left = 5
+              Margins.Top = 73
+              Margins.Right = 5
+              Margins.Bottom = 5
+              Align = alClient
+              BorderStyle = bsNone
+              ButtonStyle = bsTriangle
+              Color = 16645629
+              Colors.BorderColor = 15987699
+              Colors.DisabledColor = clGray
+              Colors.DropMarkColor = 15385233
+              Colors.DropTargetColor = 15385233
+              Colors.DropTargetBorderColor = 15385233
+              Colors.FocusedSelectionColor = 15385233
+              Colors.FocusedSelectionBorderColor = 15385233
+              Colors.GridLineColor = 15987699
+              Colors.HeaderHotColor = clBlack
+              Colors.HotColor = clBlack
+              Colors.SelectionRectangleBlendColor = 15385233
+              Colors.SelectionRectangleBorderColor = 15385233
+              Colors.SelectionTextColor = clBlack
+              Colors.TreeLineColor = 9471874
+              Colors.UnfocusedColor = clGray
+              Colors.UnfocusedSelectionColor = 13421772
+              Colors.UnfocusedSelectionBorderColor = 13421772
+              DefaultNodeHeight = 24
+              Font.Charset = DEFAULT_CHARSET
+              Font.Color = 3947580
+              Font.Height = -11
+              Font.Name = 'Arial'
+              Font.Style = [fsBold]
+              Header.AutoSizeIndex = 0
+              Header.Options = [hoAutoResize, hoColumnResize, hoDrag, hoShowSortGlyphs]
+              Indent = 16
+              ParentFont = False
+              PopupMenu = pmDevice
+              TabOrder = 0
+              TreeOptions.AutoOptions = [toAutoDropExpand, toAutoScroll, toAutoScrollOnExpand, toAutoSort, toAutoTristateTracking, toAutoDeleteMovedNodes, toAutoChangeScale]
+              TreeOptions.PaintOptions = [toShowButtons, toShowDropmark, toShowRoot, toUseBlendedImages]
+              TreeOptions.SelectionOptions = [toFullRowSelect, toRightClickSelect]
+              OnBeforeItemPaint = twDevicesBeforeItemPaint
+              OnCompareNodes = twDevicesCompareNodes
+              OnDblClick = miDesktopControlClick
+              OnFocusChanged = twDevicesFocusChanged
+              OnGetHint = twDevicesGetHint
+              OnKeyDown = twDevicesKeyDown
+              OnMouseDown = twDevicesMouseDown
+              OnMouseMove = twDevicesMouseMove
+              OnMouseUp = twDevicesMouseUp
+              OnMouseLeave = twDevicesMouseLeave
+              Touch.InteractiveGestures = [igPan, igPressAndTap]
+              Touch.InteractiveGestureOptions = [igoPanSingleFingerHorizontal, igoPanSingleFingerVertical, igoPanInertia, igoPanGutter, igoParentPassthrough]
+              Columns = <
+                item
+                  Position = 0
+                  Width = 280
+                end>
+            end
+            object eDeviceName: TEdit
+              Left = 45
+              Top = 5
+              Width = 240
+              Height = 28
+              Margins.Left = 46
+              Margins.Top = 45
+              Margins.Right = 5
+              Align = alClient
+              AutoSize = False
+              BevelInner = bvNone
+              BevelKind = bkFlat
+              BevelOuter = bvNone
+              DoubleBuffered = True
+              Font.Charset = DEFAULT_CHARSET
+              Font.Color = clWindowText
+              Font.Height = -16
+              Font.Name = 'Arial'
+              Font.Style = []
+              ParentDoubleBuffered = False
+              ParentFont = False
+              TabOrder = 1
+              OnChange = eDeviceNameChange
+            end
+            object btnAccount: TColorSpeedButton
+              Left = 5
+              Top = 5
+              Width = 35
+              Height = 28
+              Anchors = []
+              Color = clGray
+              Flat = True
+              Glyph.Data = {
+                060C0000424D060C0000000000003600000028000000230000001C0000000100
+                180000000000D00B0000120B0000120B00000000000000000000808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                808080BE00808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080800000008080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080800000008080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                80808080808080000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000FFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00
+                0000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFF000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080800000008080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                80808080808080808080808080808074BFFF8080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080800000008080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                80808080808080000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000FFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF74
+                00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFF000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080800000008080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080800000008080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080800000008080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                80808080808080000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000FFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00
+                0000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFF000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+                FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080800000008080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080800000008080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080800000008080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                8080808080808080808080808080808080808080808080808080808080808080
+                80808080808080000000}
+              Layout = blGlyphRight
+              Transparent = False
+              OnClick = bAccount0Click
+              ExplicitLeft = -2
+              ExplicitTop = 11
+            end
           end
         end
       end
-    end
-    object pBtnDevices: TPanel
-      Left = 426
-      Top = 6
-      Width = 112
-      Height = 28
-      BevelOuter = bvNone
-      Color = 15001320
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clBlack
-      Font.Height = -11
-      Font.Name = 'Arial'
-      Font.Style = []
-      ParentBackground = False
-      ParentFont = False
-      TabOrder = 3
-      StyleElements = [seFont, seBorder]
-      object bDevices: TColorSpeedButton
-        Left = 0
-        Top = 0
-        Width = 112
-        Height = 28
-        Caption = #1052#1086#1080' '#1091#1089#1090#1088#1086#1081#1089#1090#1074#1072' <<'
-        Color = 15001320
-        Flat = True
-        Font.Charset = DEFAULT_CHARSET
-        Font.Color = 3947580
-        Font.Height = -11
-        Font.Name = 'Arial'
-        Font.Style = [fsBold]
-        ParentFont = False
-        OnClick = lDevicesClick
-        OnMouseEnter = bDevicesMouseEnter
-        OnMouseLeave = bDevicesMouseLeave
+      object tsIncomeConnections: TTabSheet
+        Caption = #1042#1093#1086#1076#1103#1097#1080#1077' '#1087#1086#1076#1082#1083#1102#1095#1077#1085#1080#1103
       end
     end
     object Button4: TButton
@@ -5758,7 +5720,7 @@ object MainForm: TMainForm
       Width = 75
       Height = 25
       Caption = 'Button4'
-      TabOrder = 4
+      TabOrder = 3
       OnClick = Button4Click
     end
     object Button1: TButton
@@ -5767,7 +5729,7 @@ object MainForm: TMainForm
       Width = 75
       Height = 25
       Caption = 'Button1'
-      TabOrder = 5
+      TabOrder = 4
       Visible = False
       OnClick = Button1Click
     end
@@ -5777,7 +5739,7 @@ object MainForm: TMainForm
       Width = 75
       Height = 25
       Caption = 'Button1'
-      TabOrder = 6
+      TabOrder = 5
       Visible = False
       OnClick = Button2Click
     end
@@ -5787,7 +5749,7 @@ object MainForm: TMainForm
       Width = 75
       Height = 25
       Caption = 'Button3'
-      TabOrder = 7
+      TabOrder = 6
       Visible = False
       OnClick = Button3Click
     end
@@ -5805,7 +5767,7 @@ object MainForm: TMainForm
       Font.Style = []
       ParentBackground = False
       ParentFont = False
-      TabOrder = 8
+      TabOrder = 7
       StyleElements = [seFont, seBorder]
       object bSetup: TColorSpeedButton
         Left = 0
@@ -5836,8 +5798,8 @@ object MainForm: TMainForm
     Enabled = False
     Interval = 3000
     OnTimer = tHcAccountsReconnectTimer
-    Left = 521
-    Top = 43
+    Left = 87
+    Top = 251
   end
   object pmIconMenu: TPopupMenu
     Alignment = paRight
@@ -6047,8 +6009,8 @@ object MainForm: TMainForm
   end
   object rDeleteDevice: TRtcResult
     OnReturn = rDeleteDeviceReturn
-    Left = 353
-    Top = 4
+    Left = 17
+    Top = 312
   end
   object bhMain: TBalloonHint
     Delay = 100
@@ -6193,8 +6155,8 @@ object MainForm: TMainForm
   object HostPingTimer: TTimer
     Enabled = False
     OnTimer = HostPingTimerTimer
-    Left = 581
-    Top = 44
+    Left = 123
+    Top = 240
   end
   object resHostLogin: TRtcResult
     OnReturn = resHostLoginReturn
@@ -6254,8 +6216,8 @@ object MainForm: TMainForm
   object tCheckLockedState: TTimer
     Interval = 100
     OnTimer = tCheckLockedStateTimer
-    Left = 494
-    Top = 44
+    Left = 68
+    Top = 254
   end
   object rGetHostLockedState: TRtcResult
     OnReturn = rGetHostLockedStateReturn
@@ -6266,15 +6228,15 @@ object MainForm: TMainForm
   object tConnLimit: TTimer
     Interval = 60000
     OnTimer = tConnLimitTimer
-    Left = 318
-    Top = 42
+    Left = 84
+    Top = 312
   end
   object tStatus: TTimer
     Enabled = False
     Interval = 250
     OnTimer = tStatusTimer
-    Left = 550
-    Top = 44
+    Left = 104
+    Top = 244
   end
   object tIconRefresh: TTimer
     OnTimer = tIconRefreshTimer
@@ -6283,8 +6245,8 @@ object MainForm: TMainForm
   end
   object mmMenu: TMainMenu
     OwnerDraw = True
-    Left = 376
-    Top = 40
+    Left = 84
+    Top = 96
     object N5: TMenuItem
       Caption = #1048#1085#1089#1090#1088#1091#1084#1077#1085#1090#1099
       object mmiSettings: TMenuItem
@@ -6366,26 +6328,26 @@ object MainForm: TMainForm
   end
   object tCheckServiceStartStop: TTimer
     OnTimer = tCheckServiceStartStopTimer
-    Left = 346
-    Top = 42
+    Left = 52
+    Top = 312
   end
   object tDelayedStatus: TTimer
     Enabled = False
     OnTimer = tDelayedStatusTimer
-    Left = 406
-    Top = 44
+    Left = 144
+    Top = 236
   end
   object tTimerClientReconnect: TTimer
     Enabled = False
     OnTimer = tTimerClientReconnectTimer
-    Left = 436
-    Top = 43
+    Left = 44
+    Top = 257
   end
   object tHostTimerClientReconnect: TTimer
     Enabled = False
     OnTimer = tHostTimerClientReconnectTimer
-    Left = 464
-    Top = 43
+    Left = 16
+    Top = 261
   end
   object tPClientReconnect: TTimer
     Interval = 100
@@ -6410,7 +6372,7 @@ object MainForm: TMainForm
   end
   object rGetPartnerInfoReconnect: TRtcResult
     OnReturn = rGetPartnerInfoReconnectReturn
-    Left = 415
-    Top = 120
+    Left = 447
+    Top = 132
   end
 end

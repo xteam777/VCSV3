@@ -2,7 +2,7 @@
 Coordinates=701,610,88,36
 
 []
-Coordinates=1266,606,96,36
+Coordinates=528,441,87,58
 Visible=True
 LayerNames=
 
@@ -230,9 +230,6 @@ Coordinates=13,719,40,36
 [nCopyPass]
 Coordinates=1021,793,80,36
 
-[bDevices]
-Coordinates=952,793,67,36
-
 [Bevel1]
 Coordinates=1044,221,54,36
 
@@ -241,9 +238,6 @@ Coordinates=873,793,73,36
 
 [Label6]
 Coordinates=83,1,53,58
-
-[pDevAcc]
-Coordinates=731,78,66,58
 
 [miFileTrans]
 Coordinates=616,793,82,36
@@ -344,9 +338,6 @@ Coordinates=1266,661,107,36
 [HostTimerModule]
 Coordinates=1266,716,116,36
 
-[pBtnDevices]
-Coordinates=528,441,87,58
-
 [btnAccountLogin]
 Coordinates=695,155,110,36
 
@@ -370,4 +361,7 @@ Coordinates=731,309,60,58
 
 [tHcAccountsReconnect]
 Coordinates=714,719,66,36
+
+[pcDevAcc]
+Coordinates=731,78,66,58
 

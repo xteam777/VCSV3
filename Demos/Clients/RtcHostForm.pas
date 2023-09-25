@@ -14,7 +14,7 @@ uses
   Windows, Messages, SysUtils, CommonData, System.Types, uProcess, ServiceMgr,
   Classes, Graphics, Controls, Forms, DateUtils, CommonUtils, WtsApi, uSysAccount, ClipbrdMonitor,
   Dialogs, StdCtrls, ExtCtrls, ShellApi, rdFileTransLog, VirtualTrees.Types, SHDocVw, rtcpFileTransUI, Psapi, Winapi.SHFolder,
-  ComCtrls, Registry, Math, RtcIdentification, SyncObjs, System.Net.HTTPClient, System.Net.URLClient, ActiveX, ComObj, CommCtrl,
+  Vcl.ComCtrls, Registry, Math, RtcIdentification, SyncObjs, System.Net.HTTPClient, System.Net.URLClient, ActiveX, ComObj, CommCtrl,
   rtcSystem, rtcInfo, uMessageBox, rtcScrUtils, IOUtils, uAcceptEula, ProgressDialog, ShlObj, RecvDataObject, SendDestroyToGateway,
   ChromeTabsTypes, ChromeTabsClasses, ChromeTabsControls, uUIDataModule,
 
@@ -225,7 +225,7 @@ type
     ePartnerID: TComboBox;
     rbDesktopControl: TRadioButton;
     rbFileTrans: TRadioButton;
-    pDevAcc: TPanel;
+    pcDevAcc: TPageControl;
     pAccount: TPanel;
     Label6: TLabel;
     Label5: TLabel;
@@ -241,8 +241,6 @@ type
     iDeviceOnline: TImage;
     iDeviceOffline: TImage;
     ePassword: TAlignedEdit;
-    pBtnDevices: TPanel;
-    bDevices: TColorSpeedButton;
     iRegPassState: TImage;
     Label22: TLabel;
     iRegPassYes: TImage;
@@ -317,6 +315,8 @@ type
     pBtnSetup: TPanel;
     bGetUpdate: TSpeedButton;
     rGetPartnerInfoReconnect: TRtcResult;
+    tsIncomeConnections: TTabSheet;
+    tsMyDevices: TTabSheet;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -400,7 +400,6 @@ type
       Selected: Boolean);
     procedure Label11Click(Sender: TObject);
     procedure bAccount0Click(Sender: TObject);
-    procedure lDevicesClick(Sender: TObject);
 //    procedure twDevicesCustomDrawItem(Sender: TCustomTreeView; Node: TTreeNode;
 //      State: TCustomDrawState; var DefaultDraw: Boolean);
     procedure miAddGroupClick(Sender: TObject);
@@ -623,7 +622,6 @@ type
     ReqCnt1, ReqCnt2: Integer;
     FCurStatus: Integer;
     TaskBarIcon: Boolean;
-    DevicesPanelVisible: Boolean;
 
     AccountName, AccountUID: String;
     HighLightedNode: PVirtualNode;
@@ -3161,19 +3159,6 @@ begin
 
   Constraints.MinWidth := 0;
   Constraints.MaxWidth := 0;
-  if DevicesPanelVisible then
-  begin
-    pDevAcc.Visible := True;
-    ClientWidth := 840;
-    bDevices.Caption := 'Мои устройства <<';
-  end
-  else
-  begin
-    pDevAcc.Visible := False;
-    ClientWidth := 538;
-    bDevices.Caption := 'Мои устройства >>';
-    Constraints.MaxWidth := Width;
-  end;
 
   if LoggedIn then
   begin
@@ -4041,8 +4026,8 @@ procedure TMainForm.FormResize(Sender: TObject);
 begin
 //  XLog('FormResize');
 
-  pDevAcc.Left := 542;
-  pDevAcc.Width := ClientWidth - pDevAcc.Left; //pRight.Left - pRight.Width - GetScaleValue(25);
+  pcDevAcc.Left := 542;
+  pcDevAcc.Width := ClientWidth - pcDevAcc.Left; //pRight.Left - pRight.Width - GetScaleValue(25);
   bGetUpdate.Left := pInMain.Left + pInMain.Width - bGetUpdate.Width;
 //  CurWidth := Width;
 end;
@@ -4083,14 +4068,6 @@ begin
 //  XLog('Label22Click');
 
   ShowSettingsForm('tsSequrity');
-end;
-
-procedure TMainForm.lDevicesClick(Sender: TObject);
-begin
-//  XLog('lDevicesClick');
-
-  DevicesPanelVisible := not DevicesPanelVisible;
-  ShowDevicesPanel;
 end;
 
 procedure TMainForm.lHelpClick(Sender: TObject);
@@ -4414,7 +4391,6 @@ begin
         begin
           StoreHistory := info.asBoolean['StoreHistory'];
           StorePasswords := info.asBoolean['StorePasswords'];
-          DevicesPanelVisible := info.asBoolean['DevicesPanelVisible'];
 
   //            PClient.GateAddr:=info.asString['Address'];
   //            PClient.GatePort:=info.asString['Port'];
@@ -4433,8 +4409,6 @@ begin
           StoreHistory := info.asBoolean['StoreHistory'];
           StorePasswords := info.asBoolean['StorePasswords'];
 //          OnlyAdminChanges := info.asBoolean['OnlyAdminChanges'];
-
-          DevicesPanelVisible := info.asBoolean['DevicesPanelVisible'];
 
           cbRememberAccount.Checked := info.asBoolean['RememberAccount'];
           eAccountUserName.Text := info.asString['AccountUserName'];;
@@ -4471,7 +4445,6 @@ begin
     begin
       StoreHistory := True;
       StorePasswords := True;
-      DevicesPanelVisible := True;
       cbRememberAccount.Checked := True;
     end;
   end;
@@ -4558,7 +4531,6 @@ begin
   try
     info.asBoolean['StoreHistory'] := StoreHistory;
     info.asBoolean['StorePasswords'] := StorePasswords;
-    info.asBoolean['DevicesPanelVisible'] := DevicesPanelVisible;
 
     info.asString['Address'] := hcAccounts.ServerAddr;
   //    info.asString['Port'] := PClient.GatePort;
@@ -4568,8 +4540,6 @@ begin
 
     info.asString['RegularPassword'] := RegularPassword;
 //    info.asBoolean['OnlyAdminChanges'] := OnlyAdminChanges;
-
-    info.asBoolean['DevicesPanelVisible'] := DevicesPanelVisible;
 
     info.asString['ProxyOption'] := ProxyOption;
     info.asBoolean['Proxy'] := hcAccounts.UseProxy;
@@ -7159,20 +7129,20 @@ var
 begin
 //  XLog('bAccount0Click');
 
-  p.X := pDevAcc.Left + pInMain.Left + btnAccount.Left;
-  p.Y := btnAccount.Height + pInMain.Top + pDevAcc.Top + btnAccount.Top;
+  p.X := pcDevAcc.Left + pInMain.Left + btnAccount.Left;
+  p.Y := btnAccount.Height + pInMain.Top + pcDevAcc.Top + btnAccount.Top;
   p := ClientToScreen(p);
   pmAccount.Popup(p.X, p.Y);;
 end;
 
 procedure TMainForm.bDevicesMouseEnter(Sender: TObject);
 begin
-  bDevices.Color := RGB(220, 220, 220);
+  TColorSpeedButton(Sender).Color := RGB(220, 220, 220);
 end;
 
 procedure TMainForm.bDevicesMouseLeave(Sender: TObject);
 begin
-  bDevices.Color := RGB(230, 230, 230);
+  TColorSpeedButton(Sender).Color := RGB(230, 230, 230);
 end;
 
 procedure TMainForm.bGetUpdateClick(Sender: TObject);
