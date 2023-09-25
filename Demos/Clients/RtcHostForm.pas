@@ -778,6 +778,7 @@ type
     procedure RemoveProgressDialogByUserName(AUserName: String);
 
     procedure AddIncomeConnection(AUserName, AUserDesc: String);
+    procedure RemoveIncomeConnection(AUserName: String);
   end;
 
 //type
@@ -10288,6 +10289,26 @@ begin
   twDevices.InvalidateNode(Node);
 end;
 
+procedure TMainForm.RemoveIncomeConnection(AUserName: String);
+var
+  Node: PVirtualNode;
+begin
+//  XLog('RemoveIncomeConnection');
+
+  Node := twIncomes.GetFirst;
+  while Node <> nil do
+  begin
+    if TDeviceData(twIncomes.GetNodeData(Node)^).Name = AUserName then
+    begin
+      twDevices.DeleteNode(Node);
+      twDevices.Repaint;
+
+      Break;
+    end;
+    Node := twDevices.GetNext(Node);
+  end;
+end;
+
 procedure TMainForm.PModuleUserJoined(Sender: TRtcPModule; const user:string);
 var
   s, d: String;
@@ -10385,7 +10406,7 @@ begin
   else
     s := user + ' (' + s + ')';
 
-  RemoveIncomeConnection(user, s);
+  RemoveIncomeConnection(user);
 
 //  Memo1.Lines.Add(user + ' left');
 
