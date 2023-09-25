@@ -308,7 +308,7 @@ begin
 
   FDuplicate.ReleaseFrame;
 //  Sleep(1);
-  FError := FDuplicate.AcquireNextFrame(1000, FrameInfo, DesktopResource);
+  FError := FDuplicate.AcquireNextFrame(10, FrameInfo, DesktopResource);
   if FError = ERROR_WAIT_TIMEOUT then //Изменений нет
   begin
 //    if not CreateDD then
