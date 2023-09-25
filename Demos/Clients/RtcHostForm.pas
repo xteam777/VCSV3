@@ -572,11 +572,12 @@ type
     function FormatID(AID: String): String;
     function ConnectedToAllGateways: Boolean;
     function GetUniqueString: String;
-    function GetUserDescription(aUserName, aAction: String): String;
+    function GetUserDescription(aUserName: String): String;
     function GetUserPassword(aUserName: String): String;
     function AddPendingRequest(uname, desc, action: String; fIsReconnection: Boolean): PPendingRequestItem;
     procedure DeletePendingRequest(uname, action: String);
-    function GetPendingItemByUserName(uname, action: String): PPendingRequestItem;
+    function GetPendingItem(uname: String): PPendingRequestItem; overload;
+    function GetPendingItem(uname, action: String): PPendingRequestItem; overload;
     function PartnerIsPending(uname, action, gateway: String): Boolean; overload;
     function PartnerIsPending(uname, action: String; fIsReconnection: Boolean): Boolean; overload;
     function PartnerIsPending(uname: String): Boolean; overload;
@@ -775,6 +776,8 @@ type
     procedure RemoveProgressDialog(ATaskId: TTaskId);
     procedure RemoveProgressDialogByValue(AProgressDialog: PProgressDialog);
     procedure RemoveProgressDialogByUserName(AUserName: String);
+
+    procedure AddIncomeConnection(AUserName, AUserDesc: String);
   end;
 
 //type
@@ -933,7 +936,7 @@ begin
 //  UI.OnRecvStart := OnDesktopHostFileRecvStart;
 //  UI.OnRecvStop := OnDesktopHostFileRecvStop;
   UI.UserName := user;
-  UI.UserDesc := GetUserDescription(user, 'file');
+  UI.UserDesc := GetUserDescription(user);
   // Always set UI.Module *after* setting UI.UserName !!!
   UI.Module := Sender;
   UI.Tag := Sender.Tag; //ThreadID
@@ -3334,6 +3337,7 @@ begin
   do_notify := False;
 
   twDevices.NodeDataSize := SizeOf(TDeviceData);
+  twIncomes.NodeDataSize := SizeOf(TDeviceData);
 
   ClientHeight := 488;
   Constraints.MinHeight := Height;
@@ -6598,7 +6602,7 @@ var
   Level: Integer;
   Name: String;
 begin
-  DData := twDevices.GetNodeData(Node);
+  DData := twIncomes.GetNodeData(Node);
 //  if DData.HighLight then
 //    TargetCanvas.Brush.Color := clRed;
 //  else
@@ -6632,7 +6636,7 @@ begin
 
     FillRect(ItemRect);
 
-    ItemRect.Left := 12 + (Level * twDevices.Indent);
+    ItemRect.Left := 12 + (Level * twIncomes.Indent);
     DrawImage(TargetCanvas, ItemRect, DData.StateIndex);
 
     if Level = 0 then
@@ -7857,7 +7861,7 @@ begin
       SetStatusStringDelayed('Партнер не в сети. Подключение невозможно');
 //      SetStatusStringDelayed('Готов к подключению', 2000);
 
-//      PRItem := GetPendingItemByUserName(asWideString['user'], asString['action']);
+//      PRItem := GetPendingItem(asWideString['user'], asString['action']);
 //      if PRItem = nil then
 //        Exit;
 
@@ -7875,7 +7879,7 @@ begin
     else
     if asString['Result'] = 'OK' then
     begin
-      PRItem := GetPendingItemByUserName(asWideString['User'], asString['action']);
+      PRItem := GetPendingItem(asWideString['User'], asString['action']);
       if PRItem = nil then
         Exit;
 
@@ -7924,7 +7928,7 @@ begin
     else
     if asString['Result'] = 'PASS_NOT_VALID' then
     begin
-      PRItem := GetPendingItemByUserName(asWideString['user'], asString['action']);
+      PRItem := GetPendingItem(asWideString['user'], asString['action']);
       if PRItem = nil then
         Exit;
 
@@ -7983,7 +7987,7 @@ begin
 
   if PartnerIsPending(user, action, True) then
   begin
-    PRItem := GetPendingItemByUserName(user, action);
+    PRItem := GetPendingItem(user, action);
     PRItem^.IsReconnection := True;
   end
   else
@@ -8051,7 +8055,7 @@ begin
     else
     if asString['Result'] = 'OK' then
     begin
-      PRItem := GetPendingItemByUserName(asWideString['User'], asString['action']);
+      PRItem := GetPendingItem(asWideString['User'], asString['action']);
       if PRItem = nil then
         Exit;
 
@@ -8096,7 +8100,7 @@ begin
     else
     if asString['Result'] = 'PASS_NOT_VALID' then
     begin
-      PRItem := GetPendingItemByUserName(asWideString['user'], asString['action']);
+      PRItem := GetPendingItem(asWideString['user'], asString['action']);
       if PRItem = nil then
         Exit;
 
@@ -9423,12 +9427,12 @@ begin
     end;
 end;
 
-function TMainForm.GetUserDescription(aUserName, aAction: String): String;
+function TMainForm.GetUserDescription(aUserName: String): String;
 var
   Node: PVirtualNode;
   pRItem: PPendingRequestItem;
 begin
-  pRItem := GetPendingItemByUserName(aUserName, aAction);
+  pRItem := GetPendingItem(aUserName);
   if pRItem <> nil then
   begin
     Result := pRItem^.UserDesc;
@@ -9482,7 +9486,7 @@ begin
   if Assigned(FWin) then
   begin
     FWin.UI.UserName := user;
-    FWin.UI.UserDesc := GetUserDescription(user, 'file');
+    FWin.UI.UserDesc := GetUserDescription(user);
     // Always set UI.Module *after* setting UI.UserName !!!
     FWin.UI.Module := Sender;
     FWin.UI.Tag := Sender.Tag; //ThreadID
@@ -9549,7 +9553,7 @@ begin
   if Assigned(FWin) then
   begin
     FWin.UI.UserName := user;
-    FWin.UI.UserDesc := GetUserDescription(user, 'file');
+    FWin.UI.UserDesc := GetUserDescription(user);
     // Always set UI.Module *after* setting UI.UserName !!!
     FWin.UI.Module := Sender;
     FWin.UI.Tag := Sender.Tag; //ThreadID
@@ -9617,7 +9621,7 @@ begin
   if Assigned(FWin) then
   begin
     FWin.UI.UserName := user;
-    FWin.UI.UserDesc := GetUserDescription(user, 'file');
+    FWin.UI.UserDesc := GetUserDescription(user);
     // Always set UI.Module *after* setting UI.UserName !!!
     FWin.UI.Module := Sender;
     FWin.UI.Tag := Sender.Tag; //ThreadID
@@ -9690,7 +9694,7 @@ begin
 //    {$ENDIF}
 
     CWin.UI.UserName := user;
-    CWin.UI.UserDesc := GetPendingItemByUserName(user, 'chat')^.UserDesc;
+    CWin.UI.UserDesc := GetPendingItem(user, 'chat')^.UserDesc;
     // Always set UI.Module *after* setting UI.UserName !!!
     CWin.UI.Module := Sender;
     CWin.UI.Tag := Sender.Tag; //ThreadID
@@ -9879,7 +9883,7 @@ begin
     pPCItem := GetPortalConnection('desk', user);
     if pPCItem <> nil then
     //begin
-      pPCItem^.DataModule := DesktopsForm.AddNewTab(pPCItem^.UserName, GetUserDescription(user, 'desk'), pPCItem^.UserPass, pPCItem^.ThreadID, pPCItem^.StartLockedState, pPCItem^.StartServiceStarted, Sender);
+      pPCItem^.DataModule := DesktopsForm.AddNewTab(pPCItem^.UserName, GetUserDescription(user), pPCItem^.UserPass, pPCItem^.ThreadID, pPCItem^.StartLockedState, pPCItem^.StartServiceStarted, Sender);
 //      DesktopsForm.PartnerLockedState := pPCItem^.StartLockedState;
 //      DesktopsForm.PartnerServiceStarted := pPCItem^.StartServiceStarted;
 //      DesktopsForm.SetFormState;
@@ -10254,27 +10258,63 @@ begin
 //  PDesktopHost.Restart;
 end;
 
+procedure TMainForm.AddIncomeConnection(AUserName, AUserDesc: String);
+var
+  Node: PVirtualNode;
+  DData: PDeviceData;
+  DForm: TDeviceForm;
+begin
+  Node := twIncomes.AddChild(GetGroupByUID(DForm.GroupUID));
+  Node.States := [vsInitialized, vsVisible];
+  DData := twIncomes.GetNodeData(Node);
+  DData.UID := DForm.UID;
+  DData.Name := DForm.eName.Text;
+  DData.Password := DForm.ePassword.Text;
+  DData.Description := DForm.mDescription.Lines.GetText;
+  DData.GroupUID := DForm.GroupUID;
+  DData.ID := StrToInt(DForm.eID.Text);
+  DData.HighLight := False;
+  if DeviceId = DForm.eID.Text then
+    DData.StateIndex := MSG_STATUS_ONLINE
+  else
+    DData.StateIndex := MSG_STATUS_OFFLINE;
+
+  if not twIncomes.Expanded[Node.Parent] then
+    twDevices.Expanded[Node.Parent] := True;
+  twDevices.ToggleNode(Node);
+  twDevices.Selected[Node] := True;
+  twDevices.FocusedNode := Node;
+  twDevices.SortTree(0, sdAscending);
+  twDevices.InvalidateNode(Node);
+end;
+
 procedure TMainForm.PModuleUserJoined(Sender: TRtcPModule; const user:string);
-  var
-    s:string;
-//    el:TListItem;
-//    uinfo:TRtcRecord;
-  begin
+var
+  s, d: String;
+begin
   if Sender is TRtcPFileTransfer then
-    s:='Передача файлов'
-  else if Sender is TRtcPChat then
-    s:='Чат'
-  else if Sender is TRtcPDesktopHost then
-    begin
-    s:='Управление';
+    s := 'Передача файлов'
+  else
+  if Sender is TRtcPChat then
+    s := 'Чат'
+  else
+  if Sender is TRtcPDesktopHost then
+  begin
+    s := 'Управление';
     Inc(DesktopCnt);
-    if DesktopCnt=1 then
-      begin
-      DragAcceptFiles(Handle, True);
-      end;
-    end
-  else s:='???';
-  s := user + ' ' + s;
+    if DesktopCnt = 1 then
+      DragAcceptFiles(Handle, True)
+  end
+  else
+    s := '???';
+
+  d := GetUserDescription(user);
+  if d <> '' then
+    s := d + ' (' + s + ')'
+  else
+    s := user + ' (' + s + ')';
+
+  AddIncomeConnection(user, s);
 
 //  Memo1.Lines.Add(user + ' joined');
 
@@ -10314,29 +10354,38 @@ begin
 end;
 
 procedure TMainForm.PModuleUserLeft(Sender: TRtcPModule; const user:string);
-  var
-    s:string;
-    a,i:integer;
-//    uinfo:TRtcRecord;
-  begin
+var
+  s, d: String;
+  a, i: Integer;
+begin
 //  xLog('PModuleUserLeft');
 
   if Sender is TRtcPFileTransfer then
-    s:='Передача файлов'
-  else if Sender is TRtcPChat then
-    s:='Чат'
-  else if Sender is TRtcPDesktopHost then
-    begin
-    s:='Управление';
+    s := 'Передача файлов'
+  else
+  if Sender is TRtcPChat then
+    s := 'Чат'
+  else
+  if Sender is TRtcPDesktopHost then
+  begin
+    s := 'Управление';
     Dec(DesktopCnt);
-    if DesktopCnt=0 then
-      begin
-      DragAcceptFiles(Handle,False);
+    if DesktopCnt = 0 then
+    begin
+//      DragAcceptFiles(Handle, False);
       Show_Wallpaper;
-      end;
-    end
-  else s:='???';
-  s := user + ' ' + s;
+    end;
+  end
+  else
+    s := '???';
+
+  d := GetUserDescription(user);
+  if d <> '' then
+    s := d + ' (' + s + ')'
+  else
+    s := user + ' (' + s + ')';
+
+  RemoveIncomeConnection(user, s);
 
 //  Memo1.Lines.Add(user + ' left');
 
@@ -10852,11 +10901,32 @@ procedure TMainForm.PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttp
   sStatus2.Update;
 end;
 
-function TMainForm.GetPendingItemByUserName(uname, action: String): PPendingRequestItem;
+function TMainForm.GetPendingItem(uname: String): PPendingRequestItem;
 var
   i: Integer;
 begin
-//  xLog('GetPendingItemByUserName');
+//  xLog('GetPendingItem');
+
+  Result := nil;
+
+  CS_Pending.Acquire;
+  try
+    for i := 0 to PendingRequests.Count - 1 do
+      if (PPendingRequestItem(PendingRequests[i])^.UserName = uname) then
+        begin
+          Result := PPendingRequestItem(PendingRequests[i]);
+          Exit;
+        end;
+  finally
+    CS_Pending.Release;
+  end;
+end;
+
+function TMainForm.GetPendingItem(uname, action: String): PPendingRequestItem;
+var
+  i: Integer;
+begin
+//  xLog('GetPendingItem');
 
   Result := nil;
 
@@ -11160,7 +11230,7 @@ begin
   if IsClosing then
     Exit;
 
-  PRItem := GetPendingItemByUserName(UserName, Action);
+  PRItem := GetPendingItem(UserName, Action);
   if PRItem = nil then
     Exit;
 

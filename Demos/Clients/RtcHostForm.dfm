@@ -5753,9 +5753,10 @@ object MainForm: TMainForm
               Row = 3
             end
             item
-              Column = 0
+              Column = 1
+              ColumnSpan = 3
               Control = bCloseAllIncomes
-              Row = 0
+              Row = 1
             end>
           ParentBackground = False
           RowCollection = <
@@ -5844,10 +5845,10 @@ object MainForm: TMainForm
               end>
           end
           object bCloseAllIncomes: TColorSpeedButton
-            Left = 0
-            Top = 0
-            Width = 285
-            Height = 35
+            Left = 5
+            Top = 5
+            Width = 282
+            Height = 31
             Anchors = []
             Caption = #1047#1072#1082#1088#1099#1090#1100' '#1074#1089#1077
             Color = clGray
@@ -6320,7 +6321,7 @@ object MainForm: TMainForm
   object resHostTimerLogin: TRtcResult
     OnReturn = resHostTimerLoginReturn
     Left = 146
-    Top = 5
+    Top = 9
   end
   object resHostTimer: TRtcResult
     OnReturn = resHostTimerReturn
