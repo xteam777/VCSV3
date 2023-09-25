@@ -1802,7 +1802,6 @@ begin
 //    FDesktopControl.Send_HideDesktop(FUserToConnect);
 //    FDesktopControl.ChgDesktop_End(FUserToConnect);
 
-    FDesktopControl.Send_HideDesktop(FUserToConnect);
     FDesktopControl.Open(FUserToConnect);
   end
   else
@@ -4044,6 +4043,7 @@ begin
 
   pDevAcc.Left := 542;
   pDevAcc.Width := ClientWidth - pDevAcc.Left; //pRight.Left - pRight.Width - GetScaleValue(25);
+  bGetUpdate.Left := pInMain.Left + pInMain.Width - bGetUpdate.Width;
 //  CurWidth := Width;
 end;
 
