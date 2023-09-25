@@ -6372,7 +6372,7 @@ object MainForm: TMainForm
   end
   object rGetPartnerInfoReconnect: TRtcResult
     OnReturn = rGetPartnerInfoReconnectReturn
-    Left = 447
-    Top = 132
+    Left = 351
+    Top = 10
   end
 end
