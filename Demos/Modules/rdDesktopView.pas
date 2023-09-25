@@ -1634,8 +1634,8 @@ begin
 //  BringToFront;
 //  BringWindowToTop(Handle);
 
-  aHideWallpaper.Checked := True;
-  Sender.Send_HideDesktop(Sender);
+//  aHideWallpaper.Checked := True;
+//  Sender.Send_HideDesktop(Sender);
 //  aOptimalScale.Checked := UI.SmoothScale;
 
   //tell Windows that you're accepting drag and drop files
