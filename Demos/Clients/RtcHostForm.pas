@@ -7339,8 +7339,8 @@ var
 begin
 //  XLog('bAccount0Click');
 
-  p.X := pcDevAcc.Left + pInMain.Left + btnAccount.Left;
-  p.Y := btnAccount.Height + pInMain.Top + pcDevAcc.Top + btnAccount.Top;
+  p.X := pcDevAcc.Left + pInMain.Left + btnAccount.Left + 5;
+  p.Y := btnAccount.Height + pInMain.Top + pcDevAcc.Top + btnAccount.Top + btnAccount.Height;
   p := ClientToScreen(p);
   pmAccount.Popup(p.X, p.Y);;
 end;
