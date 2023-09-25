@@ -5753,9 +5753,9 @@ object MainForm: TMainForm
               Row = 3
             end
             item
-              Column = 1
-              ColumnSpan = 3
-              Control = bCloseAllIncomes
+              Column = 0
+              ColumnSpan = 5
+              Control = pBtnCloseAllIncomes
               Row = 1
             end>
           ParentBackground = False
@@ -5844,23 +5844,40 @@ object MainForm: TMainForm
                 Width = 280
               end>
           end
-          object bCloseAllIncomes: TColorSpeedButton
+          object pBtnCloseAllIncomes: TPanel
             Left = 5
             Top = 5
-            Width = 282
-            Height = 31
+            Width = 280
+            Height = 29
             Anchors = []
-            Caption = #1047#1072#1082#1088#1099#1090#1100' '#1074#1089#1077
-            Color = clGray
-            Flat = True
-            Font.Charset = DEFAULT_CHARSET
-            Font.Color = clWhite
-            Font.Height = -11
-            Font.Name = 'Arial'
-            Font.Style = [fsBold]
-            Layout = blGlyphRight
-            ParentFont = False
-            Transparent = False
+            BevelOuter = bvNone
+            Color = 6381297
+            ParentBackground = False
+            TabOrder = 1
+            ExplicitLeft = 7
+            DesignSize = (
+              280
+              29)
+            object bCloseAllIncomes: TColorSpeedButton
+              Left = 0
+              Top = 0
+              Width = 282
+              Height = 31
+              Anchors = []
+              Caption = #1047#1072#1082#1088#1099#1090#1100' '#1074#1089#1077
+              Color = 6381297
+              Flat = True
+              Font.Charset = DEFAULT_CHARSET
+              Font.Color = clWhite
+              Font.Height = -11
+              Font.Name = 'Arial'
+              Font.Style = [fsBold]
+              Layout = blGlyphRight
+              ParentFont = False
+              Transparent = False
+              OnMouseEnter = bCloseAllIncomesMouseEnter
+              OnMouseLeave = bCloseAllIncomesMouseLeave
+            end
           end
         end
       end

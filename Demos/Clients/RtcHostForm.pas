@@ -319,6 +319,7 @@ type
     tsMyDevices: TTabSheet;
     GridPanel2: TGridPanel;
     twIncomes: TVirtualStringTree;
+    pBtnCloseAllIncomes: TPanel;
     bCloseAllIncomes: TColorSpeedButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -545,6 +546,8 @@ type
     procedure twIncomesMouseLeave(Sender: TObject);
     procedure twIncomesMouseMove(Sender: TObject; Shift: TShiftState; X,
       Y: Integer);
+    procedure bCloseAllIncomesMouseEnter(Sender: TObject);
+    procedure bCloseAllIncomesMouseLeave(Sender: TObject);
   protected
 
 //    FAutoRun: Boolean;
@@ -7340,6 +7343,16 @@ begin
   p.Y := btnAccount.Height + pInMain.Top + pcDevAcc.Top + btnAccount.Top;
   p := ClientToScreen(p);
   pmAccount.Popup(p.X, p.Y);;
+end;
+
+procedure TMainForm.bCloseAllIncomesMouseEnter(Sender: TObject);
+begin
+  bCloseAllIncomes.Color := RGB(231, 84, 87);
+end;
+
+procedure TMainForm.bCloseAllIncomesMouseLeave(Sender: TObject);
+begin
+  bCloseAllIncomes.Color := RGB(241, 94, 97);
 end;
 
 procedure TMainForm.bDevicesMouseEnter(Sender: TObject);
