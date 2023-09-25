@@ -5222,7 +5222,7 @@ object MainForm: TMainForm
       Top = 6
       Width = 298
       Height = 455
-      ActivePage = tsMyDevices
+      ActivePage = tsIncomes
       TabOrder = 0
       object tsMyDevices: TTabSheet
         Caption = #1052#1086#1080' '#1091#1089#1090#1088#1086#1081#1089#1090#1074#1072
@@ -5710,8 +5710,158 @@ object MainForm: TMainForm
           end
         end
       end
-      object tsIncomeConnections: TTabSheet
+      object tsIncomes: TTabSheet
         Caption = #1042#1093#1086#1076#1103#1097#1080#1077' '#1087#1086#1076#1082#1083#1102#1095#1077#1085#1080#1103
+        object GridPanel2: TGridPanel
+          Left = 0
+          Top = 0
+          Width = 290
+          Height = 426
+          Margins.Left = 0
+          Margins.Top = 0
+          Margins.Right = 5
+          Margins.Bottom = 0
+          Align = alClient
+          Anchors = [akLeft, akTop, akRight]
+          BevelOuter = bvNone
+          Color = clWhite
+          ColumnCollection = <
+            item
+              SizeStyle = ssAbsolute
+              Value = 5.000000000000000000
+            end
+            item
+              SizeStyle = ssAbsolute
+              Value = 35.000000000000000000
+            end
+            item
+              SizeStyle = ssAbsolute
+              Value = 5.000000000000000000
+            end
+            item
+              Value = 100.000000000000000000
+            end
+            item
+              SizeStyle = ssAbsolute
+              Value = 5.000000000000000000
+            end>
+          ControlCollection = <
+            item
+              Column = 1
+              ColumnSpan = 3
+              Control = twIncomes
+              Row = 3
+            end
+            item
+              Column = 0
+              Control = bCloseAllIncomes
+              Row = 0
+            end>
+          ParentBackground = False
+          RowCollection = <
+            item
+              SizeStyle = ssAbsolute
+              Value = 5.000000000000000000
+            end
+            item
+              SizeStyle = ssAbsolute
+              Value = 28.000000000000000000
+            end
+            item
+              SizeStyle = ssAbsolute
+              Value = 5.000000000000000000
+            end
+            item
+              Value = 100.000000000000000000
+            end
+            item
+              SizeStyle = ssAbsolute
+              Value = 5.000000000000000000
+            end>
+          TabOrder = 0
+          DesignSize = (
+            290
+            426)
+          object twIncomes: TVirtualStringTree
+            Left = 5
+            Top = 38
+            Width = 280
+            Height = 383
+            Margins.Left = 5
+            Margins.Top = 73
+            Margins.Right = 5
+            Margins.Bottom = 5
+            Align = alClient
+            BorderStyle = bsNone
+            ButtonStyle = bsTriangle
+            Color = 16645629
+            Colors.BorderColor = 15987699
+            Colors.DisabledColor = clGray
+            Colors.DropMarkColor = 15385233
+            Colors.DropTargetColor = 15385233
+            Colors.DropTargetBorderColor = 15385233
+            Colors.FocusedSelectionColor = 15385233
+            Colors.FocusedSelectionBorderColor = 15385233
+            Colors.GridLineColor = 15987699
+            Colors.HeaderHotColor = clBlack
+            Colors.HotColor = clBlack
+            Colors.SelectionRectangleBlendColor = 15385233
+            Colors.SelectionRectangleBorderColor = 15385233
+            Colors.SelectionTextColor = clBlack
+            Colors.TreeLineColor = 9471874
+            Colors.UnfocusedColor = clGray
+            Colors.UnfocusedSelectionColor = 13421772
+            Colors.UnfocusedSelectionBorderColor = 13421772
+            DefaultNodeHeight = 24
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = 3947580
+            Font.Height = -11
+            Font.Name = 'Arial'
+            Font.Style = [fsBold]
+            Header.AutoSizeIndex = 0
+            Header.Options = [hoAutoResize, hoColumnResize, hoDrag, hoShowSortGlyphs]
+            Indent = 16
+            ParentFont = False
+            PopupMenu = pmDevice
+            TabOrder = 0
+            TreeOptions.AutoOptions = [toAutoDropExpand, toAutoScroll, toAutoScrollOnExpand, toAutoSort, toAutoTristateTracking, toAutoDeleteMovedNodes, toAutoChangeScale]
+            TreeOptions.PaintOptions = [toShowButtons, toShowDropmark, toShowRoot, toUseBlendedImages]
+            TreeOptions.SelectionOptions = [toFullRowSelect, toRightClickSelect]
+            OnBeforeItemPaint = twIncomesBeforeItemPaint
+            OnCompareNodes = twDevicesCompareNodes
+            OnDblClick = twIncomesDblClick
+            OnGetHint = twDevicesGetHint
+            OnMouseDown = twIncomesMouseDown
+            OnMouseMove = twIncomesMouseMove
+            OnMouseUp = twDevicesMouseUp
+            OnMouseLeave = twIncomesMouseLeave
+            Touch.InteractiveGestures = [igPan, igPressAndTap]
+            Touch.InteractiveGestureOptions = [igoPanSingleFingerHorizontal, igoPanSingleFingerVertical, igoPanInertia, igoPanGutter, igoParentPassthrough]
+            Columns = <
+              item
+                Position = 0
+                Width = 280
+              end>
+          end
+          object bCloseAllIncomes: TColorSpeedButton
+            Left = 0
+            Top = 0
+            Width = 285
+            Height = 35
+            Anchors = []
+            Caption = #1047#1072#1082#1088#1099#1090#1100' '#1074#1089#1077
+            Color = clGray
+            Flat = True
+            Font.Charset = DEFAULT_CHARSET
+            Font.Color = clWhite
+            Font.Height = -11
+            Font.Name = 'Arial'
+            Font.Style = [fsBold]
+            Layout = blGlyphRight
+            ParentFont = False
+            Transparent = False
+          end
+        end
       end
     end
     object Button4: TButton

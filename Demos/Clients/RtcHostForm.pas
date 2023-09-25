@@ -315,8 +315,11 @@ type
     pBtnSetup: TPanel;
     bGetUpdate: TSpeedButton;
     rGetPartnerInfoReconnect: TRtcResult;
-    tsIncomeConnections: TTabSheet;
+    tsIncomes: TTabSheet;
     tsMyDevices: TTabSheet;
+    GridPanel2: TGridPanel;
+    twIncomes: TVirtualStringTree;
+    bCloseAllIncomes: TColorSpeedButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -533,6 +536,15 @@ type
     procedure bGetUpdateClick(Sender: TObject);
     procedure rGetPartnerInfoReconnectReturn(Sender: TRtcConnection; Data,
       Result: TRtcValue);
+    procedure twIncomesBeforeItemPaint(Sender: TBaseVirtualTree;
+      TargetCanvas: TCanvas; Node: PVirtualNode; ItemRect: TRect;
+      var CustomDraw: Boolean);
+    procedure twIncomesDblClick(Sender: TObject);
+    procedure twIncomesMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+    procedure twIncomesMouseLeave(Sender: TObject);
+    procedure twIncomesMouseMove(Sender: TObject; Shift: TShiftState; X,
+      Y: Integer);
   protected
 
 //    FAutoRun: Boolean;
@@ -3369,8 +3381,8 @@ begin
 //  AutoScaleForm(MainForm);
 //  Width := CurWidth;
   LoggedIn := False;
-//  if not DevicesPanelVisible then
-    ShowDevicesPanel;
+  pcDevAcc.ActivePageIndex := 0;
+  ShowDevicesPanel;
 //  SetHostActive;
 
   //cPriorityChange(nil);
@@ -6576,6 +6588,196 @@ begin
 //  begin
 //    pmDevicest.Popup(p.X, p.Y);
 //  end;
+end;
+
+procedure TMainForm.twIncomesBeforeItemPaint(Sender: TBaseVirtualTree;
+  TargetCanvas: TCanvas; Node: PVirtualNode; ItemRect: TRect;
+  var CustomDraw: Boolean);
+var
+  DData: PDeviceData;
+  Level: Integer;
+  Name: String;
+begin
+  DData := twDevices.GetNodeData(Node);
+//  if DData.HighLight then
+//    TargetCanvas.Brush.Color := clRed;
+//  else
+//    TargetCanvas.Brush.Color := clWindow;
+
+  CustomDraw := True;
+
+  with TargetCanvas do
+  begin
+    Font.Color := clBlack;
+    Pen.Color := cl3DDkShadow;
+    if DData.HighLight
+      and (not Sender.Selected[Node]) then
+    begin
+      Brush.Color := RGB(229, 243, 255);//$DDDDDD;//$E0E0E0;
+    end
+    else
+    if Sender.Selected[Node] then
+    begin
+      Brush.Color := RGB(204, 232, 255);//RGB(19, 174, 196);
+    end
+    else
+    begin
+      Brush.Color := $00FDFDFD;
+    end;
+
+    if Node.Parent = Sender.RootNode then
+      Level := 0
+    else
+      Level := 1;
+
+    FillRect(ItemRect);
+
+    ItemRect.Left := 12 + (Level * twDevices.Indent);
+    DrawImage(TargetCanvas, ItemRect, DData.StateIndex);
+
+    if Level = 0 then
+      ItemRect.Left := 18
+    else
+      ItemRect.Left := 20 + 38;
+
+    Name := DData.Name;
+    if (DeviceId <> '') then
+      if DData.ID = StrToInt(DeviceId) then
+        if Name <> '' then
+          Name := Name + ' (этот компьютер)'
+        else
+          Name := Name + '(этот компьютер)';
+
+    Font.Size := Sender.Font.Size;
+    if Node.Parent = Sender.RootNode then
+      Font.Style := [fsBold]
+    else
+      Font.Style := [];
+    TargetCanvas.Brush.Style := bsClear;
+    TextOut(ItemRect.Left, (ItemRect.Height - TargetCanvas.TextHeight(Name)) div 2, Name);
+    TargetCanvas.Brush.Style := bsSolid;
+
+    ItemRect.Left := 2;
+    if Sender.Selected[Node] then
+      DrawButton(TargetCanvas, ItemRect, Node, clBlack)//clWhite)
+    else
+      DrawButton(TargetCanvas, ItemRect, Node, clBlack);
+  end;
+end;
+
+procedure TMainForm.twIncomesDblClick(Sender: TObject);
+var
+  DData: PDeviceData;
+  Node: PVirtualNode;
+  x, y, err: Integer;
+  p: TPoint;
+  user, sPassword: String;
+  i: Integer;
+begin
+//  XLog('twIncomesDblClick');
+
+//  GetCursorPos(p);
+//  p := twDevices.ScreenToClient(p);
+//  Node := twDevices.GetNodeAt(p);
+////  if (twDevices.FocusedNode <> nil) and
+////     (twDevices.GetNodeLevel(twDevices.FocusedNode) <> 0) then
+//  if (Node <> nil) and
+//     (twDevices.GetNodeLevel(Node) <> 0) then
+//  begin
+////    DData := PDeviceData(twDevices.GetNodeData(twDevices.FocusedNode));
+//    DData := PDeviceData(twDevices.GetNodeData(Node));
+//    user := IntToStr(DData.ID);
+//
+//    if user = DeviceId then
+//    begin
+//      SetStatusStringDelayed('Подключение к своему компьютеру невозможно');
+////      SetStatusStringDelayed('Готов к подключению', 2000);
+//      Exit;
+//    end;
+////    if DData.StateIndex = MSG_STATUS_OFFLINE then
+////    begin
+////      MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'Remox', MB_ICONWARNING or MB_OK);
+////      SetStatusString('Готов к подключению');
+////      Exit;
+////    end;
+//
+//    sPassword := DData.Password;
+//
+//    //Если ранее был сохранен верный пароль берем его, а не из списка устройств
+//    if StorePasswords then
+//    begin
+//      for i := 0 to ePartnerID.Items.Count - 1 do
+//        if THistoryRec(ePartnerID.Items.Objects[i]).user = user then
+//        begin
+//          sPassword := THistoryRec(ePartnerID.Items.Objects[i]).password;
+//          Break;
+//        end;
+//    end;
+//
+//    ConnectToPartnerStart(user, DData.Name, DData.Password, 'desk');
+//  end;
+end;
+
+procedure TMainForm.twIncomesMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+var
+  Node: PVirtualNode;
+begin
+//  XLog('twDevicesMouseDown');
+
+  Node := twIncomes.GetNodeAt(X, Y);
+  if Node <> nil then
+  begin
+    twIncomes.Selected[Node] := True;
+    twIncomes.FocusedNode := Node;
+//    twDevices.Repaint;
+  end;
+
+//  if Button = mbRight then
+//    if twDevices.GetNodeLevel(twDevices.GetNodeAt(X, Y)) = 0 then
+//      twDevices.PopupMenu := pmGroup
+//    else
+//      twDevices.PopupMenu := pmDevice;
+end;
+
+procedure TMainForm.twIncomesMouseLeave(Sender: TObject);
+//var
+//  i: Integer;
+//  ChildNode: TTreeNode;
+begin
+  if HighLightedNode <> nil then
+  begin
+    TDeviceData(twIncomes.GetNodeData(HighLightedNode)^).HighLight := False;
+    twIncomes.Repaint;
+  end;
+//  for i := 0 to twDevices.Items.Count - 1 do
+//  begin
+//    if TDeviceData(twDevices.Items[i].Data^).HighLight then
+//      TDeviceData(twDevices.Items[i].Data^).HighLight := False;
+//    ChildNode := twDevices.Items[i].GetFirstChild;
+//    while ChildNode <> nil do
+//    begin
+//      if TDeviceData(ChildNode.Data^).HighLight then
+//        TDeviceData(ChildNode.Data^).HighLight := False;
+//
+//      ChildNode := ChildNode.getNextSibling;
+//    end;
+//  end;
+
+end;
+
+procedure TMainForm.twIncomesMouseMove(Sender: TObject; Shift: TShiftState; X,
+  Y: Integer);
+begin
+  if HighLightedNode <> twIncomes.GetNodeAt(X, Y) then
+  begin
+    if HighLightedNode <> nil then
+      TDeviceData(twIncomes.GetNodeData(HighLightedNode)^).HighLight := False;
+    HighLightedNode := twIncomes.GetNodeAt(X, Y);
+    if HighLightedNode <> nil then
+      TDeviceData(twIncomes.GetNodeData(HighLightedNode)^).HighLight := True;
+    twIncomes.Repaint;
+  end;
 end;
 
 {procedure TMainForm.WMActivate(var Message: TMessage);
