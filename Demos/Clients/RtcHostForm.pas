@@ -1802,6 +1802,7 @@ begin
 //    FDesktopControl.Send_HideDesktop(FUserToConnect);
 //    FDesktopControl.ChgDesktop_End(FUserToConnect);
 
+    FDesktopControl.Send_HideDesktop(FUserToConnect);
     FDesktopControl.Open(FUserToConnect);
   end
   else

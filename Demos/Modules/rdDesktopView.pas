@@ -707,6 +707,10 @@ begin
   //  if Assigned(PFileTrans.Client) then
   //    PFileTrans.Close(PFileTrans.Client.LoginUserName);
   //  pUIItem.PFileTrans := TRtcPFileTransfer.Create(DesktopsForm);
+
+    if pUIItem.HideWallpaper then
+      pUIItem.UI.Send_HideDesktop;
+
     pUIItem.PFileTrans.Client := AModule.Client;
     pUIItem.PFileTrans.OnNewUI := PFileTransExplorerNewUI;
     pUIItem.PFileTrans.Open(pTab.UserName, False, AModule);
