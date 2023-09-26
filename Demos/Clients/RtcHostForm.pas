@@ -2039,18 +2039,18 @@ begin
 
   DData := twDevices.GetNodeData(twDevices.FocusedNode);
   if twDevices.GetNodeLevel(twDevices.FocusedNode) = 0 then
-//    Res := MessageBox(Handle, PWideChar('Удалить группу "' + DData.Name + '" и все компьютеры в ней?'), PWideChar('Remox'), MB_ICONWARNING or MB_YESNO)
-    ShowMessageBox('Удалить группу "' + DData.Name + '" и все устройства в ней?', 'Remox', 'DeleteDeviceGroup', DData.UID)
+//    Res := MessageBox(Handle, PWideChar('Удалить группу "' + DData^.Name + '" и все компьютеры в ней?'), PWideChar('Remox'), MB_ICONWARNING or MB_YESNO)
+    ShowMessageBox('Удалить группу "' + DData^.Name + '" и все устройства в ней?', 'Remox', 'DeleteDeviceGroup', DData^.UID)
   else
-//    Res := MessageBox(Handle, PWideChar('Удалить устройство "' + DData.Name + '"?'), PWideChar('Remox'), MB_ICONWARNING or MB_YESNO);
-    ShowMessageBox('Удалить устройство "' + DData.Name + '"?', 'Remox', 'DeleteDeviceGroup', DData.UID);
+//    Res := MessageBox(Handle, PWideChar('Удалить устройство "' + DData^.Name + '"?'), PWideChar('Remox'), MB_ICONWARNING or MB_YESNO);
+    ShowMessageBox('Удалить устройство "' + DData^.Name + '"?', 'Remox', 'DeleteDeviceGroup', DData^.UID);
 
 //  if Res = mrNo then
 //    Exit;
 
 //  with cmAccounts.Data.NewFunction('Account.DeleteDeviceGroup') do
 //  begin
-//    asString['UID'] := DData.UID;
+//    asString['UID'] := DData^.UID;
 //    asString['AccountUID'] := AccountUID;
 //  end;
 //  cmAccounts.Call(rDeleteDevice);
@@ -4326,7 +4326,7 @@ begin
 
   Data := GetDeviceInfo(uname);
   if Data <> nil then
-    Result := Data.Name
+    Result := Data^.Name
   else
     Result := uname;
 end;
@@ -4741,9 +4741,9 @@ begin
      (twDevices.GetNodeLevel(twDevices.FocusedNode) <> 0) then
   begin
     DData := PDeviceData(twDevices.GetNodeData(twDevices.FocusedNode));
-    user := IntToStr(DData.ID);
+    user := IntToStr(DData^.ID);
 
-    StartFileTransferring(user, DData.Name, DData.Password);
+    StartFileTransferring(user, DData^.Name, DData^.Password);
   end;
 end;
 
@@ -4761,7 +4761,7 @@ begin
 //    SetStatusStringDelayed('Готов к подключению', 2000);
     Exit;
   end;
-//    if DData.StateIndex = MSG_STATUS_OFFLINE then
+//    if DData^.StateIndex = MSG_STATUS_OFFLINE then
 //    begin
 //      MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'Remox', MB_ICONWARNING or MB_OK);
 //      SetStatusString('Готов к подключению');
@@ -4921,7 +4921,7 @@ begin
   Node := twDevices.GetFirst();
   while Node <> nil do
   begin
-    if PDeviceData(twDevices.GetNodeData(Node)).UID = UID then
+    if PDeviceData(twDevices.GetNodeData(Node))^.UID = UID then
     begin
       Result := Node;
       Exit;
@@ -4950,7 +4950,7 @@ begin
     DForm.GetDeviceInfoFunc := GetDeviceInfo;
     Node := GetSelectedGroup();
     if Node <> nil then
-      DForm.GroupUID := PDeviceData(twDevices.GetNodeData(Node)).UID;
+      DForm.GroupUID := PDeviceData(twDevices.GetNodeData(Node))^.UID;
     DForm.Mode := 'Add';
     DForm.OnCustomFormClose := OnCustomFormClose;
 
@@ -4961,17 +4961,17 @@ begin
       Node := twDevices.AddChild(GetGroupByUID(DForm.GroupUID));
       Node.States := [vsInitialized, vsVisible];
       DData := twDevices.GetNodeData(Node);
-      DData.UID := DForm.UID;
-      DData.Name := DForm.eName.Text;
-      DData.Password := DForm.ePassword.Text;
-      DData.Description := DForm.mDescription.Lines.GetText;
-      DData.GroupUID := DForm.GroupUID;
-      DData.ID := StrToInt(DForm.eID.Text);
-      DData.HighLight := False;
+      DData^.UID := DForm.UID;
+      DData^.Name := DForm.eName.Text;
+      DData^.Password := DForm.ePassword.Text;
+      DData^.Description := DForm.mDescription.Lines.GetText;
+      DData^.GroupUID := DForm.GroupUID;
+      DData^.ID := StrToInt(DForm.eID.Text);
+      DData^.HighLight := False;
       if DeviceId = DForm.eID.Text then
-        DData.StateIndex := MSG_STATUS_ONLINE
+        DData^.StateIndex := MSG_STATUS_ONLINE
       else
-        DData.StateIndex := MSG_STATUS_OFFLINE;
+        DData^.StateIndex := MSG_STATUS_OFFLINE;
 
       if not twDevices.Expanded[Node.Parent] then
         twDevices.Expanded[Node.Parent] := True;
@@ -5042,19 +5042,19 @@ begin
       GroupNode := twDevices.AddChild(nil, Pointer(DData)); //Trim(GForm.eName.Text)
       GroupNode.States := [vsInitialized, vsVisible, vsHasChildren];
       DData := twDevices.GetNodeData(GroupNode);
-      DData.UID := GForm.UID;
-      DData.Name := Trim(GForm.eName.Text);
-      DData.HighLight := False;
-      DData.StateIndex := MSG_STATUS_UNKNOWN;
+      DData^.UID := GForm.UID;
+      DData^.Name := Trim(GForm.eName.Text);
+      DData^.HighLight := False;
+      DData^.StateIndex := MSG_STATUS_UNKNOWN;
 //        GroupNode.SelectedIndex := -1;
 
       Node := twDevices.AddChild(GroupNode);
       Node.States := [vsInitialized];
       DData := twDevices.GetNodeData(Node);
-      DData.UID := '';
-      DData.ID := 0;
-      DData.HighLight := False;
-      DData.StateIndex := MSG_STATUS_OFFLINE;
+      DData^.UID := '';
+      DData^.ID := 0;
+      DData^.HighLight := False;
+      DData^.StateIndex := MSG_STATUS_OFFLINE;
 
       twDevices.ToggleNode(GroupNode);
       twDevices.Selected[GroupNode] := True;
@@ -5086,13 +5086,13 @@ begin
       GForm.twDevices := twDevices;
       GForm.CModule := @cmAccounts;
       GForm.AccountUID := AccountUID;
-      GForm.UID := DData.UID;
-      GForm.eName.Text := DData.Name;
+      GForm.UID := DData^.UID;
+      GForm.eName.Text := DData^.Name;
       GForm.Mode := 'Change';
       GForm.ShowModal();
       if GForm.ModalResult = mrOk then
       begin
-        DData.Name := Trim(GForm.eName.Text);
+        DData^.Name := Trim(GForm.eName.Text);
         twDevices.InvalidateNode(twDevices.FocusedNode);
         twDevices.SortTree(0, sdAscending);
       end;
@@ -5109,32 +5109,32 @@ begin
       DForm.twDevices := twDevices;
       DForm.CModule := @cmAccounts;
       DForm.AccountUID := AccountUID;
-      DForm.UID := DData.UID;
-      DForm.eID.Text := IntToStr(DData.ID);
-      DForm.eName.Text := DData.Name;
-      DForm.ePassword.Text := DData.Password;
-      DForm.mDescription.Text := DData.Description;
-      DForm.GroupUID := DData.GroupUID;
+      DForm.UID := DData^.UID;
+      DForm.eID.Text := IntToStr(DData^.ID);
+      DForm.eName.Text := DData^.Name;
+      DForm.ePassword.Text := DData^.Password;
+      DForm.mDescription.Text := DData^.Description;
+      DForm.GroupUID := DData^.GroupUID;
       DForm.GetDeviceInfoFunc := GetDeviceInfo;
       DForm.Mode := 'Change';
       DForm.ShowModal();
       if DForm.ModalResult = mrOk then
       begin
-        DData.Name := DForm.eName.Text;
-        DData.Password := DForm.ePassword.Text;
-        DData.Description := DForm.mDescription.Lines.GetText;
-        DData.ID := StrToInt(DForm.eID.Text);
-        DData.HighLight := False;
-//          DData.StateIndex := MSG_STATUS_OFFLINE;
+        DData^.Name := DForm.eName.Text;
+        DData^.Password := DForm.ePassword.Text;
+        DData^.Description := DForm.mDescription.Lines.GetText;
+        DData^.ID := StrToInt(DForm.eID.Text);
+        DData^.HighLight := False;
+//          DData^.StateIndex := MSG_STATUS_OFFLINE;
         GroupNode := GetGroupByUID(DForm.GroupUID);
         GroupUID := PDeviceData(twDevices.GetNodeData(GroupNode)).UID;
-        if DData.GroupUID <> GroupUID then
+        if DData^.GroupUID <> GroupUID then
         begin
           twDevices.MoveTo(twDevices.FocusedNode, GroupNode, amAddChildLast, False);
           if not twDevices.Expanded[GroupNode] then
             twDevices.Expanded[GroupNode] := True;
         end;
-        DData.GroupUID := GroupUID;
+        DData^.GroupUID := GroupUID;
 
         twDevices.InvalidateNode(twDevices.FocusedNode);
         twDevices.SortTree(0, sdAscending);
@@ -5171,7 +5171,7 @@ begin
   begin
 //    DData := PDeviceData(twDevices.GetNodeData(twDevices.FocusedNode));
     DData := PDeviceData(twDevices.GetNodeData(Node));
-    user := IntToStr(DData.ID);
+    user := IntToStr(DData^.ID);
 
     if user = DeviceId then
     begin
@@ -5179,14 +5179,14 @@ begin
 //      SetStatusStringDelayed('Готов к подключению', 2000);
       Exit;
     end;
-//    if DData.StateIndex = MSG_STATUS_OFFLINE then
+//    if DData^.StateIndex = MSG_STATUS_OFFLINE then
 //    begin
 //      MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'Remox', MB_ICONWARNING or MB_OK);
 //      SetStatusString('Готов к подключению');
 //      Exit;
 //    end;
 
-    sPassword := DData.Password;
+    sPassword := DData^.Password;
 
     //Если ранее был сохранен верный пароль берем его, а не из списка устройств
     if StorePasswords then
@@ -5199,7 +5199,7 @@ begin
         end;
     end;
 
-    ConnectToPartnerStart(user, DData.Name, DData.Password, 'desk');
+    ConnectToPartnerStart(user, DData^.Name, DData^.Password, 'desk');
   end;
 end;
 
@@ -6104,7 +6104,7 @@ var
   Name: String;
 begin
   DData := twDevices.GetNodeData(Node);
-//  if DData.HighLight then
+//  if DData^.HighLight then
 //    TargetCanvas.Brush.Color := clRed;
 //  else
 //    TargetCanvas.Brush.Color := clWindow;
@@ -6115,7 +6115,7 @@ begin
   begin
     Font.Color := clBlack;
     Pen.Color := cl3DDkShadow;
-    if DData.HighLight
+    if DData^.HighLight
       and (not Sender.Selected[Node]) then
     begin
       Brush.Color := RGB(229, 243, 255);//$DDDDDD;//$E0E0E0;
@@ -6138,16 +6138,16 @@ begin
     FillRect(ItemRect);
 
     ItemRect.Left := 12 + (Level * twDevices.Indent);
-    DrawImage(twDevices, TargetCanvas, ItemRect, DData.StateIndex);
+    DrawImage(twDevices, TargetCanvas, ItemRect, DData^.StateIndex);
 
     if Level = 0 then
       ItemRect.Left := 18
     else
       ItemRect.Left := 20 + 38;
 
-    Name := DData.Name;
+    Name := DData^.Name;
     if (DeviceId <> '') then
-      if DData.ID = StrToInt(DeviceId) then
+      if DData^.ID = StrToInt(DeviceId) then
         if Name <> '' then
           Name := Name + ' (этот компьютер)'
         else
@@ -6508,7 +6508,7 @@ begin
        (twDevices.GetNodeLevel(twDevices.FocusedNode) <> 0) then
     begin
       DData := PDeviceData(twDevices.GetNodeData(twDevices.FocusedNode));
-      user := IntToStr(DData.ID);
+      user := IntToStr(DData^.ID);
 
       if user = DeviceId then
       begin
@@ -6518,7 +6518,7 @@ begin
         Exit;
       end;
 
-      sPassword := DData.Password;
+      sPassword := DData^.Password;
 
       //Если ранее был сохранен верный пароль берем его, а не из списка устройств
       if StorePasswords then
@@ -6531,7 +6531,7 @@ begin
           end;
       end;
 
-      ConnectToPartnerStart(user, DData.Name, sPassword, 'desk');
+      ConnectToPartnerStart(user, DData^.Name, sPassword, 'desk');
     end;
   end
   else
@@ -6630,7 +6630,7 @@ var
   Level: Integer;
 begin
   DData := twIncomes.GetNodeData(Node);
-//  if DData.HighLight then
+//  if DData^.HighLight then
 //    TargetCanvas.Brush.Color := clRed;
 //  else
 //    TargetCanvas.Brush.Color := clWindow;
@@ -6641,7 +6641,7 @@ begin
   begin
     Font.Color := clBlack;
     Pen.Color := cl3DDkShadow;
-    if DData.HighLight
+    if DData^.HighLight
       and (not Sender.Selected[Node]) then
     begin
       Brush.Color := RGB(229, 243, 255);//$DDDDDD;//$E0E0E0;
@@ -6664,7 +6664,7 @@ begin
     FillRect(ItemRect);
 
     ItemRect.Left := 12 + (Level * twIncomes.Indent);
-    DrawImage(twIncomes, TargetCanvas, ItemRect, DData.StateIndex);
+    DrawImage(twIncomes, TargetCanvas, ItemRect, DData^.StateIndex);
 
 //    if Level = 0 then
 //      ItemRect.Left := 18
@@ -6677,7 +6677,7 @@ begin
 //    else
       Font.Style := [];
     TargetCanvas.Brush.Style := bsClear;
-    TextOut(ItemRect.Left, (ItemRect.Height - TargetCanvas.TextHeight(Name)) div 2, DData.Description);
+    TextOut(ItemRect.Left, (ItemRect.Height - TargetCanvas.TextHeight(Name)) div 2, DData^.Description);
     TargetCanvas.Brush.Style := bsSolid;
 
     ItemRect.Left := twIncomes.ClientWidth - 12;
@@ -6709,7 +6709,7 @@ begin
 //  begin
 ////    DData := PDeviceData(twDevices.GetNodeData(twDevices.FocusedNode));
 //    DData := PDeviceData(twDevices.GetNodeData(Node));
-//    user := IntToStr(DData.ID);
+//    user := IntToStr(DData^.ID);
 //
 //    if user = DeviceId then
 //    begin
@@ -6717,14 +6717,14 @@ begin
 ////      SetStatusStringDelayed('Готов к подключению', 2000);
 //      Exit;
 //    end;
-////    if DData.StateIndex = MSG_STATUS_OFFLINE then
+////    if DData^.StateIndex = MSG_STATUS_OFFLINE then
 ////    begin
 ////      MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'Remox', MB_ICONWARNING or MB_OK);
 ////      SetStatusString('Готов к подключению');
 ////      Exit;
 ////    end;
 //
-//    sPassword := DData.Password;
+//    sPassword := DData^.Password;
 //
 //    //Если ранее был сохранен верный пароль берем его, а не из списка устройств
 //    if StorePasswords then
@@ -6737,7 +6737,7 @@ begin
 //        end;
 //    end;
 //
-//    ConnectToPartnerStart(user, DData.Name, DData.Password, 'desk');
+//    ConnectToPartnerStart(user, DData^.Name, DData^.Password, 'desk');
 //  end;
 end;
 
@@ -6887,10 +6887,10 @@ begin
     while Node <> nil do
     begin
       DData := twDevices.GetNodeData(Node);
-      if (DData.UID <> '') then
-       if (StrPos(PWideChar(WideLowerCase(DData.Name)), PWideChar(WideString(LowerCase(Trim(eDeviceName.Text))))) <> nil)
-        or ((StrPos(PWideChar(IntToStr(DData.ID)), PWideChar(WideString(LowerCase(Trim(eDeviceName.Text))))) <> nil)
-          and (DData.ID <> 0)) then
+      if (DData^.UID <> '') then
+       if (StrPos(PWideChar(WideLowerCase(DData^.Name)), PWideChar(WideString(LowerCase(Trim(eDeviceName.Text))))) <> nil)
+        or ((StrPos(PWideChar(IntToStr(DData^.ID)), PWideChar(WideString(LowerCase(Trim(eDeviceName.Text))))) <> nil)
+          and (DData^.ID <> 0)) then
         Node.States := Node.States + [vsVisible]
        else
         Node.States := Node.States - [vsVisible];
@@ -6901,10 +6901,10 @@ begin
         while CNode <> nil do
         begin
           DData := twDevices.GetNodeData(CNode);
-          if (DData.UID <> '') then
-           if (StrPos(PWideChar(WideLowerCase(String(DData.Name))), PWideChar(WideString(LowerCase(Trim(eDeviceName.Text))))) <> nil)
-            or ((StrPos(PWideChar(IntToStr(DData.ID)), PWideChar(WideString(LowerCase(Trim(eDeviceName.Text))))) <> nil)
-              and (DData.ID <> 0)) then
+          if (DData^.UID <> '') then
+           if (StrPos(PWideChar(WideLowerCase(String(DData^.Name))), PWideChar(WideString(LowerCase(Trim(eDeviceName.Text))))) <> nil)
+            or ((StrPos(PWideChar(IntToStr(DData^.ID)), PWideChar(WideString(LowerCase(Trim(eDeviceName.Text))))) <> nil)
+              and (DData^.ID <> 0)) then
            begin
             CNode.States := CNode.States + [vsVisible];
             CNode.Parent.States := CNode.Parent.States + [vsVisible];
@@ -6925,7 +6925,7 @@ begin
     while Node <> nil do
     begin
       DData := twDevices.GetNodeData(Node);
-      if (DData.UID <> '') then
+      if (DData^.UID <> '') then
         Node.States := Node.States + [vsVisible];
 
       if Node.ChildCount > 0 then
@@ -6934,7 +6934,7 @@ begin
         while CNode <> nil do
         begin
           DData := twDevices.GetNodeData(CNode);
-          if (DData.UID <> '') then
+          if (DData^.UID <> '') then
             CNode.States := CNode.States + [vsVisible];
 
           CNode := CNode.NextSibling;
@@ -8226,9 +8226,9 @@ end;
 //      while CNode <> nil do
 //      begin
 //        DData := twDevices.GetNodeData(CNode);
-//        if (DData.ID = StrToInt(RemoveUserPrefix(uname))) then
+//        if (DData^.ID = StrToInt(RemoveUserPrefix(uname))) then
 //        begin
-//          Result := DData.StateIndex;
+//          Result := DData^.StateIndex;
 //          Exit;
 //        end;
 //
@@ -8262,7 +8262,7 @@ begin
       while CNode <> nil do
       begin
         DData := twDevices.GetNodeData(CNode);
-        if (DData.ID = StrToInt(GetUserFromFromUserName(uname))) then
+        if (DData^.ID = StrToInt(GetUserFromFromUserName(uname))) then
         begin
           Result := DData;
           Exit;
@@ -9256,22 +9256,22 @@ begin
             GroupNode := twDevices.AddChild(nil); //asWideString['GroupName'],
             GroupNode.States := [vsInitialized, vsVisible, vsHasChildren];
             DData := twDevices.GetNodeData(GroupNode);
-            DData.UID := asString['GroupUID'];
-            DData.Name := asWideString['GroupName'];
-            DData.HighLight := False;
-            DData.StateIndex := MSG_STATUS_UNKNOWN;
+            DData^.UID := asString['GroupUID'];
+            DData^.Name := asWideString['GroupName'];
+            DData^.HighLight := False;
+            DData^.StateIndex := MSG_STATUS_UNKNOWN;
 //            GroupNode.SelectedIndex := -1;
 
-            if DData.UID = LastFocusedUID then
+            if DData^.UID = LastFocusedUID then
               twDevices.Selected[GroupNode] := True;
 
             Node := twDevices.AddChild(GroupNode);
             Node.States := [vsInitialized];
             DData := twDevices.GetNodeData(Node);
-            DData.UID := '';
-            DData.ID := 0;
-            DData.HighLight := False;
-            DData.StateIndex := MSG_STATUS_OFFLINE;
+            DData^.UID := '';
+            DData^.ID := 0;
+            DData^.HighLight := False;
+            DData^.StateIndex := MSG_STATUS_OFFLINE;
           end;
 
           if asInteger['ID'] <> 0 then
@@ -9282,20 +9282,20 @@ begin
             Node := twDevices.AddChild(GroupNode);
             Node.States := [vsInitialized, vsVisible];
             DData := twDevices.GetNodeData(Node);
-            DData.UID := asString['UID'];
-            DData.GroupUID := asString['GroupUID'];
-            DData.ID := asInteger['ID'];
-            DData.Name := asWideString['Name'];
-            DData.Password := asWideString['Password'];
-            DData.Description := asWideString['Description'];
-            DData.HighLight := False;
+            DData^.UID := asString['UID'];
+            DData^.GroupUID := asString['GroupUID'];
+            DData^.ID := asInteger['ID'];
+            DData^.Name := asWideString['Name'];
+            DData^.Password := asWideString['Password'];
+            DData^.Description := asWideString['Description'];
+            DData^.HighLight := False;
             if DeviceId = asString['ID'] then
-              DData.StateIndex := MSG_STATUS_ONLINE
+              DData^.StateIndex := MSG_STATUS_ONLINE
             else
-              DData.StateIndex := asInteger['StateIndex'];
+              DData^.StateIndex := asInteger['StateIndex'];
 //            Node.SelectedIndex := 0;
 
-            if DData.UID = LastFocusedUID then
+            if DData^.UID = LastFocusedUID then
             begin
               twDevices.Selected[Node] := True;
               twDevices.Expanded[Node.Parent] := True;
@@ -10299,10 +10299,10 @@ begin
   Node := twIncomes.AddChild(nil, DData);
   Node.States := [vsInitialized, vsVisible];
   DData := twDevices.GetNodeData(Node);
-  DData.Name := AUserName;
-  DData.Description := AUserDesc;
-  DData.HighLight := False;
-  DData.StateIndex := MSG_STATUS_ONLINE;
+  DData^.Name := AUserName;
+  DData^.Description := AUserDesc;
+  DData^.HighLight := False;
+  DData^.StateIndex := MSG_STATUS_ONLINE;
 
   twIncomes.ToggleNode(Node);
   twIncomes.Selected[Node] := True;
