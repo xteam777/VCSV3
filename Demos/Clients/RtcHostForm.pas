@@ -700,8 +700,8 @@ type
     procedure TaskBarIconUpdate(AIsOnline: Boolean);
     procedure TaskBarRemoveIcon;
 
-    procedure DrawButton(Canvas:TCanvas; ARect: TRect; Node: PVirtualNode; AColor: TColor);
-    procedure DrawImage(Canvas:TCanvas; NodeRect: TRect; ImageIndex: Integer);
+    procedure DrawButton(AStringTree: TVirtualStringTree; Canvas:TCanvas; ARect: TRect; Node: PVirtualNode; AColor: TColor);
+    procedure DrawImage(AStringTree: TVirtualStringTree; Canvas:TCanvas; NodeRect: TRect; ImageIndex: Integer);
     function NodeByUID(const aTree:TVirtualStringTree; const anUID:String): PVirtualNode;
     function NodeByID(const aTree: TVirtualStringTree; const aID: Integer): PVirtualNode;
 
@@ -782,6 +782,7 @@ type
 
     procedure AddIncomeConnection(AUserName, AUserDesc: String);
     procedure RemoveIncomeConnection(AUserName: String);
+    function IsIncomeConnectionExists(AUserName: String): Boolean;
   end;
 
 //type
@@ -6135,7 +6136,7 @@ begin
     FillRect(ItemRect);
 
     ItemRect.Left := 12 + (Level * twDevices.Indent);
-    DrawImage(TargetCanvas, ItemRect, DData.StateIndex);
+    DrawImage(twDevices, TargetCanvas, ItemRect, DData.StateIndex);
 
     if Level = 0 then
       ItemRect.Left := 18
@@ -6161,9 +6162,9 @@ begin
 
     ItemRect.Left := 2;
     if Sender.Selected[Node] then
-      DrawButton(TargetCanvas, ItemRect, Node, clBlack)//clWhite)
+      DrawButton(twDevices, TargetCanvas, ItemRect, Node, clBlack)//clWhite)
     else
-      DrawButton(TargetCanvas, ItemRect, Node, clBlack);
+      DrawButton(twDevices, TargetCanvas, ItemRect, Node, clBlack);
   end;
 end;
 
@@ -6213,7 +6214,7 @@ begin
 //  end;
 end;
 
-procedure TMainForm.DrawButton(Canvas:TCanvas; ARect: TRect; Node: PVirtualNode; AColor: TColor);
+procedure TMainForm.DrawButton(AStringTree: TVirtualStringTree; Canvas:TCanvas; ARect: TRect; Node: PVirtualNode; AColor: TColor);
 var
   cx, cy: Integer;
 begin
@@ -6223,8 +6224,8 @@ begin
   begin
     Pen.Color := AColor;
     Brush.Color := AColor;
-    if twDevices.GetNodeLevel(Node) = 0 then
-      if not twDevices.Expanded[Node] then
+    if AStringTree.GetNodeLevel(Node) = 0 then
+      if not AStringTree.Expanded[Node] then
       begin
         Polygon([Point(cx + 2, cy), Point(cx + 8, cy + 4), Point(cx + 2, cy + 9)]);
       end
@@ -6236,7 +6237,7 @@ begin
 
 end;
 
-procedure TMainForm.DrawImage(Canvas:TCanvas; NodeRect: TRect; ImageIndex: Integer);
+procedure TMainForm.DrawImage(AStringTree: TVirtualStringTree; Canvas:TCanvas; NodeRect: TRect; ImageIndex: Integer);
 //var
 //  bmp: TBitmap;
 //  png: TPortableNetworkGraphic;
@@ -6251,9 +6252,9 @@ begin
 //    bmp.Transparent := True;
 
     if ImageIndex = 0 then
-      Canvas.StretchDraw(Rect(twDevices.Indent, NodeRect.Top + 1, twDevices.Indent + 38, NodeRect.Bottom - 2), iDeviceOnline.Picture.Graphic)
+      Canvas.StretchDraw(Rect(AStringTree.Indent, NodeRect.Top + 1, AStringTree.Indent + 38, NodeRect.Bottom - 2), iDeviceOnline.Picture.Graphic)
     else
-      Canvas.StretchDraw(Rect(twDevices.Indent, NodeRect.Top + 1, twDevices.Indent + 38, NodeRect.Bottom - 2), iDeviceOffline.Picture.Graphic);
+      Canvas.StretchDraw(Rect(AStringTree.Indent, NodeRect.Top + 1, AStringTree.Indent + 38, NodeRect.Bottom - 2), iDeviceOffline.Picture.Graphic);
 
 //    Canvas.Brush.Style := bsSolid;
 
@@ -6604,7 +6605,6 @@ procedure TMainForm.twIncomesBeforeItemPaint(Sender: TBaseVirtualTree;
 var
   DData: PDeviceData;
   Level: Integer;
-  Name: String;
 begin
   DData := twIncomes.GetNodeData(Node);
 //  if DData.HighLight then
@@ -6633,43 +6633,35 @@ begin
       Brush.Color := $00FDFDFD;
     end;
 
-    if Node.Parent = Sender.RootNode then
-      Level := 0
-    else
-      Level := 1;
+//    if Node.Parent = Sender.RootNode then
+//      Level := 0
+//    else
+//      Level := 1;
 
     FillRect(ItemRect);
 
     ItemRect.Left := 12 + (Level * twIncomes.Indent);
-    DrawImage(TargetCanvas, ItemRect, DData.StateIndex);
+    DrawImage(twIncomes, TargetCanvas, ItemRect, DData.StateIndex);
 
-    if Level = 0 then
-      ItemRect.Left := 18
-    else
+//    if Level = 0 then
+//      ItemRect.Left := 18
+//    else
       ItemRect.Left := 20 + 38;
 
-    Name := DData.Name;
-    if (DeviceId <> '') then
-      if DData.ID = StrToInt(DeviceId) then
-        if Name <> '' then
-          Name := Name + ' (этот компьютер)'
-        else
-          Name := Name + '(этот компьютер)';
-
     Font.Size := Sender.Font.Size;
-    if Node.Parent = Sender.RootNode then
-      Font.Style := [fsBold]
-    else
+//    if Node.Parent = Sender.RootNode then
+//      Font.Style := [fsBold]
+//    else
       Font.Style := [];
     TargetCanvas.Brush.Style := bsClear;
-    TextOut(ItemRect.Left, (ItemRect.Height - TargetCanvas.TextHeight(Name)) div 2, Name);
+    TextOut(ItemRect.Left, (ItemRect.Height - TargetCanvas.TextHeight(Name)) div 2, DData.Description);
     TargetCanvas.Brush.Style := bsSolid;
 
-    ItemRect.Left := 2;
-    if Sender.Selected[Node] then
-      DrawButton(TargetCanvas, ItemRect, Node, clBlack)//clWhite)
-    else
-      DrawButton(TargetCanvas, ItemRect, Node, clBlack);
+//    ItemRect.Left := 2;
+//    if Sender.Selected[Node] then
+//      DrawButton(twIncomes, TargetCanvas, ItemRect, Node, clBlack)//clWhite)
+//    else
+//      DrawButton(twIncomes, TargetCanvas, ItemRect, Node, clBlack);
   end;
 end;
 
@@ -10278,14 +10270,16 @@ var
   DData: PDeviceData;
   DForm: TDeviceForm;
 begin
-  New(DData);
+  if IsIncomeConnectionExists(AUserName) then
+    Exit;
+
+  Node := twIncomes.AddChild(nil, DData);
+  Node.States := [vsInitialized, vsVisible];
+  DData := twDevices.GetNodeData(Node);
   DData.Name := AUserName;
   DData.Description := AUserDesc;
   DData.HighLight := False;
   DData.StateIndex := MSG_STATUS_ONLINE;
-
-  Node := twIncomes.AddChild(twDevices.RootNode, DData);
-  Node.States := [vsInitialized, vsVisible];
 
   twIncomes.ToggleNode(Node);
   twIncomes.Selected[Node] := True;
@@ -10307,6 +10301,26 @@ begin
     begin
       twIncomes.DeleteNode(Node);
       twIncomes.Repaint;
+
+      Break;
+    end;
+    Node := twIncomes.GetNext(Node);
+  end;
+end;
+
+function TMainForm.IsIncomeConnectionExists(AUserName: String): Boolean;
+var
+  Node: PVirtualNode;
+begin
+//  XLog('IsIncomeConnectionExists');
+  Result := False;
+
+  Node := twIncomes.GetFirst;
+  while Node <> nil do
+  begin
+    if TDeviceData(twIncomes.GetNodeData(Node)^).Name = AUserName then
+    begin
+      Result := True;
 
       Break;
     end;
@@ -10413,7 +10427,7 @@ begin
   else
     s := u + ' (' + s + ')';
 
-  AddIncomeConnection(u, s);
+  RemoveIncomeConnection(u);
 
 //  Memo1.Lines.Add(user + ' left');
 
