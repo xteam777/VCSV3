@@ -10278,28 +10278,20 @@ var
   DData: PDeviceData;
   DForm: TDeviceForm;
 begin
-  Node := twIncomes.AddChild(GetGroupByUID(DForm.GroupUID));
-  Node.States := [vsInitialized, vsVisible];
-  DData := twIncomes.GetNodeData(Node);
-  DData.UID := DForm.UID;
-  DData.Name := DForm.eName.Text;
-  DData.Password := DForm.ePassword.Text;
-  DData.Description := DForm.mDescription.Lines.GetText;
-  DData.GroupUID := DForm.GroupUID;
-  DData.ID := StrToInt(DForm.eID.Text);
+  New(DData);
+  DData.Name := AUserName;
+  DData.Description := AUserDesc;
   DData.HighLight := False;
-  if DeviceId = DForm.eID.Text then
-    DData.StateIndex := MSG_STATUS_ONLINE
-  else
-    DData.StateIndex := MSG_STATUS_OFFLINE;
+  DData.StateIndex := MSG_STATUS_ONLINE;
 
-  if not twIncomes.Expanded[Node.Parent] then
-    twDevices.Expanded[Node.Parent] := True;
-  twDevices.ToggleNode(Node);
-  twDevices.Selected[Node] := True;
-  twDevices.FocusedNode := Node;
-  twDevices.SortTree(0, sdAscending);
-  twDevices.InvalidateNode(Node);
+  Node := twIncomes.AddChild(twDevices.RootNode, DData);
+  Node.States := [vsInitialized, vsVisible];
+
+  twIncomes.ToggleNode(Node);
+  twIncomes.Selected[Node] := True;
+  twIncomes.FocusedNode := Node;
+  twIncomes.SortTree(0, sdAscending);
+  twIncomes.InvalidateNode(Node);
 end;
 
 procedure TMainForm.RemoveIncomeConnection(AUserName: String);
@@ -10313,18 +10305,18 @@ begin
   begin
     if TDeviceData(twIncomes.GetNodeData(Node)^).Name = AUserName then
     begin
-      twDevices.DeleteNode(Node);
-      twDevices.Repaint;
+      twIncomes.DeleteNode(Node);
+      twIncomes.Repaint;
 
       Break;
     end;
-    Node := twDevices.GetNext(Node);
+    Node := twIncomes.GetNext(Node);
   end;
 end;
 
 procedure TMainForm.PModuleUserJoined(Sender: TRtcPModule; const user:string);
 var
-  s, d: String;
+  u, s, d: String;
 begin
   if Sender is TRtcPFileTransfer then
     s := 'Передача файлов'
@@ -10342,13 +10334,14 @@ begin
   else
     s := '???';
 
-  d := GetUserDescription(user);
+  u := GetUserFromFromUserName(user);
+  d := GetUserDescription(u);
   if d <> '' then
     s := d + ' (' + s + ')'
   else
-    s := user + ' (' + s + ')';
+    s := u + ' (' + s + ')';
 
-  AddIncomeConnection(user, s);
+  AddIncomeConnection(u, s);
 
 //  Memo1.Lines.Add(user + ' joined');
 
@@ -10389,7 +10382,7 @@ end;
 
 procedure TMainForm.PModuleUserLeft(Sender: TRtcPModule; const user:string);
 var
-  s, d: String;
+  u, s, d: String;
   a, i: Integer;
 begin
 //  xLog('PModuleUserLeft');
@@ -10413,13 +10406,14 @@ begin
   else
     s := '???';
 
-  d := GetUserDescription(user);
+  u := GetUserFromFromUserName(user);
+  d := GetUserDescription(u);
   if d <> '' then
     s := d + ' (' + s + ')'
   else
-    s := user + ' (' + s + ')';
+    s := u + ' (' + s + ')';
 
-  RemoveIncomeConnection(user);
+  AddIncomeConnection(u, s);
 
 //  Memo1.Lines.Add(user + ' left');
 
@@ -11017,6 +11011,8 @@ begin
         Result := PPendingRequestItem(PendingRequests[i])^.UserDesc;
         Break
       end;
+
+      i := i - 1;
     end;
   finally
     CS_Pending.Release;

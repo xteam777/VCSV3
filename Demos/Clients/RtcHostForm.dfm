@@ -60,6 +60,8 @@ object MainForm: TMainForm
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
+    ExplicitWidth = 836
+    ExplicitHeight = 483
     DesignSize = (
       840
       484)
@@ -67,7 +69,7 @@ object MainForm: TMainForm
       AlignWithMargins = True
       Left = 52
       Top = 467
-      Width = 546
+      Width = 542
       Height = 17
       Margins.Left = 75
       Anchors = [akLeft, akTop, akRight]
@@ -5222,7 +5224,7 @@ object MainForm: TMainForm
       Top = 6
       Width = 298
       Height = 455
-      ActivePage = tsMyDevices
+      ActivePage = tsIncomes
       TabOrder = 0
       object tsMyDevices: TTabSheet
         Caption = #1052#1086#1080' '#1091#1089#1090#1088#1086#1081#1089#1090#1074#1072
@@ -5854,7 +5856,6 @@ object MainForm: TMainForm
             Color = 6381297
             ParentBackground = False
             TabOrder = 1
-            ExplicitLeft = 7
             DesignSize = (
               280
               29)
