@@ -5713,7 +5713,7 @@ object MainForm: TMainForm
         end
       end
       object tsIncomes: TTabSheet
-        Caption = #1042#1093#1086#1076#1103#1097#1080#1077' '#1087#1086#1076#1082#1083#1102#1095#1077#1085#1080#1103
+        Caption = #1042#1093#1086#1076#1103#1097#1080#1077' '#1087#1086#1076#1082#1083#1102#1095#1077#1085#1080#1103' (0)'
         object GridPanel2: TGridPanel
           Left = 0
           Top = 0

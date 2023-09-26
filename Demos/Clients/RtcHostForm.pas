@@ -700,8 +700,9 @@ type
     procedure TaskBarIconUpdate(AIsOnline: Boolean);
     procedure TaskBarRemoveIcon;
 
-    procedure DrawButton(AStringTree: TVirtualStringTree; Canvas:TCanvas; ARect: TRect; Node: PVirtualNode; AColor: TColor);
-    procedure DrawImage(AStringTree: TVirtualStringTree; Canvas:TCanvas; NodeRect: TRect; ImageIndex: Integer);
+    procedure DrawExpandButton(AStringTree: TVirtualStringTree; Canvas: TCanvas; ARect: TRect; Node: PVirtualNode; AColor: TColor);
+    procedure DrawCloseButton(AStringTree: TVirtualStringTree; Canvas: TCanvas; ARect: TRect; Node: PVirtualNode; AColor: TColor);
+    procedure DrawImage(AStringTree: TVirtualStringTree; Canvas: TCanvas; NodeRect: TRect; ImageIndex: Integer);
     function NodeByUID(const aTree:TVirtualStringTree; const anUID:String): PVirtualNode;
     function NodeByID(const aTree: TVirtualStringTree; const aID: Integer): PVirtualNode;
 
@@ -782,6 +783,7 @@ type
 
     procedure AddIncomeConnection(AUserName, AUserDesc: String);
     procedure RemoveIncomeConnection(AUserName: String);
+    function GetIncomeConnectionsCount: Integer;
     function IsIncomeConnectionExists(AUserName: String): Boolean;
   end;
 
@@ -6162,9 +6164,9 @@ begin
 
     ItemRect.Left := 2;
     if Sender.Selected[Node] then
-      DrawButton(twDevices, TargetCanvas, ItemRect, Node, clBlack)//clWhite)
+      DrawExpandButton(twDevices, TargetCanvas, ItemRect, Node, clBlack)//clWhite)
     else
-      DrawButton(twDevices, TargetCanvas, ItemRect, Node, clBlack);
+      DrawExpandButton(twDevices, TargetCanvas, ItemRect, Node, clBlack);
   end;
 end;
 
@@ -6214,7 +6216,7 @@ begin
 //  end;
 end;
 
-procedure TMainForm.DrawButton(AStringTree: TVirtualStringTree; Canvas:TCanvas; ARect: TRect; Node: PVirtualNode; AColor: TColor);
+procedure TMainForm.DrawExpandButton(AStringTree: TVirtualStringTree; Canvas: TCanvas; ARect: TRect; Node: PVirtualNode; AColor: TColor);
 var
   cx, cy: Integer;
 begin
@@ -6234,10 +6236,28 @@ begin
         Polygon([Point(cx + 0, cy + 2), Point(cx + 10, cy + 2), Point(cx + 5, cy + 8)]);
       end;
   end;
-
 end;
 
-procedure TMainForm.DrawImage(AStringTree: TVirtualStringTree; Canvas:TCanvas; NodeRect: TRect; ImageIndex: Integer);
+procedure TMainForm.DrawCloseButton(AStringTree: TVirtualStringTree; Canvas: TCanvas; ARect: TRect; Node: PVirtualNode; AColor: TColor);
+var
+  cx, cy: Integer;
+begin
+  cx := ARect.Left;
+  cy := ARect.Top + Math.Ceil(ARect.Height / 2 - 4.5);
+  with Canvas do
+  begin
+    Pen.Color := AColor;
+    Pen.Width := 2;
+    Brush.Color := AColor;
+
+    MoveTo(cx, cy);
+    LineTo(cx + 8, cy + 8);
+    MoveTo(cx, cy + 8);
+    LineTo(cx + 8, cy);
+  end;
+end;
+
+procedure TMainForm.DrawImage(AStringTree: TVirtualStringTree; Canvas: TCanvas; NodeRect: TRect; ImageIndex: Integer);
 //var
 //  bmp: TBitmap;
 //  png: TPortableNetworkGraphic;
@@ -6583,20 +6603,23 @@ end;
 
 procedure TMainForm.twDevicesMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
-//var
-//  Node: PVirtualNode;
-//  p: TPoint;
+var
+  Node: PVirtualNode;
+  p: TPoint;
+  DData: PDeviceData;
 begin
-//  Node := twDevices.GetNodeAt(X, Y);
-//  if Node <> nil then
-//  begin
-//    twDevices.Selected[Node] := True;
-////    twDevices.Repaint;
-//  end;
-//  if Button = mbRight then
-//  begin
-//    pmDevicest.Popup(p.X, p.Y);
-//  end;
+  GetCursorPos(p);
+  p := twIncomes.ScreenToClient(p);
+  if (p.X < twIncomes.ClientWidth - 12)
+    or (p.X > twIncomes.ClientWidth - 4) then
+    Exit;
+
+  Node := twIncomes.GetNodeAt(X, Y);
+  if Node <> nil then
+  begin
+    DData := twIncomes.GetNodeData(Node);
+    TSendDestroyClientToGatewayThread.Create(False, tPHostThread.Gateway, DData^.Name, False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword);
+  end;
 end;
 
 procedure TMainForm.twIncomesBeforeItemPaint(Sender: TBaseVirtualTree;
@@ -6657,11 +6680,11 @@ begin
     TextOut(ItemRect.Left, (ItemRect.Height - TargetCanvas.TextHeight(Name)) div 2, DData.Description);
     TargetCanvas.Brush.Style := bsSolid;
 
-//    ItemRect.Left := 2;
-//    if Sender.Selected[Node] then
-//      DrawButton(twIncomes, TargetCanvas, ItemRect, Node, clBlack)//clWhite)
-//    else
-//      DrawButton(twIncomes, TargetCanvas, ItemRect, Node, clBlack);
+    ItemRect.Left := twIncomes.ClientWidth - 12;
+    if Sender.Selected[Node] then
+      DrawCloseButton(twIncomes, TargetCanvas, ItemRect, Node, clBlack)//clWhite)
+    else
+      DrawCloseButton(twIncomes, TargetCanvas, ItemRect, Node, clBlack);
   end;
 end;
 
@@ -10286,6 +10309,24 @@ begin
   twIncomes.FocusedNode := Node;
   twIncomes.SortTree(0, sdAscending);
   twIncomes.InvalidateNode(Node);
+
+  tsIncomes.Caption := 'Входящие подключения (' + IntToStr(GetIncomeConnectionsCount) + ')';
+end;
+
+function TMainForm.GetIncomeConnectionsCount: Integer;
+var
+  Node: PVirtualNode;
+begin
+//  XLog('GetIncomeConnectionsCount');
+  Result := 0;
+
+  Node := twIncomes.GetFirst;
+  while Node <> nil do
+  begin
+    Result := Result + 1;
+
+    Node := twIncomes.GetNext(Node);
+  end;
 end;
 
 procedure TMainForm.RemoveIncomeConnection(AUserName: String);
@@ -10306,6 +10347,8 @@ begin
     end;
     Node := twIncomes.GetNext(Node);
   end;
+
+  tsIncomes.Caption := 'Входящие подключения (' + IntToStr(GetIncomeConnectionsCount) + ')';
 end;
 
 function TMainForm.IsIncomeConnectionExists(AUserName: String): Boolean;
@@ -10355,7 +10398,7 @@ begin
   else
     s := u + ' (' + s + ')';
 
-  AddIncomeConnection(u, s);
+  AddIncomeConnection(user, s);
 
 //  Memo1.Lines.Add(user + ' joined');
 
@@ -10395,39 +10438,39 @@ begin
 end;
 
 procedure TMainForm.PModuleUserLeft(Sender: TRtcPModule; const user:string);
-var
-  u, s, d: String;
-  a, i: Integer;
+//var
+//  u, s, d: String;
+//  a, i: Integer;
 begin
 //  xLog('PModuleUserLeft');
 
-  if Sender is TRtcPFileTransfer then
-    s := 'Передача файлов'
-  else
-  if Sender is TRtcPChat then
-    s := 'Чат'
-  else
-  if Sender is TRtcPDesktopHost then
-  begin
-    s := 'Управление';
-    Dec(DesktopCnt);
-    if DesktopCnt = 0 then
-    begin
-//      DragAcceptFiles(Handle, False);
-      Show_Wallpaper;
-    end;
-  end
-  else
-    s := '???';
+//  if Sender is TRtcPFileTransfer then
+//    s := 'Передача файлов'
+//  else
+//  if Sender is TRtcPChat then
+//    s := 'Чат'
+//  else
+//  if Sender is TRtcPDesktopHost then
+//  begin
+//    s := 'Управление';
+//    Dec(DesktopCnt);
+//    if DesktopCnt = 0 then
+//    begin
+////      DragAcceptFiles(Handle, False);
+//      Show_Wallpaper;
+//    end;
+//  end
+//  else
+//    s := '???';
+//
+//  u := GetUserFromFromUserName(user);
+//  d := GetUserDescription(u);
+//  if d <> '' then
+//    s := d + ' (' + s + ')'
+//  else
+//    s := u + ' (' + s + ')';
 
-  u := GetUserFromFromUserName(user);
-  d := GetUserDescription(u);
-  if d <> '' then
-    s := d + ' (' + s + ')'
-  else
-    s := u + ' (' + s + ')';
-
-  RemoveIncomeConnection(u);
+  RemoveIncomeConnection(user);
 
 //  Memo1.Lines.Add(user + ' left');
 
