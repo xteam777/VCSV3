@@ -1205,11 +1205,11 @@ begin
   panOptionsMini.Top := 0;
   ammbActions.Left := Ceil((ClientWidth - ammbActions.Width) / 2);
 
-  if (panOptionsMini.Left < (ClientWidth * 5 div 100)) then
-    panOptionsMini.Left := (ClientWidth * 5 div 100)
+  if (panOptionsMini.Left < (ClientWidth * 15 div 100)) then
+    panOptionsMini.Left := (ClientWidth * 15 div 100)
   else
-  if (panOptionsMini.Left > (ClientWidth - ClientWidth * 5 div 100) - panOptionsMini.Width) then
-    panOptionsMini.Left := ClientWidth - (ClientWidth * 5 div 100) - panOptionsMini.Width;
+  if (panOptionsMini.Left > (ClientWidth - ClientWidth * 15 div 100) - panOptionsMini.Width) then
+    panOptionsMini.Left := ClientWidth - (ClientWidth * 15 div 100) - panOptionsMini.Width;
 
 //  Scroll.Left := 0;
 //  Scroll.Top := panOptions.Top + panOptions.Height;
@@ -1377,7 +1377,7 @@ begin
   pMain.Color := clWhite; //$00A39323;
   Scroll.Visible := False;
   iPrepare.Visible := True;
-  panOptionsMini.Left := ClientWidth - (ClientWidth * 5 div 100);
+  panOptionsMini.Left := ClientWidth - (ClientWidth * 15 div 100);
   iScreenLocked.Visible := False;
   lState.Caption := 'Инициализация изображения...';
   lState.Visible := True;
@@ -1419,7 +1419,7 @@ end;
 
 procedure TrdDesktopViewer.FormResize(Sender: TObject);
 begin
-  panOptionsMini.Left := ClientWidth - (ClientWidth * 5 div 100);
+  panOptionsMini.Left := ClientWidth - (ClientWidth * 15 div 100);
 
   DoResizeImage;
 end;
@@ -2465,8 +2465,8 @@ begin
     p.X := X;
     p.Y := Y;
     p := panOptionsMini.ClientToScreen(p);
-    if ((panOptionsMini.Left - MiniPanelCurX + p.X + panOptionsMini.Width) < (ClientWidth - panOptionsMini.Width - ClientWidth * 5 div 100))
-      and ((panOptionsMini.Left - MiniPanelCurX + p.X) > (ClientWidth * 5 div 100)) then
+    if ((panOptionsMini.Left - MiniPanelCurX + p.X + panOptionsMini.Width) < (ClientWidth - panOptionsMini.Width - ClientWidth * 15 div 100))
+      and ((panOptionsMini.Left - MiniPanelCurX + p.X) > (ClientWidth * 15 div 100)) then
       panOptionsMini.Left := panOptionsMini.Left - MiniPanelCurX + p.X;
     MiniPanelCurX := p.X;
 
