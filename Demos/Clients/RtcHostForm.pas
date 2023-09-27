@@ -6639,7 +6639,7 @@ begin
   if Node <> nil then
   begin
     DData := twIncomes.GetNodeData(Node);
-    TSendDestroyClientToGatewayThread.Create(False, tPHostThread.Gateway, DData^.Name, False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, False);
+//    TSendDestroyClientToGatewayThread.Create(False, tPHostThread.Gateway, DData^.Name, False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, False);
     SendManualLogoutToControl(GetUserFromFromUserName(DData^.Name), DeviceId);
   end;
 end;
@@ -7391,12 +7391,13 @@ var
   Node: PVirtualNode;
   DData: PDeviceData;
 begin
-  Node := twDevices.GetFirst;
+  Node := twIncomes.GetFirst;
   while Node <> nil do
   begin
-    TSendDestroyClientToGatewayThread.Create(False, tPHostThread.Gateway, PDeviceData(twDevices.GetNodeData(Node))^.Name, False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, True);
-
-    Node := twDevices.GetNext(Node);
+    DData := twIncomes.GetNodeData(Node);
+//    TSendDestroyClientToGatewayThread.Create(False, tPHostThread.Gateway, GetUserFromFromUserName(DData^.Name), False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, True);
+    SendManualLogoutToControl(GetUserFromFromUserName(DData^.Name), DeviceId);
+    Node := twIncomes.GetNext(Node);
   end;
 
   twIncomes.Repaint;
