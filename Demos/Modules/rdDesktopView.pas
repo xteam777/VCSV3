@@ -188,6 +188,8 @@ type
       ATab: TChromeTab; var Close: Boolean);
     procedure TimerResizeTimer(Sender: TObject);
     procedure tCloseFormTimer(Sender: TObject);
+    procedure MainChromeTabsChange(Sender: TObject; ATab: TChromeTab;
+      TabChangeType: TTabChangeType);
   private
 //    FVideoRecorder: TVideoRecorder;
 //    FVideoWriter: TRMXVideoWriter;
@@ -276,6 +278,7 @@ type
     function GetUIDataModule(AUserName: String): TUIDataModule;
     function RemoveUIDataModule(AUserName: String): Integer;
     function FreeUIDataModule(AUserName: String; AThreadID: Cardinal): Integer;
+    function GetActiveUIModulesCount: Integer;
     procedure DoReconnectToPartnerStart(user, username, pass, action: String);
   end;
 
@@ -308,6 +311,22 @@ begin
   FreeUIDataModule(StrPas(PChar(Message.wParam)), Cardinal(Message.lParam));
 end;
 
+function TrdDesktopViewer.GetActiveUIModulesCount: Integer;
+var
+  i: Integer;
+begin
+  Result := 0;
+
+  UI_CS.Acquire;
+  try
+    for i := 0 to UIModulesList.Count - 1 do
+      if (not TUIDataModule(UIModulesList[i]).NeedFree) then
+        Result := Result + 1;
+  finally
+    UI_CS.Release;
+  end;
+end;
+
 procedure TrdDesktopViewer.CloseTab(AUserName: String);
 var
   RemovedInd: Integer;
@@ -318,10 +337,10 @@ begin
   UI_CS.Acquire;
   try
     RemovedInd := RemoveUIDataModule(AUserName);
-    if UIModulesList.Count = 0 then
+    if GetActiveUIModulesCount = 0 then
     begin
       ActiveUIModule := nil;
-      tCloseForm.Enabled := True;
+//      tCloseForm.Enabled := True;
     end
     else
     if RemovedInd > 1 then
@@ -339,6 +358,19 @@ procedure TrdDesktopViewer.MainChromeTabsButtonCloseTabClick(Sender: TObject;
   ATab: TChromeTab; var Close: Boolean);
 begin
   CloseTab(ATab.UserName);
+end;
+
+procedure TrdDesktopViewer.MainChromeTabsChange(Sender: TObject;
+  ATab: TChromeTab; TabChangeType: TTabChangeType);
+begin
+  if (TabChangeType = tcDeleted)
+    and (GetActiveUIModulesCount = 0) then
+  begin
+//    ActiveUIModule := nil;
+//    tCloseForm.Enabled := True;
+    Close;
+    Exit;
+  end;
 end;
 
 procedure TrdDesktopViewer.SetFormState;

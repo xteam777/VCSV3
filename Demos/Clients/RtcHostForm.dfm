@@ -7,6 +7,7 @@ object MainForm: TMainForm
   ClientWidth = 840
   Color = clBtnFace
   CustomTitleBar.CaptionAlignment = taCenter
+  Constraints.MinWidth = 852
   DoubleBuffered = True
   Font.Charset = DEFAULT_CHARSET
   Font.Color = 14540253
@@ -5876,6 +5877,7 @@ object MainForm: TMainForm
               Layout = blGlyphRight
               ParentFont = False
               Transparent = False
+              OnClick = bCloseAllIncomesClick
               OnMouseEnter = bCloseAllIncomesMouseEnter
               OnMouseLeave = bCloseAllIncomesMouseLeave
             end

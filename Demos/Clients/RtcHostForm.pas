@@ -548,6 +548,7 @@ type
       Y: Integer);
     procedure bCloseAllIncomesMouseEnter(Sender: TObject);
     procedure bCloseAllIncomesMouseLeave(Sender: TObject);
+    procedure bCloseAllIncomesClick(Sender: TObject);
   protected
 
 //    FAutoRun: Boolean;
@@ -3179,8 +3180,8 @@ procedure TMainForm.ShowDevicesPanel;
 begin
   //XLog('ShowDevicesPanel');
 
-  Constraints.MinWidth := 0;
-  Constraints.MaxWidth := 0;
+//  Constraints.MinWidth := 0;
+//  Constraints.MaxWidth := 0;
 
   if LoggedIn then
   begin
@@ -3196,9 +3197,9 @@ begin
 
     miAccLogOut.Caption := 'Выход';
 
-    Constraints.MaxWidth := Width;
+//    Constraints.MaxWidth := Width;
   end;
-  Constraints.MinWidth := Width;
+//  Constraints.MinWidth := 852;
 
   FormResize(nil);
 end;
@@ -6689,13 +6690,13 @@ begin
 end;
 
 procedure TMainForm.twIncomesDblClick(Sender: TObject);
-var
-  DData: PDeviceData;
-  Node: PVirtualNode;
-  x, y, err: Integer;
-  p: TPoint;
-  user, sPassword: String;
-  i: Integer;
+//var
+//  DData: PDeviceData;
+//  Node: PVirtualNode;
+//  x, y, err: Integer;
+//  p: TPoint;
+//  user, sPassword: String;
+//  i: Integer;
 begin
 //  XLog('twIncomesDblClick');
 
@@ -7360,6 +7361,22 @@ begin
   pmAccount.Popup(p.X, p.Y);;
 end;
 
+procedure TMainForm.bCloseAllIncomesClick(Sender: TObject);
+var
+  Node: PVirtualNode;
+  DData: PDeviceData;
+begin
+  Node := twDevices.GetFirst;
+  while Node <> nil do
+  begin
+    TSendDestroyClientToGatewayThread.Create(False, tPHostThread.Gateway, PDeviceData(twDevices.GetNodeData(Node))^.Name, False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword);
+
+    Node := twDevices.GetNext(Node);
+  end;
+
+  twIncomes.Repaint;
+end;
+
 procedure TMainForm.bCloseAllIncomesMouseEnter(Sender: TObject);
 begin
   bCloseAllIncomes.Color := RGB(231, 84, 87);
@@ -7961,6 +7978,14 @@ begin
       if PRItem = nil then
         Exit;
 
+      if PRItem^.IsReconnection then
+      begin
+        DeletePendingRequest(asWideString['user'], asString['action']);
+        DesktopsForm.CloseTab(asWideString['user']);
+
+        Exit;
+      end;
+
       username := GetUserNameByID(asWideString['user']);
 
       TempPass := '';
@@ -7983,14 +8008,14 @@ begin
       PassForm.user := asWideString['user'];
       PassForm.OnCustomFormClose := OnCustomFormClose;
       OnCustomFormOpen(@PassForm);
-      DesktopsForm.SetReconnectInterval(asWideString['user'], 999999999);
+//      DesktopsForm.SetReconnectInterval(asWideString['user'], 999999999);
       PassForm.ShowModal;
       mResult := PassForm.ModalResult;
       TempPass := PassForm.ePassword.Text;
       if mResult = mrOk then
       begin
         ConnectToPartnerStart(asWideString['user'], username, TempPass, asString['action']);
-        DesktopsForm.SetReconnectInterval(asWideString['user'], 60000);
+//        DesktopsForm.SetReconnectInterval(asWideString['user'], 60000);
       end
       else
       begin
@@ -10100,21 +10125,22 @@ var
   i: Integer;
 begin
 //  xLog('CloseAllActiveUI');
-  CS_GW.Acquire;
-  try
-    i := PortalConnectionsList.Count - 1;
-    while i >= 0 do
-    begin
-        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, WPARAM(True), 0); //Закрываем поток с пклиентом и UIDataModule
-//      PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0);
-      Dispose(PortalConnectionsList[i]);
-      PortalConnectionsList.Delete(i);
-
-      i := i - 1;
-    end;
-  finally
-    CS_GW.Release;
-  end;
+//  CS_GW.Acquire;
+//  try
+//    i := PortalConnectionsList.Count - 1;
+//    while i >= 0 do
+//    begin
+//        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, WPARAM(True), 0); //Закрываем поток с пклиентом и UIDataModule
+////      PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0);
+//      Dispose(PortalConnectionsList[i]);
+//      PortalConnectionsList.Delete(i);
+//
+//      i := i - 1;
+//    end;
+//  finally
+//    CS_GW.Release;
+//  end;
+  DesktopsForm.Close;
 
   if (OpenedModalForm <> nil)
     and OpenedModalForm^.Visible
