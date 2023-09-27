@@ -60,6 +60,7 @@ type
     Description: WideString;
     HighLight: Boolean;
     StateIndex: Integer;
+    DateCreated: TDateTime;
   end;
 
   PDeviceGroup = ^TDeviceGroup;

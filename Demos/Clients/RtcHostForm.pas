@@ -6663,19 +6663,23 @@ begin
   begin
     Font.Color := clBlack;
     Pen.Color := cl3DDkShadow;
-    if DData^.HighLight
-      and (not Sender.Selected[Node]) then
+    if DData^.DateCreated <= IncSecond(Now, 2) then
     begin
-      Brush.Color := RGB(229, 243, 255);//$DDDDDD;//$E0E0E0;
-    end
-    else
-    if Sender.Selected[Node] then
-    begin
-      Brush.Color := RGB(204, 232, 255);//RGB(19, 174, 196);
+      if MilliSecondOf(Now) <= 500 then
+        Brush.Color := RGB(255, 255, 255)
+      else
+        Brush.Color := $00615EF1;
     end
     else
     begin
-      Brush.Color := $00FDFDFD;
+      if DData^.HighLight
+        and (not Sender.Selected[Node]) then
+        Brush.Color := RGB(229, 243, 255) //$DDDDDD;//$E0E0E0;
+      else
+      if Sender.Selected[Node] then
+        Brush.Color := RGB(204, 232, 255) //RGB(19, 174, 196);
+      else
+        Brush.Color := $00FDFDFD;
     end;
 
 //    if Node.Parent = Sender.RootNode then
@@ -10358,6 +10362,7 @@ begin
   DData^.Description := AUserDesc;
   DData^.HighLight := False;
   DData^.StateIndex := MSG_STATUS_ONLINE;
+  DData^.DateCreated := Now;
 
   twIncomes.ToggleNode(Node);
   twIncomes.Selected[Node] := True;

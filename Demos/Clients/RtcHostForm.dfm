@@ -70,7 +70,7 @@ object MainForm: TMainForm
       AlignWithMargins = True
       Left = 52
       Top = 467
-      Width = 542
+      Width = 538
       Height = 17
       Margins.Left = 75
       Anchors = [akLeft, akTop, akRight]
