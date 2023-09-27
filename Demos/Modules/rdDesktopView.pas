@@ -268,7 +268,8 @@ type
 
     function GetTab(AUserName: String): TChromeTab;
     function AddNewTab(AUserName, AUserDesc, AUserPass: String; AThreadID: Cardinal; AStartLockedState: Integer; AStartServiceStarted: Boolean; AModule: TRtcPDesktopControl): TUIDataModule;
-    procedure CloseTab(AUserName: String; ACloseTab: Boolean);
+    procedure CloseUITab(AUserName: String; ACloseTab: Boolean);
+    procedure CloseTab(AUserName: String);
     procedure SetReconnectInterval(AUserName: String; AInterval: Integer);
     procedure SetActiveTab(AUserName: String);
     procedure ChangeLockedState(AUserName: String; ALockedState: Integer; AServiceStarted: Boolean);
@@ -325,7 +326,24 @@ begin
   end;
 end;
 
-procedure TrdDesktopViewer.CloseTab(AUserName: String; ACloseTab: Boolean);
+procedure TrdDesktopViewer.CloseTab(AUserName: String);
+var
+  i: Integer;
+begin
+  i := MainChromeTabs.Tabs.Count - 1;
+  while i >= 0 do
+  begin
+    if MainChromeTabs.Tabs[i].UserName = AUserName then
+    begin
+      MainChromeTabs.Tabs.DeleteTab(i, True);
+      Break;
+    end;
+
+    i := i - 1;
+  end;
+end;
+
+procedure TrdDesktopViewer.CloseUITab(AUserName: String; ACloseTab: Boolean);
 var
   i: Integer;
 begin
@@ -337,19 +355,7 @@ begin
     RemoveUIDataModule(AUserName);
 
     if ACloseTab then
-    begin
-      i := MainChromeTabs.Tabs.Count - 1;
-      while i >= 0 do
-      begin
-        if MainChromeTabs.Tabs[i].UserName = AUserName then
-        begin
-          MainChromeTabs.Tabs.DeleteTab(i, True);
-          Break;
-        end;
-
-        i := i - 1;
-      end;
-    end;
+      CloseTab(AUserName);
   finally
     UI_CS.Release;
   end;
@@ -362,7 +368,7 @@ end;
 procedure TrdDesktopViewer.MainChromeTabsButtonCloseTabClick(Sender: TObject;
   ATab: TChromeTab; var Close: Boolean);
 begin
-  CloseTab(ATab.UserName, False);
+  CloseUITab(ATab.UserName, False);
 end;
 
 procedure TrdDesktopViewer.MainChromeTabsChange(Sender: TObject;
@@ -1385,6 +1391,7 @@ begin
     begin
       TUIDataModule(UIModulesList[i]).NeedFree := True;
       FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
+      CloseTab(TUIDataModule(UIModulesList[i]).UserName);
   //    TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
   //    TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
   //    FreeAndNil(TUIDataModule(UIModulesList[i]));
