@@ -323,7 +323,6 @@ type
     bCloseAllIncomes: TColorSpeedButton;
     rManualLogout: TRtcResult;
     tFoldForm: TTimer;
-    tIncomesBacklight: TTimer;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -6674,24 +6673,14 @@ begin
   begin
     Font.Color := clBlack;
     Pen.Color := cl3DDkShadow;
-    if DData^.DateCreated <= IncSecond(Now, 2) then
-    begin
-      if MilliSecondOf(Now) <= 500 then
-        Brush.Color := RGB(255, 255, 255)
-      else
-        Brush.Color := $00615EF1;
-    end
+    if DData^.HighLight
+      and (not Sender.Selected[Node]) then
+      Brush.Color := RGB(229, 243, 255) //$DDDDDD;//$E0E0E0;
     else
-    begin
-      if DData^.HighLight
-        and (not Sender.Selected[Node]) then
-        Brush.Color := RGB(229, 243, 255) //$DDDDDD;//$E0E0E0;
-      else
-      if Sender.Selected[Node] then
-        Brush.Color := RGB(204, 232, 255) //RGB(19, 174, 196);
-      else
-        Brush.Color := $00FDFDFD;
-    end;
+    if Sender.Selected[Node] then
+      Brush.Color := RGB(204, 232, 255) //RGB(19, 174, 196);
+    else
+      Brush.Color := $00FDFDFD;
 
 //    if Node.Parent = Sender.RootNode then
 //      Level := 0
@@ -10371,7 +10360,6 @@ begin
   DData^.Description := AUserDesc;
   DData^.HighLight := False;
   DData^.StateIndex := MSG_STATUS_ONLINE;
-  DData^.DateCreated := Now;
 
   twIncomes.ToggleNode(Node);
   twIncomes.Selected[Node] := True;
