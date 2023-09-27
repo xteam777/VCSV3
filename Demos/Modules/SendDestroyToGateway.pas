@@ -84,7 +84,6 @@ begin
       begin
         asString['UserName'] := AClientName;
         asBoolean['AllConnectionsById'] := AAllConnectionsById;
-        asBoolean['Manual'] := AManual;
         Call(rtcRes);
 //        WaitForCompletion(True, 10);
       end;

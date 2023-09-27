@@ -6546,4 +6546,8 @@ object MainForm: TMainForm
     Left = 351
     Top = 10
   end
+  object rManualLogout: TRtcResult
+    Left = 359
+    Top = 60
+  end
 end

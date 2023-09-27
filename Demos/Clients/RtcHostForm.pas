@@ -321,6 +321,7 @@ type
     twIncomes: TVirtualStringTree;
     pBtnCloseAllIncomes: TPanel;
     bCloseAllIncomes: TColorSpeedButton;
+    rManualLogout: TRtcResult;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -749,6 +750,7 @@ type
     procedure ShowMessageBox(AText, ACaption, AType, AUID: string);
     procedure ShowAboutForm;
     procedure DoDeleteDeviceGroup(AUID: String);
+    procedure SendManualLogoutToControl(AControlID, AHostID: String);
     procedure DoExit;
     procedure CloseAllActiveUI;
 
@@ -2068,6 +2070,24 @@ begin
       asString['UID'] := AUID;
       asString['AccountUID'] := AccountUID;
       Call(rDeleteDevice);
+    end;
+  except
+    on E: Exception do
+      Data.Clear;
+  end;
+end;
+
+procedure TMainForm.SendManualLogoutToControl(AControlID, AHostID: String);
+begin
+  //XLog('DoDeleteDeviceGroup');
+
+  with cmAccounts do
+  try
+    with Data.NewFunction('Account.ManualLogout') do
+    begin
+      asString['ControlID'] := AControlID;
+      asString['HostID'] := AHostID;
+      Call(rManualLogout);
     end;
   except
     on E: Exception do
@@ -6620,6 +6640,7 @@ begin
   begin
     DData := twIncomes.GetNodeData(Node);
     TSendDestroyClientToGatewayThread.Create(False, tPHostThread.Gateway, DData^.Name, False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, False);
+    SendManualLogoutToControl(GetUserFromFromUserName(DData^.Name), DeviceId);
   end;
 end;
 
@@ -8497,6 +8518,14 @@ begin
 //                make_notify(fname, 'logout');
 //              if isFriend(fname) then
                 FriendList_Status(fname, MSG_STATUS_OFFLINE);
+              end
+            else if not isNull['manual_logout'] then // User closed incoming connection
+              begin
+//                fname := asText['manual_logout'];
+//                make_notify(fname, 'manual_logout');
+//              if isFriend(fname) then
+//                FriendList_Status(fname, MSG_STATUS_OFFLINE);
+                DesktopsForm.CloseTab(asRecord['manual_logout'].asText['user']);
               end
             else if not isNull['locked'] then // Friend locked status update
               begin
