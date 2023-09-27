@@ -12,6 +12,7 @@ type
     FGateway: String;
     FClientName: String;
     FAllConnectionsById: Boolean;
+    FManual: Boolean;
     rtcClient: TRtcHttpClient;
     rtcModule: TRtcClientModule;
     rtcRes: TRtcResult;
@@ -23,13 +24,13 @@ type
     procedure rtcResReturn(Sender: TRtcConnection; Data, Result: TRtcValue);
     procedure rtcResRequestAborted(Sender: TRtcConnection; Data, Result: TRtcValue);
   public
-    constructor Create(CreateSuspended: Boolean; AGateway, AClientName: String; AAllConnectionsById, UseProxy: Boolean; ProxyAddr, ProxyUserName, ProxyPassword: String); overload;
+    constructor Create(CreateSuspended: Boolean; AGateway, AClientName: String; AAllConnectionsById, UseProxy: Boolean; ProxyAddr, ProxyUserName, ProxyPassword: String; AManual: Boolean); overload;
     destructor Destroy; override;
   end;
 
 implementation
 
-constructor TSendDestroyClientToGatewayThread.Create(CreateSuspended: Boolean; AGateway, AClientName: String; AAllConnectionsById, UseProxy: Boolean; ProxyAddr, ProxyUserName, ProxyPassword: String);
+constructor TSendDestroyClientToGatewayThread.Create(CreateSuspended: Boolean; AGateway, AClientName: String; AAllConnectionsById, UseProxy: Boolean; ProxyAddr, ProxyUserName, ProxyPassword: String; AManual: Boolean);
 begin
   inherited Create(CreateSuspended);
 
@@ -38,6 +39,7 @@ begin
   FGateway := AGateway;
   FClientName := AClientName;
   FAllConnectionsById := AAllConnectionsById;
+  FManual := AManual;
 
   FResultGot := False;
 
@@ -82,6 +84,7 @@ begin
       begin
         asString['UserName'] := AClientName;
         asBoolean['AllConnectionsById'] := AAllConnectionsById;
+        asBoolean['Manual'] := AManual;
         Call(rtcRes);
 //        WaitForCompletion(True, 10);
       end;
