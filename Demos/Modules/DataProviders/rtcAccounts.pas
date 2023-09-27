@@ -148,6 +148,8 @@ type
     function isGatewayLoggedIn(address: String): Boolean;
     procedure CheckDisconnectedGateways;
     procedure DisconnectServiceClients(ServiceUserName: String);
+
+    procedure NotifyControlOfManualLogout(ControlID, HostID: String);
   end;
 
 implementation
@@ -557,6 +559,23 @@ end;
 //    userCS.Release;
 //  end;
 //end;
+
+procedure TVircessUsers.NotifyControlOfManualLogout(ControlID, HostID: String);
+var
+  rec: TRtcRecord;
+begin
+  rec := TRtcRecord.Create;
+  try
+    rec.AutoCreate := True;
+    with rec.asRecord['manual_logout'] do
+    begin
+      asText['user'] := HostID;
+      SendData(ControlID, rec);
+    end;
+  finally
+    rec.Free;
+  end;
+end;
 
 procedure TVircessUsers.NotifyAccountsOnHostLockedUpdate(uname: String; Friends: TRtcRecord; LockedState: Integer; ServiceStarted: Boolean);
 var
@@ -1280,12 +1299,12 @@ begin
 
       if DisconnectAll then
       begin
-        TSendDestroyClientToGatewayThread.Create(False, HostsInfo.Child[uname]['gateway'], uname, True, False, '', '', '');
+        TSendDestroyClientToGatewayThread.Create(False, HostsInfo.Child[uname]['gateway'], uname, True, False, '', '', '', False);
         DelUserFromGateway(uname, HostsInfo.Child[uname]['gateway']) //Param gateway = ''
       end
       else
       begin
-        TSendDestroyClientToGatewayThread.Create(False, gateway, uname + '_', False, False, '', '', '');
+        TSendDestroyClientToGatewayThread.Create(False, gateway, uname + '_', False, False, '', '', '', False);
         DelUserFromGateway(uname, gateway);
       end;
 

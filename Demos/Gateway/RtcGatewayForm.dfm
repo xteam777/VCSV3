@@ -3,8 +3,8 @@ object MainForm: TMainForm
   Top = 123
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'Remox Gateway'
-  ClientHeight = 463
-  ClientWidth = 579
+  ClientHeight = 462
+  ClientWidth = 575
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -23,8 +23,8 @@ object MainForm: TMainForm
   object pMaster: TPanel
     Left = 0
     Top = 0
-    Width = 579
-    Height = 430
+    Width = 575
+    Height = 429
     Align = alClient
     TabOrder = 0
     ExplicitTop = 28
@@ -33,8 +33,8 @@ object MainForm: TMainForm
     object Pages: TPageControl
       Left = 1
       Top = 1
-      Width = 585
-      Height = 429
+      Width = 581
+      Height = 428
       ActivePage = Page_Setup
       Align = alClient
       TabOrder = 0
@@ -424,8 +424,8 @@ object MainForm: TMainForm
   end
   object lblStatusPanel: TPanel
     Left = 0
-    Top = 430
-    Width = 579
+    Top = 429
+    Width = 575
     Height = 33
     Align = alBottom
     BevelInner = bvLowered

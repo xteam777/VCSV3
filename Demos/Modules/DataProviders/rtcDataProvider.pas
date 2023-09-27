@@ -1491,6 +1491,8 @@ end;
 procedure TData_Provider.ClientsDestroyExecute(Sender: TRtcConnection;
   Param: TRtcFunctionInfo; Result: TRtcValue);
 begin
+  if Param.asBoolean['Manual'] then
+    Users.NotifyControlOfManualLogout(Param.asString['UserName']);
   Gateway1.StartForceUserLogoutThread(Param.asString['UserName'], Param.asBoolean['AllConnectionsById']);
   Gateway2.StartForceUserLogoutThread(Param.asString['UserName'], Param.asBoolean['AllConnectionsById']);
   Gateway3.StartForceUserLogoutThread(Param.asString['UserName'], Param.asBoolean['AllConnectionsById']);
