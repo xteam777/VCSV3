@@ -70,7 +70,7 @@ object MainForm: TMainForm
       AlignWithMargins = True
       Left = 52
       Top = 467
-      Width = 538
+      Width = 534
       Height = 17
       Margins.Left = 75
       Anchors = [akLeft, akTop, akRight]
@@ -6552,7 +6552,7 @@ object MainForm: TMainForm
   end
   object tFoldForm: TTimer
     Enabled = False
-    Interval = 2000
+    Interval = 3000
     OnTimer = tFoldFormTimer
     Left = 122
     Top = 310

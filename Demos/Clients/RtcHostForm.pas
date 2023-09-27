@@ -10457,7 +10457,8 @@ begin
 
   if not IsIncomeConnectionExists(user) then
   begin
-    if not Visible then
+    if (not Visible)
+      or (IsIconic(Application.Handle)) then
     begin
       Visible := True;
       ShowWindow(Application.Handle, SW_SHOW);
