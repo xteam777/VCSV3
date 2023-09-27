@@ -322,6 +322,7 @@ type
     pBtnCloseAllIncomes: TPanel;
     bCloseAllIncomes: TColorSpeedButton;
     rManualLogout: TRtcResult;
+    tFoldForm: TTimer;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -550,6 +551,7 @@ type
     procedure bCloseAllIncomesMouseEnter(Sender: TObject);
     procedure bCloseAllIncomesMouseLeave(Sender: TObject);
     procedure bCloseAllIncomesClick(Sender: TObject);
+    procedure tFoldFormTimer(Sender: TObject);
   protected
 
 //    FAutoRun: Boolean;
@@ -5940,6 +5942,14 @@ begin
   tDelayedStatus.Enabled := False;
 end;
 
+procedure TMainForm.tFoldFormTimer(Sender: TObject);
+begin
+  ShowWindow(Application.Handle, SW_HIDE);
+  Visible := False;
+
+  tFoldForm.Enabled := False;
+end;
+
 procedure TMainForm.TimerClientConnect(Sender: TRtcConnection);
 begin
 //  xLog('TimerClientConnect');
@@ -10353,9 +10363,6 @@ var
   DData: PDeviceData;
   DForm: TDeviceForm;
 begin
-  if IsIncomeConnectionExists(AUserName) then
-    Exit;
-
   Node := twIncomes.AddChild(nil, DData);
   Node.States := [vsInitialized, vsVisible];
   DData := twDevices.GetNodeData(Node);
@@ -10459,7 +10466,21 @@ begin
   else
     s := u + ' (' + s + ')';
 
-  AddIncomeConnection(user, s);
+  if not IsIncomeConnectionExists(user) then
+  begin
+    if not Visible then
+    begin
+      Visible := True;
+      ShowWindow(Application.Handle, SW_SHOW);
+      Application.Restore;
+      SetForegroundWindow(Handle);
+      tFoldForm.Enabled := True;
+
+      pcDevAcc.ActivePage := tsIncomes;
+    end;
+
+    AddIncomeConnection(user, s);
+  end;
 
 //  Memo1.Lines.Add(user + ' joined');
 

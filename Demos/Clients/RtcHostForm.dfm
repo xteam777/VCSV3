@@ -6550,4 +6550,11 @@ object MainForm: TMainForm
     Left = 359
     Top = 60
   end
+  object tFoldForm: TTimer
+    Enabled = False
+    Interval = 2000
+    OnTimer = tFoldFormTimer
+    Left = 122
+    Top = 310
+  end
 end
