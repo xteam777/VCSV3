@@ -252,6 +252,7 @@ type
 //    PartnerServiceStarted: Boolean;
 //    MappedFiles: array of TMappedFileRec;
     ReconnectToPartnerStart: TReconnectToPartnerStart;
+    FShortcutsHookActive: Boolean;
 
     function SetShortcuts_Hook(fBlockInput: Boolean): Boolean;
 
@@ -1377,8 +1378,6 @@ begin
 
   RecordCancel;
 
-  SetShortcuts_Hook(False); //Доделать
-
 //  FreeAndNil(PFileTrans);
 
 //  MainChromeTabs.Tabs.Clear;
@@ -1628,6 +1627,8 @@ procedure TrdDesktopViewer.FormDestroy(Sender: TObject);
 //var
 //  i: Integer;
 begin
+  SetShortcuts_Hook(False);
+
 //  for i := 0 to FProgressDialogsList.Count - 1 do
 //  begin
 //    FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
@@ -2787,10 +2788,15 @@ var
 begin
   if fBlockInput then
   begin
+    if FShortcutsHookActive then
+      Exit;
+
     try
       KeyboardShortcutsHook := SetWindowsHookEx(WH_KEYBOARD_LL, @KeyboardShortcutsProc, hInstance, 0);
+      FShortcutsHookActive := True;
     finally
     end;
+
     err := GetLastError;
     if err <> 0 then
       xLog(Format('SetShortcuts. Error: %s', [SysErrorMessage(err)]));
@@ -2798,10 +2804,15 @@ begin
   end
   else
   begin
+    if not FShortcutsHookActive then
+      Exit;
+
     try
       Result := UnhookWindowsHookEx(KeyboardShortcutsHook);
+      FShortcutsHookActive := False;
     finally
     end;
+
     err := GetLastError;
     if err <> 0 then
       xLog(Format('SetShortcuts. Error: %s', [SysErrorMessage(err)]));
