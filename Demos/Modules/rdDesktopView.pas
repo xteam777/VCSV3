@@ -107,7 +107,6 @@ type
     iMove: TImage;
     iMiniPanelShow: TImage;
     iMiniPanelHide: TImage;
-    tCloseForm: TTimer;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -187,7 +186,6 @@ type
     procedure MainChromeTabsButtonCloseTabClick(Sender: TObject;
       ATab: TChromeTab; var Close: Boolean);
     procedure TimerResizeTimer(Sender: TObject);
-    procedure tCloseFormTimer(Sender: TObject);
     procedure MainChromeTabsChange(Sender: TObject; ATab: TChromeTab;
       TabChangeType: TTabChangeType);
   private
@@ -329,18 +327,29 @@ end;
 
 procedure TrdDesktopViewer.CloseTab(AUserName: String);
 var
-  RemovedInd: Integer;
+  i, RemovedInd: Integer;
 begin
   if Assigned(FOnUIClose) then
     FOnUIClose('desk', AUserName);
 
   UI_CS.Acquire;
   try
+    i := MainChromeTabs.Tabs.Count - 1;
+    while i >= 0 do
+    begin
+      if MainChromeTabs.Tabs[i].UserName = AUserName then
+      begin
+        MainChromeTabs.Tabs.DeleteTab(i, True);
+        Break;
+      end;
+
+      i := i - 1;
+    end;
+
     RemovedInd := RemoveUIDataModule(AUserName);
     if GetActiveUIModulesCount = 0 then
     begin
       ActiveUIModule := nil;
-//      tCloseForm.Enabled := True;
     end
     else
     if RemovedInd > 1 then
@@ -350,6 +359,8 @@ begin
   finally
     UI_CS.Release;
   end;
+
+//  MainChromeTabsChange(Self, nil, tcDeleted);
 
   DoResizeImage;
 end;
@@ -367,7 +378,6 @@ begin
     and (GetActiveUIModulesCount = 0) then
   begin
 //    ActiveUIModule := nil;
-//    tCloseForm.Enabled := True;
     Close;
     Exit;
   end;
@@ -1544,7 +1554,8 @@ begin
       Exit;
     end;
   end;
-  if ActiveUIModule.UI.ControlMode <> rtcpNoControl then
+  if (ActiveUIModule <> nil)
+    and (ActiveUIModule.UI.ControlMode <> rtcpNoControl) then
     ActiveUIModule.UI.SendKeyDown(Key, Shift);
   Key := 0;
 end;
@@ -1561,7 +1572,8 @@ begin
     VK_RWIN: RWinDown := False;
     end;
 
-  if ActiveUIModule.UI.ControlMode <> rtcpNoControl then
+  if (ActiveUIModule <> nil)
+    and (ActiveUIModule.UI.ControlMode <> rtcpNoControl) then
   begin
     temp := Key; // a work-around for Internal Error in Delphi 7 compiler
     ActiveUIModule.UI.SendKeyUp(temp, Shift);
@@ -1727,7 +1739,8 @@ begin
   //tell Windows that you're accepting drag and drop files
 //  DragAcceptFiles(Handle, False);
 
-  ActiveUIModule.TimerReconnect.Enabled := True;
+  if ActiveUIModule <> nil then
+    ActiveUIModule.TimerReconnect.Enabled := True;
 
 //  Sender.Active := True;
 //  Close; //Доделать
@@ -2452,8 +2465,13 @@ end;
 
 procedure TrdDesktopViewer.DesktopTimerTimer(Sender: TObject);
 begin
-  if (ActiveUIModule <> nil) and Assigned(ActiveUIModule.UI) and ActiveUIModule.UI.InControl and (GetForegroundWindow <> Handle) then
-    FormDeactivate(nil);
+  UI_CS.Acquire;
+  try
+    if (ActiveUIModule <> nil) and Assigned(ActiveUIModule.UI) and ActiveUIModule.UI.InControl and (GetForegroundWindow <> Handle) then
+      FormDeactivate(nil);
+  finally
+    UI_CS.Release;
+  end;
 end;
 
 procedure TrdDesktopViewer.panOptionsMiniMouseDown(Sender: TObject;
@@ -2757,12 +2775,6 @@ begin
     if err <> 0 then
       xLog(Format('SetShortcuts. Error: %s', [SysErrorMessage(err)]));
   end;
-end;
-
-procedure TrdDesktopViewer.tCloseFormTimer(Sender: TObject);
-begin
-  tCloseForm.Enabled := False;
-  Close;
 end;
 
 procedure TrdDesktopViewer.TimerRecTimer(Sender: TObject);
