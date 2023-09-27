@@ -7387,7 +7387,7 @@ var
   Node: PVirtualNode;
   DData: PDeviceData;
 begin
-  Node := twDevices.GetFirst;
+  Node := twIncomes.GetFirst;
   while Node <> nil do
   begin
     TSendDestroyClientToGatewayThread.Create(False, tPHostThread.Gateway, PDeviceData(twDevices.GetNodeData(Node))^.Name, False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, True);
