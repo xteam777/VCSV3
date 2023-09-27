@@ -406,8 +406,6 @@ type
       Selected: Boolean);
     procedure Label11Click(Sender: TObject);
     procedure bAccount0Click(Sender: TObject);
-//    procedure twDevicesCustomDrawItem(Sender: TCustomTreeView; Node: TTreeNode;
-//      State: TCustomDrawState; var DefaultDraw: Boolean);
     procedure miAddGroupClick(Sender: TObject);
     procedure rDeleteDeviceReturn(Sender: TRtcConnection; Data,
       Result: TRtcValue);
@@ -557,11 +555,6 @@ type
 //    FAutoRun: Boolean;
     DesktopCnt: Integer;
 
-//    Options: TrdHostSettings;
-//    PassForm: TfIdentification;
-//    GForm: TGroupForm;
-//    DForm: TDeviceForm;
-//    fReg: TRegistrationForm;
     FScreenLockedState: Integer;
     FHostGatewayClientActive: Boolean;
     DelayedStatus: String;
@@ -570,10 +563,7 @@ type
     FUpdateAvailable: Boolean;
     FProgressDialogsList: TList;
 
-//    GatewayClientsList: TList;
-
     PendingRequests: TList;
-//    ActiveUIList: TList;
     PortalConnectionsList: TList;
 
     function FormatID(AID: String): String;
@@ -589,12 +579,10 @@ type
     function PartnerIsPending(uname, action: String; fIsReconnection: Boolean): Boolean; overload;
     function PartnerIsPending(uname: String): Boolean; overload;
     procedure ChangePendingRequestUser(action, userFrom, userTo: String);
-//    procedure DeletePendingRequestByItem(Item: PPendingRequestItem);
     procedure DeletePendingRequests(uname: String);
     procedure DeleteAllPendingRequests;
     procedure DeleteLastPendingItem;
     function GetCurrentPendingItemUserName: String;
-//    procedure UpdatePendingStatus;
     function GetPendingRequestsCount: Integer;
 
     function CheckService(bServiceFilename: Boolean = True {False = Service Name} ): String;
@@ -602,12 +590,9 @@ type
     procedure AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; AThread: PPortalThread);
     function GetPortalConnection(AAction: String; AUserName: String): PPortalConnection;
     procedure RemovePortalConnection(AID, AAction: String; ACloseFUI: Boolean);
-//    procedure RemovePortalConnectionByThreadId(AThreadId: Cardinal; ACloseFUI: Boolean);
-//    procedure RemovePortalConnectionByUser(ID: String; ACloseFUI: Boolean);
 
     procedure StartFileTransferring(AUser, AUserName, APassword: String; ANeedGetPass: Boolean = False);
     function CheckAccountFields: Boolean;
-//    procedure CloseThisApp;
 //    function IsScreenSaverRunning: Boolean;
     procedure SetScreenLockedState(AValue: Integer);
 //    procedure CheckSAS(value : Boolean; name : String);
@@ -629,10 +614,6 @@ type
     procedure CheckUpdates;
 
     procedure OnProgressDialogCancel(Sender: TObject);
-//    procedure OnDesktopHostFileRecv(Sender: TRtcPFileTransferUI);
-//    procedure OnDesktopHostFileRecvCancel(Sender: TRtcPFileTransferUI);
-//    procedure OnDesktopHostFileRecvStart(Sender: TRtcPFileTransferUI);
-//    procedure OnDesktopHostFileRecvStop(Sender: TRtcPFileTransferUI);
     procedure OnDesktopHostNotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);
   public
     { Public declarations }
@@ -710,7 +691,6 @@ type
     function NodeByUID(const aTree:TVirtualStringTree; const anUID:String): PVirtualNode;
     function NodeByID(const aTree: TVirtualStringTree; const aID: Integer): PVirtualNode;
 
-//    procedure ConnectToPartner(GatewayRec: PGatewayRec; user, username, action: String);
     procedure SetConnectedState(fConnected: Boolean);
 //    procedure WndProc(var Msg : TMessage); override;
     function GetSelectedGroup(): PVirtualNode;
@@ -821,10 +801,8 @@ var
   UseConnectionsLimit: Boolean = False;
   ChangedDragFullWindows: Boolean = False;
   OriginalDragFullWindows: LongBool = True;
-//  ConnectedToAllGateways: Boolean;
   DeviceDisplayName: String;
-//  FInputThread: TInputThread;
-  CS_GW, CS_Status, CS_Pending, CS_ActivateHost, CS_HostGateway: TCriticalSection; //CS_SetConnectedState
+  CS_GW, CS_Status, CS_Pending, CS_ActivateHost, CS_HostGateway: TCriticalSection;
   DeviceId, ConsoleId: String;
   LastActiveExplorerHandle: THandle;
 
@@ -943,10 +921,6 @@ begin
 
   UI := TRtcPFileTransferUI.Create(nil);
   UI.NotifyFileBatchSend := OnDesktopHostNotifyFileBatchSend;
-//  UI.OnRecv := OnDesktopHostFileRecv;
-//  UI.OnRecvCancel := OnDesktopHostFileRecvCancel;
-//  UI.OnRecvStart := OnDesktopHostFileRecvStart;
-//  UI.OnRecvStop := OnDesktopHostFileRecvStop;
   UI.UserName := user;
   UI.UserDesc := GetUserDescription(user);
   // Always set UI.Module *after* setting UI.UserName !!!
@@ -1212,62 +1186,7 @@ begin
       RemoveProgressDialog(task.Id);
     end;
   end;
-
-
-//  if Sender.Recv_BytesTotal = Sender.Recv_BytesComplete then
-//    FProgressDialog.Stop;
 end;
-
-{procedure TMainForm.OnDesktopHostFileRecv(Sender: TRtcPFileTransferUI);
-begin
-//  Memo1.Lines.Add(IntToStr(Sender.Recv_FileCount) + ' - ' + Sender.Recv_FileName + ' - ' + IntToStr(Sender.Recv_BytesComplete) + ' - '+ IntToStr(Sender.Recv_BytesTotal));
-
-  FProgressDialog.TextLine1 := Sender.Recv_FileName;
-
-  if Sender.Recv_BytesTotal > 0 then
-    FProgressDialog.Position := Round(Sender.Recv_BytesComplete * 100 / Sender.Recv_BytesTotal)
-  else
-    FProgressDialog.Position := 0;
-
-  if Sender.Recv_BytesTotal > 1024 * 1024 * 1024 then
-    FProgressDialog.TextFooter := FormatFloat('0.00', Sender.Recv_BytesComplete / (1024 * 1024 * 1024)) + ' GB из ' + FormatFloat('0.00', Sender.Recv_BytesTotal / (1024 * 1024 * 1024)) + ' GB'
-  else
-  if Sender.Recv_BytesTotal > 1024 * 1024 then
-    FProgressDialog.TextFooter := FormatFloat('0.00', Sender.Recv_BytesComplete / (1024 * 1024)) + ' MB из ' + FormatFloat('0.00', Sender.Recv_BytesTotal / (1024 * 1024)) + ' MB'
-  else
-    FProgressDialog.TextFooter := FormatFloat('0.00', Sender.Recv_BytesComplete / 1024) + ' KB из ' + FormatFloat('0.00', Sender.Recv_BytesTotal / 1024) + ' KB';
-
-  if Sender.Recv_BytesTotal = Sender.Recv_BytesComplete then
-    FProgressDialog.Stop;
-end;
-
-procedure TMainForm.OnDesktopHostFileRecvCancel(Sender: TRtcPFileTransferUI);
-begin
-  FProgressDialog.Stop;
-end;
-
-procedure TMainForm.OnDesktopHostFileRecvStart(Sender: TRtcPFileTransferUI);
-begin
-  if Sender.Recv_FirstTime then
-  begin
-    FProgressDialog.Title := 'Копирование';
-    FProgressDialog.CommonAVI := TCommonAVI.aviCopyFiles;
-    FProgressDialog.TextLine1 := Sender.Recv_FileName;
-    FProgressDialog.TextLine2 := Sender.Recv_ToFolder;
-    FProgressDialog.Max := 100;
-    FProgressDialog.Position := 0;
-    FProgressDialog.TextCancel := 'Прерывание...';
-    FProgressDialog.OnCancel := OnProgressDialogCancel;
-//    FProgressDialog.AutoCalcFooter := True;
-    FProgressDialog.fHwndParent := LastActiveExplorerHandle;
-    FProgressDialog.Execute;
-  end;
-end;
-
-procedure TMainForm.OnDesktopHostFileRecvStop(Sender: TRtcPFileTransferUI);
-begin
-//  FProgressDialog.Stop;
-end;}
 
 procedure TMainForm.OnProgressDialogCancel(Sender: TObject);
 var
@@ -2830,85 +2749,6 @@ begin
 //    Application.Restore;
 end;
 
-{procedure TMainForm.RemovePortalConnectionByThreadId(AThreadId: Cardinal; ACloseFUI: Boolean);
-var
-  i: Integer;
-begin
-  //XLog('RemovePortalConnectionByUIHandle');
-
-  CS_GW.Acquire;
-  try
-    i := PortalConnectionsList.Count - 1;
-    while i >= 0 do
-    begin
-      if PPortalConnection(PortalConnectionsList[i])^.ThreadId = AThreadId then
-      begin
-//        if (PPortalConnection(PortalConnectionsList[i])^.ThisThread <> nil) then
-//        begin
-////          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Terminate;
-////          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.WaitFor;
-////          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Free;
-////          PPortalConnection(PortalConnectionsList[i])^.ThisThread := nil;
-//          FreeAndNil(PPortalConnection(PortalConnectionsList[i])^.ThisThread);
-//        end;
-        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, WPARAM(ACloseFUI), 0); //Закрываем поток с пклиентом
-//        if ACloseFUI then
-//          PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
-
-//        Dispose(PPortalConnection(PortalConnectionsList[i])^.UIForm);
-        Dispose(PortalConnectionsList[i]);
-        PortalConnectionsList.Delete(i);
-      end;
-
-      i := i - 1;
-    end;
-  finally
-    CS_GW.Release;
-  end;
-
-//  if GatewayClientsList.Count = 1 then
-//    Application.Restore;
-end;}
-
-{procedure TMainForm.RemovePortalConnectionByUser(ID: String; ACloseFUI: Boolean);
-var
-  i: Integer;
-begin
-  //XLog('RemovePortalConnectionByUser');
-
-  CS_GW.Acquire;
-  try
-    i := PortalConnectionsList.Count - 1;
-    while i >= 0 do
-    begin
-      if PPortalConnection(PortalConnectionsList[i])^.ID = ID then
-      begin
-//        if (PPortalConnection(PortalConnectionsList[i])^.ThisThread <> nil) then
-//        begin
-//          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Terminate;
-//          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.WaitFor;
-//          PPortalConnection(PortalConnectionsList[i])^.ThisThread^.Free;
-//          PPortalConnection(PortalConnectionsList[i])^.ThisThread := nil;
-//        end;
-        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, WPARAM(ACloseFUI), 0); //Закрываем поток с пклиентом
-//        if ACloseFUI then
-//          PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0); //Закрываем форму UI
-
-//        Dispose(PPortalConnection(PortalConnectionsList[i])^.UIForm);
-        Dispose(PortalConnectionsList[i]);
-        PortalConnectionsList.Delete(i);
-      end;
-
-      i := i - 1;
-    end;
-  finally
-    CS_GW.Release;
-  end;
-
-//  if GatewayClientsList.Count = 1 then
-//    Application.Restore;
-end;}
-
 procedure TMainForm.aFeedBackExecute(Sender: TObject);
 var
   pAccUserName: String;
@@ -3062,76 +2902,6 @@ begin
     end;
   end;}
 end;
-
-{procedure TMainForm.CloseThisApp;
-var
-  i: Integer;
-begin
-  SaveSetup;
-
-  tConnect.Enabled := False;
-
-//  if(eConnected.Items.Count > 0) then
-//  begin
-//  if SilentMode then
-//  begin
-    LogOut(Self);
-    HostLogOut;
-//  end
-//  else
-////  if MessageDlg('Вы действительно хотите закрыть Remox?'#13#10+
-////    'Имеются подключенные к Вам пользователи.'#13#10 +
-////    'Закрытие Remox их отключит.',
-////    mtWarning, [mbNo, mbYes], 0) = mrYes then
-//  begin
-//    TaskBarRemoveIcon;
-//    LogOut(Self);
-//    HostLogOut;
-//    CanClose := True;
-//  end;
-//  else
-//    CanClose := False;
-//  end
-//  else
-//  begin
-//    TaskBarRemoveIcon;
-//    LogOut(Self);
-//    CanClose := True;
-//  end;
-
-//  SaveWindowPosition(Self, 'MainForm', False);
-
-  Visible := False;
-
-  isClosing := True;
-
-  for i := 0 to Length(GatewayClients) - 1 do
-  begin
-//      GatewayClients[i].GatewayClient.Disconnect;
-
-    if GatewayClients[i].GatewayClient.Active then
-      GatewayClients[i].GatewayClient.Active := False;
-    GatewayClients[i].GatewayClient.Stop;
-
-//      GatewayClients[i].GatewayClient.Module.WaitForCompletion(False, 2);
-//      GatewayClients[i].GatewayClient.Module.SkipRequests;
-  end;
-
-  pingTimer.Enabled := False;
-  HostPingTimer.Enabled := False;
-
-//  hcAccounts.WaitForCompletion(False, 2);
-
-//  cmAccounts.SkipRequests;
-//  TimerModule.SkipRequests;
-//  HostTimerModule.SkipRequests;
-//
-//  hcAccounts.Disconnect;
-//  TimerClient.Disconnect;
-//  HostTimerClient.Disconnect;
-
-  Application.Terminate;
-end;}
 
 procedure TMainForm.cmMainMenuColorChange(Sender: TObject);
 begin
@@ -7962,13 +7732,6 @@ begin
 
       if not PartnerIsPending(asWideString['user'], asString['action'], asString['Address']) then
       begin
-        if (asWideString['action'] <> 'desk')
-          and (asInteger['LockedState'] = LCK_STATE_LOCKED) then
-        begin
-          SetStatusStringDelayed('Устройство партнера заблокировано. Подключение запрещено');
-          DeletePendingRequest(asWideString['UserToConnect'], asString['action']);
-        end
-        else
         if (asWideString['action'] = 'desk')
           and (asInteger['LockedState'] = LCK_STATE_LOCKED)
           and (not asBoolean['ServiceStarted']) then
@@ -11121,8 +10884,6 @@ begin
     CS_Pending.Release;
   end;
 
-//  UpdatePendingStatus;
-
   Result := PRItem;
 end;
 
@@ -11205,8 +10966,6 @@ begin
     PassForm.ModalResult := mrCancel;
     PassForm.Close;
   end;
-
-//  UpdatePendingStatus;
 end;
 
 function TMainForm.PartnerIsPending(uname, action, gateway: String): Boolean;
@@ -11296,29 +11055,6 @@ begin
   end;
 end;
 
-{procedure TMainForm.DeletePendingRequestByItem(Item: PPendingRequestItem);
-var
-  i: Integer;
-begin
-//  xLog('DeletePendingRequestByItem');
-
-  CS_Pending.Acquire;
-  try
-    i := PendingRequests.IndexOf(Item);
-    if i >= 0 then
-    begin
-      PostThreadMessage(PPendingRequestItem(PendingRequests[i])^.ThreadID, WM_DESTROY, 0, 0);
-//      Dispose(PPendingRequestItem(PendingRequests[i])^.UIForm);
-      Dispose(PendingRequests[i]);
-      PendingRequests.Delete(i);
-    end;
-  finally
-    CS_Pending.Release;
-  end;
-
-//  UpdatePendingStatus;
-end;}
-
 procedure TMainForm.DeletePendingRequests(uname: String);
 var
   i: Integer;
@@ -11342,8 +11078,6 @@ begin
   finally
     CS_Pending.Release;
   end;
-
-//  UpdatePendingStatus;
 end;
 
 procedure TMainForm.DeleteAllPendingRequests;
@@ -11366,8 +11100,6 @@ begin
   finally
     CS_Pending.Release;
   end;
-
-//  UpdatePendingStatus;
 end;
 
 procedure TMainForm.OnCustomFormOpen(AForm: PForm);
@@ -11432,29 +11164,6 @@ begin
     CS_Pending.Release;
   end;
 end;
-
-//procedure TMainForm.UpdatePendingStatus;
-//begin
-//  //xLog('UpdatePendingStatus');
-//
-//  CS_Status.Acquire;
-//  try
-//    if GetPendingRequestsCount > 0 then
-//    begin
-////      SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True);
-//      btnNewConnection.Caption := 'ПРЕРВАТЬ';
-//      btnNewConnection.Color := RGB(232, 17, 35);
-//    end
-//    else
-//    begin
-////      SetStatusString('Готов к подключению');
-//      btnNewConnection.Caption := 'ПОДКЛЮЧИТЬСЯ';
-//      btnNewConnection.Color := $00A39323;
-//    end;
-//  finally
-//    CS_Status.Release;
-//  end;
-//end;
 
 procedure TMainForm.PDesktopHostHaveScreeenChanged(Sender: TObject);
 begin
