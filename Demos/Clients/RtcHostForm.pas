@@ -8002,7 +8002,7 @@ begin
       if PRItem^.IsReconnection then
       begin
         DeletePendingRequest(asWideString['user'], asString['action']);
-        DesktopsForm.CloseTab(asWideString['user']);
+        DesktopsForm.CloseTab(asWideString['user'], True);
 
         Exit;
       end;
@@ -8042,7 +8042,7 @@ begin
       begin
       begin
         DeletePendingRequest(asWideString['user'], asString['action']);
-        DesktopsForm.CloseTab(asWideString['user']);
+        DesktopsForm.CloseTab(asWideString['user'], True);
       end;
 
 //        if GetPendingRequestsCount > 0 then
@@ -8525,7 +8525,7 @@ begin
 //                make_notify(fname, 'manual_logout');
 //              if isFriend(fname) then
 //                FriendList_Status(fname, MSG_STATUS_OFFLINE);
-                DesktopsForm.CloseTab(asRecord['manual_logout'].asText['user']);
+                DesktopsForm.CloseTab(asRecord['manual_logout'].asText['user'], True);
               end
             else if not isNull['locked'] then // Friend locked status update
               begin
