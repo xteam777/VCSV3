@@ -684,7 +684,7 @@ procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 procedure TMainForm.bLogoffUserClick(Sender: TObject);
 begin
 //  Gateway.ForceUserLogOut(eLogoff.Text);
-  StartForceUserLogoutThreadInAllGateways(eLogoff.Text, False);
+  StartForceUserLogoutThreadInAllGateways(eLogoff.Text, False );
 end;
 
 procedure TMainForm.btnCloseClick(Sender: TObject);
