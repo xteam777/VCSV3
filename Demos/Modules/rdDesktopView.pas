@@ -268,13 +268,13 @@ type
 
     function GetTab(AUserName: String): TChromeTab;
     function AddNewTab(AUserName, AUserDesc, AUserPass: String; AThreadID: Cardinal; AStartLockedState: Integer; AStartServiceStarted: Boolean; AModule: TRtcPDesktopControl): TUIDataModule;
-    procedure CloseTab(AUserName: String);
+    procedure CloseTab(AUserName: String; ACloseTab: Boolean);
     procedure SetReconnectInterval(AUserName: String; AInterval: Integer);
     procedure SetActiveTab(AUserName: String);
     procedure ChangeLockedState(AUserName: String; ALockedState: Integer; AServiceStarted: Boolean);
     function GetRemovedUIDataModule(AUserName: String): TUIDataModule;
     function GetUIDataModule(AUserName: String): TUIDataModule;
-    function RemoveUIDataModule(AUserName: String): Integer;
+    procedure RemoveUIDataModule(AUserName: String);
     function FreeUIDataModule(AUserName: String; AThreadID: Cardinal): Integer;
     function GetActiveUIModulesCount: Integer;
     procedure DoReconnectToPartnerStart(user, username, pass, action: String);
@@ -325,42 +325,36 @@ begin
   end;
 end;
 
-procedure TrdDesktopViewer.CloseTab(AUserName: String);
+procedure TrdDesktopViewer.CloseTab(AUserName: String; ACloseTab: Boolean);
 var
-  i, RemovedInd: Integer;
+  i: Integer;
 begin
   if Assigned(FOnUIClose) then
     FOnUIClose('desk', AUserName);
 
   UI_CS.Acquire;
   try
-    i := MainChromeTabs.Tabs.Count - 1;
-    while i >= 0 do
+    RemoveUIDataModule(AUserName);
+
+    if ACloseTab then
     begin
-      if MainChromeTabs.Tabs[i].UserName = AUserName then
+      i := MainChromeTabs.Tabs.Count - 1;
+      while i >= 0 do
       begin
-        MainChromeTabs.Tabs.DeleteTab(i, True);
-        Break;
+        if MainChromeTabs.Tabs[i].UserName = AUserName then
+        begin
+          MainChromeTabs.Tabs.DeleteTab(i, True);
+          Break;
+        end;
+
+        i := i - 1;
       end;
-
-      i := i - 1;
     end;
-
-    RemovedInd := RemoveUIDataModule(AUserName);
-    if GetActiveUIModulesCount = 0 then
-    begin
-      ActiveUIModule := nil;
-    end
-    else
-    if RemovedInd > 1 then
-      ActiveUIModule := UIModulesList[RemovedInd - 1]
-    else
-      ActiveUIModule := UIModulesList[0];
   finally
     UI_CS.Release;
   end;
 
-//  MainChromeTabsChange(Self, nil, tcDeleted);
+  MainChromeTabsChange(Self, nil, tcDeleted);
 
   DoResizeImage;
 end;
@@ -368,7 +362,7 @@ end;
 procedure TrdDesktopViewer.MainChromeTabsButtonCloseTabClick(Sender: TObject;
   ATab: TChromeTab; var Close: Boolean);
 begin
-  CloseTab(ATab.UserName);
+  CloseTab(ATab.UserName, False);
 end;
 
 procedure TrdDesktopViewer.MainChromeTabsChange(Sender: TObject;
@@ -789,11 +783,12 @@ begin
   Handled := True;
 end;
 
-function TrdDesktopViewer.RemoveUIDataModule(AUserName: String): Integer;
+procedure TrdDesktopViewer.RemoveUIDataModule(AUserName: String);
 var
-  i: Integer;
+  i, RemovedInd, ActiveUICount: Integer;
 begin
-  Result := -1;
+  RemovedInd := -1;
+  ActiveUICount := 0;
 
   UI_CS.Acquire;
   try
@@ -808,11 +803,39 @@ begin
   //      FreeAndNil(TUIDataModule(UIModulesList[i]));
   //      UIModulesList.Delete(i);
 
-        Result := i;
-        Break;
+        RemovedInd := i;
       end;
 
+      if (not TUIDataModule(UIModulesList[i]).NeedFree) then
+        ActiveUICount := ActiveUICount + 1;
+
       i := i - 1;
+    end;
+
+    if ActiveUICount = 0 then
+      ActiveUIModule := nil
+    else
+    begin
+      i := RemovedInd - 1;
+      while i >= 0 do
+      begin
+        if (not TUIDataModule(UIModulesList[i]).NeedFree) then
+        begin
+          ActiveUIModule := UIModulesList[i];
+          Exit;
+        end;
+
+        i := i - 1;
+      end;
+
+      for i := RemovedInd + 1 to UIModulesList.Count - 1 do
+        if (not TUIDataModule(UIModulesList[i]).NeedFree) then
+        begin
+          ActiveUIModule := UIModulesList[i];
+          Exit;
+        end;
+
+      ActiveUIModule := nil;
     end;
   finally
     UI_CS.Release;
@@ -1352,7 +1375,7 @@ begin
 
 //  FreeAndNil(PFileTrans);
 
-  MainChromeTabs.Tabs.Clear;
+//  MainChromeTabs.Tabs.Clear;
 
   ActiveUIModule := nil;
 
@@ -1797,7 +1820,8 @@ begin
     //tell Windows that you're accepting drag and drop files
 //    if Assigned(PFileTrans) then
 //      DragAcceptFiles(Handle, True);
-    DesktopTimer.Enabled := True;
+    if UIDM.pImage^.Active then
+      DesktopTimer.Enabled := True;
   end;
 
   if Sender.ScreenInfoChanged then

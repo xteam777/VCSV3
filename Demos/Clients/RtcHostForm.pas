@@ -6639,7 +6639,7 @@ begin
   if Node <> nil then
   begin
     DData := twIncomes.GetNodeData(Node);
-    TSendDestroyClientToGatewayThread.Create(False, tPHostThread.Gateway, DData^.Name, False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, False);
+//    TSendDestroyClientToGatewayThread.Create(False, tPHostThread.Gateway, DData^.Name, False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, False);
     SendManualLogoutToControl(GetUserFromFromUserName(DData^.Name), DeviceId);
   end;
 end;
@@ -6663,19 +6663,23 @@ begin
   begin
     Font.Color := clBlack;
     Pen.Color := cl3DDkShadow;
-    if DData^.HighLight
-      and (not Sender.Selected[Node]) then
+    if DData^.DateCreated <= IncSecond(Now, 2) then
     begin
-      Brush.Color := RGB(229, 243, 255);//$DDDDDD;//$E0E0E0;
-    end
-    else
-    if Sender.Selected[Node] then
-    begin
-      Brush.Color := RGB(204, 232, 255);//RGB(19, 174, 196);
+      if MilliSecondOf(Now) <= 500 then
+        Brush.Color := RGB(255, 255, 255)
+      else
+        Brush.Color := $00615EF1;
     end
     else
     begin
-      Brush.Color := $00FDFDFD;
+      if DData^.HighLight
+        and (not Sender.Selected[Node]) then
+        Brush.Color := RGB(229, 243, 255) //$DDDDDD;//$E0E0E0;
+      else
+      if Sender.Selected[Node] then
+        Brush.Color := RGB(204, 232, 255) //RGB(19, 174, 196);
+      else
+        Brush.Color := $00FDFDFD;
     end;
 
 //    if Node.Parent = Sender.RootNode then
@@ -7390,9 +7394,10 @@ begin
   Node := twIncomes.GetFirst;
   while Node <> nil do
   begin
-    TSendDestroyClientToGatewayThread.Create(False, tPHostThread.Gateway, PDeviceData(twDevices.GetNodeData(Node))^.Name, False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, True);
-
-    Node := twDevices.GetNext(Node);
+    DData := twIncomes.GetNodeData(Node);
+//    TSendDestroyClientToGatewayThread.Create(False, tPHostThread.Gateway, GetUserFromFromUserName(DData^.Name), False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, True);
+    SendManualLogoutToControl(GetUserFromFromUserName(DData^.Name), DeviceId);
+    Node := twIncomes.GetNext(Node);
   end;
 
   twIncomes.Repaint;
@@ -8002,7 +8007,7 @@ begin
       if PRItem^.IsReconnection then
       begin
         DeletePendingRequest(asWideString['user'], asString['action']);
-        DesktopsForm.CloseTab(asWideString['user']);
+        DesktopsForm.CloseTab(asWideString['user'], True);
 
         Exit;
       end;
@@ -8042,7 +8047,7 @@ begin
       begin
       begin
         DeletePendingRequest(asWideString['user'], asString['action']);
-        DesktopsForm.CloseTab(asWideString['user']);
+        DesktopsForm.CloseTab(asWideString['user'], True);
       end;
 
 //        if GetPendingRequestsCount > 0 then
@@ -8525,7 +8530,7 @@ begin
 //                make_notify(fname, 'manual_logout');
 //              if isFriend(fname) then
 //                FriendList_Status(fname, MSG_STATUS_OFFLINE);
-                DesktopsForm.CloseTab(asRecord['manual_logout'].asText['user']);
+                DesktopsForm.CloseTab(asRecord['manual_logout'].asText['user'], True);
               end
             else if not isNull['locked'] then // Friend locked status update
               begin
@@ -10358,6 +10363,7 @@ begin
   DData^.Description := AUserDesc;
   DData^.HighLight := False;
   DData^.StateIndex := MSG_STATUS_ONLINE;
+  DData^.DateCreated := Now;
 
   twIncomes.ToggleNode(Node);
   twIncomes.Selected[Node] := True;
