@@ -6560,7 +6560,6 @@ object MainForm: TMainForm
   object tIncomesBacklight: TTimer
     Enabled = False
     Interval = 100
-    OnTimer = tIncomesBacklightTimer
     Left = 156
     Top = 310
   end
