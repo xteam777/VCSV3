@@ -323,6 +323,7 @@ type
     bCloseAllIncomes: TColorSpeedButton;
     rManualLogout: TRtcResult;
     tFoldForm: TTimer;
+    tIncomesBacklight: TTimer;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -552,6 +553,7 @@ type
     procedure bCloseAllIncomesMouseLeave(Sender: TObject);
     procedure bCloseAllIncomesClick(Sender: TObject);
     procedure tFoldFormTimer(Sender: TObject);
+    procedure tIncomesBacklightTimer(Sender: TObject);
   protected
 
 //    FAutoRun: Boolean;
@@ -575,6 +577,8 @@ type
     PendingRequests: TList;
 //    ActiveUIList: TList;
     PortalConnectionsList: TList;
+
+    IncomesBacklightStart: TDateTime;
 
     function FormatID(AID: String): String;
     function ConnectedToAllGateways: Boolean;
@@ -5994,6 +5998,14 @@ begin
 //    end;
 end;
 
+procedure TMainForm.tIncomesBacklightTimer(Sender: TObject);
+begin
+  tsIncomes.Repaint;
+
+  if (IncomesBacklightStart + 2000) > Now then
+    tIncomesBacklight.Enabled := False;
+end;
+
 procedure TMainForm.tInternetActiveTimer(Sender: TObject);
 var
   i: Integer;
@@ -10478,6 +10490,8 @@ begin
     end;
 
     pcDevAcc.ActivePage := tsIncomes;
+    IncomesBacklightStart := Now;
+    tIncomesBacklight.Enabled := True;
 
     AddIncomeConnection(user, s);
   end;
