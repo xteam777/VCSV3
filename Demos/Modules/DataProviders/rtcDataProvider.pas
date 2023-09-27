@@ -89,6 +89,7 @@ type
     HostLogoutByHash: TRtcFunction;
     AddConnection: TRtcFunction;
     RemoveConnection: TRtcFunction;
+    AccountManualLogout: TRtcFunction;
     procedure DataModuleCreate(Sender: TObject);
     procedure DataModuleDestroy(Sender: TObject);
     procedure Module1SessionClose(Sender: TRtcConnection);
@@ -145,6 +146,8 @@ type
     procedure ClientsDestroyExecute(Sender: TRtcConnection;
       Param: TRtcFunctionInfo; Result: TRtcValue);
     procedure HostLogoutByHashExecute(Sender: TRtcConnection;
+      Param: TRtcFunctionInfo; Result: TRtcValue);
+    procedure AccountManualLogoutExecute(Sender: TRtcConnection;
       Param: TRtcFunctionInfo; Result: TRtcValue);
   private
     FOnUserLogin: TUserEvent;
@@ -1491,8 +1494,6 @@ end;
 procedure TData_Provider.ClientsDestroyExecute(Sender: TRtcConnection;
   Param: TRtcFunctionInfo; Result: TRtcValue);
 begin
-  if Param.asBoolean['Manual'] then
-    Users.NotifyControlOfManualLogout(Param.asString['UserName']);
   Gateway1.StartForceUserLogoutThread(Param.asString['UserName'], Param.asBoolean['AllConnectionsById']);
   Gateway2.StartForceUserLogoutThread(Param.asString['UserName'], Param.asBoolean['AllConnectionsById']);
   Gateway3.StartForceUserLogoutThread(Param.asString['UserName'], Param.asBoolean['AllConnectionsById']);
@@ -1588,6 +1589,12 @@ begin
             Session['$MSG:User']:='';
             Session['$MSG:Account'] := '';
           end;
+end;
+
+procedure TData_Provider.AccountManualLogoutExecute(Sender: TRtcConnection;
+  Param: TRtcFunctionInfo; Result: TRtcValue);
+begin
+  Users.NotifyControlOfManualLogout(Param.asString['ControlID'], Param.asString['HostID']);
 end;
 
 procedure TData_Provider.AccountPingExecute(Sender: TRtcConnection; Param: TRtcFunctionInfo; Result: TRtcValue);
