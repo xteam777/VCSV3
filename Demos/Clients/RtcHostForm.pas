@@ -10475,9 +10475,9 @@ begin
       Application.Restore;
       SetForegroundWindow(Handle);
       tFoldForm.Enabled := True;
-
-      pcDevAcc.ActivePage := tsIncomes;
     end;
+
+    pcDevAcc.ActivePage := tsIncomes;
 
     AddIncomeConnection(user, s);
   end;
