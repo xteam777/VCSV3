@@ -94,6 +94,9 @@ begin
 
   xLog('Start Remox in desktop mode');
 
+  if not File_Exists(GetTempDirectory + 'rmxCompression.dll') then
+    CommonUtils.SaveResourceToFile('FAST_LZMA2', GetTempDirectory + 'rmxCompression.dll');
+
   IsService := False;
 
   AutoDesktopSwitch := False; //True; //Нужно для получения инфы об экране и курсоре
@@ -200,9 +203,6 @@ begin
   CurrentProcessId := GetCurrentProcessId;
   ProcessIdToSessionId(GetCurrentProcessId, CurrentSessionID);
   IsWinServer := IsWindowsServerPlatform;
-
-  if not File_Exists(GetTempDirectory + 'rmxCompression.dll') then
-    CommonUtils.SaveResourceToFile('FAST_LZMA2', GetTempDirectory +'rmxCompression.dll');
 
 //  CreateAttachedProcess('\Tor\tor.exe', 'SocksPort 9250 ControlPort 9251', SW_HIDE, TorProcessID);
 

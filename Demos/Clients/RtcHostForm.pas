@@ -11,7 +11,7 @@ interface
 {$DEFINE RtcViewer}
 
 uses
-  Windows, Messages, SysUtils, CommonData, System.Types, uProcess, ServiceMgr,
+  Windows, Messages, SysUtils, CommonData, System.Types, uProcess, ServiceMgr, Cromis.Comm.IPC, System.Hash,
   Classes, Graphics, Controls, Forms, DateUtils, CommonUtils, WtsApi, uSysAccount, ClipbrdMonitor,
   Dialogs, StdCtrls, ExtCtrls, ShellApi, rdFileTransLog, VirtualTrees.Types, SHDocVw, rtcpFileTransUI, Psapi, Winapi.SHFolder,
   Vcl.ComCtrls, Registry, Math, RtcIdentification, SyncObjs, System.Net.HTTPClient, System.Net.URLClient, ActiveX, ComObj, CommCtrl,
@@ -550,6 +550,7 @@ type
     procedure bCloseAllIncomesMouseLeave(Sender: TObject);
     procedure bCloseAllIncomesClick(Sender: TObject);
     procedure tFoldFormTimer(Sender: TObject);
+    procedure eAccountPasswordChange(Sender: TObject);
   protected
 
 //    FAutoRun: Boolean;
@@ -627,8 +628,8 @@ type
     AccountName, AccountUID: String;
     HighLightedNode: PVirtualNode;
 
-    ProxyOption: String;
-    RegularPassword: String;
+    ProxyOption: Integer;
+    PermanentPassword, AccountPassword: String;
 //    OnlyAdminChanges: Boolean;
     StoreHistory: Boolean;
     StorePasswords: Boolean;
@@ -702,9 +703,10 @@ type
     function AddDotsToString(sCurString: String): String;
     procedure ShowDevicesPanel;
     procedure ShowSettingsForm(APage: String);
+    function SendSettingsToService(ANewPermanentPassword: String): Boolean;
 //    procedure SettingsFormOnResult(sett: TrdClientSettings);
 //    procedure SetAutoRunToRegistry(AValue: Boolean);
-    procedure ShowRegularPasswordState();
+    procedure ShowPermanentPasswordState();
     procedure FriendList_Status(uname: String; status: Integer);
     function GetUserNameByID(uname: String): String;
     procedure Locked_Status(uname: String; aLockedStatus: Integer; aServiceStarted: Boolean);
@@ -1048,16 +1050,16 @@ var
 begin
   fAcceptEULA := TfAcceptEULA.Create(nil);
   try
-    fAcceptEULA.ePassword.Text := RegularPassword;
-    fAcceptEULA.ePasswordConfirm.Text := RegularPassword;
+    fAcceptEULA.ePassword.Text := PermanentPassword;
+    fAcceptEULA.ePasswordConfirm.Text := PermanentPassword;
 
     if fAcceptEULA.ShowModal = mrCancel then
       Exit
     else
-    if fAcceptEULA.ePassword.Text <> RegularPassword then
+    if fAcceptEULA.ePassword.Text <> PermanentPassword then
     begin
-      RegularPassword := fAcceptEULA.ePassword.Text;
-      ShowRegularPasswordState();
+      PermanentPassword := fAcceptEULA.ePassword.Text;
+      ShowPermanentPasswordState();
       SendPasswordsToGateway;
 
       SaveSetup;
@@ -2451,11 +2453,11 @@ begin
   end;
 end;}
 
-procedure TMainForm.ShowRegularPasswordState();
+procedure TMainForm.ShowPermanentPasswordState();
 begin
-  //XLog('ShowRegularPasswordState');
+  //XLog('ShowPermanentPasswordState');
 
-  if RegularPassword <> '' then
+  if PermanentPassword <> '' then
     iRegPassState.Picture.Assign(iRegPassYes.Picture)
   else
     iRegPassState.Picture.Assign(iRegPassNo.Picture);
@@ -3181,7 +3183,7 @@ begin
 //  SetStatusString('Подключение к серверу...', True);
   StartAccountLogin;
   StartHostLogin;
-  ShowRegularPasswordState();
+  ShowPermanentPasswordState();
 //  AutoScaleForm(MainForm);
 //  Width := CurWidth;
   LoggedIn := False;
@@ -3794,7 +3796,7 @@ begin
 ////        SetStatus(0);
 //        SetStatusString('Отсутствует сетевое подключение');
 //
-//  //      if ProxyOption = 'Automatic' then
+//  //      if ProxyOption = PO_AUTOMATIC then
 //  //      begin
 //  //        SetStatusString('Определение прокси-сервера', True);
 //  //        SetProxyFromIE;
@@ -4148,6 +4150,83 @@ end;
 
 procedure TMainForm.LoadSetup(RecordType: String);
 var
+  reg: TRegistry;
+begin
+//  xLog('LoadSetup: ' + RecordType);
+
+  reg := TRegistry.Create;
+  try
+    reg.RootKey := HKEY_CURRENT_USER;
+    if reg.KeyExists('Software\Remox') then
+    begin
+      reg.OpenKey('Software\Remox', True);
+
+      if (RecordType = 'ALL') then
+      begin
+        StoreHistory := reg.ReadBool('StoreHistory');
+        StorePasswords := reg.ReadBool('StorePasswords');
+
+        cbRememberAccount.Checked := reg.ReadBool('RememberAccount');
+        eAccountUserName.Text := reg.ReadString('AccountUserName');
+        if reg.ReadString('AccountPassword') <> '' then
+          eAccountPassword.Text := 'password'
+        else
+          eAccountPassword.Text := '';
+        AccountPassword := reg.ReadString('AccountPassword');
+
+        DateAllowConnectionPending := reg.ReadDateTime('DateAllowConnectPending');
+
+        ProxyOption := reg.ReadInteger('ProxyOption');
+//        'socks=127.0.0.1:9050'; //Tor
+
+        hcAccounts.UseProxy := (ProxyOption = PO_MANUAL);
+        hcAccounts.UserLogin.ProxyAddr := reg.ReadString('ProxyAddr');
+        hcAccounts.UserLogin.ProxyUserName := reg.ReadString('ProxyUsername');
+        hcAccounts.UserLogin.ProxyPassword := reg.ReadString('ProxyPassword');
+
+        TimerClient.UseProxy := (ProxyOption = PO_MANUAL);
+        TimerClient.UserLogin.ProxyAddr := reg.ReadString('ProxyAddr');
+        TimerClient.UserLogin.ProxyUserName := reg.ReadString('ProxyUsername');
+        TimerClient.UserLogin.ProxyPassword := reg.ReadString('ProxyPassword');
+
+        HostTimerClient.UseProxy := (ProxyOption = PO_MANUAL);
+        HostTimerClient.UserLogin.ProxyAddr := reg.ReadString('ProxyAddr');
+        HostTimerClient.UserLogin.ProxyUserName := reg.ReadString('ProxyUsername');
+        HostTimerClient.UserLogin.ProxyPassword := reg.ReadString('ProxyPassword');
+      end;
+
+      if (RecordType = 'ALL')
+        or (RecordType = 'REGULAR_PASS') then
+        PermanentPassword := reg.ReadString('PermanentPassword');
+
+      if (RecordType = 'ALL')
+        or (RecordType = 'ACTIVE_NODE') then
+        LastFocusedUID := reg.ReadString('LastFocusedUID');
+    end
+    else
+    begin
+      StoreHistory := True;
+      StorePasswords := True;
+      cbRememberAccount.Checked := True;
+    end;
+
+    reg.CloseKey;
+  finally
+    reg.Free;
+  end;
+
+//  if tPHostThread.Gateway = '' then
+//    tPHostThread.Gateway := '95.216.96.6';
+  if hcAccounts.ServerAddr = '' then
+    hcAccounts.ServerAddr := '95.216.96.6';
+  if TimerClient.ServerAddr = '' then
+    TimerClient.ServerAddr := '95.216.96.6';
+  if HostTimerClient.ServerAddr = '' then
+    HostTimerClient.ServerAddr := '95.216.96.6';
+end;
+
+{procedure TMainForm.LoadSetup(RecordType: String);
+var
   CfgFileName: String;
   s: RtcString;
   info: TRtcRecord;
@@ -4239,8 +4318,8 @@ begin
 
   //            PClient.LoginUsername:=info.asText['UserName'];
   //            PClient.LoginPassword:=info.asText['Password'];
-          { We can simply replace all data from "LoginUserInfo" with "CustomInfo",
-            because this is where we have saved it. }
+          // We can simply replace all data from "LoginUserInfo" with "CustomInfo",
+          //  because this is where we have saved it.
   //            PClient.LoginUserInfo:=info.asRecord['CustomInfo'];
 
   //            xSavePassword.Checked:=info.asBoolean['SavePassword'];
@@ -4287,26 +4366,26 @@ begin
       try
         if (RecordType = 'ALL')
           or (RecordType = 'REGULAR_PASS') then
-          RegularPassword := info.asString['RegularPassword'];
+          PermanentPassword := info.asString['PermanentPassword'];
 
         if (RecordType = 'ALL') then
         begin
-          ProxyOption := info.asString['ProxyOption'];
+          ProxyOption := info.asInteger['ProxyOption'];
           //Доделать. Удалить фикс прокси?
   //        info.asBoolean['Proxy'] := True;
   //        info.asString['ProxyAddr'] := 'socks=127.0.0.1:9050';
 
-          hcAccounts.UseProxy := info.asBoolean['Proxy'];
+          hcAccounts.UseProxy := (ProxyOption = PO_MANUAL);
           hcAccounts.UserLogin.ProxyAddr := info.asString['ProxyAddr'];
           hcAccounts.UserLogin.ProxyUserName := info.asString['ProxyUsername'];
           hcAccounts.UserLogin.ProxyPassword := info.asString['ProxyPassword'];
 
-          TimerClient.UseProxy := info.asBoolean['Proxy'];
+          TimerClient.UseProxy := (ProxyOption = PO_MANUAL);
           TimerClient.UserLogin.ProxyAddr := info.asString['ProxyAddr'];
           TimerClient.UserLogin.ProxyUserName := info.asString['ProxyUsername'];
           TimerClient.UserLogin.ProxyPassword := info.asString['ProxyPassword'];
 
-          HostTimerClient.UseProxy := info.asBoolean['Proxy'];
+          HostTimerClient.UseProxy := (ProxyOption = PO_MANUAL);
           HostTimerClient.UserLogin.ProxyAddr := info.asString['ProxyAddr'];
           HostTimerClient.UserLogin.ProxyUserName := info.asString['ProxyUsername'];
           HostTimerClient.UserLogin.ProxyPassword := info.asString['ProxyPassword'];
@@ -4326,14 +4405,44 @@ begin
   if HostTimerClient.ServerAddr = '' then
     HostTimerClient.ServerAddr := '95.216.96.6';
 
-  if ProxyOption = '' then
-    ProxyOption := 'Automatic';
+//  if ProxyOption = '' then
+//    ProxyOption := 'Automatic';
 
   // Load Window Position
 //  LoadWindowPosition(Self, 'MainForm');
-end;
+end;}
 
 procedure TMainForm.SaveSetup;
+var
+  reg: TRegistry;
+begin
+//  xLog('SaveSetup');
+
+  reg := TRegistry.Create;
+  try
+    reg.RootKey := HKEY_CURRENT_USER;
+    reg.OpenKey('Software\Remox', True);
+    reg.WriteBool('StoreHistory', StoreHistory);
+    reg.WriteBool('StorePasswords', StorePasswords);
+    reg.WriteString('PermanentPassword', PermanentPassword);
+    reg.WriteInteger('ProxyOption', ProxyOption);
+    reg.WriteString('ProxyAddr', hcAccounts.UserLogin.ProxyAddr);
+    reg.WriteString('ProxyPassword', hcAccounts.UserLogin.ProxyUserName);
+    reg.WriteString('ProxyUsername', hcAccounts.UserLogin.ProxyPassword);
+    reg.WriteBool('RememberAccount', cbRememberAccount.Checked);
+    reg.WriteString('AccountUserName', Trim(eAccountUserName.Text));
+    if cbRememberAccount.Checked then
+      reg.WriteString('AccountPassword', AccountPassword)
+    else
+      reg.WriteString('AccountPassword', '');
+    reg.WriteString('LastFocusedUID', LastFocusedUID);
+    reg.WriteDateTime('DateAllowConnectPending', DateAllowConnectionPending);
+  finally
+    reg.Free;
+  end;
+end;
+
+{procedure TMainForm.SaveSetup;
 var
   CfgFileName: String;
   infos: RtcString;
@@ -4354,10 +4463,10 @@ begin
     info.asBoolean['SSL'] := hcAccounts.UseSSL;
   //    info.asString['DLL'] := PClient.Gate_ISAPI;
 
-    info.asString['RegularPassword'] := RegularPassword;
+    info.asString['PermanentPassword'] := PermanentPassword;
 //    info.asBoolean['OnlyAdminChanges'] := OnlyAdminChanges;
 
-    info.asString['ProxyOption'] := ProxyOption;
+    info.asInteger['ProxyOption'] := ProxyOption;
     info.asBoolean['Proxy'] := hcAccounts.UseProxy;
     info.asString['ProxyAddr'] := hcAccounts.UserLogin.ProxyAddr;
     info.asString['ProxyPassword'] := hcAccounts.UserLogin.ProxyUserName;
@@ -4424,9 +4533,9 @@ begin
   //Inf file
   info := TRtcRecord.Create;
   try
-    info.asWideString['RegularPassword'] := RegularPassword;
+    info.asWideString['PermanentPassword'] := PermanentPassword;
 
-    info.asString['ProxyOption'] := ProxyOption;
+    info.asInteger['ProxyOption'] := ProxyOption;
     info.asBoolean['Proxy'] := hcAccounts.UseProxy;
     info.asString['ProxyAddr'] := hcAccounts.UserLogin.ProxyAddr;
     info.asWideString['ProxyPassword'] := hcAccounts.UserLogin.ProxyPassword;
@@ -4473,7 +4582,7 @@ begin
 //    RaiseLastOSError;
 
 //  Delete_File(CfgFileName);
-end;
+end;}
 
 // Load Window Position procedure
 //function TMainForm.LoadWindowPosition(Form: TForm; FormName: String; sizeable:boolean=False):boolean;
@@ -4756,7 +4865,7 @@ begin
       DData := twDevices.GetNodeData(Node);
       DData^.UID := DForm.UID;
       DData^.Name := DForm.eName.Text;
-      DData^.Password := DForm.ePassword.Text;
+      DData^.Password := System.Hash.THashMD5.GetHashString(DForm.ePassword.Text);
       DData^.Description := DForm.mDescription.Lines.GetText;
       DData^.GroupUID := DForm.GroupUID;
       DData^.ID := StrToInt(DForm.eID.Text);
@@ -4778,7 +4887,7 @@ begin
 
       DoGetDeviceState(eAccountUserName.Text,
         LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll])),
-        eAccountPassword.Text,
+        AccountPassword,
         DForm.eID.Text);
     end;
   finally
@@ -4787,8 +4896,6 @@ begin
 end;
 
 procedure TMainForm.DoGetDeviceState(Account, User, Pass, Friend: String);
-//var
-//  CurPass: String;
 begin
 //  XLog('DoGetDeviceState');
 
@@ -4798,9 +4905,7 @@ begin
     begin
       asString['Account'] := Account;
       asWideString['User'] := User;
-//      CurPass := Pass;
-//      Crypt(CurPass, '@VCS@');
-//      asWideString['Pass'] := CurPass;
+//      asWideString['Pass'] := Pass;
       asString['Friend'] := Friend;
       Call(resGetState);
     end;
@@ -4905,7 +5010,11 @@ begin
       DForm.UID := DData^.UID;
       DForm.eID.Text := IntToStr(DData^.ID);
       DForm.eName.Text := DData^.Name;
-      DForm.ePassword.Text := DData^.Password;
+      DForm.PrevPassword := DData^.Password;
+      if DData^.Password <> '' then
+        DForm.ePassword.Text := 'password'
+      else
+        DForm.ePassword.Text := '';
       DForm.mDescription.Text := DData^.Description;
       DForm.GroupUID := DData^.GroupUID;
       DForm.GetDeviceInfoFunc := GetDeviceInfo;
@@ -4914,7 +5023,10 @@ begin
       if DForm.ModalResult = mrOk then
       begin
         DData^.Name := DForm.eName.Text;
-        DData^.Password := DForm.ePassword.Text;
+        if DForm.PasswordChanged then
+          DData^.Password := System.Hash.THashMD5.GetHashString(DForm.ePassword.Text)
+        else
+          DData^.Password := DForm.PrevPassword;
         DData^.Description := DForm.mDescription.Lines.GetText;
         DData^.ID := StrToInt(DForm.eID.Text);
         DData^.HighLight := False;
@@ -4934,7 +5046,7 @@ begin
 
         DoGetDeviceState(eAccountUserName.Text,
           LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll])),
-          eAccountPassword.Text,
+          AccountPassword,
           DForm.eID.Text);
       end;
     finally
@@ -5134,8 +5246,6 @@ begin
 end;
 
 procedure TMainForm.DoAccountLogin;
-var
-  CurPass: String;
 begin
 //  xLog('DoAccountLogin');
 
@@ -5150,9 +5260,7 @@ begin
     begin
       Value['User'] := LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]));
       asWideString['Account'] := LowerCase(eAccountUserName.Text);
-      CurPass := eAccountPassword.Text;
-      Crypt(CurPass, '@VCS@');
-      asWideString['Pass'] := CurPass;
+      asWideString['Pass'] := AccountPassword;
       asBoolean['IsService'] := IsService;
       Call(resLogin);
     end;
@@ -5167,9 +5275,7 @@ begin
     begin
       Value['User'] := LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]));
       asWideString['Account'] := LowerCase(eAccountUserName.Text);
-      CurPass := eAccountPassword.Text;
-      Crypt(CurPass, '@VCS@');
-      asWideString['Pass'] := CurPass;
+      asWideString['Pass'] := AccountPassword;
       asBoolean['IsService'] := IsService;
       Call(resTimerLogin);
     end;
@@ -6639,6 +6745,11 @@ begin
     eUserName.SelectAll;
 end;
 
+procedure TMainForm.eAccountPasswordChange(Sender: TObject);
+begin
+  AccountPassword := System.Hash.THashMD5.GetHashString(eAccountPassword.Text);
+end;
+
 procedure TMainForm.eAccountUserNameKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 var
@@ -6966,9 +7077,9 @@ begin
 ////  fReg.Parent := Self;
 ////  AutoScaleForm(fReg);
 //  fReg.CModule := cmAccounts;
-//  PrevRegularPass := RegularPassword;
-//  fReg.eDevicePassword.Text := RegularPassword;
-//  fReg.eDevicePasswordConfirm.Text := RegularPassword;
+//  PrevRegularPass := PermanentPassword;
+//  fReg.eDevicePassword.Text := PermanentPassword;
+//  fReg.eDevicePasswordConfirm.Text := PermanentPassword;
 //  fReg.ThisDeviceID := PClient.LoginUserName;
 //  fReg.AccountLoginProcedure := DoAccountLogin;
 //  fReg.MF_AccountName := eAccountUserName;
@@ -6987,10 +7098,10 @@ begin
 //  fReg.ShowModal;
 //  if fReg.ModalResult = mrOk then
 //  begin
-//    if RegularPassword <> PrevRegularPass then
+//    if PermanentPassword <> PrevRegularPass then
 //    begin
-//      RegularPassword := fReg.eDevicePassword.Text;
-//      ShowRegularPasswordState();
+//      PermanentPassword := fReg.eDevicePassword.Text;
+//      ShowPermanentPasswordState();
 //      SendPasswordsToGateway;
 //      SaveSetup;
 //    end;
@@ -7231,7 +7342,6 @@ end;
 procedure TMainForm.HostPingTimerTimer(Sender: TObject);
 var
   PassRec: TRtcRecord;
-  CurPass: String;
 begin
 //  xLog('HostPingTimerTimer');
 
@@ -7250,15 +7360,9 @@ begin
 
     PassRec := TRtcRecord.Create;
     try
-      CurPass := ePassword.Text;
-      Crypt(CurPass, '@VCS@');
-      PassRec.asString['0'] := CurPass;
-      if Trim(RegularPassword) <> '' then
-      begin
-        CurPass := RegularPassword;
-        Crypt(CurPass, '@VCS@');
-        PassRec.asString['1'] := CurPass;
-      end;
+      PassRec.asString['0'] := AccountPassword;
+      if Trim(PermanentPassword) <> '' then
+        PassRec.asString['1'] := PermanentPassword;
 
       with cmAccounts do
       try
@@ -7647,7 +7751,7 @@ begin
 
   DoGetDeviceState(eAccountUserName.Text,
     LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll])),
-    eAccountPassword.Text,
+    AccountPassword,
     user);
 
   with cmAccounts do
@@ -7655,7 +7759,6 @@ begin
     with Data.NewFunction('Host.GetUserInfo') do
     begin
       asWideString['User'] := user;
-      Crypt(pass, '@VCS@');
       asWideString['Pass'] := pass;
       asString['Action'] := action;
       Call(rGetPartnerInfo);
@@ -7715,7 +7818,7 @@ begin
 
 //      DoGetDeviceState(eAccountUserName.Text,
 //        PClient.LoginUserName,
-//        eAccountPassword.Text,
+//        AccountPassword,
 //        asWideString['user']);
     end
     else
@@ -7803,7 +7906,7 @@ begin
       TempPass := PassForm.ePassword.Text;
       if mResult = mrOk then
       begin
-        ConnectToPartnerStart(asWideString['user'], username, TempPass, asString['action']);
+        ConnectToPartnerStart(asWideString['user'], username, System.Hash.THashMD5.GetHashString(TempPass), asString['action']);
 //        DesktopsForm.SetReconnectInterval(asWideString['user'], 60000);
       end
       else
@@ -7838,7 +7941,7 @@ begin
 
   DoGetDeviceState(eAccountUserName.Text,
     LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll])),
-    eAccountPassword.Text,
+    AccountPassword,
     user);
 
   with cmAccounts do
@@ -7846,7 +7949,6 @@ begin
     with Data.NewFunction('Host.GetUserInfo') do
     begin
       asWideString['User'] := user;
-      Crypt(pass, '@VCS@');
       asWideString['Pass'] := pass;
       asString['Action'] := action;
       Call(rGetPartnerInfoReconnect);
@@ -8846,15 +8948,9 @@ begin
         begin
           PassRec := TRtcRecord.Create;
           try
-            CurPass := ePassword.Text;
-            Crypt(CurPass, '@VCS@');
-            PassRec.asString['0'] := CurPass;
-            if Trim(RegularPassword) <> '' then
-            begin
-              CurPass := RegularPassword;
-              Crypt(CurPass, '@VCS@');
-              PassRec.asString['1'] := CurPass;
-            end;
+            PassRec.asString['0'] := AccountPassword;
+            if Trim(PermanentPassword) <> '' then
+              PassRec.asString['1'] := PermanentPassword;
 
             with TimerModule do
             try
@@ -8914,21 +9010,14 @@ end;
 procedure TMainForm.SendPasswordsToGateway();
 var
   PassRec: TRtcRecord;
-  CurPass: String;
 begin
 //  XLog('SendPasswordsToGateway');
 
   PassRec := TRtcRecord.Create;
   try
-    CurPass := ePassword.Text;
-    Crypt(CurPass, '@VCS@');
-    PassRec.asString['0'] := CurPass;
-    if Trim(RegularPassword) <> '' then
-    begin
-      CurPass := RegularPassword;
-      Crypt(CurPass, '@VCS@');
-      PassRec.asString['1'] := CurPass;
-    end;
+    PassRec.asString['0'] := AccountPassword;
+    if Trim(PermanentPassword) <> '' then
+      PassRec.asString['1'] := PermanentPassword;
 
     with cmAccounts do
     try
@@ -9030,6 +9119,7 @@ begin
   if Result.isType = rtc_Exception then
   begin
     eAccountPassword.Text := '';
+    AccountPassword := '';
 
     AccountLogOut(nil);
   //    MessageBeep(0);
@@ -9039,6 +9129,7 @@ begin
   if Result.isType <> rtc_Record then
   begin
     eAccountPassword.Text := '';
+    AccountPassword := '';
 
     AccountLogOut(nil);
   //    MessageBeep(0);
@@ -9131,6 +9222,7 @@ begin
     else
     begin
       eAccountPassword.Text := '';
+      AccountPassword := '';
   //    MessageBeep(0);
     end;
 
@@ -9202,7 +9294,6 @@ end;
 procedure TMainForm.msgHostTimerTimer(Sender: TObject);
 var
   PassRec: TRtcRecord;
-  CurPass: String;
 begin
 //  XLog('msgHostTimerTimer');
 
@@ -9217,15 +9308,9 @@ begin
 
     PassRec := TRtcRecord.Create;
     try
-      CurPass := ePassword.Text;
-      Crypt(CurPass, '@VCS@');
-      PassRec.asString['0'] := CurPass;
-      if Trim(RegularPassword) <> '' then
-      begin
-        CurPass := RegularPassword;
-        Crypt(CurPass, '@VCS@');
-        PassRec.asString['1'] := CurPass;
-      end;
+      PassRec.asString['0'] := AccountPassword;
+      if Trim(PermanentPassword) <> '' then
+        PassRec.asString['1'] := PermanentPassword;
 
       with HostTimerModule do
       try
@@ -10370,8 +10455,16 @@ begin
     sett.PrevProxyAddr := hcAccounts.UserLogin.ProxyAddr;
     sett.PrevProxyUserName := hcAccounts.UserLogin.ProxyUserName;
     sett.PrevProxyPassword := hcAccounts.UserLogin.ProxyPassword;
-    sett.ePassword.Text := RegularPassword;
-    sett.ePasswordConfirm.Text := RegularPassword;
+    if PermanentPassword <> '' then
+    begin
+      sett.ePassword.Text := 'password';
+      sett.ePasswordConfirm.Text := 'password';
+    end
+    else
+    begin
+      sett.ePassword.Text := '';
+      sett.ePasswordConfirm.Text := '';
+    end;
     sett.cbStoreHistory.Checked := StoreHistory;
     sett.cbStorePasswords.Checked := StorePasswords;
     sett.OnCustomFormClose := OnCustomFormClose;
@@ -10424,7 +10517,7 @@ begin
       //  if PClient.Gate_Proxy or PClient.Gate_WinHttp then
       //    begin
 
-        if ProxyOption = 'Automatic' then
+        if ProxyOption = PO_AUTOMATIC then
         begin
           tPHostThread.ProxyEnabled := False;
           tPHostThread.ProxyAddr := '';
@@ -10450,7 +10543,7 @@ begin
           HostTimerClient.UserLogin.ProxyPassword := '';
         end
         else
-        if ProxyOption = 'Manual' then
+        if ProxyOption = PO_MANUAL then
         begin
           tPHostThread.ProxyEnabled := True;
           tPHostThread.ProxyAddr := sett.CurProxyAddr;
@@ -10476,6 +10569,7 @@ begin
           HostTimerClient.UserLogin.ProxyPassword := sett.CurProxyPassword;
         end
         else
+        if ProxyOption = PO_DIRECT then
         begin
           tPHostThread.ProxyEnabled := False;
           tPHostThread.ProxyAddr := '';
@@ -10524,10 +10618,18 @@ begin
         tActivateHost.Enabled := True;
       end;
 
-      if sett.ePassword.Text <> RegularPassword then
+      if sett.PermanentPasswordChanged then
       begin
-        RegularPassword := sett.ePassword.Text;
-        ShowRegularPasswordState();
+        if IsServiceStarted(RTC_HOSTSERVICE_NAME)
+          and (not SendSettingsToService(sett.ePassword.Text)) then
+        begin
+          MessageBox(Handle, 'Ошибка при установке пароля. Проверьте что служба Remox запущена', 'Remox', MB_OKCANCEL);
+          SettingsFormOpened := False;
+          Exit;
+        end;
+
+        PermanentPassword := System.Hash.THashMD5.GetHashString(sett.ePassword.Text);
+        ShowPermanentPasswordState();
         SendPasswordsToGateway;
       end;
 
@@ -10550,6 +10652,41 @@ begin
   end;
 end;
 
+function TMainForm.SendSettingsToService(ANewPermanentPassword: String): Boolean;
+var
+  Request, Response: IIPCData;
+  IPCClient: TIPCClient;
+  I, Len: Integer;
+begin
+  Result := False;
+
+  IPCClient := TIPCClient.Create;
+  try
+    IPCClient.ComputerName := 'localhost';
+    IPCClient.ServerName := 'Remox_IPC_Service';
+    IPCClient.ConnectClient(1000); //cDefaultTimeout
+    try
+      if IPCClient.IsConnected then
+      begin
+        Request := AcquireIPCData;
+        Request.Data.WriteInteger('QueryType', QT_SET_PERMANENT_PASSWORD);
+        Request.Data.WriteString('Password',ANewPermanentPassword);
+        Response := IPCClient.ExecuteConnectedRequest(Request);
+
+        if IPCClient.AnswerValid then
+          Result := Response.Data.ReadBoolean('Result');
+
+//          if IPCClient.LastError <> 0 then
+//            ListBox1.Items.Add(Format('Error: Code %d', [IPCClient.LastError]));
+      end;
+    finally
+      IPCClient.DisconnectClient;
+    end;
+  finally
+    IPCClient.Free;
+  end;
+end;
+
 {procedure TMainForm.SettingsFormOnResult(sett: TrdClientSettings);
 begin
   xLog('SettingsFormOnResult');
@@ -10562,8 +10699,8 @@ begin
     ProxyOption := sett.CurProxyOption;
     if sett.ePassword.Text <> sett.PrevRegularPass then
     begin
-      RegularPassword := sett.ePassword.Text;
-      ShowRegularPasswordState();
+      PermanentPassword := sett.ePassword.Text;
+      ShowPermanentPasswordState();
       SendPasswordsToGateway;
     end;
 

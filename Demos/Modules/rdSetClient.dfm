@@ -4,8 +4,8 @@ object rdClientSettings: TrdClientSettings
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = #1053#1072#1089#1090#1088#1086#1081#1082#1080
-  ClientHeight = 258
-  ClientWidth = 439
+  ClientHeight = 257
+  ClientWidth = 435
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -235,6 +235,7 @@ object rdClientSettings: TrdClientSettings
           Height = 24
           PasswordChar = '*'
           TabOrder = 0
+          OnChange = ePasswordChange
           OnKeyDown = cbAutoRunKeyDown
         end
         object ePasswordConfirm: TEdit
@@ -244,6 +245,7 @@ object rdClientSettings: TrdClientSettings
           Height = 24
           PasswordChar = '*'
           TabOrder = 1
+          OnChange = ePasswordChange
           OnKeyDown = cbAutoRunKeyDown
         end
       end

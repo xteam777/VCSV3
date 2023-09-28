@@ -120,6 +120,7 @@ object DeviceForm: TDeviceForm
     ParentFont = False
     PasswordChar = '*'
     TabOrder = 1
+    OnChange = ePasswordChange
     OnKeyDown = eIDKeyDown
   end
   object eName: TEdit

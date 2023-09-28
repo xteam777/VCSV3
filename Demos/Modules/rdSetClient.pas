@@ -65,16 +65,18 @@ type
     procedure eProxyUsernameChange(Sender: TObject);
     procedure eProxyPasswordChange(Sender: TObject);
     procedure cbAutoRunClick(Sender: TObject);
+    procedure ePasswordChange(Sender: TObject);
 
   private
     { Private declarations }
 
   public
     { Public declarations }
-    PrevProxyOption, CurProxyOption: String;
+    PrevProxyOption, CurProxyOption: Integer;
     PrevProxyAddr, CurProxyAddr: String;
     PrevProxyUserName, CurProxyUserName: String;
     PrevProxyPassword, CurProxyPassword: String;
+    PermanentPasswordChanged: Boolean;
 //    PrevAutoRun, CurAutoRun: Boolean;
     FOnCustomFormClose: TOnCustomFormEvent;
 
@@ -111,25 +113,25 @@ begin
 //  cbAutoRun.Checked := PrevAutoRun;
 
   CurProxyOption := PrevProxyOption;
-  if CurProxyOption = 'NoProxy' then
-  begin
-    rbNoProxy.Checked := True;
-    rbAutomatic.Checked := False;
-    rbManual.Checked := False;
-  end
-  else
-  if CurProxyOption = 'Automatic' then
+  if CurProxyOption = PO_AUTOMATIC then
   begin
     rbNoProxy.Checked := False;
     rbAutomatic.Checked := True;
     rbManual.Checked := False;
   end
   else
-  if CurProxyOption = 'Manual' then
+  if CurProxyOption = PO_MANUAL then
   begin
     rbNoProxy.Checked := False;
     rbAutomatic.Checked := False;
     rbManual.Checked := True;
+  end
+  else
+  if CurProxyOption = PO_DIRECT then
+  begin
+    rbNoProxy.Checked := True;
+    rbAutomatic.Checked := False;
+    rbManual.Checked := False;
   end;
 
 //  eAddress.Text := String(HTTPClient^.ServerAddr);
@@ -191,6 +193,11 @@ begin
     or (CurProxyPassword <> PrevProxyPassword);
 end;
 
+procedure TrdClientSettings.ePasswordChange(Sender: TObject);
+begin
+  PermanentPasswordChanged := True;
+end;
+
 procedure TrdClientSettings.eProxyAddrChange(Sender: TObject);
 var
   sProxyAddr: String;
@@ -235,7 +242,7 @@ begin
       ePassword.SetFocus;
     Exit;
   end;
-  if CurProxyOption = 'Manual' then
+  if CurProxyOption = PO_MANUAL then
   begin
     if Trim(eProxyAddr.Text) = '' then
     begin
@@ -446,7 +453,7 @@ begin
 
 //  xProxyClick(nil);
 
-  if (tcSettings.ActivePage.Name = 'tsSequrity')
+  if (tcSettings.ActivePage = tsSequrity)
     and Visible then
   begin
     ePassword.SetFocus;
@@ -460,7 +467,7 @@ procedure TrdClientSettings.rbAutomaticClick(Sender: TObject);
 begin
   rbNoProxy.Checked := False;
   rbManual.Checked := False;
-  CurProxyOption := 'Automatic';
+  CurProxyOption := PO_AUTOMATIC;
 
   xProxyClick(nil);
 end;
@@ -469,7 +476,7 @@ procedure TrdClientSettings.rbManualClick(Sender: TObject);
 begin
   rbNoProxy.Checked := False;
   rbAutomatic.Checked := False;
-  CurProxyOption := 'Manual';
+  CurProxyOption := PO_MANUAL;
 
   xProxyClick(nil);
 
@@ -481,14 +488,14 @@ procedure TrdClientSettings.rbNoProxyClick(Sender: TObject);
 begin
   rbAutomatic.Checked := False;
   rbManual.Checked := False;
-  CurProxyOption := 'NoProxy';
+  CurProxyOption := PO_DIRECT;
 
   xProxyClick(nil);
 end;
 
 procedure TrdClientSettings.xProxyClick(Sender: TObject);
   begin
-  if CurProxyOption = 'Manual' then
+  if CurProxyOption = PO_MANUAL then
   begin
     eProxyAddr.Color := clWindow;
     eProxyPort.Color := clWindow;

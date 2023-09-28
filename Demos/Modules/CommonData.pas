@@ -77,7 +77,11 @@ const
   QT_SENDLCKSYS = 16;
   QT_SENDLOGOFF = 17;
   QT_GETDATA = 18;
+  QT_SET_PERMANENT_PASSWORD = 11;
 
+  PO_AUTOMATIC = 0;
+  PO_DIRECT = 1;
+  PO_MANUAL = 2;
 var
   MainFormHandle: THandle;
   CurrentSessionID: DWORD;

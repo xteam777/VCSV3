@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, rtcInfo, rtcConn, rtcCliModule,
-  rtcFunction, Vcl.Buttons, Vcl.ExtCtrls, VirtualTrees, uVircessTypes,
+  rtcFunction, Vcl.Buttons, Vcl.ExtCtrls, VirtualTrees, uVircessTypes, System.Hash,
   Vcl.AppEvnts, rtcSystem;
 
 type
@@ -41,6 +41,7 @@ type
       Result: TRtcValue);
     procedure rChangeDeviceRequestAborted(Sender: TRtcConnection; Data,
       Result: TRtcValue);
+    procedure ePasswordChange(Sender: TObject);
   private
     { Private declarations }
     FOnCustomFormClose: TOnCustomFormEvent;
@@ -54,8 +55,9 @@ type
     UID: String;
     AccountUID: String;
     user: String;
-    GroupUID: String;
+    GroupUID, PrevPassword: String;
     GetDeviceInfoFunc: TGetDeviceInfoFunc;
+    PasswordChanged: Boolean;
 
     property OnCustomFormClose: TOnCustomFormEvent read FOnCustomFormClose write FOnCustomFormClose;
   end;
@@ -116,7 +118,7 @@ begin
   eID.Text := StringReplace(eID.Text, ' ', '', [rfReplaceAll]);
   if eID.Text = '' then
   begin
-    MessageBox(Handle, 'Не указано ID компьютера', 'Remox', MB_ICONWARNING or MB_OK);
+    MessageBox(Handle, 'Не указано ID устройства', 'Remox', MB_ICONWARNING or MB_OK);
     eID.SetFocus;
     Exit;
   end;
@@ -126,7 +128,7 @@ begin
   try
     i := StrToInt(eID.Text);
   except
-    MessageBox(Handle, 'ID компьютера может содержать только цифры', 'Remox', MB_ICONWARNING or MB_OK);
+    MessageBox(Handle, 'ID устройство может содержать только цифры', 'Remox', MB_ICONWARNING or MB_OK);
     eID.SetFocus;
     Exit;
   end;
@@ -134,14 +136,14 @@ begin
   if DData <> nil then
     if DData.UID <> UID then
     begin
-      MessageBox(Handle, 'Компьютер с указанныс ID уже присутствует в списке', 'Remox', MB_ICONWARNING or MB_OK);
+      MessageBox(Handle, 'Устройство с указанныс ID уже присутствует в списке', 'Remox', MB_ICONWARNING or MB_OK);
       eID.SetFocus;
       Exit;
     end;
 
   if Trim(eName.Text) = '' then
   begin
-    MessageBox(Handle, 'Не указано имя компьютера', 'Remox', MB_ICONWARNING or MB_OK);
+    MessageBox(Handle, 'Не указано имя устройства', 'Remox', MB_ICONWARNING or MB_OK);
     eName.SetFocus;
     Exit;
   end;
@@ -168,7 +170,7 @@ begin
         asString['AccountUID'] := AccountUID;
         asString['GroupUID'] := GroupUID;
         asInteger['DeviceID'] := StrToInt(eID.Text);
-        asWideString['Password'] := ePassword.Text;
+        asWideString['Password'] := System.Hash.THashMD5.GetHashString(ePassword.Text);
         asWideString['Description'] := mDescription.Lines.GetText;
       end;
       Call(rAddDevice);
@@ -188,7 +190,10 @@ begin
         asString['AccountUID'] := AccountUID;
         asString['GroupUID'] := GroupUID;
         asInteger['DeviceID'] := StrToInt(eID.Text);
-        asWideString['Password'] := ePassword.Text;
+        if PasswordChanged then
+          asWideString['Password'] := System.Hash.THashMD5.GetHashString(ePassword.Text)
+        else
+          asWideString['Password'] := PrevPassword;
         asWideString['Description'] := mDescription.Lines.GetText;
       end;
       Call(rChangeDevice);
@@ -220,6 +225,11 @@ begin
     bOKClick(Sender)
   else if Key = VK_ESCAPE then
     bCloseClick(Sender);
+end;
+
+procedure TDeviceForm.ePasswordChange(Sender: TObject);
+begin
+  PasswordChanged := True;
 end;
 
 procedure TDeviceForm.FormClose(Sender: TObject; var Action: TCloseAction);

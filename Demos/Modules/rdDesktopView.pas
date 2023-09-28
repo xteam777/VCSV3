@@ -2279,7 +2279,11 @@ begin
       end;
 
     if ActiveUIModule <> nil then
+    begin
+      ActiveUIModule.pImage^.Canvas.Brush.Color := clBlack;
+      ActiveUIModule.pImage^.Canvas.FillRect(Rect(0, 0, ActiveUIModule.pImage^.Width, ActiveUIModule.pImage^.Height));
       ActiveUIModule.UI.DrawScreen(ActiveUIModule.pImage^.Canvas, ActiveUIModule.pImage^.Width, ActiveUIModule.pImage^.Height);
+    end;
 
 //      MessageBox(Handle, PChar('Record finished'), PChar(Application.Title), MB_ICONINFORMATION or MB_OK);
     end
@@ -2300,7 +2304,11 @@ begin
       end;
 
     if ActiveUIModule <> nil then
+    begin
+      ActiveUIModule.pImage^.Canvas.Brush.Color := clBlack;
+      ActiveUIModule.pImage^.Canvas.FillRect(Rect(0, 0, ActiveUIModule.pImage^.Width, ActiveUIModule.pImage^.Height));
       ActiveUIModule.UI.DrawScreen(ActiveUIModule.pImage^.Canvas, ActiveUIModule.pImage^.Width, ActiveUIModule.pImage^.Height);
+    end;
 
 //      MessageBox(Handle, PChar('Record canceled'), PChar(Application.Title), MB_ICONINFORMATION or MB_OK);
     end
@@ -2405,7 +2413,11 @@ begin
   DoResizeImage;
 
   if ActiveUIModule <> nil then
+  begin
+    ActiveUIModule.pImage^.Canvas.Brush.Color := clBlack;
+    ActiveUIModule.pImage^.Canvas.FillRect(Rect(0, 0, ActiveUIModule.pImage^.Width, ActiveUIModule.pImage^.Height));
     ActiveUIModule.UI.DrawScreen(ActiveUIModule.pImage^.Canvas, ActiveUIModule.pImage^.Width, ActiveUIModule.pImage^.Height);
+  end;
 end;
 
 procedure TrdDesktopViewer.lMinimizeClick(Sender: TObject);
