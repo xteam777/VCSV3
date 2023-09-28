@@ -1092,7 +1092,6 @@ end;
 procedure TVircessUsers.SetPasswords(uname: String; sessid: RtcString; Param: TRtcFunctionInfo);
 var
   i: Integer;
-  CurPass: String;
 begin
   if Param.isType['Passwords'] = rtc_Null then
     Exit;
@@ -1108,11 +1107,7 @@ begin
         HostsInfo.Child[uname].NewRecord('Passwords');
 
       for i := 0 to Param.asRecord['Passwords'].Count - 1 do
-      begin
-        CurPass := Param.asRecord['Passwords'][IntToStr(i)];
-        DeCrypt(CurPass, '@VCS@');
-        HostsInfo.Child[uname].asRecord['Passwords'].asString[IntToStr(i)] := CurPass;
-      end;
+        HostsInfo.Child[uname].asRecord['Passwords'].asString[IntToStr(i)] := Param.asRecord['Passwords'][IntToStr(i)];
       for i := Param.asRecord['Passwords'].Count to HostsInfo.Child[uname].asRecord['Passwords'].Count - 1 do
         HostsInfo.Child[uname].asRecord['Passwords'].is_Null[IntToStr(i)] := True;
   finally

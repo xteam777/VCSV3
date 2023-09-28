@@ -14,7 +14,7 @@ uses
   Forms, // D5
   {$ENDIF}
 
-  rtcCrypt, rtcInfo,
+  rtcInfo,
   rtcFunction, rtcSrvModule,
 
   rtcConn, rtcDataSrv, uVircessTypes,
