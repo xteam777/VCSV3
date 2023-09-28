@@ -804,7 +804,7 @@ var
   ChangedDragFullWindows: Boolean = False;
   OriginalDragFullWindows: LongBool = True;
   DeviceDisplayName: String;
-  CS_GW, CS_Status, CS_Pending, CS_ActivateHost, CS_HostGateway: TCriticalSection;
+  CS_GW, CS_Status, CS_Pending, CS_ActivateHost, CS_HostGateway, CS_Incoming: TCriticalSection;
   DeviceId, ConsoleId: String;
   LastActiveExplorerHandle: THandle;
 
@@ -10201,19 +10201,24 @@ var
   DData: PDeviceData;
   DForm: TDeviceForm;
 begin
-  Node := twIncomes.AddChild(nil, DData);
-  Node.States := [vsInitialized, vsVisible];
-  DData := twDevices.GetNodeData(Node);
-  DData^.Name := AUserName;
-  DData^.Description := AUserDesc;
-  DData^.HighLight := False;
-  DData^.StateIndex := MSG_STATUS_ONLINE;
+  CS_Incoming.Acquire;
+  try
+    Node := twIncomes.AddChild(nil, DData);
+    Node.States := [vsInitialized, vsVisible];
+    DData := twDevices.GetNodeData(Node);
+    DData^.Name := AUserName;
+    DData^.Description := AUserDesc;
+    DData^.HighLight := False;
+    DData^.StateIndex := MSG_STATUS_ONLINE;
 
-  twIncomes.ToggleNode(Node);
-  twIncomes.Selected[Node] := True;
-  twIncomes.FocusedNode := Node;
-  twIncomes.SortTree(0, sdAscending);
-  twIncomes.InvalidateNode(Node);
+    twIncomes.ToggleNode(Node);
+    twIncomes.Selected[Node] := True;
+    twIncomes.FocusedNode := Node;
+    twIncomes.SortTree(0, sdAscending);
+    twIncomes.InvalidateNode(Node);
+  finally
+    CS_Incoming.Release;
+  end;
 
   tsIncomes.Caption := 'Входящие подключения (' + IntToStr(GetIncomeConnectionsCount) + ')';
 end;
@@ -10225,12 +10230,17 @@ begin
 //  XLog('GetIncomeConnectionsCount');
   Result := 0;
 
-  Node := twIncomes.GetFirst;
-  while Node <> nil do
-  begin
-    Result := Result + 1;
+  CS_Incoming.Acquire;
+  try
+    Node := twIncomes.GetFirst;
+    while Node <> nil do
+    begin
+      Result := Result + 1;
 
-    Node := twIncomes.GetNext(Node);
+      Node := twIncomes.GetNext(Node);
+    end;
+  finally
+    CS_Incoming.Release;
   end;
 end;
 
@@ -10240,17 +10250,22 @@ var
 begin
 //  XLog('RemoveIncomeConnection');
 
-  Node := twIncomes.GetFirst;
-  while Node <> nil do
-  begin
-    if TDeviceData(twIncomes.GetNodeData(Node)^).Name = AUserName then
+  CS_Incoming.Acquire;
+  try
+    Node := twIncomes.GetFirst;
+    while Node <> nil do
     begin
-      twIncomes.DeleteNode(Node);
-      twIncomes.Repaint;
+      if TDeviceData(twIncomes.GetNodeData(Node)^).Name = AUserName then
+      begin
+        twIncomes.DeleteNode(Node);
+        twIncomes.Repaint;
 
-      Break;
+        Break;
+      end;
+      Node := twIncomes.GetNext(Node);
     end;
-    Node := twIncomes.GetNext(Node);
+  finally
+    CS_Incoming.Release;
   end;
 
   tsIncomes.Caption := 'Входящие подключения (' + IntToStr(GetIncomeConnectionsCount) + ')';
@@ -10263,16 +10278,21 @@ begin
 //  XLog('IsIncomeConnectionExists');
   Result := False;
 
-  Node := twIncomes.GetFirst;
-  while Node <> nil do
-  begin
-    if TDeviceData(twIncomes.GetNodeData(Node)^).Name = AUserName then
+  CS_Incoming.Acquire;
+  try
+    Node := twIncomes.GetFirst;
+    while Node <> nil do
     begin
-      Result := True;
+      if TDeviceData(twIncomes.GetNodeData(Node)^).Name = AUserName then
+      begin
+        Result := True;
 
-      Break;
+        Break;
+      end;
+      Node := twIncomes.GetNext(Node);
     end;
-    Node := twIncomes.GetNext(Node);
+  finally
+    CS_Incoming.Release;
   end;
 end;
 
@@ -11703,6 +11723,7 @@ initialization
   CS_Pending := TCriticalSection.Create;
   CS_ActivateHost := TCriticalSection.Create;
   CS_HostGateway := TCriticalSection.Create;
+  CS_Incoming := TCriticalSection.Create;
   Randomize;
 
 finalization
@@ -11712,5 +11733,6 @@ finalization
   CS_GW.Free;
   CS_ActivateHost.Free;
   CS_HostGateway.Free;
+  CS_Incoming.Free;
 
 end.
