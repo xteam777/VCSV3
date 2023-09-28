@@ -41,6 +41,7 @@ type
       Result: TRtcValue);
     procedure rChangeDeviceRequestAborted(Sender: TRtcConnection; Data,
       Result: TRtcValue);
+    procedure ePasswordChange(Sender: TObject);
   private
     { Private declarations }
     FOnCustomFormClose: TOnCustomFormEvent;
@@ -56,6 +57,7 @@ type
     user: String;
     GroupUID: String;
     GetDeviceInfoFunc: TGetDeviceInfoFunc;
+    PasswordChanged: Boolean;
 
     property OnCustomFormClose: TOnCustomFormEvent read FOnCustomFormClose write FOnCustomFormClose;
   end;
@@ -220,6 +222,11 @@ begin
     bOKClick(Sender)
   else if Key = VK_ESCAPE then
     bCloseClick(Sender);
+end;
+
+procedure TDeviceForm.ePasswordChange(Sender: TObject);
+begin
+  PasswordChanged := True;
 end;
 
 procedure TDeviceForm.FormClose(Sender: TObject; var Action: TCloseAction);

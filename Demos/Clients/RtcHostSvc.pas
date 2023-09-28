@@ -9,14 +9,14 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, SyncObjs,
-  Graphics, Controls, SvcMgr, Dialogs, ExtCtrls,
+  Graphics, Controls, SvcMgr, Dialogs, ExtCtrls, Cromis.Comm.Custom, Cromis.Comm.IPC,
 
-  rtcInfo, rtcLog, rtcCrypt, rtcSystem, CommonData,
+  rtcInfo, rtcLog, rtcCrypt, rtcSystem, CommonData, Registry,
   rtcThrPool, WTSApi, uProcess, CommonUtils, uHardware,
 
   rtcWinLogon, wininet, rtcScrUtils, uVircessTypes, rtcpDesktopHost, rtcpChat,
   rtcPortalMod, rtcpFileTrans, rtcPortalCli, rtcPortalHttpCli, rtcConn,
-  rtcDataCli, rtcHttpCli, rtcCliModule, rtcFunction, Cromis.Comm.IPC, SASLibEx;
+  rtcDataCli, rtcHttpCli, rtcCliModule, rtcFunction, SASLibEx;
 
 type
   TStartThread = class(TThread)
@@ -96,17 +96,16 @@ type
     Stopping: Boolean;
 //    WaitLoopCount:integer;
 //    WasRunning:boolean;
-    ProxyOption: String;
     UserName: String;
     myCheckTime: TDateTime;
-    FRegularPassword: String;
+    FPermanentPassword: String;
     FScreenLockedState: Integer;
 
     procedure UpdateMyPriority;
     function GetServiceController: TServiceController; override;
     procedure ActivateHost;
     procedure HostLogOut;
-    procedure LoadSetup(RecordType: String);
+    procedure LoadSetup;
     procedure StartHostLogin;
     procedure msgHostTimerTimer(Sender: TObject);
 //    procedure LogoutClientHosts;
@@ -126,13 +125,14 @@ type
 
 //    procedure StartMyService;
 //    procedure StopMyService;
-    procedure SetRegularPassword(AValue: String);
+    procedure SetPermanentPassword(AValue: String);
 
     procedure SendLockedStateToGateway;
     procedure GetDataFromHelperByIPC(QueryType: Cardinal);
     procedure SetScreenLockedState(AValue: Integer);
-    property RegularPassword: String read FRegularPassword write SetRegularPassword;
+    property PermanentPassword: String read FPermanentPassword write SetPermanentPassword;
     property ScreenLockedState: Integer read FScreenLockedState write SetScreenLockedState;
+    procedure OnExecuteRequest(const Context: ICommContext; const Request, Response: IMessageData);
   end;
 
 const
@@ -152,6 +152,7 @@ var
   ActivationInProcess: Boolean;
   CurStatus: Integer;
   CS_Status: TCriticalSection;
+  FIPCServer: TIPCServer;
 //  hWnd, hWndThread: THandle;
 //  tid: Cardinal;
 //  FRegisteredSessionNotification: Boolean;
@@ -159,6 +160,36 @@ var
 implementation
 
 {$R *.DFM}
+
+procedure TRemoxService.OnExecuteRequest(const Context: ICommContext; const Request, Response: IMessageData);
+var
+  reg: TRegistry;
+begin
+  if Request.Data.ReadInteger('QueryType') = QT_SET_PERMANENT_PASSWORD then
+  begin
+    reg := TRegistry.Create;
+    try
+      try
+        reg.RootKey := HKEY_LOCAL_MACHINE;
+        reg.OpenKey('Software\Remox', True);
+        reg.WriteString('PermanentPassword', Request.Data.ReadString('PermanentPassword'));
+        reg.WriteInteger('ProxyOption', Request.Data.ReadInteger('ProxyOption'));
+        reg.WriteString('ProxyAddr', Request.Data.ReadString('ProxyAddr'));
+        reg.WriteString('ProxyUsername', Request.Data.ReadString('ProxyUsername'));
+        reg.WriteString('ProxyPassword', Request.Data.ReadString('ProxyPassword'));
+        reg.CloseKey;
+
+        LoadSetup;
+      except
+        Response.Data.WriteBoolean('Result', False);
+        Exit;
+      end;
+    finally
+      reg.Free;
+    end;
+    Response.Data.WriteBoolean('Result', True);
+  end;
+end;
 
 procedure TRemoxService.SendLockedStateToGateway;
 begin
@@ -358,7 +389,11 @@ begin
   tStartHelpers := TStartThread.Create(True, 'PermanentlyRestartHelpers');
   tStartClients := TStartThread.Create(True, 'StartClientsOnLogon');
 
-  LoadSetup('ALL');
+  LoadSetup;
+
+  FIPCServer := TIPCServer.Create;
+  FIPCServer.OnExecuteRequest := OnExecuteRequest;
+  FIPCServer.ServerName := 'Remox_IPC_Service';
 
 //  PFileTrans.FileInboxPath := ExtractFilePath(AppFileName) + '\INBOX';
 end;
@@ -367,13 +402,14 @@ procedure TRemoxService.ServiceStart(Sender: TService; var Started: Boolean);
 var
   s: RtcString;
 begin
+  FIPCServer.Start;
+
 //  Sleep(10000);
   xLog('Service start pending');
   try
+    StartHostLogin;
 
-  StartHostLogin;
-
-  Stopping := False;
+    Stopping := False;
 //  if (Win32MajorVersion >= 6 {vista\server 2k8}) then
 //  begin
 //    WasRunning := False;
@@ -468,7 +504,11 @@ procedure TRemoxService.ServiceStop(Sender: TService; var Stopped: Boolean);
 var
   cnt: Integer;
 begin
-  Stopping := True;
+    Stopping := True;
+
+    FIPCServer.Stop;
+
+
 //  if (Win32MajorVersion >= 6 { vista\server 2k8 } ) then
 //  begin
 //    timCheckProcess.Enabled := False;
@@ -569,6 +609,9 @@ end;
 procedure TRemoxService.ServiceDestroy(Sender: TObject);
 begin
   Stopping := True;
+
+  FIPCServer.Free;
+
 //  if (Win32MajorVersion >= 6 { vista\server 2k8 } ) then
 //    begin
 
@@ -628,10 +671,10 @@ begin
     AClient.GatePort := '80';
 end;
 
-procedure TRemoxService.SetRegularPassword(AValue: String);
+procedure TRemoxService.SetPermanentPassword(AValue: String);
 begin
-  if FRegularPassword <> AValue then
-    FRegularPassword := AValue;
+  if FPermanentPassword <> AValue then
+    FPermanentPassword := AValue;
 end;
 
 constructor TStartThread.Create(ACreateSuspended: Boolean; AType: String);
@@ -849,7 +892,66 @@ begin
   HostTimerClient.Connect(True);
 end;
 
-procedure TRemoxService.LoadSetup(RecordType: String);
+procedure TRemoxService.LoadSetup;
+var
+  reg: TRegistry;
+begin
+  reg := TRegistry.Create;
+  try
+    reg.RootKey := HKEY_LOCAL_MACHINE;
+    reg.OpenKey('Software\Remox', True);
+    reg.ReadString('ProxyAddr');
+    reg.ReadString('ProxyUsername');
+    reg.ReadString('ProxyPassword');
+
+    PermanentPassword := reg.ReadString('PermanentPassword');
+
+    if reg.ReadInteger('ProxyOption') = PO_AUTOMATIC then
+    begin
+      PClient.Gate_Proxy := False;
+      PClient.Gate_ProxyAddr := '';
+      PClient.Gate_ProxyUserName := '';
+      PClient.Gate_ProxyPassword := '';
+
+      HostTimerClient.UseProxy := False;
+      HostTimerClient.UserLogin.ProxyAddr := '';
+      HostTimerClient.UserLogin.ProxyUserName := '';
+      HostTimerClient.UserLogin.ProxyPassword := '';
+    end
+    else
+    if reg.ReadInteger('ProxyOption') = PO_MANUAL then
+    begin
+      PClient.Gate_Proxy := True;
+      PClient.Gate_ProxyAddr := reg.ReadString('ProxyAddr');
+      PClient.Gate_ProxyUserName := reg.ReadString('ProxyUsername');
+      PClient.Gate_ProxyPassword := reg.ReadString('ProxyPassword');
+
+      HostTimerClient.UseProxy := True;
+      HostTimerClient.UserLogin.ProxyAddr := reg.ReadString('ProxyAddr');
+      HostTimerClient.UserLogin.ProxyUserName := reg.ReadString('ProxyUsername');
+      HostTimerClient.UserLogin.ProxyPassword := reg.ReadString('ProxyPassword');
+    end
+    else
+    if reg.ReadInteger('ProxyOption') = PO_DIRECT then
+    begin
+      PClient.Gate_Proxy := False;
+      PClient.Gate_ProxyAddr := '';
+      PClient.Gate_ProxyUserName := '';
+      PClient.Gate_ProxyPassword := '';
+
+      HostTimerClient.UseProxy := False;
+      HostTimerClient.UserLogin.ProxyAddr := '';
+      HostTimerClient.UserLogin.ProxyUserName := '';
+      HostTimerClient.UserLogin.ProxyPassword := '';
+    end;
+
+    reg.CloseKey;
+  finally
+    reg.Free;
+  end;
+end;
+
+{procedure TRemoxService.LoadSetup(RecordType: String);
 var
   CfgFileName: String;
   s: String;
@@ -904,7 +1006,7 @@ begin
             try
               if (RecordType = 'ALL')
                 or (RecordType = 'REGULAR_PASS') then
-                RegularPassword := info.asString['RegularPassword'];
+                PermanentPassword := info.asString['PermanentPassword'];
 
               if (RecordType = 'ALL') then
               begin
@@ -943,9 +1045,9 @@ begin
   if HostTimerClient.ServerAddr = '' then
     HostTimerClient.ServerAddr := '95.216.96.39';
 
-  if ProxyOption = '' then
-    ProxyOption := 'NoProxy';
-end;
+//  if ProxyOption = '' then
+//    ProxyOption := 'NoProxy';
+end;}
 
 procedure TRemoxService.rActivateRequestAborted(Sender: TRtcConnection; Data,
   Result: TRtcValue);
@@ -993,7 +1095,7 @@ begin
 
       PassRec := TRtcRecord.Create;
       try
-        CurPass := RegularPassword;
+        CurPass := PermanentPassword;
         Crypt(CurPass, '@VCS@');
         PassRec.asString['0'] := CurPass;
 
@@ -1337,11 +1439,11 @@ var
   PassRec: TRtcRecord;
   CurPass: String;
 begin
-  LoadSetup('ALL'); //Обновление пароля и прокси
+//  LoadSetup('ALL'); //Обновление пароля и прокси
 
   PassRec := TRtcRecord.Create;
   try
-    CurPass := RegularPassword;
+    CurPass := PermanentPassword;
     Crypt(CurPass, '@VCS@');
     PassRec.asString['0'] := CurPass;
     with HostTimerModule, Data.NewFunction('GetData') do
@@ -1611,11 +1713,11 @@ var
   PassRec: TRtcRecord;
   CurPass: String;
 begin
-  LoadSetup('ALL'); //Обновление пароля и прокси
+//  LoadSetup('ALL'); //Обновление пароля и прокси
 
   PassRec := TRtcRecord.Create;
   try
-    CurPass := RegularPassword;
+    CurPass := PermanentPassword;
     Crypt(CurPass, '@VCS@');
     PassRec.asString['0'] := CurPass;
     with HostTimerModule, Data.NewFunction('Host.Ping') do
