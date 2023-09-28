@@ -2278,6 +2278,9 @@ begin
         ActiveUIModule.TimerRec.Enabled := False;
       end;
 
+    if ActiveUIModule <> nil then
+      ActiveUIModule.UI.DrawScreen(ActiveUIModule.pImage^.Canvas, ActiveUIModule.pImage^.Width, ActiveUIModule.pImage^.Height);
+
 //      MessageBox(Handle, PChar('Record finished'), PChar(Application.Title), MB_ICONINFORMATION or MB_OK);
     end
   else
@@ -2295,6 +2298,9 @@ begin
         ActiveUIModule.pImage^.RecordInfoVisible := False;
         ActiveUIModule.TimerRec.Enabled := False;
       end;
+
+    if ActiveUIModule <> nil then
+      ActiveUIModule.UI.DrawScreen(ActiveUIModule.pImage^.Canvas, ActiveUIModule.pImage^.Width, ActiveUIModule.pImage^.Height);
 
 //      MessageBox(Handle, PChar('Record canceled'), PChar(Application.Title), MB_ICONINFORMATION or MB_OK);
     end

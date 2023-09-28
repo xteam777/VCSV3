@@ -66,7 +66,6 @@ uses
   SendDestroyToGateway in '..\Modules\SendDestroyToGateway.pas',
   uUIDataModule in '..\Modules\uUIDataModule.pas' {UIDataModule};
 
-{$R rtcportaluac.res rtcportaluac.rc}
 {$R *.res}
 
 
@@ -201,6 +200,9 @@ begin
   CurrentProcessId := GetCurrentProcessId;
   ProcessIdToSessionId(GetCurrentProcessId, CurrentSessionID);
   IsWinServer := IsWindowsServerPlatform;
+
+  if not File_Exists(GetTempDirectory + 'rmxCompression.dll') then
+    CommonUtils.SaveResourceToFile('FAST_LZMA2', GetTempDirectory +'rmxCompression.dll');
 
 //  CreateAttachedProcess('\Tor\tor.exe', 'SocksPort 9250 ControlPort 9251', SW_HIDE, TorProcessID);
 

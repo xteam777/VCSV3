@@ -68,7 +68,7 @@ const
  E_LZMA_SZ_ERROR_ARCHIVE     = 16;
  E_LZMA_SZ_ERROR_NO_ARCHIVE  = 17;
 
-type
+{type
  TLZMAMemoryAlloc = function (Size: size_t): Pointer; stdcall;
  TLZMAMemoryFree = procedure (P: Pointer); stdcall;
 
@@ -80,7 +80,7 @@ function lzma_GetDecompressedSize(Src: Pointer;
   SrcSize: size_t; DecompressedSize: PSIZE_T): Integer; stdcall;
 function lzma_SetMemoryManager(_Alloc: TLZMAMemoryAlloc;
   _Free: TLZMAMemoryFree): Integer; stdcall;
-function lzma_GetErrorString(code: Integer): PAnsiChar; stdcall;
+function lzma_GetErrorString(code: Integer): PAnsiChar; stdcall;}
 
 type
   TCompressinID = array [0..8-1] of AnsiChar;
@@ -128,7 +128,7 @@ type
 
   end;
 
-  TCompressionLZMA = class(TCompressionCustom)
+{  TCompressionLZMA = class(TCompressionCustom)
   private
     FLevel: Integer;
     procedure CheckError(Code: Integer);
@@ -144,12 +144,12 @@ type
     function GetCompressionSize(Buffer: Pointer; Size: NativeUInt): NativeUInt; override;
     class function GetCompressionId: TCompressinID; override;
 
-  end;
+  end;}
 
 implementation
 const
-  lzma2_lib = 'fast-lzma2.dll';
-  lzma_lib = 'LZMA.dll';
+  lzma2_lib = 'rmxCompression.dll';
+//  lzma_lib = 'LZMA.dll';
 
 function lzma2_CreateCompressorEx; external lzma2_lib delayed;
 procedure lzma2_FreeCompressor; external lzma2_lib delayed;
@@ -164,11 +164,11 @@ function lzma2_GetErrorCode; external lzma2_lib delayed;
 function lzma2_GetErrorName; external lzma2_lib delayed;
 function lzma2_GetErrorString; external lzma2_lib delayed;
 
-function lzma_Compress; external lzma_lib delayed;
+{function lzma_Compress; external lzma_lib delayed;
 function lzma_Decompress; external lzma_lib delayed;
 function lzma_GetDecompressedSize; external lzma_lib delayed;
 function lzma_SetMemoryManager; external lzma_lib delayed;
-function lzma_GetErrorString; external lzma_lib delayed;
+function lzma_GetErrorString; external lzma_lib delayed;}
 
 { **************************************************************************** }
 {                               TCompressionCustom                             }
@@ -273,7 +273,7 @@ end;
 { **************************************************************************** }
 
 
-function LZMAMemoryAlloc(Size: size_t): Pointer; stdcall;
+{function LZMAMemoryAlloc(Size: size_t): Pointer; stdcall;
 begin
   GetMem(Result, Size);
 end;
@@ -343,6 +343,6 @@ begin
   ecode := lzma_GetDecompressedSize(Buffer, Size, @Result);
   CheckError(ecode);
 
-end;
+end;}
 
 end.
