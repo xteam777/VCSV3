@@ -7360,7 +7360,7 @@ begin
 
     PassRec := TRtcRecord.Create;
     try
-      PassRec.asString['0'] := AccountPassword;
+      PassRec.asString['0'] := System.Hash.THashMD5.GetHashString(ePassword.Text);
       if Trim(PermanentPassword) <> '' then
         PassRec.asString['1'] := PermanentPassword;
 
@@ -8948,7 +8948,7 @@ begin
         begin
           PassRec := TRtcRecord.Create;
           try
-            PassRec.asString['0'] := AccountPassword;
+            PassRec.asString['0'] := System.Hash.THashMD5.GetHashString(ePassword.Text);
             if Trim(PermanentPassword) <> '' then
               PassRec.asString['1'] := PermanentPassword;
 
@@ -9015,7 +9015,7 @@ begin
 
   PassRec := TRtcRecord.Create;
   try
-    PassRec.asString['0'] := AccountPassword;
+    PassRec.asString['0'] := System.Hash.THashMD5.GetHashString(ePassword.Text);
     if Trim(PermanentPassword) <> '' then
       PassRec.asString['1'] := PermanentPassword;
 
