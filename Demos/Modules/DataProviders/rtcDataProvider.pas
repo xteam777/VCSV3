@@ -451,20 +451,16 @@ end;
 procedure TData_Provider.HostGetUserInfoExecute(
   Sender: TRtcConnection; Param: TRtcFunctionInfo; Result: TRtcValue);
 var
-  CurPass: String;
   UserGateway: String;
   ActiveConsoleClientId: String;
 begin
-  CurPass := Param.asWideString['Pass'];
-  DeCrypt(CurPass, '@VCS@');
-
   if not Users.isHostLoggedIn(Param.asWideString['User']) then
     with Result.NewRecord do
     begin
       asString['Result'] := 'IS_OFFLINE';
       asWideString['User'] := Param.asWideString['User'];
       asString['Action'] := Param.asString['Action'];
-      asWideString['Pass'] := CurPass;
+      asWideString['Pass'] := Param.asWideString['Pass'];
 
       Exit;
     end;
@@ -472,7 +468,7 @@ begin
   UserGateway := Users.GetUserGateway(Param.asWideString['User']);
   with Result.NewRecord do
   begin
-    if Users.CheckPassword(Param.asWideString['User'], CurPass) then
+    if Users.CheckPassword(Param.asWideString['User'], Param.asWideString['Pass']) then
       asString['Result'] := 'OK'
     else
       asString['Result'] := 'PASS_NOT_VALID';
@@ -500,7 +496,7 @@ begin
     asString['Action'] := Param.asString['Action'];
     if UserGateway <> '' then
       asString['Address'] := UserGateway;
-    asWideString['Pass'] := CurPass;
+    asWideString['Pass'] := Param.asWideString['Pass'];
     asInteger['LockedState'] := Users.GetHostLockedState(Param.asWideString['User']);
     asBoolean['ServiceStarted'] := Users.GetHostServiceStarted(Param.asWideString['User']);
   end;
@@ -1399,21 +1395,18 @@ end;
 
 procedure TData_Provider.AccountLoginExecute(Sender: TRtcConnection; Param: TRtcFunctionInfo; Result: TRtcValue);
 var
-  RealName, AccountUID, CurPass: String;
+  RealName, AccountUID: String;
 begin
   with TRtcDataServer(Sender) do
   begin
-    CurPass := Param['Pass'];
-    DeCrypt(CurPass, '@VCS@');
-
     if Param['Account'] = '' then
       raise Exception.Create('Username required for Login.')
 //    else if Param['Pass'] = '' then
 //      raise Exception.Create('Password required for Login.')
-    else if not AccountIsValid(Param['Account'], CurPass, RealName, AccountUID) then
+    else if not AccountIsValid(Param['Account'], Param['Pass'], RealName, AccountUID) then
         raise Exception.Create('Username or password is not valid.');
 
-    Users.AccountLogin(Param['Account'], Param['User'], CurPass, GetFriendList(Param['User']), Session.ID);
+    Users.AccountLogin(Param['Account'], Param['User'], Param['Pass'], GetFriendList(Param['User']), Session.ID);
 
 //    Result.asObject := User.LoadInfo(Param['User']);
     Result.asObject := LoadUserInfo(Param['Account'], RealName, AccountUID);
@@ -1428,21 +1421,18 @@ end;
 
 procedure TData_Provider.AccountLogin2Execute(Sender: TRtcConnection; Param: TRtcFunctionInfo; Result: TRtcValue);
 var
-  RealName, AccountUID, CurPass: String;
+  RealName, AccountUID: String;
 begin
   with TRtcDataServer(Sender) do
   begin
-    CurPass := Param['Pass'];
-    DeCrypt(CurPass, '@VCS@');
-
     if Param['account'] = '' then
       raise Exception.Create('Username required for Login.')
 //    else if CurPass = '' then
 //      raise Exception.Create('Password required for Login.')
-    else if not AccountIsValid(Param['Account'], CurPass, RealName, AccountUID) then
+    else if not AccountIsValid(Param['Account'], Param['Pass'], RealName, AccountUID) then
         raise Exception.Create('Username or password is not valid.');
 
-    Users.AccountLogin2(Param['Account'], Param['User'], CurPass, GetFriendList(Param['User']), Session.ID);
+    Users.AccountLogin2(Param['Account'], Param['User'], Param['Pass'], GetFriendList(Param['User']), Session.ID);
 
     Session['$MSG:AccountLogin'] := 'OK';
     Session['$MSG:User'] := Param['User'];
