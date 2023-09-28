@@ -15,7 +15,7 @@ uses
   Windows, Messages, SysUtils, CommonData, CommonUtils, uVircessTypes, rtcLog, Clipbrd,
   Classes, Graphics, Controls, Forms, Types, IOUtils, DateUtils, rtcPortalHttpCli,
   Dialogs, ExtCtrls, StdCtrls, ShellAPI, ProgressDialog, rtcSystem, SyncObjs,
-  rtcpChat, Math, rtcpFileTrans, rtcpFileTransUI, uUIDataModule,
+  rtcpChat, Math, rtcpFileTrans, rtcpFileTransUI, uUIDataModule, Registry,
   System.ImageList, Vcl.ImgList, Vcl.ActnMan, Vcl.ActnColorMaps, System.Actions,
   Vcl.ActnList, Vcl.PlatformDefaultStyleActnCtrls, rtcPortalMod,
   rtcpDesktopControl, rtcpDesktopControlUI, ChromeTabs, NFPanel, Vcl.Imaging.jpeg,
@@ -656,6 +656,7 @@ var
   pUIItem: TUIDataModule;
 //  pViewer: TRtcPDesktopViewer;
   fIsPending, fIsReconnection: Boolean;
+  reg: TRegistry;
 begin
   if Assigned(FOnUIOpen) then
     FOnUIOpen(AUserName, 'desk', fIsPending, fIsReconnection);
@@ -695,15 +696,37 @@ begin
     if not fIsReconnection then
     begin
       pUIItem := TUIDataModule.Create(Self);
-      pUIItem.LockSystemOnClose := False;
-      pUIItem.ShowRemoteCursor := False;
-      pUIItem.SendShortcuts := True;
-      pUIItem.BlockKeyboardMouse := False;
-      pUIItem.PowerOffMonitor := False;
-      pUIItem.OptimizeQuality := True;
-      pUIItem.OptimizeSpeed := False;
-      pUIItem.StretchScreen := False;
-      pUIItem.HideWallpaper := True;
+
+      reg := TRegistry.Create;
+      try
+        reg.RootKey := HKEY_CURRENT_USER;
+        if reg.OpenKey('Software\Remox\Partners\' + AUserName, True) then
+        begin
+          pUIItem.LockSystemOnClose := reg.ReadBool('LockSystemOnClose');
+          pUIItem.ShowRemoteCursor := reg.ReadBool('ShowRemoteCursor');
+          pUIItem.SendShortcuts := reg.ReadBool('SendShortcuts');
+          pUIItem.BlockKeyboardMouse := reg.ReadBool('BlockKeyboardMouse');
+          pUIItem.PowerOffMonitor := reg.ReadBool('PowerOffMonitor');
+          pUIItem.OptimizeQuality := reg.ReadBool('OptimizeQuality');
+          pUIItem.OptimizeSpeed := reg.ReadBool('OptimizeSpeed');
+          pUIItem.StretchScreen := reg.ReadBool('StretchScreen');
+          pUIItem.HideWallpaper := reg.ReadBool('HideWallpaper');
+        end
+        else
+        begin
+          pUIItem.LockSystemOnClose := False;
+          pUIItem.ShowRemoteCursor := False;
+          pUIItem.SendShortcuts := True;
+          pUIItem.BlockKeyboardMouse := False;
+          pUIItem.PowerOffMonitor := False;
+          pUIItem.OptimizeQuality := True;
+          pUIItem.OptimizeSpeed := False;
+          pUIItem.StretchScreen := False;
+          pUIItem.HideWallpaper := True;
+        end;
+      finally
+        reg.Free;
+      end;
     end;
     pUIItem.ThreadID := AThreadID;
     pUIItem.PartnerLockedState := AStartLockedState;
@@ -793,6 +816,8 @@ end;
 procedure TrdDesktopViewer.RemoveUIDataModule(AUserName: String);
 var
   i, RemovedInd, ActiveUICount: Integer;
+  UIDM: TUIDataModule;
+  reg: TRegistry;
 begin
   RemovedInd := -1;
   ActiveUICount := 0;
@@ -802,18 +827,39 @@ begin
     i := UIModulesList.Count - 1;
     while i >= 0 do
     begin
-      if (not TUIDataModule(UIModulesList[i]).NeedFree)
-        and (TUIDataModule(UIModulesList[i]).UserName = AUserName) then
+      UIDM := UIModulesList[i];
+
+      if (not UIDM.NeedFree)
+        and (UIDM.UserName = AUserName) then
       begin
-        TUIDataModule(UIModulesList[i]).NeedFree := True;
+        UIDM.NeedFree := True;
         FOnUIClose('desk', AUserName);
   //      FreeAndNil(TUIDataModule(UIModulesList[i]));
   //      UIModulesList.Delete(i);
 
+        reg := TRegistry.Create;
+        try
+          reg.RootKey := HKEY_CURRENT_USER;
+          if reg.OpenKey('Software\Remox\Partners\' + AUserName, True) then
+          begin
+            reg.WriteBool('LockSystemOnClose', UIDM.LockSystemOnClose);
+            reg.WriteBool('ShowRemoteCursor', UIDM.ShowRemoteCursor);
+            reg.WriteBool('SendShortcuts', UIDM.SendShortcuts);
+            reg.WriteBool('BlockKeyboardMouse', UIDM.BlockKeyboardMouse);
+            reg.WriteBool('PowerOffMonitor', UIDM.PowerOffMonitor);
+            reg.WriteBool('OptimizeQuality', UIDM.OptimizeQuality);
+            reg.WriteBool('OptimizeSpeed', UIDM.OptimizeSpeed);
+            reg.WriteBool('StretchScreen', UIDM.StretchScreen);
+            reg.WriteBool('HideWallpaper', UIDM.HideWallpaper);
+          end;
+        finally
+          reg.Free;
+        end;
+
         RemovedInd := i;
       end;
 
-      if (not TUIDataModule(UIModulesList[i]).NeedFree) then
+      if (not UIDM.NeedFree) then
         ActiveUICount := ActiveUICount + 1;
 
       i := i - 1;

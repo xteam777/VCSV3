@@ -1056,9 +1056,9 @@ begin
     if fAcceptEULA.ShowModal = mrCancel then
       Exit
     else
-    if fAcceptEULA.ePassword.Text <> PermanentPassword then
+    if fAcceptEULA.PasswordChanged then
     begin
-      PermanentPassword := fAcceptEULA.ePassword.Text;
+      PermanentPassword := System.Hash.THashMD5.GetHashString(fAcceptEULA.ePassword.Text);
       ShowPermanentPasswordState();
       SendPasswordsToGateway;
 
@@ -4658,8 +4658,8 @@ begin
 
   if AUser = DeviceId then
   begin
-//      MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'Remox', MB_ICONWARNING or MB_OK);
-    SetStatusStringDelayed('Подключение к своему компьютеру невозможно');
+//      MessageBox(Handle, 'Подключение к своему устройству невозможно', 'Remox', MB_ICONWARNING or MB_OK);
+    SetStatusStringDelayed('Подключение к своему устройству невозможно');
 //    SetStatusStringDelayed('Готов к подключению', 2000);
     Exit;
   end;
@@ -5080,7 +5080,7 @@ begin
 
     if user = DeviceId then
     begin
-      SetStatusStringDelayed('Подключение к своему компьютеру невозможно');
+      SetStatusStringDelayed('Подключение к своему устройству невозможно');
 //      SetStatusStringDelayed('Готов к подключению', 2000);
       Exit;
     end;
@@ -5104,7 +5104,7 @@ begin
         end;
     end;
 
-    ConnectToPartnerStart(user, DData^.Name, DData^.Password, 'desk');
+    ConnectToPartnerStart(user, DData^.Name, sPassword, 'desk');
   end;
 end;
 
@@ -6419,8 +6419,8 @@ begin
 
       if user = DeviceId then
       begin
-//        MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'Remox', MB_ICONWARNING or MB_OK);
-        SetStatusStringDelayed('Подключение к своему компьютеру невозможно');
+//        MessageBox(Handle, 'Подключение к своему устройству невозможно', 'Remox', MB_ICONWARNING or MB_OK);
+        SetStatusStringDelayed('Подключение к своему устройству невозможно');
 //        SetStatusStringDelayed('Готов к подключению', 2000);
         Exit;
       end;
@@ -6615,7 +6615,7 @@ begin
 //
 //    if user = DeviceId then
 //    begin
-//      SetStatusStringDelayed('Подключение к своему компьютеру невозможно');
+//      SetStatusStringDelayed('Подключение к своему устройству невозможно');
 ////      SetStatusStringDelayed('Готов к подключению', 2000);
 //      Exit;
 //    end;
@@ -7346,7 +7346,7 @@ begin
 //  xLog('HostPingTimerTimer');
 
   //Хост должен быть включен в клиенте только если не запущена служба на десктопной версии или если сервер
-  //Эта процедура и так не работает в слуюбе
+  //Эта процедура и так не работает в службе
 //  if IsWinServer
 //    or ((not IsServiceStarted(RTC_HOSTSERVICE_NAME))
 //      and (not IsServiceStarting(RTC_HOSTSERVICE_NAME))) then
