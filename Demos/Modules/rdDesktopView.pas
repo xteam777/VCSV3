@@ -700,29 +700,55 @@ begin
       reg := TRegistry.Create;
       try
         reg.RootKey := HKEY_CURRENT_USER;
+        reg.Access := KEY_READ;
         if reg.OpenKey('Software\Remox\Partners\' + AUserName, True) then
         begin
-          pUIItem.LockSystemOnClose := reg.ReadBool('LockSystemOnClose');
-          pUIItem.ShowRemoteCursor := reg.ReadBool('ShowRemoteCursor');
-          pUIItem.SendShortcuts := reg.ReadBool('SendShortcuts');
-          pUIItem.BlockKeyboardMouse := reg.ReadBool('BlockKeyboardMouse');
-          pUIItem.PowerOffMonitor := reg.ReadBool('PowerOffMonitor');
-          pUIItem.OptimizeQuality := reg.ReadBool('OptimizeQuality');
-          pUIItem.OptimizeSpeed := reg.ReadBool('OptimizeSpeed');
-          pUIItem.StretchScreen := reg.ReadBool('StretchScreen');
-          pUIItem.HideWallpaper := reg.ReadBool('HideWallpaper');
-        end
-        else
-        begin
-          pUIItem.LockSystemOnClose := False;
-          pUIItem.ShowRemoteCursor := False;
-          pUIItem.SendShortcuts := True;
-          pUIItem.BlockKeyboardMouse := False;
-          pUIItem.PowerOffMonitor := False;
-          pUIItem.OptimizeQuality := True;
-          pUIItem.OptimizeSpeed := False;
-          pUIItem.StretchScreen := False;
-          pUIItem.HideWallpaper := True;
+          if reg.ValueExists('LockSystemOnClose') then
+            pUIItem.LockSystemOnClose := reg.ReadBool('LockSystemOnClose')
+          else
+            pUIItem.LockSystemOnClose := False;
+          if reg.ValueExists('ShowRemoteCursor') then
+            pUIItem.ShowRemoteCursor := reg.ReadBool('ShowRemoteCursor')
+          else
+            pUIItem.ShowRemoteCursor := False;
+          if reg.ValueExists('SendShortcuts') then
+            pUIItem.SendShortcuts := reg.ReadBool('SendShortcuts')
+          else
+            pUIItem.SendShortcuts := True;
+          if reg.ValueExists('BlockKeyboardMouse') then
+            pUIItem.BlockKeyboardMouse := reg.ReadBool('BlockKeyboardMouse')
+          else
+            pUIItem.BlockKeyboardMouse := False;
+          if reg.ValueExists('PowerOffMonitor') then
+            pUIItem.PowerOffMonitor := reg.ReadBool('PowerOffMonitor')
+          else
+            pUIItem.PowerOffMonitor := False;
+          if reg.ValueExists('OptimizeQuality') then
+            pUIItem.OptimizeQuality := reg.ReadBool('OptimizeQuality')
+          else
+            pUIItem.OptimizeQuality := True;
+          if reg.ValueExists('OptimizeSpeed') then
+            pUIItem.OptimizeSpeed := reg.ReadBool('OptimizeSpeed')
+          else
+            pUIItem.OptimizeSpeed := False;
+          if reg.ValueExists('StretchScreen') then
+            pUIItem.StretchScreen := reg.ReadBool('StretchScreen')
+          else
+            pUIItem.StretchScreen := False;
+          if reg.ValueExists('HideWallpaper') then
+            pUIItem.HideWallpaper := reg.ReadBool('HideWallpaper')
+          else
+            pUIItem.HideWallpaper := True;
+
+          aLockSystemOnClose.Checked := pUIItem.LockSystemOnClose;
+          aShowRemoteCursor.Checked := pUIItem.ShowRemoteCursor;
+          aSendShortcuts.Checked := pUIItem.SendShortcuts;
+          aBlockKeyboardMouse.Checked := pUIItem.BlockKeyboardMouse;
+          aPowerOffMonitor.Checked := pUIItem.PowerOffMonitor;
+          aOptimizeQuality.Checked := pUIItem.OptimizeQuality;
+          aOptimizeSpeed.Checked := pUIItem.OptimizeSpeed;
+          aStretchScreen.Checked := pUIItem.StretchScreen;
+          aHideWallpaper.Checked := pUIItem.HideWallpaper;
         end;
       finally
         reg.Free;

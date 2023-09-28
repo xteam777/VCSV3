@@ -895,53 +895,54 @@ end;
 procedure TRemoxService.LoadSetup;
 var
   reg: TRegistry;
+  ProxyOption: Integer;
 begin
   reg := TRegistry.Create;
   try
     reg.RootKey := HKEY_LOCAL_MACHINE;
+    reg.Access := KEY_READ;
     reg.OpenKey('Software\Remox', True);
-    reg.ReadString('ProxyAddr');
-    reg.ReadString('ProxyUsername');
-    reg.ReadString('ProxyPassword');
 
-    PermanentPassword := reg.ReadString('PermanentPassword');
+    if reg.ValueExists('PermanentPassword') then
+      PermanentPassword := reg.ReadString('PermanentPassword')
+    else
+      PermanentPassword := '';
 
-    if reg.ReadInteger('ProxyOption') = PO_AUTOMATIC then
+    if reg.ValueExists('ProxyOption') then
+      ProxyOption := reg.ReadInteger('ProxyOption')
+    else
+      ProxyOption := PO_AUTOMATIC;
+
+    PClient.Gate_Proxy := (ProxyOption = PO_MANUAL);
+    HostTimerClient.UseProxy := (ProxyOption = PO_MANUAL);
+    if reg.ValueExists('ProxyAddr') then
     begin
-      PClient.Gate_Proxy := False;
-      PClient.Gate_ProxyAddr := '';
-      PClient.Gate_ProxyUserName := '';
-      PClient.Gate_ProxyPassword := '';
-
-      HostTimerClient.UseProxy := False;
-      HostTimerClient.UserLogin.ProxyAddr := '';
-      HostTimerClient.UserLogin.ProxyUserName := '';
-      HostTimerClient.UserLogin.ProxyPassword := '';
+      PClient.Gate_ProxyAddr := reg.ReadString('ProxyAddr');
+      HostTimerClient.UserLogin.ProxyAddr := reg.ReadString('ProxyAddr');
     end
     else
-    if reg.ReadInteger('ProxyOption') = PO_MANUAL then
     begin
-      PClient.Gate_Proxy := True;
-      PClient.Gate_ProxyAddr := reg.ReadString('ProxyAddr');
+      PClient.Gate_ProxyAddr := '';
+      HostTimerClient.UserLogin.ProxyAddr := '';
+    end;
+    if reg.ValueExists('ProxyUsername') then
+    begin
       PClient.Gate_ProxyUserName := reg.ReadString('ProxyUsername');
-      PClient.Gate_ProxyPassword := reg.ReadString('ProxyPassword');
-
-      HostTimerClient.UseProxy := True;
-      HostTimerClient.UserLogin.ProxyAddr := reg.ReadString('ProxyAddr');
       HostTimerClient.UserLogin.ProxyUserName := reg.ReadString('ProxyUsername');
+    end
+    else
+    begin
+      PClient.Gate_ProxyUserName := '';
+      HostTimerClient.UserLogin.ProxyUserName := '';
+    end;
+    if reg.ValueExists('ProxyPassword') then
+    begin
+      PClient.Gate_ProxyPassword := reg.ReadString('ProxyPassword');
       HostTimerClient.UserLogin.ProxyPassword := reg.ReadString('ProxyPassword');
     end
     else
-    if reg.ReadInteger('ProxyOption') = PO_DIRECT then
     begin
-      PClient.Gate_Proxy := False;
-      PClient.Gate_ProxyAddr := '';
-      PClient.Gate_ProxyUserName := '';
       PClient.Gate_ProxyPassword := '';
-
-      HostTimerClient.UseProxy := False;
-      HostTimerClient.UserLogin.ProxyAddr := '';
-      HostTimerClient.UserLogin.ProxyUserName := '';
       HostTimerClient.UserLogin.ProxyPassword := '';
     end;
 

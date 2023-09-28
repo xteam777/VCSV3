@@ -1,5 +1,12 @@
 unit LockWindowUnit;
-{$WARN SYMBOL_PLATFORM OFF}
+
+  {$WARN SYMBOL_PLATFORM OFF}
+  {$DEFINE BLOCK_INPUT_ENABLED}
+  {$DEFINE ERROR_TO_MSGBOX}
+  {$DEFINE ERROR_TO_DEBUG_OUTPUT}
+
+
+
 interface
 
 uses
@@ -7,22 +14,43 @@ uses
   Vcl.Graphics;
 
 const
-  WM_REORDER_WND = WM_USER + 1;
+
+  WM_SEND_INPUT   = WM_USER + 1;
+  WM_CLOSE_WND    = WM_USER + 2;
+
   TIMER_ID_DATE = 1;
-  TIMER_ID_FIXZ = 2;
 
 type
 
+  // record for Monitor Infos
   TMonitorInfoRect = record
     BoundsRect: TRect;
     PixelsPerInch: Integer;
   end;
 
+  // SendInput DATA
+  PSendInputData = ^TSendInputData;
+  TSendInputData = record
+    cInputs: UINT;
+    pInputs: PInput;// TInput
+    cbSize: Integer;
+  end;
+
+  // extended record for TMessage
   TMessageLW = record
     message: TMessage;
     Window: HWND;
     constructor Create(Wnd: HWND; Msg: UINT; wParam: WPARAM; lParam: LPARAM);
   end;
+
+  // record for SendInput
+  TMessageInput = record
+    Msg: Cardinal;
+    WParam: WPARAM;
+    pInputData: PSendInputData;
+    Result: LRESULT;
+  end;
+
 
   TMonitorInfoRectList = array of TMonitorInfoRect;
 
@@ -40,25 +68,33 @@ type
     FDateFont,
     FTimeFont: TFont;
     FSkipOrder: Boolean;
+    FDestroing: Boolean;
     procedure CreateWindow();
     procedure DestroyWindow();
     procedure DisableWindowForRecord(Disable: Boolean);
     procedure ApplyLayeredWindow(Percent: Byte);
     procedure DisableInput(Disable: Boolean);
 
-    ///
-    class var MonitorsRect: TMonitorInfoRectList;
+    /// class var, alias global
+    class var
+      MonitorsRect: TMonitorInfoRectList;
+      Instance: TLockWindow;
+      LockCookie: Integer;
+
+
     class procedure UpdateMonitors();
     class function EnumMonitorsProc(hm: HMONITOR; dc: HDC; r: PRect; Data: Pointer): Boolean; stdcall; static;
     class procedure RegisterClassWindow();
     class procedure UnregisterClassWindow();
+    class constructor Create;
+    class destructor Destroy;
 
     class function WindowProc(Wnd: HWND; Msg: UINT; wParam: WPARAM; lParam: LPARAM): LRESULT; stdcall; static;
     class function MessegeLoopProc(w: TLockWindow): Integer; static;
     class procedure HandleException(E: Exception);
-    class constructor Create;
 
-    ///
+
+    /// instance methods
     procedure EraseBackground(DC: HDC);
     procedure Paint();
     procedure UpdateDateTime();
@@ -67,14 +103,15 @@ type
     procedure Invalidate(bErase: Boolean = false);
     procedure LockCanvas(DC: HDC);
     procedure UnlockCanvas();
-    procedure FixZOrder();
-    //
+
+    // Handlers Window Message
     procedure WmEraseBackground(var Msg: TMessage); message WM_ERASEBKGND;
     procedure WmTimer(var Msg: TMessage); message WM_TIMER;
     procedure WmPaint(var Msg: TMessage); message WM_PAINT;
-    procedure WmClose(var Msg: TMessage); message WM_CLOSE;
+    procedure WmClose(var Msg: TMessageLW); message WM_CLOSE;
     procedure WmDisplayChange(var Msg: TMessage); message WM_DISPLAYCHANGE;
-    procedure WmDestroy(var Msg: TMessage); message WM_DESTROY;
+    procedure WmDestroy(var Msg: TMessageLW); message WM_DESTROY;
+    procedure WmSendInput(var Msg: TMessageInput); message WM_SEND_INPUT;
 
   public
     procedure DefaultHandler(var Message); override;
@@ -82,6 +119,14 @@ type
     constructor Create;
     destructor Destroy; override;
 
+    // Use these methods to manipulate the window <- thread safe
+    // But you can also use Create, Free. <- not! thread safe. User is responsible
+    class function Show(): TLockWindow;
+    class procedure Close();
+    class function SendInput(cInputs: UINT; var pInputs: TInput; cbSize: Integer): UINT;
+    class function IsVisible(): Boolean;
+
+    // User settings
     property DateLable: string read FDateLable write FDateLable;
     property TimeLabel: string read FTimeLabel write FTimeLabel;
     property UserMessage: string read FUserMessage write FUserMessage;
@@ -90,8 +135,7 @@ type
   end;
 
 
-  procedure ShowLockForm();
-  procedure CloseLockForm();
+
 
 implementation
 
@@ -99,42 +143,7 @@ uses
   Winapi.MultiMon, Vcl.Consts, Winapi.ShellScaling,
   Winapi.UxTheme, Winapi.DwmApi;
 
-var
-  LockWindow: TLockWindow;
-  lock: Integer;
-procedure ShowLockForm();
-begin
-  if Assigned(LockWindow) then exit;
-  while InterlockedExchange(lock, 1) <> 0 do
-    begin
-      SwitchToThread;
-    end;
-    
-  try
 
-    if not Assigned(LockWindow) then
-      LockWindow := TLockWindow.Create;
-  finally
-    InterlockedExchange(lock, 0);
-  end;
-end;
-
-procedure CloseLockForm();
-begin
-  if not Assigned(LockWindow) then exit;
-
-  while InterlockedExchange(lock, 1) <> 0 do
-    begin
-      SwitchToThread;
-    end;
-  try
-
-    LockWindow.Free;
-    LockWindow := nil;
-  finally
-    InterlockedExchange(lock, 0);
-  end;
-end;
 
 {$REGION 'WindowInBand'}
 
@@ -174,11 +183,8 @@ var
   FPUCW: Word;
   pCreateWindowInBand: TCreateWindowInBand;
 begin
-  if @pCreateWindowInBand = nil then
-    begin
-       @pCreateWindowInBand := GetProcAddress(GetModuleHandle('user32.dll'), 'CreateWindowInBand');
-       Win32Check(@pCreateWindowInBand <> nil);
-    end;
+  @pCreateWindowInBand := GetProcAddress(GetModuleHandle('user32.dll'), 'CreateWindowInBand');
+  Win32Check(@pCreateWindowInBand <> nil);
   FPUCW := Get8087CW;
   Result := pCreateWindowInBand(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y,
               nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam, dwBand);
@@ -226,6 +232,73 @@ resourcestring
 {                               TLockWindow                                    }
 { **************************************************************************** }
 
+//==============================================================================
+
+class procedure TLockWindow.Close;
+var
+  w: TLockWindow;
+begin
+  if Assigned(Instance) then
+    begin
+      w := InterlockedExchangePointer(Pointer(Instance), nil);
+      if Assigned(w) then
+        w.Free;
+    end;
+end;
+
+class function TLockWindow.Show: TLockWindow;
+begin
+  Result := nil;
+  if Assigned(Instance) then exit;
+
+  while InterlockedExchange(LockCookie, 1) <> 0 do
+    begin
+      SwitchToThread;
+    end;
+  try
+    // double check after entry into block
+    if not Assigned(Instance) then
+      Instance := TLockWindow.Create;
+    Result := Instance;
+  finally
+    InterlockedExchange(LockCookie, 0);
+  end;
+end;
+
+class function TLockWindow.SendInput(cInputs: UINT; var pInputs: TInput;
+  cbSize: Integer): UINT;
+var
+  data: TSendInputData;
+  wnd: HWND;
+begin
+  if not Assigned(Instance) then
+    wnd := 0 else
+    wnd := Instance.FWindow;
+
+  if wnd <> 0 then
+    begin
+      data.cInputs := cInputs;
+      data.pInputs := @pInputs;
+      data.cbSize  := cbSize;
+      Result := SendMessage(wnd, WM_SEND_INPUT, 0, LPARAM(@data))
+    end
+  else
+    begin
+      Result := Winapi.Windows.SendInput(cInputs, pInputs, cbSize);
+    end;
+
+end;
+
+class function TLockWindow.IsVisible: Boolean;
+begin
+  Result := Assigned(Instance);
+end;
+
+
+
+
+//==============================================================================
+// instance methods
 
 procedure TLockWindow.ApplyLayeredWindow(Percent: Byte);
 begin
@@ -316,10 +389,6 @@ begin
 
   if SetTimer(FWindow, TIMER_ID_DATE, 1000, nil) = 0 then
       raise EOutOfResources.Create(SNoTimers);
-//  if SetTimer(FWindow, TIMER_ID_FIXZ, 16, nil) = 0 then
-//      raise EOutOfResources.Create(SNoTimers);
-
-
 
 end;
 
@@ -332,7 +401,7 @@ end;
 
 destructor TLockWindow.Destroy;
 begin
-  DisableInput(false);
+
   DestroyWindow;
   FCanvas.Handle := 0;
   FCanvas.Free;
@@ -343,22 +412,31 @@ begin
   inherited;
 end;
 
+class destructor TLockWindow.Destroy;
+begin
+  UnregisterClassWindow;
+  inherited;
+end;
+
 procedure TLockWindow.DestroyWindow;
-var
-  wnd: HWND;
 begin
   if FWindow = 0 then exit;
-  wnd := FWindow;
-  Win32Check(KillTimer(wnd, TIMER_ID_DATE));
+  FDestroing := true;
+  Win32Check(KillTimer(FWindow, TIMER_ID_DATE));
+
+  // this lines are commented, can be deleted
   //Win32Check(KillTimer(wnd, TIMER_ID_FIXZ));
-  Win32Check(SetWindowLongPtr(wnd, GWL_USERDATA, 0) <> 0);
-  SendMessage(wnd, WM_CLOSE, 0, 0);
+  //Win32Check(SetWindowLongPtr(wnd, GWL_USERDATA, 0) <> 0);
+  SendMessage(FWindow, WM_CLOSE, 0, 0);
 end;
 
 procedure TLockWindow.DisableInput(Disable: Boolean);
 begin
-  // not implemented;
-  //Win32Check(BlockInput(Disable));
+  {$IFDEF BLOCK_INPUT_ENABLED}
+    { TODO 1 -cWARN : Check Error - BlockInput. }
+    BlockInput(Disable);
+    //Win32Check(BlockInput(Disable));
+  {$ENDIF}
 end;
 
 procedure TLockWindow.DisableWindowForRecord(Disable: Boolean);
@@ -384,24 +462,6 @@ begin
   end;
 end;
 
-procedure TLockWindow.FixZOrder;
-begin
-  SetWindowPos(FWindow, HWND_TOPMOST, 0, 0, 0, 0,
-    SWP_NOMOVE or SWP_NOSIZE or SWP_NOACTIVATE);
-end;
-
-class procedure TLockWindow.HandleException(E: Exception);
-begin
-  if E is EAbort then exit;
-  System.SysUtils.ShowException(E, ExceptAddr);
-
-//  TThread.Current.Synchronize(procedure()
-//  begin
-//
-//  end
-//  );
-end;
-
 procedure TLockWindow.Invalidate(bErase: Boolean);
 begin
   if FWindow <> 0 then
@@ -412,30 +472,6 @@ procedure TLockWindow.LockCanvas(DC: HDC);
 begin
   FCanvas.Lock;
   FCanvas.Handle := DC;
-end;
-
-class function TLockWindow.MessegeLoopProc(w: TLockWindow): Integer;
-var
-  msg: TMsg;
-begin
-  Result := 0;
-  try
-    w.CreateWindow();
-    while GetMessage(msg, 0, 0, 0) do
-      begin
-        //if TranslateAccelerator(w.FWindow, 0, msg) <> 0 then Continue;
-        TranslateMessage(msg);
-        DispatchMessage(msg);
-      end;
-
-  except
-    on e: Exception do
-      begin
-        TLockWindow.HandleException(e);
-        Result := -1;
-      end;
-  end;
-
 end;
 
 procedure TLockWindow.UpdateDateTime;
@@ -484,6 +520,9 @@ begin
         WorkDC := MemDC;
       end;
 
+    if WorkDC = 0 then
+      Exit;
+
     if PS.fErase then
       EraseBackground(WorkDC);
 
@@ -530,21 +569,6 @@ begin
   end;
 end;
 
-class procedure TLockWindow.RegisterClassWindow;
-var
-  wndClass: TWndClassEx;
-begin
-  FillChar(wndClass, SizeOf(wndClass), 0);
-  wndClass.cbSize        := SizeOf(TWndClassEx);
-  wndClass.lpfnWndProc   := @WindowProc;
-  wndClass.hInstance     := hInstance;
-  wndClass.lpszClassName := WND_CLASS_NAME;
-  wndClass.style         := CS_VREDRAW + CS_HREDRAW;
-  wndClass.hCursor       := LoadCursor(0, IDC_ARROW);
-  wndClass.hIcon         := LoadIcon(0, IDI_APPLICATION);
-  Win32Check(Winapi.Windows.RegisterClassEx(wndClass) <> 0);
-end;
-
 procedure TLockWindow.SetAlphaPecent(const Value: Byte);
 begin
   if FAlphaPecent <> Value then
@@ -569,10 +593,60 @@ begin
   FCanvas.Unlock;
 end;
 
-class procedure TLockWindow.UnregisterClassWindow;
+procedure TLockWindow.WmClose(var Msg: TMessageLW);
 begin
-  Winapi.Windows.UnregisterClass(WND_CLASS_NAME, hInstance)
+  // prevetn close, return 0, else call DefProc (destroy window)
+  if FDestroing  and (Msg.Window = FWindow) then
+    DefaultHandler(Msg) else
+    Msg.message.Result := 0;
 end;
+
+procedure TLockWindow.WmDestroy(var Msg: TMessageLW);
+begin
+  if Msg.Window = FWindow then
+    begin
+      Msg.message.Result := 0;
+      DisableInput(false);
+      PostQuitMessage(0);
+    end
+  else
+    DefaultHandler(Msg);
+end;
+
+procedure TLockWindow.WmDisplayChange(var Msg: TMessage);
+var
+  Wnd: HWND;
+begin
+  UpdateMonitors;
+  Wnd := FWindow;
+  KillTimer(wnd, TIMER_ID_DATE);
+  CreateWindow();
+  SendMessage(wnd, WM_CLOSE, 0, 0);
+end;
+
+procedure TLockWindow.WmEraseBackground(var Msg: TMessage);
+begin
+  Msg.Result := 0;
+end;
+
+procedure TLockWindow.WmPaint(var Msg: TMessage);
+begin
+  Msg.Result := 0;
+  Paint();
+end;
+
+procedure TLockWindow.WmSendInput(var Msg: TMessageInput);
+begin
+  Msg.Result :=
+    Winapi.Windows.SendInput(Msg.pInputData.cInputs, Msg.pInputData.pInputs^, Msg.pInputData.cbSize);
+end;
+
+procedure TLockWindow.WmTimer(var Msg: TMessage);
+begin
+  Msg.Result := 0;
+  UpdateDateTime();
+end;
+
 
 //==============================================================================
 // Get Monitor Count and DPI
@@ -611,6 +685,30 @@ begin
 end;
 
 //==============================================================================
+// Register\UnRegister class window
+
+
+class procedure TLockWindow.RegisterClassWindow;
+var
+  wndClass: TWndClassEx;
+begin
+  FillChar(wndClass, SizeOf(wndClass), 0);
+  wndClass.cbSize        := SizeOf(TWndClassEx);
+  wndClass.lpfnWndProc   := @WindowProc;
+  wndClass.hInstance     := hInstance;
+  wndClass.lpszClassName := WND_CLASS_NAME;
+  wndClass.style         := CS_VREDRAW + CS_HREDRAW;
+  wndClass.hCursor       := LoadCursor(0, IDC_ARROW);
+  wndClass.hIcon         := LoadIcon(0, IDI_APPLICATION);
+  Win32Check(Winapi.Windows.RegisterClassEx(wndClass) <> 0);
+end;
+
+class procedure TLockWindow.UnregisterClassWindow;
+begin
+  Winapi.Windows.UnregisterClass(WND_CLASS_NAME, hInstance)
+end;
+
+//==============================================================================
 // Window Proc
 class function TLockWindow.WindowProc(Wnd: HWND; Msg: UINT; wParam: WPARAM;
   lParam: LPARAM): LRESULT;
@@ -638,12 +736,6 @@ begin
 
   end
 
-  else if Msg = WM_DESTROY  then
-    begin
-      PostQuitMessage(0);
-      Result := 0;
-    end
-
   else
     begin
       Result := DefWindowProc(Wnd, Msg, wParam, lParam);
@@ -652,51 +744,67 @@ begin
 
 end;
 
-procedure TLockWindow.WmClose(var Msg: TMessage);
-begin
-  // prevetn close
-  Msg.Result := 0;
-end;
+//==============================================================================
+// class methods MessegeLoopProc, own thread proc
 
-procedure TLockWindow.WmDestroy(var Msg: TMessage);
-begin
-  DefaultHandler(Msg);
-end;
-
-procedure TLockWindow.WmDisplayChange(var Msg: TMessage);
+class function TLockWindow.MessegeLoopProc(w: TLockWindow): Integer;
 var
-  Wnd: HWND;
+  msg: TMsg;
 begin
-  UpdateMonitors;
-  Wnd := FWindow;
-  KillTimer(wnd, TIMER_ID_DATE);
-  KillTimer(wnd, TIMER_ID_FIXZ);
-  CreateWindow();
-  SendMessage(wnd, WM_CLOSE, 0, 0);
-end;
+  Result := 0;
+  try
+    w.CreateWindow();
+    while GetMessage(msg, 0, 0, 0) do
+      begin
+        //if TranslateAccelerator(w.FWindow, 0, msg) <> 0 then Continue;
+        TranslateMessage(msg);
+        DispatchMessage(msg);
+      end;
 
-procedure TLockWindow.WmEraseBackground(var Msg: TMessage);
-begin
-  Msg.Result := 0;
-end;
-
-procedure TLockWindow.WmPaint(var Msg: TMessage);
-begin
-  Msg.Result := 0;
-  Paint();
-end;
-
-procedure TLockWindow.WmTimer(var Msg: TMessage);
-begin
-  Msg.Result := 0;
-  case Msg.WParam of
-    1: UpdateDateTime();
-    2: FixZOrder();
+  except
+    on e: Exception do
+      begin
+        TLockWindow.HandleException(e);
+        Result := -1;
+      end;
   end;
 
 end;
 
-{ TMessageLW }
+//==============================================================================
+// class methods HandleException
+
+class procedure TLockWindow.HandleException(E: Exception);
+{$IFDEF ERROR_TO_DEBUG_OUTPUT}
+var
+  Buffer: array[0..1023] of Char;
+{$ENDIF}
+begin
+  if E is EAbort then exit;
+
+  {$IFDEF ERROR_TO_MSGBOX}
+    System.SysUtils.ShowException(E, ExceptAddr);
+  {$ENDIF}
+
+  {$IFDEF ERROR_TO_DEBUG_OUTPUT}
+    ExceptionErrorMessage(ExceptObject, ExceptAddr, Buffer, Length(Buffer));
+    OutputDebugString(Buffer);
+  {$ENDIF}
+
+
+//lines below can be deleted
+
+//  TThread.Current.Synchronize(procedure()
+//  begin
+//
+//  end
+//  );
+end;
+
+
+{ **************************************************************************** }
+{                               TMessageLW                                     }
+{ **************************************************************************** }
 
 constructor TMessageLW.Create(Wnd: HWND; Msg: UINT; wParam: WPARAM;
   lParam: LPARAM);

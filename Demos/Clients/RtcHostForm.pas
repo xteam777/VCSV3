@@ -4157,46 +4157,96 @@ begin
   reg := TRegistry.Create;
   try
     reg.RootKey := HKEY_CURRENT_USER;
+    reg.Access := KEY_READ;
     if reg.KeyExists('Software\Remox') then
     begin
       reg.OpenKey('Software\Remox', True);
 
       if (RecordType = 'ALL') then
       begin
-        StoreHistory := reg.ReadBool('StoreHistory');
-        StorePasswords := reg.ReadBool('StorePasswords');
-
-        cbRememberAccount.Checked := reg.ReadBool('RememberAccount');
-        eAccountUserName.Text := reg.ReadString('AccountUserName');
-        if reg.ReadString('AccountPassword') <> '' then
-          eAccountPassword.Text := 'password'
+        if reg.ValueExists('StoreHistory') then
+          StoreHistory := reg.ReadBool('StoreHistory')
         else
+          StoreHistory := True;
+        if reg.ValueExists('StorePasswords') then
+          StorePasswords := reg.ReadBool('StorePasswords')
+        else
+          StorePasswords := True;
+
+        if reg.ValueExists('RememberAccount') then
+          cbRememberAccount.Checked := reg.ReadBool('RememberAccount')
+        else
+          cbRememberAccount.Checked := True;
+        if reg.ValueExists('AccountUserName') then
+          eAccountUserName.Text := reg.ReadString('AccountUserName')
+        else
+          eAccountUserName.Text := '';
+        if reg.ValueExists('AccountPassword') then
+        begin
+          if reg.ReadString('AccountPassword') <> '' then
+            eAccountPassword.Text := 'password'
+          else
+            eAccountPassword.Text := '';
+          AccountPassword := reg.ReadString('AccountPassword');
+        end
+        else
+        begin
           eAccountPassword.Text := '';
-        AccountPassword := reg.ReadString('AccountPassword');
+          AccountPassword := '';
+        end;
 
-        DateAllowConnectionPending := reg.ReadDateTime('DateAllowConnectPending');
+        if reg.ValueExists('DateAllowConnectPending') then
+          DateAllowConnectionPending := reg.ReadDateTime('DateAllowConnectPending');
 
-        ProxyOption := reg.ReadInteger('ProxyOption');
+        if reg.ValueExists('ProxyOption') then
+          ProxyOption := reg.ReadInteger('ProxyOption')
+        else
+          ProxyOption := PO_AUTOMATIC;
 //        'socks=127.0.0.1:9050'; //Tor
 
         hcAccounts.UseProxy := (ProxyOption = PO_MANUAL);
-        hcAccounts.UserLogin.ProxyAddr := reg.ReadString('ProxyAddr');
-        hcAccounts.UserLogin.ProxyUserName := reg.ReadString('ProxyUsername');
-        hcAccounts.UserLogin.ProxyPassword := reg.ReadString('ProxyPassword');
-
         TimerClient.UseProxy := (ProxyOption = PO_MANUAL);
-        TimerClient.UserLogin.ProxyAddr := reg.ReadString('ProxyAddr');
-        TimerClient.UserLogin.ProxyUserName := reg.ReadString('ProxyUsername');
-        TimerClient.UserLogin.ProxyPassword := reg.ReadString('ProxyPassword');
-
         HostTimerClient.UseProxy := (ProxyOption = PO_MANUAL);
-        HostTimerClient.UserLogin.ProxyAddr := reg.ReadString('ProxyAddr');
-        HostTimerClient.UserLogin.ProxyUserName := reg.ReadString('ProxyUsername');
-        HostTimerClient.UserLogin.ProxyPassword := reg.ReadString('ProxyPassword');
+        if reg.ValueExists('ProxyAddr') then
+        begin
+          hcAccounts.UserLogin.ProxyAddr := reg.ReadString('ProxyAddr');
+          TimerClient.UserLogin.ProxyAddr := reg.ReadString('ProxyAddr');
+          HostTimerClient.UserLogin.ProxyAddr := reg.ReadString('ProxyAddr');
+        end
+        else
+        begin
+          hcAccounts.UserLogin.ProxyAddr := '';
+          TimerClient.UserLogin.ProxyAddr := '';
+          HostTimerClient.UserLogin.ProxyAddr := '';
+        end;
+        if reg.ValueExists('ProxyUsername') then
+        begin
+          hcAccounts.UserLogin.ProxyUserName := reg.ReadString('ProxyUsername');
+          TimerClient.UserLogin.ProxyUserName := reg.ReadString('ProxyUsername');
+          HostTimerClient.UserLogin.ProxyUserName := reg.ReadString('ProxyUsername');
+        end
+        else
+        begin
+          hcAccounts.UserLogin.ProxyUserName := '';
+          TimerClient.UserLogin.ProxyUserName := '';
+          HostTimerClient.UserLogin.ProxyUserName := '';
+        end;
+        if reg.ValueExists('ProxyPassword') then
+        begin
+          hcAccounts.UserLogin.ProxyPassword := reg.ReadString('ProxyPassword');
+          TimerClient.UserLogin.ProxyPassword := reg.ReadString('ProxyPassword');
+          HostTimerClient.UserLogin.ProxyPassword := reg.ReadString('ProxyPassword');
+        end
+        else
+        begin
+          hcAccounts.UserLogin.ProxyPassword := '';
+          TimerClient.UserLogin.ProxyPassword := '';
+          HostTimerClient.UserLogin.ProxyPassword := '';
+        end;
       end;
 
       if (RecordType = 'ALL')
-        or (RecordType = 'REGULAR_PASS') then
+        or (RecordType = 'PERMANENT_PASS') then
         PermanentPassword := reg.ReadString('PermanentPassword');
 
       if (RecordType = 'ALL')
@@ -4346,7 +4396,7 @@ begin
 
   //Inf file
   if (RecordType = 'ALL')
-    or (RecordType = 'REGULAR_PASS') then
+    or (RecordType = 'PERMANENT_PASS') then
   begin
     CfgFileName := ChangeFileExt(AppFileName,'.inf'); //RTC_LOG_FOLDER + ChangeFileExt(ExtractFileName(Application.ExeName), '.inf');
     s := Read_File(CfgFileName, rtc_ShareDenyNone);
@@ -4365,7 +4415,7 @@ begin
     begin
       try
         if (RecordType = 'ALL')
-          or (RecordType = 'REGULAR_PASS') then
+          or (RecordType = 'PERMANENT_PASS') then
           PermanentPassword := info.asString['PermanentPassword'];
 
         if (RecordType = 'ALL') then
@@ -7356,7 +7406,7 @@ begin
 //    if not hcAccounts.IsConnected then
 //      Exit;
 
-    LoadSetup('REGULAR_PASS');
+    LoadSetup('PERMANENT_PASS');
 
     PassRec := TRtcRecord.Create;
     try
