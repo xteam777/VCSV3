@@ -5010,6 +5010,7 @@ begin
       DForm.UID := DData^.UID;
       DForm.eID.Text := IntToStr(DData^.ID);
       DForm.eName.Text := DData^.Name;
+      DForm.PrevPassword := DData^.Password;
       if DData^.Password <> '' then
         DForm.ePassword.Text := 'password'
       else
@@ -5023,7 +5024,9 @@ begin
       begin
         DData^.Name := DForm.eName.Text;
         if DForm.PasswordChanged then
-          DData^.Password := System.Hash.THashMD5.GetHashString(DForm.ePassword.Text);
+          DData^.Password := System.Hash.THashMD5.GetHashString(DForm.ePassword.Text)
+        else
+          DData^.Password := DForm.PrevPassword;
         DData^.Description := DForm.mDescription.Lines.GetText;
         DData^.ID := StrToInt(DForm.eID.Text);
         DData^.HighLight := False;
