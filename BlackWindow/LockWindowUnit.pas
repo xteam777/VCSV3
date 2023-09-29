@@ -75,6 +75,7 @@ type
     procedure ApplyLayeredWindow(Percent: Byte);
     procedure DisableInput(Disable: Boolean);
 
+
     /// class var, alias global
     class var
       MonitorsRect: TMonitorInfoRectList;
@@ -380,6 +381,7 @@ begin
   SetWindowLongPtr(FWindow, GWL_USERDATA, NativeInt(Self));
   Win32Check(GetLastError() = 0);
 
+
   ApplyLayeredWindow(FAlphaPecent);
   DisableWindowForRecord(true);
   DisableInput(true);
@@ -423,10 +425,6 @@ begin
   if FWindow = 0 then exit;
   FDestroing := true;
   Win32Check(KillTimer(FWindow, TIMER_ID_DATE));
-
-  // this lines are commented, can be deleted
-  //Win32Check(KillTimer(wnd, TIMER_ID_FIXZ));
-  //Win32Check(SetWindowLongPtr(wnd, GWL_USERDATA, 0) <> 0);
   SendMessage(FWindow, WM_CLOSE, 0, 0);
 end;
 
@@ -434,9 +432,14 @@ procedure TLockWindow.DisableInput(Disable: Boolean);
 begin
   {$IFDEF BLOCK_INPUT_ENABLED}
     { TODO 1 -cWARN : Check Error - BlockInput. }
-    BlockInput(Disable);
+//    BlockInput(Disable);
     //Win32Check(BlockInput(Disable));
+
   {$ENDIF}
+    var r: Boolean := false;
+    var s: string := Format('TID: %x, BlockInput(%s): %s', [GetCurrentThreadId, BoolToStr(Disable, true), BoolToStr(r, true)]);
+    OutputDebugString(PChar(s));
+
 end;
 
 procedure TLockWindow.DisableWindowForRecord(Disable: Boolean);
@@ -512,16 +515,17 @@ begin
   MemDC := 0;
   PaintBuffer := 0;
   DC := BeginPaint(FWindow, PS);
+  if DC = 0 then exit;
+
   try
     WorkDC := DC;
     if DwmCompositionEnabled then
       begin
         PaintBuffer := BeginBufferedPaint(DC, PS.rcPaint, BPBF_COMPOSITED, nil, MemDC);
-        WorkDC := MemDC;
+        if PaintBuffer <> 0 then
+          WorkDC := MemDC;
       end;
 
-    if WorkDC = 0 then
-      Exit;
 
     if PS.fErase then
       EraseBackground(WorkDC);
@@ -753,13 +757,25 @@ var
 begin
   Result := 0;
   try
-    w.CreateWindow();
-    while GetMessage(msg, 0, 0, 0) do
-      begin
-        //if TranslateAccelerator(w.FWindow, 0, msg) <> 0 then Continue;
-        TranslateMessage(msg);
-        DispatchMessage(msg);
-      end;
+
+    if TOSVersion.Check(6, 0) then
+      BufferedPaintInit;
+    try
+
+      w.CreateWindow();
+      while GetMessage(msg, 0, 0, 0) do
+        begin
+          //if TranslateAccelerator(w.FWindow, 0, msg) <> 0 then Continue;
+          TranslateMessage(msg);
+          DispatchMessage(msg);
+        end;
+
+    finally
+      if TOSVersion.Check(6, 0) then
+        BufferedPaintUnInit;
+    end;
+
+
 
   except
     on e: Exception do
