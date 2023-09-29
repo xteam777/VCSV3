@@ -793,6 +793,8 @@ const
   STATUS_CONNECTING_TO_GATE = 2;
   STATUS_READY = 3;
 
+  WH_MOUSE_LL = 14; // Используется для хука на низком уровне для мыши
+
 var
   MainForm: TMainForm;
   BlockInputHook_Keyboard, BlockInputHook_Mouse, BlockZOrderHook: HHOOK;
@@ -807,14 +809,22 @@ var
   CS_GW, CS_Status, CS_Pending, CS_ActivateHost, CS_HostGateway, CS_Incoming: TCriticalSection;
   DeviceId, ConsoleId: String;
   LastActiveExplorerHandle: THandle;
-
+  MouseHook: HHOOK;
   CB_Monitor: TClipbrdMonitor;
-
   DesktopsForm: TrdDesktopViewer;
 
 implementation
 
 {$R *.dfm}
+
+
+function MouseHookProc(nCode: Integer; wParam: WPARAM; lParam: LPARAM): LRESULT; stdcall;
+begin
+  if (nCode = HC_ACTION) and ((wParam = WM_LBUTTONUP) or (wParam = WM_RBUTTONUP)) then
+    MainForm.pmIconMenu.CloseMenu;
+
+  Result := CallNextHookEx(MouseHook, nCode, wParam, lParam);
+end;
 
 function TMainForm.AddProgressDialog(ATaskId: TTaskId; AUserName: String): PProgressDialogData;
 begin
@@ -2576,6 +2586,7 @@ begin
       GetCursorPos(p);
       pmIconMenu.Popup(p.x, p.y);
       PostMessage(Handle, WM_NULL, 0, 0);
+
       Message.Result := 0;
     end;
   end;
@@ -3083,6 +3094,8 @@ begin
   isClosing := False;
 
   pBtnSetup.Visible := not IsServiceExisted(RTC_HOSTSERVICE_NAME);
+
+  MouseHook := SetWindowsHookEx(WH_MOUSE_LL, @MouseHookProc, HInstance, 0);
 
 //  EleavateSupport := TEleavateSupport.Create(DoElevatedTask);
 
