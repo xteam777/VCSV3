@@ -810,30 +810,12 @@ var
   CS_GW, CS_Status, CS_Pending, CS_ActivateHost, CS_HostGateway, CS_Incoming: TCriticalSection;
   DeviceId, ConsoleId: String;
   LastActiveExplorerHandle: THandle;
-  MouseHook: HHOOK;
   CB_Monitor: TClipbrdMonitor;
   DesktopsForm: TrdDesktopViewer;
 
 implementation
 
 {$R *.dfm}
-
-
-function MouseHookProc(nCode: Integer; wParam: WPARAM; lParam: LPARAM): LRESULT; stdcall;
-var
-  p: TPoint;
-  MenuRect: TRect;
-begin
-  if (nCode = HC_ACTION) and ((wParam = WM_LBUTTONUP) or (wParam = WM_RBUTTONUP)) then
-  begin
-    GetCursorPos(p);
-    GetWindowRect(MainForm.pmIconMenu.Handle, MenuRect);
-    if not PtInRect(MenuRect, p) then
-      MainForm.pmIconMenu.CloseMenu;
-  end;
-
-  Result := CallNextHookEx(MouseHook, nCode, wParam, lParam);
-end;
 
 function TMainForm.AddProgressDialog(ATaskId: TTaskId; AUserName: String): PProgressDialogData;
 begin
@@ -1788,8 +1770,8 @@ begin
   UIDM := DesktopsForm.GetRemovedUIDataModule(FUserName);
   if UIDM <> nil then
   begin
-//    if UIDM.HideWallpaper then
-//      UIDM.UI.Send_ShowDesktop;
+    if UIDM.HideWallpaper then
+      UIDM.UI.Send_ShowDesktop;
     if UIDM.LockSystemOnClose then
       UIDM.UI.Send_LockSystem;
   end;
@@ -3108,8 +3090,6 @@ begin
   isClosing := False;
 
   pBtnSetup.Visible := not IsServiceExisted(RTC_HOSTSERVICE_NAME);
-
-  MouseHook := SetWindowsHookEx(WH_MOUSE_LL, @MouseHookProc, HInstance, 0);
 
 //  EleavateSupport := TEleavateSupport.Create(DoElevatedTask);
 

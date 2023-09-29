@@ -76,6 +76,15 @@ vcs и vircess заменить в текстах
 ?		!	как только логинимся, сразу получаем акт конс клиента и к нему коннектим файлы
 
 
+	!!!без отладчика пашет. вин10 вм. нет картинки в рдп error -2147418113 Catastrophic failure. при повторном? входе по рдп?. тим пашет. если ошибка брать из гди? прогеру
+		AcquireNextFrame Error: -2005270527
+		брать из гди? если дд не создан. а тим работает?		
+		https://learn.microsoft.com/nb-NO/troubleshoot/windows-client/shell-experience/error-when-dda-capable-app-is-against-gpu
+		https://learn.microsoft.com/en-us/answers/questions/1068807/desktop-duplication-api-doesnt-work-over-remote-de
+		WIC
+			http://forum.script-coding.com/viewtopic.php?id=14508
+			http://forum.script-coding.com/viewtopic.php?id=17676
+			EncodeImage CodecId = 1 Rect = 0 src w/h = 0 - error_wait_timeout. перед этим катастрофик когда создается дд. шв не определяется и картинки нет
 //фм
 //	подключение к службе
 		//в клиенте получать и хранить ид консоли всегда
