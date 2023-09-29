@@ -4279,11 +4279,17 @@ begin
 
       if (RecordType = 'ALL')
         or (RecordType = 'PERMANENT_PASS') then
-        PermanentPassword := reg.ReadString('PermanentPassword');
+        if reg.ValueExists('PermanentPassword') then
+          PermanentPassword := reg.ReadString('PermanentPassword')
+        else
+          PermanentPassword := '';
 
       if (RecordType = 'ALL')
         or (RecordType = 'ACTIVE_NODE') then
-        LastFocusedUID := reg.ReadString('LastFocusedUID');
+        if reg.ValueExists('LastFocusedUID') then
+          LastFocusedUID := reg.ReadString('LastFocusedUID')
+        else
+          LastFocusedUID := '';
     end
     else
     begin
