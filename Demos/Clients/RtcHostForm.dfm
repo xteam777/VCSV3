@@ -5225,7 +5225,7 @@ object MainForm: TMainForm
       Top = 6
       Width = 298
       Height = 455
-      ActivePage = tsMyDevices
+      ActivePage = tsIncomes
       TabOrder = 0
       object tsMyDevices: TTabSheet
         Caption = #1052#1086#1080' '#1091#1089#1090#1088#1086#1081#1089#1090#1074#1072

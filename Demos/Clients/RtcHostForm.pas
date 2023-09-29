@@ -674,6 +674,7 @@ type
 //    function LoadWindowPosition(Form: TForm; FormName: String; sizeable:boolean=False):boolean;
 //    procedure SaveWindowPosition(Form: TForm; FormName: String; sizeable:boolean=False);
 
+    function PartnerNeedHideWallpaper(AUserName: String): Boolean;
     procedure LoadSetup(RecordType: String);
     procedure SaveSetup;
     procedure GeneratePassword;
@@ -819,9 +820,17 @@ implementation
 
 
 function MouseHookProc(nCode: Integer; wParam: WPARAM; lParam: LPARAM): LRESULT; stdcall;
+var
+  p: TPoint;
+  MenuRect: TRect;
 begin
   if (nCode = HC_ACTION) and ((wParam = WM_LBUTTONUP) or (wParam = WM_RBUTTONUP)) then
-    MainForm.pmIconMenu.CloseMenu;
+  begin
+    GetCursorPos(p);
+    GetWindowRect(MainForm.pmIconMenu.Handle, MenuRect);
+    if not PtInRect(MenuRect, p) then
+      MainForm.pmIconMenu.CloseMenu;
+  end;
 
   Result := CallNextHookEx(MouseHook, nCode, wParam, lParam);
 end;
@@ -1741,6 +1750,9 @@ begin
 
   if FAction = 'desk' then
   begin
+    if MainForm.PartnerNeedHideWallpaper(FUserToConnect) then
+      FDesktopControl.Send_HideDesktop(FUserToConnect);
+
 //    FDesktopControl.ChgDesktop_Begin;
 {//    FDesktopControl.ChgDesktop_UseMouseDriver(False);
 //    FDesktopControl.ChgDesktop_CaptureLayeredWindows(False);
@@ -1755,7 +1767,6 @@ begin
 //      FDesktopControl.ChgDesktop_ColorLowLimit(rd_ColorHigh);
 //      FDesktopControl.ChgDesktop_ColorReducePercent(cbReduceColors.Value);
 //    FDesktopControl.ChgDesktop_SendScreenRefineDelay(grpScreen2Refine.ItemIndex);}
-//    FDesktopControl.Send_HideDesktop(FUserToConnect);
 //    FDesktopControl.ChgDesktop_End(FUserToConnect);
 
     FDesktopControl.Open(FUserToConnect);
@@ -2584,8 +2595,10 @@ begin
     begin
 //      SetForegroundWindow(Handle);
       GetCursorPos(p);
-      pmIconMenu.Popup(p.x, p.y);
+      SetForegroundWindow(Handle);
       PostMessage(Handle, WM_NULL, 0, 0);
+      pmIconMenu.Popup(p.x, p.y);
+//      PostMessage(Handle, WM_NULL, 0, 0);
 
       Message.Result := 0;
     end;
@@ -2657,19 +2670,20 @@ begin
 
   reg:=TRegistry.Create;
   try
-    reg.RootKey:=HKEY_CURRENT_USER;
-    if reg.OpenKey('\AppEvents\Schemes\Apps\.Default\CCSelect\.current',False) then
+    reg.RootKey := HKEY_CURRENT_USER;
+    reg.Access := KEY_READ;
+    if reg.OpenKey('\AppEvents\Schemes\Apps\.Default\CCSelect\.current', False) then
     try
       if reg.ValueExists('') then
-        if Trim(reg.ReadString(''))='' then
+        if Trim(reg.ReadString('')) = '' then
           reg.DeleteValue('');
     finally
       reg.CloseKey;
     end;
-    if reg.OpenKey('\AppEvents\Schemes\Apps\.Default\CCSelect\.Modified',False) then
+    if reg.OpenKey('\AppEvents\Schemes\Apps\.Default\CCSelect\.Modified', False) then
     try
       if reg.ValueExists('') then
-        if Trim(reg.ReadString(''))='' then
+        if Trim(reg.ReadString('')) = '' then
           reg.DeleteValue('');
     finally
       reg.CloseKey;
@@ -4161,6 +4175,31 @@ begin
   DesktopsForm.ChangeLockedState(uname, aLockedStatus, aServiceStarted);
 end;
 
+function TMainForm.PartnerNeedHideWallpaper(AUserName: String): Boolean;
+var
+  reg: TRegistry;
+begin
+//  xLog('PartnerNeedHideDesktop');
+
+  Result := True;
+
+  reg := TRegistry.Create;
+  try
+    reg.RootKey := HKEY_CURRENT_USER;
+    reg.Access := KEY_READ;
+    if reg.KeyExists('Software\Remox\Partners\' + AUserName) then
+      if reg.OpenKey('Software\Remox\Partners\' + AUserName, False) then
+      begin
+        if reg.ValueExists('HideWallpaper') then
+          Result := reg.ReadBool('HideWallpaper');
+
+        reg.CloseKey;
+      end;
+  finally
+    reg.Free;
+  end;
+end;
+
 procedure TMainForm.LoadSetup(RecordType: String);
 var
   reg: TRegistry;
@@ -4173,7 +4212,7 @@ begin
     reg.Access := KEY_READ;
     if reg.KeyExists('Software\Remox') then
     begin
-      reg.OpenKey('Software\Remox', True);
+      reg.OpenKey('Software\Remox', False);
 
       if (RecordType = 'ALL') then
       begin
@@ -6590,6 +6629,7 @@ begin
     DData := twIncomes.GetNodeData(Node);
 //    TSendDestroyClientToGatewayThread.Create(False, tPHostThread.Gateway, DData^.Name, False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, False);
     SendManualLogoutToControl(GetUserFromFromUserName(DData^.Name), DeviceId);
+    twIncomes.DeleteNode(Node);
   end;
 end;
 
@@ -7344,6 +7384,7 @@ begin
     Node := twIncomes.GetNext(Node);
   end;
 
+  twIncomes.Clear;
   twIncomes.Repaint;
 end;
 

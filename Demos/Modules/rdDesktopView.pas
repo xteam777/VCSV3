@@ -183,8 +183,6 @@ type
     procedure MainChromeTabsButtonAddClick(Sender: TObject; var Handled: Boolean);
     procedure Button1Click(Sender: TObject);
     procedure MainChromeTabsActiveTabChanged(Sender: TObject; ATab: TChromeTab);
-    procedure MainChromeTabsButtonCloseTabClick(Sender: TObject;
-      ATab: TChromeTab; var Close: Boolean);
     procedure TimerResizeTimer(Sender: TObject);
     procedure MainChromeTabsChange(Sender: TObject; ATab: TChromeTab;
       TabChangeType: TTabChangeType);
@@ -366,21 +364,20 @@ begin
   DoResizeImage;
 end;
 
-procedure TrdDesktopViewer.MainChromeTabsButtonCloseTabClick(Sender: TObject;
-  ATab: TChromeTab; var Close: Boolean);
-begin
-  CloseUITab(ATab.UserName, False);
-end;
-
 procedure TrdDesktopViewer.MainChromeTabsChange(Sender: TObject;
   ATab: TChromeTab; TabChangeType: TTabChangeType);
 begin
-  if (TabChangeType = tcDeleted)
-    and (GetActiveUIModulesCount = 0) then
+  if (TabChangeType = tcDeleted) then
   begin
-//    ActiveUIModule := nil;
-    Close;
-    Exit;
+    if ATab <> nil then
+      CloseUITab(ATab.UserName, False);
+
+    if (GetActiveUIModulesCount = 0) then
+    begin
+  //    ActiveUIModule := nil;
+      Close;
+      Exit;
+    end;
   end;
 end;
 
@@ -701,7 +698,7 @@ begin
       try
         reg.RootKey := HKEY_CURRENT_USER;
         reg.Access := KEY_READ;
-        if reg.OpenKey('Software\Remox\Partners\' + AUserName, True) then
+        if reg.OpenKey('Software\Remox\Partners\' + AUserName, False) then
         begin
           if reg.ValueExists('LockSystemOnClose') then
             pUIItem.LockSystemOnClose := reg.ReadBool('LockSystemOnClose')
@@ -1452,8 +1449,6 @@ begin
 
 //  FreeAndNil(PFileTrans);
 
-//  MainChromeTabs.Tabs.Clear;
-
   ActiveUIModule := nil;
 
   UI_CS.Acquire;
@@ -1462,7 +1457,7 @@ begin
     begin
       TUIDataModule(UIModulesList[i]).NeedFree := True;
       FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
-      CloseTab(TUIDataModule(UIModulesList[i]).UserName);
+//      CloseTab(TUIDataModule(UIModulesList[i]).UserName);
   //    TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
   //    TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
   //    FreeAndNil(TUIDataModule(UIModulesList[i]));
@@ -1472,6 +1467,8 @@ begin
   finally
     UI_CS.Release;
   end;
+
+  MainChromeTabs.Tabs.Clear;
 end;
 
 procedure TrdDesktopViewer.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
