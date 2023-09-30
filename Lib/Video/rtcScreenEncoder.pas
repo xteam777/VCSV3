@@ -782,10 +782,15 @@ time := GetTickCount;
       {$IFDEF DEBUG}
       EncLat := Debug.GetMCSTick - CurTick;
 
+      if CapLat > 10000 then
+        CapLat := 10000;
+      if EncLat > 10000 then
+        EncLat := 10000;
+
       with Rec.newRecord('scrfs') do
       begin
-        asInteger['CapLat'] :=  CapLat;
-        asInteger['EncLat'] :=  EncLat;
+        asInteger['CapLat'] := CapLat;
+        asInteger['EncLat'] := EncLat;
       end;
       {$ENDIF}
 

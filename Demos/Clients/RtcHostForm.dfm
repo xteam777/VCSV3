@@ -3,8 +3,8 @@ object MainForm: TMainForm
   Top = 309
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'Remox'
-  ClientHeight = 480
-  ClientWidth = 836
+  ClientHeight = 482
+  ClientWidth = 840
   Color = clBtnFace
   CustomTitleBar.CaptionAlignment = taCenter
   Constraints.MinWidth = 852
@@ -47,8 +47,8 @@ object MainForm: TMainForm
   object pInMain: TPanel
     Left = 0
     Top = 0
-    Width = 836
-    Height = 480
+    Width = 840
+    Height = 482
     Margins.Left = 0
     Margins.Top = 0
     Margins.Right = 0
@@ -61,15 +61,16 @@ object MainForm: TMainForm
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
-    ExplicitHeight = 482
+    ExplicitWidth = 836
+    ExplicitHeight = 481
     DesignSize = (
-      836
-      480)
+      840
+      482)
     object lblStatus: TLabel
       AlignWithMargins = True
       Left = 52
       Top = 467
-      Width = 514
+      Width = 522
       Height = 17
       Margins.Left = 75
       Anchors = [akLeft, akTop, akRight]
@@ -5218,13 +5219,22 @@ object MainForm: TMainForm
         TabOrder = 2
         OnClick = rbFileTransClick
       end
+      object Button5: TButton
+        Left = 98
+        Top = 92
+        Width = 75
+        Height = 25
+        Caption = 'Button5'
+        TabOrder = 3
+        OnClick = Button5Click
+      end
     end
     object pcDevAcc: TPageControl
       Left = 542
       Top = 6
       Width = 298
       Height = 455
-      ActivePage = tsMyDevices
+      ActivePage = tsIncomes
       TabOrder = 0
       object tsMyDevices: TTabSheet
         Caption = #1052#1086#1080' '#1091#1089#1090#1088#1086#1081#1089#1090#1074#1072

@@ -113,6 +113,7 @@ type
     ID: String;
     Action: String;
     DataModule: TUIDataModule;
+    UIHandle: THandle;
     StartLockedState: Integer;
     StartServiceStarted: Boolean;
   end;
@@ -323,6 +324,7 @@ type
     bCloseAllIncomes: TColorSpeedButton;
     rManualLogout: TRtcResult;
     tFoldForm: TTimer;
+    Button5: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -551,6 +553,7 @@ type
     procedure bCloseAllIncomesClick(Sender: TObject);
     procedure tFoldFormTimer(Sender: TObject);
     procedure eAccountPasswordChange(Sender: TObject);
+    procedure Button5Click(Sender: TObject);
   protected
 
 //    FAutoRun: Boolean;
@@ -674,6 +677,7 @@ type
 //    function LoadWindowPosition(Form: TForm; FormName: String; sizeable:boolean=False):boolean;
 //    procedure SaveWindowPosition(Form: TForm; FormName: String; sizeable:boolean=False);
 
+    function PartnerNeedHideWallpaper(AUserName: String): Boolean;
     procedure LoadSetup(RecordType: String);
     procedure SaveSetup;
     procedure GeneratePassword;
@@ -690,7 +694,7 @@ type
     procedure DrawCloseButton(AStringTree: TVirtualStringTree; Canvas: TCanvas; ARect: TRect; Node: PVirtualNode; AColor: TColor);
     procedure DrawImage(AStringTree: TVirtualStringTree; Canvas: TCanvas; NodeRect: TRect; ImageIndex: Integer);
     function NodeByUID(const aTree:TVirtualStringTree; const anUID:String): PVirtualNode;
-    function NodeByID(const aTree: TVirtualStringTree; const aID: Integer): PVirtualNode;
+    function NodeByID(const aTree: TVirtualStringTree; const aID: String): PVirtualNode;
 
     procedure SetConnectedState(fConnected: Boolean);
 //    procedure WndProc(var Msg : TMessage); override;
@@ -734,7 +738,7 @@ type
     procedure ShowMessageBox(AText, ACaption, AType, AUID: string);
     procedure ShowAboutForm;
     procedure DoDeleteDeviceGroup(AUID: String);
-    procedure SendManualLogoutToControl(AControlID, AHostID: String);
+    procedure SendManualLogoutToControl(AAction, AControlID, AHostID: String);
     procedure DoExit;
     procedure CloseAllActiveUI;
 
@@ -768,10 +772,10 @@ type
     procedure RemoveProgressDialogByValue(AProgressDialog: PProgressDialog);
     procedure RemoveProgressDialogByUserName(AUserName: String);
 
-    procedure AddIncomeConnection(AUserName, AUserDesc: String);
+    procedure AddIncomeConnection(AAction, AUserName, AUserDesc: String);
     procedure RemoveIncomeConnection(AUserName: String);
     function GetIncomeConnectionsCount: Integer;
-    function IsIncomeConnectionExists(AUserName: String): Boolean;
+    function IsIncomeConnectionExists(AID, AAction: String): Boolean;
   end;
 
 //type
@@ -793,6 +797,8 @@ const
   STATUS_CONNECTING_TO_GATE = 2;
   STATUS_READY = 3;
 
+  WH_MOUSE_LL = 14; // Используется для хука на низком уровне для мыши
+
 var
   MainForm: TMainForm;
   BlockInputHook_Keyboard, BlockInputHook_Mouse, BlockZOrderHook: HHOOK;
@@ -804,12 +810,10 @@ var
   ChangedDragFullWindows: Boolean = False;
   OriginalDragFullWindows: LongBool = True;
   DeviceDisplayName: String;
-  CS_GW, CS_Status, CS_Pending, CS_ActivateHost, CS_HostGateway: TCriticalSection;
+  CS_GW, CS_Status, CS_Pending, CS_ActivateHost, CS_HostGateway, CS_Incoming: TCriticalSection;
   DeviceId, ConsoleId: String;
   LastActiveExplorerHandle: THandle;
-
   CB_Monitor: TClipbrdMonitor;
-
   DesktopsForm: TrdDesktopViewer;
 
 implementation
@@ -1056,9 +1060,9 @@ begin
     if fAcceptEULA.ShowModal = mrCancel then
       Exit
     else
-    if fAcceptEULA.ePassword.Text <> PermanentPassword then
+    if fAcceptEULA.PasswordChanged then
     begin
-      PermanentPassword := fAcceptEULA.ePassword.Text;
+      PermanentPassword := System.Hash.THashMD5.GetHashString(fAcceptEULA.ePassword.Text);
       ShowPermanentPasswordState();
       SendPasswordsToGateway;
 
@@ -1731,6 +1735,9 @@ begin
 
   if FAction = 'desk' then
   begin
+    if MainForm.PartnerNeedHideWallpaper(FUserToConnect) then
+      FDesktopControl.Send_HideDesktop(FUserToConnect);
+
 //    FDesktopControl.ChgDesktop_Begin;
 {//    FDesktopControl.ChgDesktop_UseMouseDriver(False);
 //    FDesktopControl.ChgDesktop_CaptureLayeredWindows(False);
@@ -1745,7 +1752,6 @@ begin
 //      FDesktopControl.ChgDesktop_ColorLowLimit(rd_ColorHigh);
 //      FDesktopControl.ChgDesktop_ColorReducePercent(cbReduceColors.Value);
 //    FDesktopControl.ChgDesktop_SendScreenRefineDelay(grpScreen2Refine.ItemIndex);}
-//    FDesktopControl.Send_HideDesktop(FUserToConnect);
 //    FDesktopControl.ChgDesktop_End(FUserToConnect);
 
     FDesktopControl.Open(FUserToConnect);
@@ -1764,16 +1770,19 @@ destructor TPortalThread.Destroy;
 var
   UIDM: TUIDataModule;
 begin
-  UIDM := DesktopsForm.GetRemovedUIDataModule(FUserName);
-  if UIDM <> nil then
-  begin
+//  UIDM := DesktopsForm.GetRemovedUIDataModule(FUserName);
+//  if UIDM <> nil then
+//  begin
 //    if UIDM.HideWallpaper then
 //      UIDM.UI.Send_ShowDesktop;
-    if UIDM.LockSystemOnClose then
-      UIDM.UI.Send_LockSystem;
-  end;
+//    if UIDM.LockSystemOnClose then
+//      UIDM.UI.Send_LockSystem;
+//  end;
 
-  FGatewayClient.Module.WaitForCompletion(False, 2);
+//  FGatewayClient.Module.WaitForCompletion(False, 2);
+
+//  UIDM.UI.CloseAndClear;
+//  UIDM.FT_UI.CloseAndClear;
 
   FGatewayClient.Stop;
   FGatewayClient.Active := False;
@@ -1891,6 +1900,9 @@ begin
   CloseAllActiveUI;
 
   SetStatus(STATUS_NO_CONNECTION);
+
+  tPHostThread.Restart;
+
 //  SetConnectedState(False); //Сначала устанавливаем первичные насройки прокси
 //  SetStatusString('Подключение к серверу...', True);
   StartAccountLogin;
@@ -2000,7 +2012,7 @@ begin
   end;
 end;
 
-procedure TMainForm.SendManualLogoutToControl(AControlID, AHostID: String);
+procedure TMainForm.SendManualLogoutToControl(AAction, AControlID, AHostID: String);
 begin
   //XLog('DoDeleteDeviceGroup');
 
@@ -2008,6 +2020,7 @@ begin
   try
     with Data.NewFunction('Account.ManualLogout') do
     begin
+      asString['Action'] := AAction;
       asString['ControlID'] := AControlID;
       asString['HostID'] := AHostID;
       Call(rManualLogout);
@@ -2574,8 +2587,11 @@ begin
     begin
 //      SetForegroundWindow(Handle);
       GetCursorPos(p);
-      pmIconMenu.Popup(p.x, p.y);
+      SetForegroundWindow(Handle);
       PostMessage(Handle, WM_NULL, 0, 0);
+      pmIconMenu.Popup(p.x, p.y);
+//      PostMessage(Handle, WM_NULL, 0, 0);
+
       Message.Result := 0;
     end;
   end;
@@ -2646,19 +2662,20 @@ begin
 
   reg:=TRegistry.Create;
   try
-    reg.RootKey:=HKEY_CURRENT_USER;
-    if reg.OpenKey('\AppEvents\Schemes\Apps\.Default\CCSelect\.current',False) then
+    reg.RootKey := HKEY_CURRENT_USER;
+    reg.Access := KEY_READ;
+    if reg.OpenKey('\AppEvents\Schemes\Apps\.Default\CCSelect\.current', False) then
     try
       if reg.ValueExists('') then
-        if Trim(reg.ReadString(''))='' then
+        if Trim(reg.ReadString('')) = '' then
           reg.DeleteValue('');
     finally
       reg.CloseKey;
     end;
-    if reg.OpenKey('\AppEvents\Schemes\Apps\.Default\CCSelect\.Modified',False) then
+    if reg.OpenKey('\AppEvents\Schemes\Apps\.Default\CCSelect\.Modified', False) then
     try
       if reg.ValueExists('') then
-        if Trim(reg.ReadString(''))='' then
+        if Trim(reg.ReadString('')) = '' then
           reg.DeleteValue('');
     finally
       reg.CloseKey;
@@ -2714,7 +2731,7 @@ procedure TMainForm.RemovePortalConnection(AID, AAction: String; ACloseFUI: Bool
 var
   i: Integer;
 begin
-  //XLog('RemovePortalConnectionByUIHandle');
+  //XLog('RemovePortalConnection');
 
   CS_GW.Acquire;
   try
@@ -2733,8 +2750,9 @@ begin
 //          FreeAndNil(PPortalConnection(PortalConnectionsList[i])^.ThisThread);
 //        end;
         PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, WPARAM(ACloseFUI), 0); //Закрываем поток с пклиентом
-//        if ACloseFUI then
-//          PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
+        if ACloseFUI
+          and ((PPortalConnection(PortalConnectionsList[i])^.Action = 'file') or (PPortalConnection(PortalConnectionsList[i])^.Action = 'chat')) then
+          PostMessage(PPortalConnection(PortalConnectionsList[i])^.UIHandle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
 
 //        Dispose(PPortalConnection(PortalConnectionsList[i])^.UIForm);
         Dispose(PortalConnectionsList[i]);
@@ -4089,7 +4107,7 @@ begin
   Node := twDevices.GetFirst;
   while Node <> nil do
   begin
-    if TDeviceData(twDevices.GetNodeData(Node)^).ID = StrToInt(GetUserFromFromUserName(uname)) then
+    if TDeviceData(twDevices.GetNodeData(Node)^).ID = GetUserFromFromUserName(uname) then
     begin
       TDeviceData(twDevices.GetNodeData(Node)^).StateIndex := status;
       twDevices.InvalidateNode(Node);
@@ -4148,6 +4166,31 @@ begin
   DesktopsForm.ChangeLockedState(uname, aLockedStatus, aServiceStarted);
 end;
 
+function TMainForm.PartnerNeedHideWallpaper(AUserName: String): Boolean;
+var
+  reg: TRegistry;
+begin
+//  xLog('PartnerNeedHideDesktop');
+
+  Result := True;
+
+  reg := TRegistry.Create;
+  try
+    reg.RootKey := HKEY_CURRENT_USER;
+    reg.Access := KEY_READ;
+    if reg.KeyExists('Software\Remox\Partners\' + AUserName) then
+      if reg.OpenKey('Software\Remox\Partners\' + AUserName, False) then
+      begin
+        if reg.ValueExists('HideWallpaper') then
+          Result := reg.ReadBool('HideWallpaper');
+
+        reg.CloseKey;
+      end;
+  finally
+    reg.Free;
+  end;
+end;
+
 procedure TMainForm.LoadSetup(RecordType: String);
 var
   reg: TRegistry;
@@ -4157,51 +4200,107 @@ begin
   reg := TRegistry.Create;
   try
     reg.RootKey := HKEY_CURRENT_USER;
+    reg.Access := KEY_READ;
     if reg.KeyExists('Software\Remox') then
     begin
-      reg.OpenKey('Software\Remox', True);
+      reg.OpenKey('Software\Remox', False);
 
       if (RecordType = 'ALL') then
       begin
-        StoreHistory := reg.ReadBool('StoreHistory');
-        StorePasswords := reg.ReadBool('StorePasswords');
-
-        cbRememberAccount.Checked := reg.ReadBool('RememberAccount');
-        eAccountUserName.Text := reg.ReadString('AccountUserName');
-        if reg.ReadString('AccountPassword') <> '' then
-          eAccountPassword.Text := 'password'
+        if reg.ValueExists('StoreHistory') then
+          StoreHistory := reg.ReadBool('StoreHistory')
         else
+          StoreHistory := True;
+        if reg.ValueExists('StorePasswords') then
+          StorePasswords := reg.ReadBool('StorePasswords')
+        else
+          StorePasswords := True;
+
+        if reg.ValueExists('RememberAccount') then
+          cbRememberAccount.Checked := reg.ReadBool('RememberAccount')
+        else
+          cbRememberAccount.Checked := True;
+        if reg.ValueExists('AccountUserName') then
+          eAccountUserName.Text := reg.ReadString('AccountUserName')
+        else
+          eAccountUserName.Text := '';
+        if reg.ValueExists('AccountPassword') then
+        begin
+          if reg.ReadString('AccountPassword') <> '' then
+            eAccountPassword.Text := 'password'
+          else
+            eAccountPassword.Text := '';
+          AccountPassword := reg.ReadString('AccountPassword');
+        end
+        else
+        begin
           eAccountPassword.Text := '';
-        AccountPassword := reg.ReadString('AccountPassword');
+          AccountPassword := '';
+        end;
 
-        DateAllowConnectionPending := reg.ReadDateTime('DateAllowConnectPending');
+        if reg.ValueExists('DateAllowConnectPending') then
+          DateAllowConnectionPending := reg.ReadDateTime('DateAllowConnectPending');
 
-        ProxyOption := reg.ReadInteger('ProxyOption');
+        if reg.ValueExists('ProxyOption') then
+          ProxyOption := reg.ReadInteger('ProxyOption')
+        else
+          ProxyOption := PO_AUTOMATIC;
 //        'socks=127.0.0.1:9050'; //Tor
 
         hcAccounts.UseProxy := (ProxyOption = PO_MANUAL);
-        hcAccounts.UserLogin.ProxyAddr := reg.ReadString('ProxyAddr');
-        hcAccounts.UserLogin.ProxyUserName := reg.ReadString('ProxyUsername');
-        hcAccounts.UserLogin.ProxyPassword := reg.ReadString('ProxyPassword');
-
         TimerClient.UseProxy := (ProxyOption = PO_MANUAL);
-        TimerClient.UserLogin.ProxyAddr := reg.ReadString('ProxyAddr');
-        TimerClient.UserLogin.ProxyUserName := reg.ReadString('ProxyUsername');
-        TimerClient.UserLogin.ProxyPassword := reg.ReadString('ProxyPassword');
-
         HostTimerClient.UseProxy := (ProxyOption = PO_MANUAL);
-        HostTimerClient.UserLogin.ProxyAddr := reg.ReadString('ProxyAddr');
-        HostTimerClient.UserLogin.ProxyUserName := reg.ReadString('ProxyUsername');
-        HostTimerClient.UserLogin.ProxyPassword := reg.ReadString('ProxyPassword');
+        if reg.ValueExists('ProxyAddr') then
+        begin
+          hcAccounts.UserLogin.ProxyAddr := reg.ReadString('ProxyAddr');
+          TimerClient.UserLogin.ProxyAddr := reg.ReadString('ProxyAddr');
+          HostTimerClient.UserLogin.ProxyAddr := reg.ReadString('ProxyAddr');
+        end
+        else
+        begin
+          hcAccounts.UserLogin.ProxyAddr := '';
+          TimerClient.UserLogin.ProxyAddr := '';
+          HostTimerClient.UserLogin.ProxyAddr := '';
+        end;
+        if reg.ValueExists('ProxyUsername') then
+        begin
+          hcAccounts.UserLogin.ProxyUserName := reg.ReadString('ProxyUsername');
+          TimerClient.UserLogin.ProxyUserName := reg.ReadString('ProxyUsername');
+          HostTimerClient.UserLogin.ProxyUserName := reg.ReadString('ProxyUsername');
+        end
+        else
+        begin
+          hcAccounts.UserLogin.ProxyUserName := '';
+          TimerClient.UserLogin.ProxyUserName := '';
+          HostTimerClient.UserLogin.ProxyUserName := '';
+        end;
+        if reg.ValueExists('ProxyPassword') then
+        begin
+          hcAccounts.UserLogin.ProxyPassword := reg.ReadString('ProxyPassword');
+          TimerClient.UserLogin.ProxyPassword := reg.ReadString('ProxyPassword');
+          HostTimerClient.UserLogin.ProxyPassword := reg.ReadString('ProxyPassword');
+        end
+        else
+        begin
+          hcAccounts.UserLogin.ProxyPassword := '';
+          TimerClient.UserLogin.ProxyPassword := '';
+          HostTimerClient.UserLogin.ProxyPassword := '';
+        end;
       end;
 
       if (RecordType = 'ALL')
-        or (RecordType = 'REGULAR_PASS') then
-        PermanentPassword := reg.ReadString('PermanentPassword');
+        or (RecordType = 'PERMANENT_PASS') then
+        if reg.ValueExists('PermanentPassword') then
+          PermanentPassword := reg.ReadString('PermanentPassword')
+        else
+          PermanentPassword := '';
 
       if (RecordType = 'ALL')
         or (RecordType = 'ACTIVE_NODE') then
-        LastFocusedUID := reg.ReadString('LastFocusedUID');
+        if reg.ValueExists('LastFocusedUID') then
+          LastFocusedUID := reg.ReadString('LastFocusedUID')
+        else
+          LastFocusedUID := '';
     end
     else
     begin
@@ -4346,7 +4445,7 @@ begin
 
   //Inf file
   if (RecordType = 'ALL')
-    or (RecordType = 'REGULAR_PASS') then
+    or (RecordType = 'PERMANENT_PASS') then
   begin
     CfgFileName := ChangeFileExt(AppFileName,'.inf'); //RTC_LOG_FOLDER + ChangeFileExt(ExtractFileName(Application.ExeName), '.inf');
     s := Read_File(CfgFileName, rtc_ShareDenyNone);
@@ -4365,7 +4464,7 @@ begin
     begin
       try
         if (RecordType = 'ALL')
-          or (RecordType = 'REGULAR_PASS') then
+          or (RecordType = 'PERMANENT_PASS') then
           PermanentPassword := info.asString['PermanentPassword'];
 
         if (RecordType = 'ALL') then
@@ -4643,7 +4742,7 @@ begin
      (twDevices.GetNodeLevel(twDevices.FocusedNode) <> 0) then
   begin
     DData := PDeviceData(twDevices.GetNodeData(twDevices.FocusedNode));
-    user := IntToStr(DData^.ID);
+    user := DData^.ID;
 
     StartFileTransferring(user, DData^.Name, DData^.Password);
   end;
@@ -4658,8 +4757,8 @@ begin
 
   if AUser = DeviceId then
   begin
-//      MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'Remox', MB_ICONWARNING or MB_OK);
-    SetStatusStringDelayed('Подключение к своему компьютеру невозможно');
+//      MessageBox(Handle, 'Подключение к своему устройству невозможно', 'Remox', MB_ICONWARNING or MB_OK);
+    SetStatusStringDelayed('Подключение к своему устройству невозможно');
 //    SetStatusStringDelayed('Готов к подключению', 2000);
     Exit;
   end;
@@ -4868,7 +4967,7 @@ begin
       DData^.Password := System.Hash.THashMD5.GetHashString(DForm.ePassword.Text);
       DData^.Description := DForm.mDescription.Lines.GetText;
       DData^.GroupUID := DForm.GroupUID;
-      DData^.ID := StrToInt(DForm.eID.Text);
+      DData^.ID := DForm.eID.Text;
       DData^.HighLight := False;
       if DeviceId = DForm.eID.Text then
         DData^.StateIndex := MSG_STATUS_ONLINE
@@ -4950,7 +5049,7 @@ begin
       Node.States := [vsInitialized];
       DData := twDevices.GetNodeData(Node);
       DData^.UID := '';
-      DData^.ID := 0;
+      DData^.ID := '';
       DData^.HighLight := False;
       DData^.StateIndex := MSG_STATUS_OFFLINE;
 
@@ -5008,7 +5107,7 @@ begin
       DForm.CModule := @cmAccounts;
       DForm.AccountUID := AccountUID;
       DForm.UID := DData^.UID;
-      DForm.eID.Text := IntToStr(DData^.ID);
+      DForm.eID.Text := DData^.ID;
       DForm.eName.Text := DData^.Name;
       DForm.PrevPassword := DData^.Password;
       if DData^.Password <> '' then
@@ -5028,7 +5127,7 @@ begin
         else
           DData^.Password := DForm.PrevPassword;
         DData^.Description := DForm.mDescription.Lines.GetText;
-        DData^.ID := StrToInt(DForm.eID.Text);
+        DData^.ID := DForm.eID.Text;
         DData^.HighLight := False;
 //          DData^.StateIndex := MSG_STATUS_OFFLINE;
         GroupNode := GetGroupByUID(DForm.GroupUID);
@@ -5076,11 +5175,11 @@ begin
   begin
 //    DData := PDeviceData(twDevices.GetNodeData(twDevices.FocusedNode));
     DData := PDeviceData(twDevices.GetNodeData(Node));
-    user := IntToStr(DData^.ID);
+    user := DData^.ID;
 
     if user = DeviceId then
     begin
-      SetStatusStringDelayed('Подключение к своему компьютеру невозможно');
+      SetStatusStringDelayed('Подключение к своему устройству невозможно');
 //      SetStatusStringDelayed('Готов к подключению', 2000);
       Exit;
     end;
@@ -5104,7 +5203,7 @@ begin
         end;
     end;
 
-    ConnectToPartnerStart(user, DData^.Name, DData^.Password, 'desk');
+    ConnectToPartnerStart(user, DData^.Name, sPassword, 'desk');
   end;
 end;
 
@@ -6054,7 +6153,7 @@ begin
 
     Name := DData^.Name;
     if (DeviceId <> '') then
-      if DData^.ID = StrToInt(DeviceId) then
+      if DData^.ID = DeviceId then
         if Name <> '' then
           Name := Name + ' (этот компьютер)'
         else
@@ -6415,12 +6514,12 @@ begin
        (twDevices.GetNodeLevel(twDevices.FocusedNode) <> 0) then
     begin
       DData := PDeviceData(twDevices.GetNodeData(twDevices.FocusedNode));
-      user := IntToStr(DData^.ID);
+      user := DData^.ID;
 
       if user = DeviceId then
       begin
-//        MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'Remox', MB_ICONWARNING or MB_OK);
-        SetStatusStringDelayed('Подключение к своему компьютеру невозможно');
+//        MessageBox(Handle, 'Подключение к своему устройству невозможно', 'Remox', MB_ICONWARNING or MB_OK);
+        SetStatusStringDelayed('Подключение к своему устройству невозможно');
 //        SetStatusStringDelayed('Готов к подключению', 2000);
         Exit;
       end;
@@ -6526,7 +6625,8 @@ begin
   begin
     DData := twIncomes.GetNodeData(Node);
 //    TSendDestroyClientToGatewayThread.Create(False, tPHostThread.Gateway, DData^.Name, False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, False);
-    SendManualLogoutToControl(GetUserFromFromUserName(DData^.Name), DeviceId);
+    SendManualLogoutToControl(DData^.Action, GetUserFromFromUserName(DData^.Name), DeviceId);
+    twIncomes.DeleteNode(Node);
   end;
 end;
 
@@ -6615,7 +6715,7 @@ begin
 //
 //    if user = DeviceId then
 //    begin
-//      SetStatusStringDelayed('Подключение к своему компьютеру невозможно');
+//      SetStatusStringDelayed('Подключение к своему устройству невозможно');
 ////      SetStatusStringDelayed('Готов к подключению', 2000);
 //      Exit;
 //    end;
@@ -6796,8 +6896,8 @@ begin
       DData := twDevices.GetNodeData(Node);
       if (DData^.UID <> '') then
        if (StrPos(PWideChar(WideLowerCase(DData^.Name)), PWideChar(WideString(LowerCase(Trim(eDeviceName.Text))))) <> nil)
-        or ((StrPos(PWideChar(IntToStr(DData^.ID)), PWideChar(WideString(LowerCase(Trim(eDeviceName.Text))))) <> nil)
-          and (DData^.ID <> 0)) then
+        or ((StrPos(PWideChar(DData^.ID), PWideChar(WideString(LowerCase(Trim(eDeviceName.Text))))) <> nil)
+          and (DData^.ID <> '')) then
         Node.States := Node.States + [vsVisible]
        else
         Node.States := Node.States - [vsVisible];
@@ -6810,8 +6910,8 @@ begin
           DData := twDevices.GetNodeData(CNode);
           if (DData^.UID <> '') then
            if (StrPos(PWideChar(WideLowerCase(String(DData^.Name))), PWideChar(WideString(LowerCase(Trim(eDeviceName.Text))))) <> nil)
-            or ((StrPos(PWideChar(IntToStr(DData^.ID)), PWideChar(WideString(LowerCase(Trim(eDeviceName.Text))))) <> nil)
-              and (DData^.ID <> 0)) then
+            or ((StrPos(PWideChar(DData^.ID), PWideChar(WideString(LowerCase(Trim(eDeviceName.Text))))) <> nil)
+              and (DData^.ID <> '')) then
            begin
             CNode.States := CNode.States + [vsVisible];
             CNode.Parent.States := CNode.Parent.States + [vsVisible];
@@ -7277,10 +7377,11 @@ begin
   begin
     DData := twIncomes.GetNodeData(Node);
 //    TSendDestroyClientToGatewayThread.Create(False, tPHostThread.Gateway, GetUserFromFromUserName(DData^.Name), False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, True);
-    SendManualLogoutToControl(GetUserFromFromUserName(DData^.Name), DeviceId);
+    SendManualLogoutToControl(DData^.Action, GetUserFromFromUserName(DData^.Name), DeviceId);
     Node := twIncomes.GetNext(Node);
   end;
 
+  twIncomes.Clear;
   twIncomes.Repaint;
 end;
 
@@ -7346,7 +7447,7 @@ begin
 //  xLog('HostPingTimerTimer');
 
   //Хост должен быть включен в клиенте только если не запущена служба на десктопной версии или если сервер
-  //Эта процедура и так не работает в слуюбе
+  //Эта процедура и так не работает в службе
 //  if IsWinServer
 //    or ((not IsServiceStarted(RTC_HOSTSERVICE_NAME))
 //      and (not IsServiceStarting(RTC_HOSTSERVICE_NAME))) then
@@ -7356,7 +7457,7 @@ begin
 //    if not hcAccounts.IsConnected then
 //      Exit;
 
-    LoadSetup('REGULAR_PASS');
+    LoadSetup('PERMANENT_PASS');
 
     PassRec := TRtcRecord.Create;
     try
@@ -7610,6 +7711,11 @@ begin
 //  pd.Execute;
 end;
 
+procedure TMainForm.Button5Click(Sender: TObject);
+begin
+  tPHostThread.Restart;
+end;
+
 procedure TMainForm.AddHistoryRecord(username, userdesc: String);
 var
   hr: THistoryRec;
@@ -7810,7 +7916,7 @@ begin
 //      if PRItem = nil then
 //        Exit;
 
-      RemovePortalConnection(asWideString['user'], asString['action'], True);
+      RemovePortalConnection(asWideString['user'], asString['action'], False);
       DeletePendingRequest(asWideString['user'], asString['action']);
 
       if asString['action'] = 'desk' then
@@ -7873,7 +7979,7 @@ begin
       if PRItem^.IsReconnection then
       begin
         DeletePendingRequest(asWideString['user'], asString['action']);
-        DesktopsForm.CloseUITab(asWideString['user'], True);
+        DesktopsForm.CloseUIAndTab(asWideString['user'], True, PRItem^.ThreadID);
 
         Exit;
       end;
@@ -7913,7 +8019,7 @@ begin
       begin
       begin
         DeletePendingRequest(asWideString['user'], asString['action']);
-        DesktopsForm.CloseUITab(asWideString['user'], True);
+        DesktopsForm.CloseUIAndTab(asWideString['user'], True, PRItem^.ThreadID);
       end;
 
 //        if GetPendingRequestsCount > 0 then
@@ -8178,7 +8284,7 @@ begin
       while CNode <> nil do
       begin
         DData := twDevices.GetNodeData(CNode);
-        if (DData^.ID = StrToInt(GetUserFromFromUserName(uname))) then
+        if (DData^.ID = GetUserFromFromUserName(uname)) then
         begin
           Result := DData;
           Exit;
@@ -8300,6 +8406,7 @@ procedure TMainForm.resHostTimerReturn(Sender: TRtcConnection; Data,
 var
   i: Integer;
   fname: String;
+  pPC:  PPortalConnection;
 begin
 //  XLog('resHostTimerReturn');
 
@@ -8395,7 +8502,15 @@ begin
 //                make_notify(fname, 'manual_logout');
 //              if isFriend(fname) then
 //                FriendList_Status(fname, MSG_STATUS_OFFLINE);
-                DesktopsForm.CloseUITab(asRecord['manual_logout'].asText['user'], True);
+                with asRecord['manual_logout'] do
+                  if asString['action'] = 'desk' then
+                  begin
+                    pPC := GetPortalConnection(asString['action'], asWideString['user']);
+                    if pPC <> nil then
+                      DesktopsForm.CloseUIAndTab(asText['user'], True, pPC^.ThreadID);
+                  end
+                  else
+                    RemovePortalConnection(asWideString['user'], asString['action'], True);
               end
             else if not isNull['locked'] then // Friend locked status update
               begin
@@ -8664,7 +8779,7 @@ begin
   Result := Node; //Should Return Nil if the index is not reached.
 end;
 
-function TMainForm.NodeByID(const aTree: TVirtualStringTree; const aID: Integer): PVirtualNode;
+function TMainForm.NodeByID(const aTree: TVirtualStringTree; const aID: String): PVirtualNode;
 var
   Node : PVirtualNode;
 begin
@@ -9182,7 +9297,7 @@ begin
             Node.States := [vsInitialized];
             DData := twDevices.GetNodeData(Node);
             DData^.UID := '';
-            DData^.ID := 0;
+            DData^.ID := '';
             DData^.HighLight := False;
             DData^.StateIndex := MSG_STATUS_OFFLINE;
           end;
@@ -9197,7 +9312,7 @@ begin
             DData := twDevices.GetNodeData(Node);
             DData^.UID := asString['UID'];
             DData^.GroupUID := asString['GroupUID'];
-            DData^.ID := asInteger['ID'];
+            DData^.ID := asString['ID'];
             DData^.Name := asWideString['Name'];
             DData^.Password := asWideString['Password'];
             DData^.Description := asWideString['Description'];
@@ -9381,7 +9496,7 @@ begin
     Exit;
   end;
 
-  Node := NodeByID(twDevices, StrToInt(GetUserFromFromUserName(aUserName)));
+  Node := NodeByID(twDevices, GetUserFromFromUserName(aUserName));
   if Node <> nil then
     Result := TDeviceData(twDevices.GetNodeData(Node)^).Name
   else
@@ -9398,7 +9513,7 @@ begin
     Exit;
   end;
 
-  Node := NodeByID(twDevices, StrToInt(GetUserFromFromUserName(aUserName)));
+  Node := NodeByID(twDevices, GetUserFromFromUserName(aUserName));
   if Node <> nil then
     Result := TDeviceData(twDevices.GetNodeData(Node)^).Password
   else
@@ -9430,7 +9545,7 @@ begin
     pPCItem := GetPortalConnection('file', user);
     if pPCItem <> nil then
     begin
-//      pPCItem^.DMHandle := FWin.Handle;
+      pPCItem^.UIHandle := FWin.Handle;
       FWin.PartnerLockedState := pPCItem^.StartLockedState;
       FWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
       FWin.SetFormState;
@@ -9497,7 +9612,7 @@ begin
     pPCItem := GetPortalConnection('file', user);
     if pPCItem <> nil then
     begin
-//      pPCItem^.DMHandle := FWin.Handle;
+      pPCItem^.UIHandle := FWin.Handle;
       FWin.PartnerLockedState := pPCItem^.StartLockedState;
       FWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
       FWin.SetFormState;
@@ -9565,7 +9680,7 @@ begin
     pPCItem := GetPortalConnection('file', user);
     if pPCItem <> nil then
     begin
-//      pPCItem^.DMHandle := FWin.Handle;
+      pPCItem^.UIHandle := FWin.Handle;
 //      FWin.PartnerLockedState := pPCItem^.StartLockedState;
 //      FWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
 //      FWin.SetFormState;
@@ -9638,7 +9753,7 @@ begin
     pPCItem := GetPortalConnection('chat', user);
     if pPCItem <> nil then
     begin
-//      pPCItem^.DMHandle := CWin.Handle;
+      pPCItem^.UIHandle := CWin.Handle;
       CWin.PartnerLockedState := pPCItem^.StartLockedState;
       CWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
       CWin.SetFormState;
@@ -10195,25 +10310,31 @@ begin
 //  PDesktopHost.Restart;
 end;
 
-procedure TMainForm.AddIncomeConnection(AUserName, AUserDesc: String);
+procedure TMainForm.AddIncomeConnection(AAction, AUserName, AUserDesc: String);
 var
   Node: PVirtualNode;
   DData: PDeviceData;
   DForm: TDeviceForm;
 begin
-  Node := twIncomes.AddChild(nil, DData);
-  Node.States := [vsInitialized, vsVisible];
-  DData := twDevices.GetNodeData(Node);
-  DData^.Name := AUserName;
-  DData^.Description := AUserDesc;
-  DData^.HighLight := False;
-  DData^.StateIndex := MSG_STATUS_ONLINE;
+  CS_Incoming.Acquire;
+  try
+    Node := twIncomes.AddChild(nil, DData);
+    Node.States := [vsInitialized, vsVisible];
+    DData := twDevices.GetNodeData(Node);
+    DData^.Name := AUserName;
+    DData^.Description := AUserDesc;
+    DData^.Action := AAction;
+    DData^.HighLight := False;
+    DData^.StateIndex := MSG_STATUS_ONLINE;
 
-  twIncomes.ToggleNode(Node);
-  twIncomes.Selected[Node] := True;
-  twIncomes.FocusedNode := Node;
-  twIncomes.SortTree(0, sdAscending);
-  twIncomes.InvalidateNode(Node);
+    twIncomes.ToggleNode(Node);
+    twIncomes.Selected[Node] := True;
+    twIncomes.FocusedNode := Node;
+    twIncomes.SortTree(0, sdAscending);
+    twIncomes.InvalidateNode(Node);
+  finally
+    CS_Incoming.Release;
+  end;
 
   tsIncomes.Caption := 'Входящие подключения (' + IntToStr(GetIncomeConnectionsCount) + ')';
 end;
@@ -10225,12 +10346,17 @@ begin
 //  XLog('GetIncomeConnectionsCount');
   Result := 0;
 
-  Node := twIncomes.GetFirst;
-  while Node <> nil do
-  begin
-    Result := Result + 1;
+  CS_Incoming.Acquire;
+  try
+    Node := twIncomes.GetFirst;
+    while Node <> nil do
+    begin
+      Result := Result + 1;
 
-    Node := twIncomes.GetNext(Node);
+      Node := twIncomes.GetNext(Node);
+    end;
+  finally
+    CS_Incoming.Release;
   end;
 end;
 
@@ -10240,70 +10366,97 @@ var
 begin
 //  XLog('RemoveIncomeConnection');
 
-  Node := twIncomes.GetFirst;
-  while Node <> nil do
-  begin
-    if TDeviceData(twIncomes.GetNodeData(Node)^).Name = AUserName then
+  CS_Incoming.Acquire;
+  try
+    Node := twIncomes.GetFirst;
+    while Node <> nil do
     begin
-      twIncomes.DeleteNode(Node);
-      twIncomes.Repaint;
+      if TDeviceData(twIncomes.GetNodeData(Node)^).Name = AUserName then
+      begin
+        twIncomes.DeleteNode(Node);
+        twIncomes.Repaint;
 
-      Break;
+        Break;
+      end;
+      Node := twIncomes.GetNext(Node);
     end;
-    Node := twIncomes.GetNext(Node);
+  finally
+    CS_Incoming.Release;
   end;
 
   tsIncomes.Caption := 'Входящие подключения (' + IntToStr(GetIncomeConnectionsCount) + ')';
 end;
 
-function TMainForm.IsIncomeConnectionExists(AUserName: String): Boolean;
+function TMainForm.IsIncomeConnectionExists(AID, AAction: String): Boolean;
 var
   Node: PVirtualNode;
 begin
 //  XLog('IsIncomeConnectionExists');
   Result := False;
 
-  Node := twIncomes.GetFirst;
-  while Node <> nil do
-  begin
-    if TDeviceData(twIncomes.GetNodeData(Node)^).Name = AUserName then
+  CS_Incoming.Acquire;
+  try
+    Node := twIncomes.GetFirst;
+    while Node <> nil do
     begin
-      Result := True;
+      if (TDeviceData(twIncomes.GetNodeData(Node)^).ID = AID)
+        and (TDeviceData(twIncomes.GetNodeData(Node)^).Action = AAction) then
+      begin
+        Result := True;
 
-      Break;
+        Break;
+      end;
+      Node := twIncomes.GetNext(Node);
     end;
-    Node := twIncomes.GetNext(Node);
+  finally
+    CS_Incoming.Release;
   end;
 end;
 
 procedure TMainForm.PModuleUserJoined(Sender: TRtcPModule; const user:string);
 var
-  u, s, d: String;
+  FullDesc, UserName, UserDesc, Action, sAction: String;
+  arr: TStringDynArray;
 begin
+//  xLog('PModuleUserJoined');
+
+  if Copy(Sender.Client.LoginUserName, 1, Length(DeviceId)) = DeviceId then
+    Exit;
+
   if Sender is TRtcPFileTransfer then
-    s := 'Передача файлов'
+    sAction := 'Передача файлов'
   else
   if Sender is TRtcPChat then
-    s := 'Чат'
+    sAction := 'Чат'
   else
   if Sender is TRtcPDesktopHost then
   begin
-    s := 'Управление';
+    sAction := 'Управление';
     Inc(DesktopCnt);
-    if DesktopCnt = 1 then
-      DragAcceptFiles(Handle, True)
+//    if DesktopCnt = 1 then
+//      DragAcceptFiles(Handle, True);
   end
   else
-    s := '???';
+    sAction := '???';
 
-  u := GetUserFromFromUserName(user);
-  d := GetUserDescription(u);
-  if d <> '' then
-    s := d + ' (' + s + ')'
+  arr := user.Split(['_'], 3);
+  if Length(arr) = 3 then
+  begin
+    UserName := arr[1];
+    Action := arr[2];
+  end
   else
-    s := u + ' (' + s + ')';
+  begin
+    UserName := '';
+    Action := '';
+  end;
+  UserDesc := GetUserDescription(UserName);
+  if UserDesc <> '' then
+    FullDesc := UserDesc + ' (' + sAction + ')'
+  else
+    FullDesc := UserName + ' (' + sAction + ')';
 
-  if not IsIncomeConnectionExists(user) then
+  if not IsIncomeConnectionExists(UserName, Action) then
   begin
     if (not Visible)
       or (IsIconic(Application.Handle)) then
@@ -10317,7 +10470,7 @@ begin
 
     pcDevAcc.ActivePage := tsIncomes;
 
-    AddIncomeConnection(user, s);
+    AddIncomeConnection(UserName, Action, FullDesc);
   end;
 
 //  Memo1.Lines.Add(user + ' joined');
@@ -10363,6 +10516,9 @@ procedure TMainForm.PModuleUserLeft(Sender: TRtcPModule; const user:string);
 //  a, i: Integer;
 begin
 //  xLog('PModuleUserLeft');
+
+  if Copy(Sender.Client.LoginUserName, 1, Length(DeviceId)) = DeviceId then
+    Exit;
 
 //  if Sender is TRtcPFileTransfer then
 //    s := 'Передача файлов'
@@ -11703,6 +11859,7 @@ initialization
   CS_Pending := TCriticalSection.Create;
   CS_ActivateHost := TCriticalSection.Create;
   CS_HostGateway := TCriticalSection.Create;
+  CS_Incoming := TCriticalSection.Create;
   Randomize;
 
 finalization
@@ -11712,5 +11869,6 @@ finalization
   CS_GW.Free;
   CS_ActivateHost.Free;
   CS_HostGateway.Free;
+  CS_Incoming.Free;
 
 end.

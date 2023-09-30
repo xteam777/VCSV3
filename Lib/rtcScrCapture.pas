@@ -824,7 +824,8 @@ begin
       inputs[0].mi.dy := FLastMouseY;
       inputs[0].mi.mouseData := 0;
       inputs[0].mi.dwExtraInfo := RMX_MAGIC_NUMBER;
-      SendInput(1, inputs[0], SizeOf(inputs));
+//      SendInput(1, inputs[0], SizeOf(inputs));
+      TLockWindow.SendInput(1, inputs[0], SizeOf(inputs));
   end
   else
     SendIOToHelperByIPC(QT_SENDINPUT, INPUT_MOUSE, dwFlags, FLastMouseX, FLastMouseY, 0, 0, 0, '');
@@ -865,7 +866,8 @@ begin
     inputs[0].mi.dy := 0;
     inputs[0].mi.mouseData := 0;
     inputs[0].mi.dwExtraInfo := RMX_MAGIC_NUMBER;
-    SendInput(1, inputs[0], SizeOf(inputs));
+//      SendInput(1, inputs[0], SizeOf(inputs));
+      TLockWindow.SendInput(1, inputs[0], SizeOf(inputs));
   end
   else
     SendIOToHelperByIPC(QT_SENDINPUT, INPUT_MOUSE, dwFlags, 0, 0, 0, 0, 0, '');
@@ -902,7 +904,8 @@ begin
     inputs[0].mi.dy := 0;
     inputs[0].mi.mouseData := DWORD(Wheel);
     inputs[0].mi.dwExtraInfo := RMX_MAGIC_NUMBER;
-    SendInput(1, inputs[0], SizeOf(inputs));
+//      SendInput(1, inputs[0], SizeOf(inputs));
+      TLockWindow.SendInput(1, inputs[0], SizeOf(inputs));
 //    mouse_event(MOUSEEVENTF_WHEEL, 0, 0, DWORD(Wheel), 0);
   end
   else
@@ -930,7 +933,8 @@ begin
       inputs[0].mi.dy := Y;
       inputs[0].mi.mouseData := 0;
       inputs[0].mi.dwExtraInfo := RMX_MAGIC_NUMBER;
-      SendInput(1, inputs[0], SizeOf(inputs));
+//      SendInput(1, inputs[0], SizeOf(inputs));
+      TLockWindow.SendInput(1, inputs[0], SizeOf(inputs));
 
       //mouse_event(MOUSEEVENTF_MOVE or MOUSEEVENTF_ABSOLUTE, X, Y, 0, 0);
     end
@@ -1159,8 +1163,8 @@ begin
     inputs[0].ki.wVk := key;
     inputs[0].ki.wScan := vk;
     inputs[0].ki.dwExtraInfo := RMX_MAGIC_NUMBER;
-
-    SendInput(1, inputs[0], SizeOf(inputs));
+//      SendInput(1, inputs[0], SizeOf(inputs));
+      TLockWindow.SendInput(1, inputs[0], SizeOf(inputs));
   end
   else
     SendIOToHelperByIPC(QT_SENDINPUT, INPUT_KEYBOARD, dwFlags, 0, 0, 0, key, vk, '');
@@ -1609,7 +1613,7 @@ begin
 //    SendMessage(MainFormHandle, WM_DRAG_FULL_WINDOWS_MESSAGE, 0, 0);
 //    SetBlankMonitor(True);
 //      BlankOutScreen(True);
-      ShowLockForm;
+      TLockWindow.Show();
     end;
 
 
@@ -1642,7 +1646,7 @@ begin
 //    SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 1, 0);
 //    SendMessage(MainFormHandle, WM_DRAG_FULL_WINDOWS_MESSAGE, 1, 0);
 //      RestoreScreen;
-      CloseLockForm;
+      TLockWindow.Close();
     end;
 
 

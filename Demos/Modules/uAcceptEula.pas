@@ -27,10 +27,12 @@ type
     procedure lEULAMouseEnter(Sender: TObject);
     procedure lEULAMouseLeave(Sender: TObject);
     procedure FormShow(Sender: TObject);
+    procedure ePasswordChange(Sender: TObject);
   private
     { Private declarations }
   public
     { Public declarations }
+    PasswordChanged: Boolean;
   end;
 
 var
@@ -58,6 +60,11 @@ begin
 
   ModalResult := mrOk;
   Hide;
+end;
+
+procedure TfAcceptEULA.ePasswordChange(Sender: TObject);
+begin
+  PasswordChanged := True;
 end;
 
 procedure TfAcceptEULA.FormShow(Sender: TObject);

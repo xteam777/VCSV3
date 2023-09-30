@@ -54,10 +54,11 @@ type
   TDeviceData = record
     UID: String;
     GroupUID: String;
-    ID: Integer;
+    ID: String;
     Name: WideString;
     Password: WideString;
     Description: WideString;
+    Action: String;
     HighLight: Boolean;
     StateIndex: Integer;
   end;

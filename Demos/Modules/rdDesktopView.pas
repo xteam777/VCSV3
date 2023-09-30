@@ -15,7 +15,7 @@ uses
   Windows, Messages, SysUtils, CommonData, CommonUtils, uVircessTypes, rtcLog, Clipbrd,
   Classes, Graphics, Controls, Forms, Types, IOUtils, DateUtils, rtcPortalHttpCli,
   Dialogs, ExtCtrls, StdCtrls, ShellAPI, ProgressDialog, rtcSystem, SyncObjs,
-  rtcpChat, Math, rtcpFileTrans, rtcpFileTransUI, uUIDataModule,
+  rtcpChat, Math, rtcpFileTrans, rtcpFileTransUI, uUIDataModule, Registry,
   System.ImageList, Vcl.ImgList, Vcl.ActnMan, Vcl.ActnColorMaps, System.Actions,
   Vcl.ActnList, Vcl.PlatformDefaultStyleActnCtrls, rtcPortalMod,
   rtcpDesktopControl, rtcpDesktopControlUI, ChromeTabs, NFPanel, Vcl.Imaging.jpeg,
@@ -183,8 +183,6 @@ type
     procedure MainChromeTabsButtonAddClick(Sender: TObject; var Handled: Boolean);
     procedure Button1Click(Sender: TObject);
     procedure MainChromeTabsActiveTabChanged(Sender: TObject; ATab: TChromeTab);
-    procedure MainChromeTabsButtonCloseTabClick(Sender: TObject;
-      ATab: TChromeTab; var Close: Boolean);
     procedure TimerResizeTimer(Sender: TObject);
     procedure MainChromeTabsChange(Sender: TObject; ATab: TChromeTab;
       TabChangeType: TTabChangeType);
@@ -269,14 +267,14 @@ type
 
     function GetTab(AUserName: String): TChromeTab;
     function AddNewTab(AUserName, AUserDesc, AUserPass: String; AThreadID: Cardinal; AStartLockedState: Integer; AStartServiceStarted: Boolean; AModule: TRtcPDesktopControl): TUIDataModule;
-    procedure CloseUITab(AUserName: String; ACloseTab: Boolean);
+    procedure CloseUIAndTab(AUserName: String; ACloseTab: Boolean; AThreadID: Cardinal);
     procedure CloseTab(AUserName: String);
     procedure SetReconnectInterval(AUserName: String; AInterval: Integer);
     procedure SetActiveTab(AUserName: String);
     procedure ChangeLockedState(AUserName: String; ALockedState: Integer; AServiceStarted: Boolean);
     function GetRemovedUIDataModule(AUserName: String): TUIDataModule;
     function GetUIDataModule(AUserName: String): TUIDataModule;
-    procedure RemoveUIDataModule(AUserName: String);
+    procedure RemoveUIDataModule(AUserName: String; AThreadID: Cardinal);
     function FreeUIDataModule(AUserName: String; AThreadID: Cardinal): Integer;
     function GetActiveUIModulesCount: Integer;
     procedure DoReconnectToPartnerStart(user, username, pass, action: String);
@@ -344,16 +342,16 @@ begin
   end;
 end;
 
-procedure TrdDesktopViewer.CloseUITab(AUserName: String; ACloseTab: Boolean);
+procedure TrdDesktopViewer.CloseUIAndTab(AUserName: String; ACloseTab: Boolean; AThreadID: Cardinal);
 var
   i: Integer;
 begin
-  if Assigned(FOnUIClose) then
-    FOnUIClose('desk', AUserName);
+//  if Assigned(FOnUIClose) then
+//    FOnUIClose('desk', AUserName);
 
   UI_CS.Acquire;
   try
-    RemoveUIDataModule(AUserName);
+    RemoveUIDataModule(AUserName, AThreadID);
 
     if ACloseTab then
       CloseTab(AUserName);
@@ -366,21 +364,26 @@ begin
   DoResizeImage;
 end;
 
-procedure TrdDesktopViewer.MainChromeTabsButtonCloseTabClick(Sender: TObject;
-  ATab: TChromeTab; var Close: Boolean);
-begin
-  CloseUITab(ATab.UserName, False);
-end;
-
 procedure TrdDesktopViewer.MainChromeTabsChange(Sender: TObject;
   ATab: TChromeTab; TabChangeType: TTabChangeType);
+var
+  UIDM: TUIDataModule;
 begin
-  if (TabChangeType = tcDeleted)
-    and (GetActiveUIModulesCount = 0) then
+  if (TabChangeType = tcDeleted) then
   begin
-//    ActiveUIModule := nil;
-    Close;
-    Exit;
+    if ATab <> nil then
+    begin
+      UIDM := GetUIDataModule(GetUserToFromUserName(ATab.UserName));
+      if UIDM <> nil then
+        CloseUIAndTab(ATab.UserName, False, UIDM.ThreadID);
+    end;
+
+    if (GetActiveUIModulesCount = 0) then
+    begin
+  //    ActiveUIModule := nil;
+      Close;
+      Exit;
+    end;
   end;
 end;
 
@@ -656,6 +659,7 @@ var
   pUIItem: TUIDataModule;
 //  pViewer: TRtcPDesktopViewer;
   fIsPending, fIsReconnection: Boolean;
+  reg: TRegistry;
 begin
   if Assigned(FOnUIOpen) then
     FOnUIOpen(AUserName, 'desk', fIsPending, fIsReconnection);
@@ -695,15 +699,63 @@ begin
     if not fIsReconnection then
     begin
       pUIItem := TUIDataModule.Create(Self);
-      pUIItem.LockSystemOnClose := False;
-      pUIItem.ShowRemoteCursor := False;
-      pUIItem.SendShortcuts := True;
-      pUIItem.BlockKeyboardMouse := False;
-      pUIItem.PowerOffMonitor := False;
-      pUIItem.OptimizeQuality := True;
-      pUIItem.OptimizeSpeed := False;
-      pUIItem.StretchScreen := False;
-      pUIItem.HideWallpaper := True;
+
+      reg := TRegistry.Create;
+      try
+        reg.RootKey := HKEY_CURRENT_USER;
+        reg.Access := KEY_READ;
+        if reg.OpenKey('Software\Remox\Partners\' + AUserName, False) then
+        begin
+          if reg.ValueExists('LockSystemOnClose') then
+            pUIItem.LockSystemOnClose := reg.ReadBool('LockSystemOnClose')
+          else
+            pUIItem.LockSystemOnClose := False;
+          if reg.ValueExists('ShowRemoteCursor') then
+            pUIItem.ShowRemoteCursor := reg.ReadBool('ShowRemoteCursor')
+          else
+            pUIItem.ShowRemoteCursor := False;
+          if reg.ValueExists('SendShortcuts') then
+            pUIItem.SendShortcuts := reg.ReadBool('SendShortcuts')
+          else
+            pUIItem.SendShortcuts := True;
+          if reg.ValueExists('BlockKeyboardMouse') then
+            pUIItem.BlockKeyboardMouse := reg.ReadBool('BlockKeyboardMouse')
+          else
+            pUIItem.BlockKeyboardMouse := False;
+          if reg.ValueExists('PowerOffMonitor') then
+            pUIItem.PowerOffMonitor := reg.ReadBool('PowerOffMonitor')
+          else
+            pUIItem.PowerOffMonitor := False;
+          if reg.ValueExists('OptimizeQuality') then
+            pUIItem.OptimizeQuality := reg.ReadBool('OptimizeQuality')
+          else
+            pUIItem.OptimizeQuality := True;
+          if reg.ValueExists('OptimizeSpeed') then
+            pUIItem.OptimizeSpeed := reg.ReadBool('OptimizeSpeed')
+          else
+            pUIItem.OptimizeSpeed := False;
+          if reg.ValueExists('StretchScreen') then
+            pUIItem.StretchScreen := reg.ReadBool('StretchScreen')
+          else
+            pUIItem.StretchScreen := False;
+          if reg.ValueExists('HideWallpaper') then
+            pUIItem.HideWallpaper := reg.ReadBool('HideWallpaper')
+          else
+            pUIItem.HideWallpaper := True;
+
+          aLockSystemOnClose.Checked := pUIItem.LockSystemOnClose;
+          aShowRemoteCursor.Checked := pUIItem.ShowRemoteCursor;
+          aSendShortcuts.Checked := pUIItem.SendShortcuts;
+          aBlockKeyboardMouse.Checked := pUIItem.BlockKeyboardMouse;
+          aPowerOffMonitor.Checked := pUIItem.PowerOffMonitor;
+          aOptimizeQuality.Checked := pUIItem.OptimizeQuality;
+          aOptimizeSpeed.Checked := pUIItem.OptimizeSpeed;
+          aStretchScreen.Checked := pUIItem.StretchScreen;
+          aHideWallpaper.Checked := pUIItem.HideWallpaper;
+        end;
+      finally
+        reg.Free;
+      end;
     end;
     pUIItem.ThreadID := AThreadID;
     pUIItem.PartnerLockedState := AStartLockedState;
@@ -790,9 +842,11 @@ begin
   Handled := True;
 end;
 
-procedure TrdDesktopViewer.RemoveUIDataModule(AUserName: String);
+procedure TrdDesktopViewer.RemoveUIDataModule(AUserName: String; AThreadID: Cardinal);
 var
   i, RemovedInd, ActiveUICount: Integer;
+  UIDM: TUIDataModule;
+  reg: TRegistry;
 begin
   RemovedInd := -1;
   ActiveUICount := 0;
@@ -802,18 +856,49 @@ begin
     i := UIModulesList.Count - 1;
     while i >= 0 do
     begin
-      if (not TUIDataModule(UIModulesList[i]).NeedFree)
-        and (TUIDataModule(UIModulesList[i]).UserName = AUserName) then
+      UIDM := UIModulesList[i];
+
+      if (not UIDM.NeedFree)
+        and (UIDM.UserName = AUserName)
+        and (UIDM.ThreadID = AThreadID)
+        and (RemovedInd = -1) then
       begin
-        TUIDataModule(UIModulesList[i]).NeedFree := True;
+//        if UIDM.HideWallpaper then
+//          UIDM.UI.Send_ShowDesktop;
+//        if UIDM.LockSystemOnClose then
+//          UIDM.UI.Send_LockSystem;
+
+        UIDM.UI.CloseAndClear;
+        UIDM.FT_UI.CloseAndClear;
+
+        UIDM.NeedFree := True;
         FOnUIClose('desk', AUserName);
   //      FreeAndNil(TUIDataModule(UIModulesList[i]));
   //      UIModulesList.Delete(i);
 
+        reg := TRegistry.Create;
+        try
+          reg.RootKey := HKEY_CURRENT_USER;
+          if reg.OpenKey('Software\Remox\Partners\' + AUserName, True) then
+          begin
+            reg.WriteBool('LockSystemOnClose', UIDM.LockSystemOnClose);
+            reg.WriteBool('ShowRemoteCursor', UIDM.ShowRemoteCursor);
+            reg.WriteBool('SendShortcuts', UIDM.SendShortcuts);
+            reg.WriteBool('BlockKeyboardMouse', UIDM.BlockKeyboardMouse);
+            reg.WriteBool('PowerOffMonitor', UIDM.PowerOffMonitor);
+            reg.WriteBool('OptimizeQuality', UIDM.OptimizeQuality);
+            reg.WriteBool('OptimizeSpeed', UIDM.OptimizeSpeed);
+            reg.WriteBool('StretchScreen', UIDM.StretchScreen);
+            reg.WriteBool('HideWallpaper', UIDM.HideWallpaper);
+          end;
+        finally
+          reg.Free;
+        end;
+
         RemovedInd := i;
       end;
 
-      if (not TUIDataModule(UIModulesList[i]).NeedFree) then
+      if (not UIDM.NeedFree) then
         ActiveUICount := ActiveUICount + 1;
 
       i := i - 1;
@@ -1380,8 +1465,6 @@ begin
 
 //  FreeAndNil(PFileTrans);
 
-//  MainChromeTabs.Tabs.Clear;
-
   ActiveUIModule := nil;
 
   UI_CS.Acquire;
@@ -1390,7 +1473,7 @@ begin
     begin
       TUIDataModule(UIModulesList[i]).NeedFree := True;
       FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
-      CloseTab(TUIDataModule(UIModulesList[i]).UserName);
+//      CloseTab(TUIDataModule(UIModulesList[i]).UserName);
   //    TUIDataModule(UIModulesList[i]).UI.CloseAndClear;
   //    TUIDataModule(UIModulesList[i]).FT_UI.CloseAndClear;
   //    FreeAndNil(TUIDataModule(UIModulesList[i]));
@@ -1400,6 +1483,8 @@ begin
   finally
     UI_CS.Release;
   end;
+
+  MainChromeTabs.Tabs.Clear;
 end;
 
 procedure TrdDesktopViewer.FormCloseQuery(Sender: TObject; var CanClose: Boolean);

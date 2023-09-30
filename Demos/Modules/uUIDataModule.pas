@@ -325,7 +325,7 @@ begin
   TimerReconnect.Enabled := False;
   TimerRec.Enabled := False;
 
-  UI.Active := False;
+//  UI.Active := False;
 //  UI.Module.Close(UserName);
 //  UI.CloseAndClear;
 //  UI.Close;

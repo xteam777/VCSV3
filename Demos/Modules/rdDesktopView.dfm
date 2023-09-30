@@ -3895,7 +3895,6 @@ object rdDesktopViewer: TrdDesktopViewer
     OnChange = MainChromeTabsChange
     OnActiveTabChanged = MainChromeTabsActiveTabChanged
     OnButtonAddClick = MainChromeTabsButtonAddClick
-    OnButtonCloseTabClick = MainChromeTabsButtonCloseTabClick
     OnGetControlPolygons = ControlPolygons
     ActiveTabIndex = -1
     Options.Display.CloseButton.Offsets.Vertical = 6

@@ -33,8 +33,8 @@ object fAcceptEULA: TfAcceptEULA
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
-    ExplicitWidth = 440
-    ExplicitHeight = 249
+    ExplicitWidth = 432
+    ExplicitHeight = 278
     object Label6: TLabel
       Left = 6
       Top = 8
@@ -190,6 +190,7 @@ object fAcceptEULA: TfAcceptEULA
         ParentFont = False
         PasswordChar = '*'
         TabOrder = 1
+        OnChange = ePasswordChange
       end
       object ePassword: TEdit
         Left = 171
@@ -204,6 +205,7 @@ object fAcceptEULA: TfAcceptEULA
         ParentFont = False
         PasswordChar = '*'
         TabOrder = 0
+        OnChange = ePasswordChange
       end
     end
     object cbAutoUpdate: TCheckBox
