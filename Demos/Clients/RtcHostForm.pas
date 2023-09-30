@@ -113,6 +113,7 @@ type
     ID: String;
     Action: String;
     DataModule: TUIDataModule;
+    UIHandle: THandle;
     StartLockedState: Integer;
     StartServiceStarted: Boolean;
   end;
@@ -2730,7 +2731,7 @@ procedure TMainForm.RemovePortalConnection(AID, AAction: String; ACloseFUI: Bool
 var
   i: Integer;
 begin
-  //XLog('RemovePortalConnectionByUIHandle');
+  //XLog('RemovePortalConnection');
 
   CS_GW.Acquire;
   try
@@ -2749,8 +2750,9 @@ begin
 //          FreeAndNil(PPortalConnection(PortalConnectionsList[i])^.ThisThread);
 //        end;
         PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, WPARAM(ACloseFUI), 0); //Закрываем поток с пклиентом
-//        if ACloseFUI then
-//          PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
+        if ACloseFUI
+          and ((PPortalConnection(PortalConnectionsList[i])^.Action = 'file') or (PPortalConnection(PortalConnectionsList[i])^.Action = 'chat')) then
+          PostMessage(PPortalConnection(PortalConnectionsList[i])^.UIHandle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
 
 //        Dispose(PPortalConnection(PortalConnectionsList[i])^.UIForm);
         Dispose(PortalConnectionsList[i]);
@@ -7914,7 +7916,7 @@ begin
 //      if PRItem = nil then
 //        Exit;
 
-      RemovePortalConnection(asWideString['user'], asString['action'], True);
+      RemovePortalConnection(asWideString['user'], asString['action'], False);
       DeletePendingRequest(asWideString['user'], asString['action']);
 
       if asString['action'] = 'desk' then
@@ -8506,7 +8508,9 @@ begin
                     pPC := GetPortalConnection(asString['action'], asWideString['user']);
                     if pPC <> nil then
                       DesktopsForm.CloseUIAndTab(asText['user'], True, pPC^.ThreadID);
-                  end;
+                  end
+                  else
+                    RemovePortalConnection(asWideString['user'], asString['action'], True);
               end
             else if not isNull['locked'] then // Friend locked status update
               begin
@@ -9541,7 +9545,7 @@ begin
     pPCItem := GetPortalConnection('file', user);
     if pPCItem <> nil then
     begin
-//      pPCItem^.DMHandle := FWin.Handle;
+      pPCItem^.UIHandle := FWin.Handle;
       FWin.PartnerLockedState := pPCItem^.StartLockedState;
       FWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
       FWin.SetFormState;
@@ -9608,7 +9612,7 @@ begin
     pPCItem := GetPortalConnection('file', user);
     if pPCItem <> nil then
     begin
-//      pPCItem^.DMHandle := FWin.Handle;
+      pPCItem^.UIHandle := FWin.Handle;
       FWin.PartnerLockedState := pPCItem^.StartLockedState;
       FWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
       FWin.SetFormState;
@@ -9676,7 +9680,7 @@ begin
     pPCItem := GetPortalConnection('file', user);
     if pPCItem <> nil then
     begin
-//      pPCItem^.DMHandle := FWin.Handle;
+      pPCItem^.UIHandle := FWin.Handle;
 //      FWin.PartnerLockedState := pPCItem^.StartLockedState;
 //      FWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
 //      FWin.SetFormState;
@@ -9749,7 +9753,7 @@ begin
     pPCItem := GetPortalConnection('chat', user);
     if pPCItem <> nil then
     begin
-//      pPCItem^.DMHandle := CWin.Handle;
+      pPCItem^.UIHandle := CWin.Handle;
       CWin.PartnerLockedState := pPCItem^.StartLockedState;
       CWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
       CWin.SetFormState;
@@ -10412,6 +10416,11 @@ procedure TMainForm.PModuleUserJoined(Sender: TRtcPModule; const user:string);
 var
   u, s, d, a: String;
 begin
+//  xLog('PModuleUserJoined');
+
+  if Copy(Sender.Client.LoginUserName, 1, Length(DeviceId)) = DeviceId then
+    Exit;
+
   if Sender is TRtcPFileTransfer then
   begin
     s := 'Передача файлов';
@@ -10505,6 +10514,9 @@ procedure TMainForm.PModuleUserLeft(Sender: TRtcPModule; const user:string);
 //  a, i: Integer;
 begin
 //  xLog('PModuleUserLeft');
+
+  if Copy(Sender.Client.LoginUserName, 1, Length(DeviceId)) = DeviceId then
+    Exit;
 
 //  if Sender is TRtcPFileTransfer then
 //    s := 'Передача файлов'
