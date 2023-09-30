@@ -6614,6 +6614,7 @@ var
   Node: PVirtualNode;
   p: TPoint;
   DData: PDeviceData;
+  cnt: Integer;
 begin
   GetCursorPos(p);
   p := twIncomes.ScreenToClient(p);
@@ -6628,6 +6629,11 @@ begin
 //    TSendDestroyClientToGatewayThread.Create(False, tPHostThread.Gateway, DData^.Name, False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, False);
     SendManualLogoutToControl(DData^.Action, DData^.ID, DeviceId);
     twIncomes.DeleteNode(Node);
+
+    cnt := GetIncomeConnectionsCount;
+    tsIncomes.Caption := 'Входящие подключения (' + IntToStr(cnt) + ')';
+    if cnt = 0 then
+      pcDevAcc.ActivePage := tsMyDevices;
   end;
 end;
 
@@ -7372,6 +7378,7 @@ procedure TMainForm.bCloseAllIncomesClick(Sender: TObject);
 var
   Node: PVirtualNode;
   DData: PDeviceData;
+  cnt: Integer;
 begin
   Node := twIncomes.GetFirst;
   while Node <> nil do
@@ -7384,6 +7391,11 @@ begin
 
   twIncomes.Clear;
   twIncomes.Repaint;
+
+  cnt := GetIncomeConnectionsCount;
+  tsIncomes.Caption := 'Входящие подключения (' + IntToStr(cnt) + ')';
+  if cnt = 0 then
+    pcDevAcc.ActivePage := tsMyDevices;
 end;
 
 procedure TMainForm.bCloseAllIncomesMouseEnter(Sender: TObject);
@@ -10426,8 +10438,16 @@ var
 begin
 //  xLog('PModuleUserJoined');
 
-  if Copy(user {Sender.Client.LoginUserName}, 1, Length(DeviceId)) = DeviceId then
-    Exit;
+  if Pos('_', Sender.Client.LoginUserName) > 0 then
+  begin
+    if Copy(Sender.Client.LoginUserName, 1, Length(DeviceId)) = DeviceId then
+      Exit;
+  end
+  else
+  begin
+    if Copy(user, 1, Length(DeviceId)) = DeviceId then
+      Exit;
+  end;
 
   if Sender is TRtcPFileTransfer then
     sAction := 'Передача файлов'
@@ -10523,8 +10543,16 @@ procedure TMainForm.PModuleUserLeft(Sender: TRtcPModule; const user:string);
 begin
 //  xLog('PModuleUserLeft');
 
-  if Copy(user {Sender.Client.LoginUserName}, 1, Length(DeviceId)) = DeviceId then
-    Exit;
+  if Pos('_', Sender.Client.LoginUserName) > 0 then
+  begin
+    if Copy(Sender.Client.LoginUserName, 1, Length(DeviceId)) = DeviceId then
+      Exit;
+  end
+  else
+  begin
+    if Copy(user, 1, Length(DeviceId)) = DeviceId then
+      Exit;
+  end;
 
 //  if Sender is TRtcPFileTransfer then
 //    s := 'Передача файлов'
