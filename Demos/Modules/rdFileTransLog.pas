@@ -1,4 +1,4 @@
-unit rdFileTransLog;
+п»їunit rdFileTransLog;
 
 interface
 
@@ -67,7 +67,7 @@ end;
 
 procedure TrdFileTransferLog.SetCaption;
 begin
-  Caption := GetUserFromFromUserName(myUI.UserName) + ' - Лог передачи файлов';
+  Caption := GetUserFromFromUserName(myUI.UserName) + ' - Р›РѕРі РїРµСЂРµРґР°С‡Рё С„Р°Р№Р»РѕРІ';
 end;
 
 procedure TrdFileTransferLog.Form_Open(const mode: string);
@@ -117,7 +117,7 @@ var
   sDate: String;
 begin
   DateTimeToString(sDate, 'dd.mm.yyyy hh:nn:ss', Now);
-  mLog.Lines.Add(sDate + ': Передача файлов завершена');
+  mLog.Lines.Add(sDate + ': ГЏГҐГ°ГҐГ¤Г Г·Г  ГґГ Г©Г«Г®Гў Г§Г ГўГҐГ°ГёГҐГ­Г ');
 
   Form_Close('Closed');
   Close;
@@ -138,7 +138,7 @@ begin
   if not FReady then Form_Open('(Init) ');
 
   DateTimeToString(sDate, 'dd.mm.yyyy hh:nn:ss', Now);
-  mLog.Lines.Add(sDate + ': Инициализация передачи файлов...');
+  mLog.Lines.Add(sDate + ': РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РїРµСЂРµРґР°С‡Рё С„Р°Р№Р»РѕРІ...');
 end;
 
 procedure TrdFileTransferLog.myUILogOut(Sender: TRtcPFileTransferUI);
@@ -169,7 +169,7 @@ procedure TrdFileTransferLog.myUIOpen(Sender: TRtcPFileTransferUI);
 
   Form_Open('');
 
-//  mLog.Lines.Add('Начата передача файлов');
+//  mLog.Lines.Add('РќР°С‡Р°С‚Р° РїРµСЂРµРґР°С‡Р° С„Р°Р№Р»РѕРІ');
 
 //  Caption:=myUI.UserName+' - Files transferring';
   SetCaption;
@@ -239,9 +239,9 @@ var
 begin
   DateTimeToString(sDate, 'dd.mm.yyyy hh:nn:ss', Now);
   if myUI.Recv_FileCount>1 then
-    mLog.Lines.Add(sDate + ': Получение отменено ' + myUI.Recv_ToFolder + '\' + '[' + IntToStr(myUI.Recv_FileCount) + '] ' + myUI.Recv_FileName)
+    mLog.Lines.Add(sDate + ': РџРѕР»СѓС‡РµРЅРёРµ РѕС‚РјРµРЅРµРЅРѕ ' + myUI.Recv_ToFolder + '\' + '[' + IntToStr(myUI.Recv_FileCount) + '] ' + myUI.Recv_FileName)
   else
-    mLog.Lines.Add(sDate + ': Получение отменено ' + myUI.Recv_ToFolder + '\' + myUI.Recv_FileName);
+    mLog.Lines.Add(sDate + ': РџРѕР»СѓС‡РµРЅРёРµ РѕС‚РјРµРЅРµРЅРѕ ' + myUI.Recv_ToFolder + '\' + myUI.Recv_FileName);
 //  lRecvFileName.Caption:='Cancelled';
 end;
 
@@ -253,9 +253,9 @@ begin
  if myUI.Recv_FirstTime then
   begin
     if myUI.Recv_FileCount > 1 then
-      mLog.Lines.Add(sDate + ': Получение ' + myUI.Recv_ToFolder + '\' + '[' + IntToStr(myUI.Recv_FileCount) + '] ' + myUI.Recv_FileName)
+      mLog.Lines.Add(sDate + ': РџРѕР»СѓС‡РµРЅРёРµ ' + myUI.Recv_ToFolder + '\' + '[' + IntToStr(myUI.Recv_FileCount) + '] ' + myUI.Recv_FileName)
     else
-      mLog.Lines.Add(sDate + ': Получение ' + myUI.Recv_ToFolder + '\' + myUI.Recv_FileName);
+      mLog.Lines.Add(sDate + ': РџРѕР»СѓС‡РµРЅРёРµ ' + myUI.Recv_ToFolder + '\' + myUI.Recv_FileName);
   end;
 
 //  if myUI.Recv_FirstTime then
@@ -380,9 +380,9 @@ var
 begin
   DateTimeToString(sDate, 'dd.mm.yyyy hh:nn:ss', Now);
   if myUI.Send_FileCount > 1 then
-    mLog.Lines.Add(sDate + ': Отправка отменена ' + myUI.Send_FromFolder + ' [' + IntToStr(myUI.Send_FileCount) + '] '+ myUI.Send_FileName)
+    mLog.Lines.Add(sDate + ': РћС‚РїСЂР°РІРєР° РѕС‚РјРµРЅРµРЅР° ' + myUI.Send_FromFolder + ' [' + IntToStr(myUI.Send_FileCount) + '] '+ myUI.Send_FileName)
   else
-    mLog.Lines.Add(sDate + ': Отправка отменена ' + myUI.Send_FromFolder + myUI.Send_FileName);
+    mLog.Lines.Add(sDate + ': РћС‚РїСЂР°РІРєР° РѕС‚РјРµРЅРµРЅР° ' + myUI.Send_FromFolder + myUI.Send_FileName);
 
 //  lSendFileName.Caption:='Cancelled';
 end;
@@ -395,9 +395,9 @@ begin
   if myUI.Send_FirstTime then
   begin
     if myUI.Send_FileCount > 1 then
-      mLog.Lines.Add(sDate + ': Отправка ' + myUI.Send_FromFolder + ' [' + IntToStr(myUI.Send_FileCount) + '] '+ myUI.Send_FileName)
+      mLog.Lines.Add(sDate + ': РћС‚РїСЂР°РІРєР° ' + myUI.Send_FromFolder + ' [' + IntToStr(myUI.Send_FileCount) + '] '+ myUI.Send_FileName)
     else
-      mLog.Lines.Add(sDate + ': Отправка ' + myUI.Send_FromFolder + myUI.Send_FileName);
+      mLog.Lines.Add(sDate + ': РћС‚РїСЂР°РІРєР° ' + myUI.Send_FromFolder + myUI.Send_FileName);
   end;
 end;
 

@@ -23,8 +23,8 @@ object rdFileTransferLog: TrdFileTransferLog
     Align = alClient
     ReadOnly = True
     TabOrder = 0
-    ExplicitWidth = 407
-    ExplicitHeight = 248
+    ExplicitWidth = 399
+    ExplicitHeight = 246
   end
   object pBottom: TPanel
     Left = 0
@@ -34,8 +34,8 @@ object rdFileTransferLog: TrdFileTransferLog
     Align = alBottom
     BevelOuter = bvNone
     TabOrder = 1
-    ExplicitTop = 248
-    ExplicitWidth = 407
+    ExplicitTop = 246
+    ExplicitWidth = 399
     object bOK: TButton
       Left = 156
       Top = 6
