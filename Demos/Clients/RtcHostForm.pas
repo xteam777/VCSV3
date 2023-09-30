@@ -113,6 +113,7 @@ type
     ID: String;
     Action: String;
     DataModule: TUIDataModule;
+    UIHandle: THandle;
     StartLockedState: Integer;
     StartServiceStarted: Boolean;
   end;
@@ -693,7 +694,7 @@ type
     procedure DrawCloseButton(AStringTree: TVirtualStringTree; Canvas: TCanvas; ARect: TRect; Node: PVirtualNode; AColor: TColor);
     procedure DrawImage(AStringTree: TVirtualStringTree; Canvas: TCanvas; NodeRect: TRect; ImageIndex: Integer);
     function NodeByUID(const aTree:TVirtualStringTree; const anUID:String): PVirtualNode;
-    function NodeByID(const aTree: TVirtualStringTree; const aID: Integer): PVirtualNode;
+    function NodeByID(const aTree: TVirtualStringTree; const aID: String): PVirtualNode;
 
     procedure SetConnectedState(fConnected: Boolean);
 //    procedure WndProc(var Msg : TMessage); override;
@@ -774,7 +775,7 @@ type
     procedure AddIncomeConnection(AAction, AUserName, AUserDesc: String);
     procedure RemoveIncomeConnection(AUserName: String);
     function GetIncomeConnectionsCount: Integer;
-    function IsIncomeConnectionExists(AUserName: String): Boolean;
+    function IsIncomeConnectionExists(AID, AAction: String): Boolean;
   end;
 
 //type
@@ -2730,7 +2731,7 @@ procedure TMainForm.RemovePortalConnection(AID, AAction: String; ACloseFUI: Bool
 var
   i: Integer;
 begin
-  //XLog('RemovePortalConnectionByUIHandle');
+  //XLog('RemovePortalConnection');
 
   CS_GW.Acquire;
   try
@@ -2749,8 +2750,9 @@ begin
 //          FreeAndNil(PPortalConnection(PortalConnectionsList[i])^.ThisThread);
 //        end;
         PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, WPARAM(ACloseFUI), 0); //Закрываем поток с пклиентом
-//        if ACloseFUI then
-//          PostMessage(PPortalConnection(PortalConnectionsList[i])^.DataModule.Handle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
+        if ACloseFUI
+          and ((PPortalConnection(PortalConnectionsList[i])^.Action = 'file') or (PPortalConnection(PortalConnectionsList[i])^.Action = 'chat')) then
+          PostMessage(PPortalConnection(PortalConnectionsList[i])^.UIHandle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
 
 //        Dispose(PPortalConnection(PortalConnectionsList[i])^.UIForm);
         Dispose(PortalConnectionsList[i]);
@@ -4105,7 +4107,7 @@ begin
   Node := twDevices.GetFirst;
   while Node <> nil do
   begin
-    if TDeviceData(twDevices.GetNodeData(Node)^).ID = StrToInt(GetUserFromFromUserName(uname)) then
+    if TDeviceData(twDevices.GetNodeData(Node)^).ID = GetUserFromFromUserName(uname) then
     begin
       TDeviceData(twDevices.GetNodeData(Node)^).StateIndex := status;
       twDevices.InvalidateNode(Node);
@@ -4740,7 +4742,7 @@ begin
      (twDevices.GetNodeLevel(twDevices.FocusedNode) <> 0) then
   begin
     DData := PDeviceData(twDevices.GetNodeData(twDevices.FocusedNode));
-    user := IntToStr(DData^.ID);
+    user := DData^.ID;
 
     StartFileTransferring(user, DData^.Name, DData^.Password);
   end;
@@ -4965,7 +4967,7 @@ begin
       DData^.Password := System.Hash.THashMD5.GetHashString(DForm.ePassword.Text);
       DData^.Description := DForm.mDescription.Lines.GetText;
       DData^.GroupUID := DForm.GroupUID;
-      DData^.ID := StrToInt(DForm.eID.Text);
+      DData^.ID := DForm.eID.Text;
       DData^.HighLight := False;
       if DeviceId = DForm.eID.Text then
         DData^.StateIndex := MSG_STATUS_ONLINE
@@ -5047,7 +5049,7 @@ begin
       Node.States := [vsInitialized];
       DData := twDevices.GetNodeData(Node);
       DData^.UID := '';
-      DData^.ID := 0;
+      DData^.ID := '';
       DData^.HighLight := False;
       DData^.StateIndex := MSG_STATUS_OFFLINE;
 
@@ -5105,7 +5107,7 @@ begin
       DForm.CModule := @cmAccounts;
       DForm.AccountUID := AccountUID;
       DForm.UID := DData^.UID;
-      DForm.eID.Text := IntToStr(DData^.ID);
+      DForm.eID.Text := DData^.ID;
       DForm.eName.Text := DData^.Name;
       DForm.PrevPassword := DData^.Password;
       if DData^.Password <> '' then
@@ -5125,7 +5127,7 @@ begin
         else
           DData^.Password := DForm.PrevPassword;
         DData^.Description := DForm.mDescription.Lines.GetText;
-        DData^.ID := StrToInt(DForm.eID.Text);
+        DData^.ID := DForm.eID.Text;
         DData^.HighLight := False;
 //          DData^.StateIndex := MSG_STATUS_OFFLINE;
         GroupNode := GetGroupByUID(DForm.GroupUID);
@@ -5173,7 +5175,7 @@ begin
   begin
 //    DData := PDeviceData(twDevices.GetNodeData(twDevices.FocusedNode));
     DData := PDeviceData(twDevices.GetNodeData(Node));
-    user := IntToStr(DData^.ID);
+    user := DData^.ID;
 
     if user = DeviceId then
     begin
@@ -6151,7 +6153,7 @@ begin
 
     Name := DData^.Name;
     if (DeviceId <> '') then
-      if DData^.ID = StrToInt(DeviceId) then
+      if DData^.ID = DeviceId then
         if Name <> '' then
           Name := Name + ' (этот компьютер)'
         else
@@ -6512,7 +6514,7 @@ begin
        (twDevices.GetNodeLevel(twDevices.FocusedNode) <> 0) then
     begin
       DData := PDeviceData(twDevices.GetNodeData(twDevices.FocusedNode));
-      user := IntToStr(DData^.ID);
+      user := DData^.ID;
 
       if user = DeviceId then
       begin
@@ -6894,8 +6896,8 @@ begin
       DData := twDevices.GetNodeData(Node);
       if (DData^.UID <> '') then
        if (StrPos(PWideChar(WideLowerCase(DData^.Name)), PWideChar(WideString(LowerCase(Trim(eDeviceName.Text))))) <> nil)
-        or ((StrPos(PWideChar(IntToStr(DData^.ID)), PWideChar(WideString(LowerCase(Trim(eDeviceName.Text))))) <> nil)
-          and (DData^.ID <> 0)) then
+        or ((StrPos(PWideChar(DData^.ID), PWideChar(WideString(LowerCase(Trim(eDeviceName.Text))))) <> nil)
+          and (DData^.ID <> '')) then
         Node.States := Node.States + [vsVisible]
        else
         Node.States := Node.States - [vsVisible];
@@ -6908,8 +6910,8 @@ begin
           DData := twDevices.GetNodeData(CNode);
           if (DData^.UID <> '') then
            if (StrPos(PWideChar(WideLowerCase(String(DData^.Name))), PWideChar(WideString(LowerCase(Trim(eDeviceName.Text))))) <> nil)
-            or ((StrPos(PWideChar(IntToStr(DData^.ID)), PWideChar(WideString(LowerCase(Trim(eDeviceName.Text))))) <> nil)
-              and (DData^.ID <> 0)) then
+            or ((StrPos(PWideChar(DData^.ID), PWideChar(WideString(LowerCase(Trim(eDeviceName.Text))))) <> nil)
+              and (DData^.ID <> '')) then
            begin
             CNode.States := CNode.States + [vsVisible];
             CNode.Parent.States := CNode.Parent.States + [vsVisible];
@@ -7914,7 +7916,7 @@ begin
 //      if PRItem = nil then
 //        Exit;
 
-      RemovePortalConnection(asWideString['user'], asString['action'], True);
+      RemovePortalConnection(asWideString['user'], asString['action'], False);
       DeletePendingRequest(asWideString['user'], asString['action']);
 
       if asString['action'] = 'desk' then
@@ -8282,7 +8284,7 @@ begin
       while CNode <> nil do
       begin
         DData := twDevices.GetNodeData(CNode);
-        if (DData^.ID = StrToInt(GetUserFromFromUserName(uname))) then
+        if (DData^.ID = GetUserFromFromUserName(uname)) then
         begin
           Result := DData;
           Exit;
@@ -8506,7 +8508,9 @@ begin
                     pPC := GetPortalConnection(asString['action'], asWideString['user']);
                     if pPC <> nil then
                       DesktopsForm.CloseUIAndTab(asText['user'], True, pPC^.ThreadID);
-                  end;
+                  end
+                  else
+                    RemovePortalConnection(asWideString['user'], asString['action'], True);
               end
             else if not isNull['locked'] then // Friend locked status update
               begin
@@ -8775,7 +8779,7 @@ begin
   Result := Node; //Should Return Nil if the index is not reached.
 end;
 
-function TMainForm.NodeByID(const aTree: TVirtualStringTree; const aID: Integer): PVirtualNode;
+function TMainForm.NodeByID(const aTree: TVirtualStringTree; const aID: String): PVirtualNode;
 var
   Node : PVirtualNode;
 begin
@@ -9293,7 +9297,7 @@ begin
             Node.States := [vsInitialized];
             DData := twDevices.GetNodeData(Node);
             DData^.UID := '';
-            DData^.ID := 0;
+            DData^.ID := '';
             DData^.HighLight := False;
             DData^.StateIndex := MSG_STATUS_OFFLINE;
           end;
@@ -9308,7 +9312,7 @@ begin
             DData := twDevices.GetNodeData(Node);
             DData^.UID := asString['UID'];
             DData^.GroupUID := asString['GroupUID'];
-            DData^.ID := asInteger['ID'];
+            DData^.ID := asString['ID'];
             DData^.Name := asWideString['Name'];
             DData^.Password := asWideString['Password'];
             DData^.Description := asWideString['Description'];
@@ -9492,7 +9496,7 @@ begin
     Exit;
   end;
 
-  Node := NodeByID(twDevices, StrToInt(GetUserFromFromUserName(aUserName)));
+  Node := NodeByID(twDevices, GetUserFromFromUserName(aUserName));
   if Node <> nil then
     Result := TDeviceData(twDevices.GetNodeData(Node)^).Name
   else
@@ -9509,7 +9513,7 @@ begin
     Exit;
   end;
 
-  Node := NodeByID(twDevices, StrToInt(GetUserFromFromUserName(aUserName)));
+  Node := NodeByID(twDevices, GetUserFromFromUserName(aUserName));
   if Node <> nil then
     Result := TDeviceData(twDevices.GetNodeData(Node)^).Password
   else
@@ -9541,7 +9545,7 @@ begin
     pPCItem := GetPortalConnection('file', user);
     if pPCItem <> nil then
     begin
-//      pPCItem^.DMHandle := FWin.Handle;
+      pPCItem^.UIHandle := FWin.Handle;
       FWin.PartnerLockedState := pPCItem^.StartLockedState;
       FWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
       FWin.SetFormState;
@@ -9608,7 +9612,7 @@ begin
     pPCItem := GetPortalConnection('file', user);
     if pPCItem <> nil then
     begin
-//      pPCItem^.DMHandle := FWin.Handle;
+      pPCItem^.UIHandle := FWin.Handle;
       FWin.PartnerLockedState := pPCItem^.StartLockedState;
       FWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
       FWin.SetFormState;
@@ -9676,7 +9680,7 @@ begin
     pPCItem := GetPortalConnection('file', user);
     if pPCItem <> nil then
     begin
-//      pPCItem^.DMHandle := FWin.Handle;
+      pPCItem^.UIHandle := FWin.Handle;
 //      FWin.PartnerLockedState := pPCItem^.StartLockedState;
 //      FWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
 //      FWin.SetFormState;
@@ -9749,7 +9753,7 @@ begin
     pPCItem := GetPortalConnection('chat', user);
     if pPCItem <> nil then
     begin
-//      pPCItem^.DMHandle := CWin.Handle;
+      pPCItem^.UIHandle := CWin.Handle;
       CWin.PartnerLockedState := pPCItem^.StartLockedState;
       CWin.PartnerServiceStarted := pPCItem^.StartServiceStarted;
       CWin.SetFormState;
@@ -10383,7 +10387,7 @@ begin
   tsIncomes.Caption := 'Входящие подключения (' + IntToStr(GetIncomeConnectionsCount) + ')';
 end;
 
-function TMainForm.IsIncomeConnectionExists(AUserName: String): Boolean;
+function TMainForm.IsIncomeConnectionExists(AID, AAction: String): Boolean;
 var
   Node: PVirtualNode;
 begin
@@ -10395,7 +10399,8 @@ begin
     Node := twIncomes.GetFirst;
     while Node <> nil do
     begin
-      if TDeviceData(twIncomes.GetNodeData(Node)^).Name = AUserName then
+      if (TDeviceData(twIncomes.GetNodeData(Node)^).ID = AID)
+        and (TDeviceData(twIncomes.GetNodeData(Node)^).Action = AAction) then
       begin
         Result := True;
 
@@ -10410,42 +10415,48 @@ end;
 
 procedure TMainForm.PModuleUserJoined(Sender: TRtcPModule; const user:string);
 var
-  u, s, d, a: String;
+  FullDesc, UserName, UserDesc, Action, sAction: String;
+  arr: TStringDynArray;
 begin
+//  xLog('PModuleUserJoined');
+
+  if Copy(Sender.Client.LoginUserName, 1, Length(DeviceId)) = DeviceId then
+    Exit;
+
   if Sender is TRtcPFileTransfer then
-  begin
-    s := 'Передача файлов';
-    a := 'file';
-  end
+    sAction := 'Передача файлов'
   else
   if Sender is TRtcPChat then
-  begin
-    s := 'Чат';
-    a := 'chat';
-  end
+    sAction := 'Чат'
   else
   if Sender is TRtcPDesktopHost then
   begin
-    s := 'Управление';
+    sAction := 'Управление';
     Inc(DesktopCnt);
 //    if DesktopCnt = 1 then
 //      DragAcceptFiles(Handle, True);
-    a := 'desk';
+  end
+  else
+    sAction := '???';
+
+  arr := user.Split(['_'], 3);
+  if Length(arr) = 3 then
+  begin
+    UserName := arr[1];
+    Action := arr[2];
   end
   else
   begin
-    s := '???';
-    a := '???';
+    UserName := '';
+    Action := '';
   end;
-
-  u := GetUserFromFromUserName(user);
-  d := GetUserDescription(u);
-  if d <> '' then
-    s := d + ' (' + s + ')'
+  UserDesc := GetUserDescription(UserName);
+  if UserDesc <> '' then
+    FullDesc := UserDesc + ' (' + sAction + ')'
   else
-    s := u + ' (' + s + ')';
+    FullDesc := UserName + ' (' + sAction + ')';
 
-  if not IsIncomeConnectionExists(user) then
+  if not IsIncomeConnectionExists(UserName, Action) then
   begin
     if (not Visible)
       or (IsIconic(Application.Handle)) then
@@ -10459,7 +10470,7 @@ begin
 
     pcDevAcc.ActivePage := tsIncomes;
 
-    AddIncomeConnection(a, user, s);
+    AddIncomeConnection(UserName, Action, FullDesc);
   end;
 
 //  Memo1.Lines.Add(user + ' joined');
@@ -10505,6 +10516,9 @@ procedure TMainForm.PModuleUserLeft(Sender: TRtcPModule; const user:string);
 //  a, i: Integer;
 begin
 //  xLog('PModuleUserLeft');
+
+  if Copy(Sender.Client.LoginUserName, 1, Length(DeviceId)) = DeviceId then
+    Exit;
 
 //  if Sender is TRtcPFileTransfer then
 //    s := 'Передача файлов'
