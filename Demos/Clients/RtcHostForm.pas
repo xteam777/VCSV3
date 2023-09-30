@@ -361,8 +361,6 @@ type
     procedure PChatNewUI(Sender: TRtcPChat; const user:string);
     procedure PDesktopControlNewUI(Sender: TRtcPDesktopControl;
       const user: String);
-
-    procedure HostFileTransferModuleUserLeft(Sender: TRtcPModule; const user:string);
     procedure PModuleUserJoined(Sender: TRtcPModule; const user:string);
     procedure PModuleUserLeft(Sender: TRtcPModule; const user:string);
 
@@ -1311,7 +1309,7 @@ begin
 //  else
 //    FFileTransfer.OnNewUI := MainForm.PFileTransExplorerNewUI_HideMode; //Для контроля указываем невидимый эксплорер
   FFileTransfer.OnUserJoined := MainForm.PModuleUserJoined;
-  FFileTransfer.OnUserLeft := MainForm.HostFileTransferModuleUserLeft; //MainForm.PModuleUserLeft;
+  FFileTransfer.OnUserLeft := MainForm.PModuleUserLeft; //MainForm.PModuleUserLeft;
   FFileTransfer.NotifyFileBatchSend := MainForm.OnDesktopHostNotifyFileBatchSend;
   FFileTransfer.Tag := ThreadID;
 
@@ -10530,11 +10528,6 @@ begin
 //  el.Caption:=s;
 //  eConnected.Update;
   end;
-
-procedure TMainForm.HostFileTransferModuleUserLeft(Sender: TRtcPModule; const user:string);
-begin
-  RemoveProgressDialogByUserName(user);
-end;
 
 procedure TMainForm.PModuleUserLeft(Sender: TRtcPModule; const user:string);
 //var
