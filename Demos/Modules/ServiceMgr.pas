@@ -230,10 +230,10 @@ var
   sMgr, sHandle: SC_HANDLE;
 begin
   Result := False;
-  sMgr := OpenSCManager(nil, nil, SC_MANAGER_ALL_ACCESS);
+  sMgr := OpenSCManager(nil, nil, GENERIC_READ); //SC_MANAGER_ALL_ACCESS
   if sMgr <= 0 then
     Exit;
-  sHandle := OpenService(sMgr, PChar(SvrName), STANDARD_RIGHTS_REQUIRED);
+  sHandle := OpenService(sMgr, PChar(SvrName), GENERIC_READ); //STANDARD_RIGHTS_REQUIRED
   if sHandle > 0 then
     Result := True;
 end;

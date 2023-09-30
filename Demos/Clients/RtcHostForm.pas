@@ -1090,7 +1090,7 @@ begin
     begin
       EleavateSupport := TEleavateSupport.Create(nil);
       try
-        SetLastError(EleavateSupport.RunElevated(fn, '', Handle, False, Application.ProcessMessages));
+        SetLastError(EleavateSupport.RunElevated(fn, '', Handle, True, Application.ProcessMessages));
         err := GetLastError;
         if err <> ERROR_SUCCESS then
           xLog('ServiceInstall error = ' + IntToStr(err) + ' ' + SysErrorMessage(err));
@@ -1098,12 +1098,12 @@ begin
       finally
         EleavateSupport.Free;
       end;
+
+    //  pBtnSetup.Visible := not IsServiceExisted(RTC_HOSTSERVICE_NAME);
+
+      Application.Terminate;
     end;
   end;
-
-  pBtnSetup.Visible := not IsServiceExisted(RTC_HOSTSERVICE_NAME);
-
-  Application.Terminate;
 end;
 
 procedure TMainForm.bSetupMouseEnter(Sender: TObject);
