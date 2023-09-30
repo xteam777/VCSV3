@@ -149,7 +149,7 @@ type
     procedure CheckDisconnectedGateways;
     procedure DisconnectServiceClients(ServiceUserName: String);
 
-    procedure NotifyControlOfManualLogout(ControlID, HostID: String);
+    procedure NotifyControlOfManualLogout(Action, ControlID, HostID: String);
   end;
 
 implementation
@@ -560,7 +560,7 @@ end;
 //  end;
 //end;
 
-procedure TVircessUsers.NotifyControlOfManualLogout(ControlID, HostID: String);
+procedure TVircessUsers.NotifyControlOfManualLogout(Action, ControlID, HostID: String);
 var
   rec: TRtcRecord;
 begin
@@ -569,6 +569,7 @@ begin
     rec.AutoCreate := True;
     with rec.asRecord['manual_logout'] do
     begin
+      asText['action'] := Action;
       asText['user'] := HostID;
       SendData(ControlID, rec);
     end;
