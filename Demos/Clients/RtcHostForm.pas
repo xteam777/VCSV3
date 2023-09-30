@@ -1384,6 +1384,7 @@ end;
 
 destructor TPortalHostThread.Destroy;
 begin
+  FGatewayClient.Module.WaitForCompletion(False, 2);
 //  try
     FGatewayClient.Disconnect;
 //  finally
