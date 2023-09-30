@@ -10364,6 +10364,7 @@ end;
 procedure TMainForm.RemoveIncomeConnection(AUserName: String);
 var
   Node: PVirtualNode;
+  cnt: Integer;
 begin
 //  XLog('RemoveIncomeConnection');
 
@@ -10385,7 +10386,10 @@ begin
     CS_Incoming.Release;
   end;
 
-  tsIncomes.Caption := 'Входящие подключения (' + IntToStr(GetIncomeConnectionsCount) + ')';
+  cnt := GetIncomeConnectionsCount;
+  tsIncomes.Caption := 'Входящие подключения (' + IntToStr(cnt) + ')';
+  if cnt = 0 then
+    pcDevAcc.ActivePage := tsMyDevices;
 end;
 
 function TMainForm.IsIncomeConnectionExists(AID, AAction: String): Boolean;
