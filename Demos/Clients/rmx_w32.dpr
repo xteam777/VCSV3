@@ -21,7 +21,8 @@ uses
   Execute.DesktopDuplicationAPI,
   rtcWinLogon,
   WtsApi,
-  DateUtils;
+  DateUtils,
+  LockWindowUnit;
 
 //  rtcWinlogon,
   //FastDIB in 'Lib\FastDIB.pas';
@@ -2561,12 +2562,14 @@ begin
   begin
     // Power Off Monitor
 //    SetBlankMonitor(True);
+    TLockWindow.Show();
   end
   else
   if Request.Data.ReadInteger('QueryType') = QT_SENDONMON then
   begin
     // Power On Monitor
 //    SetBlankMonitor(False);
+    TLockWindow.Close();
   end
   else
   if Request.Data.ReadInteger('QueryType') = QT_SENDLCKSYS then

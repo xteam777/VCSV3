@@ -333,15 +333,15 @@ type
 
 //function GetCursorInfo2(var pci: PCursorInfo): BOOL; stdcall; external 'user32.dll' name 'GetCursorInfo';
 
-const
-  TG_F ='˜';
+//const
+//  TG_F ='˜';
 
-var
-  FHelper_Width, FHelper_Height: Integer;
-  FHelper_BitsPerPixel: Word;
-  FHelper_mouseFlags: DWORD;
-  FHelper_mouseCursor: HCURSOR;
-  FHelper_mouseX, FHelper_mouseY: LongInt;
+//var
+//  FHelper_Width, FHelper_Height: Integer;
+//  FHelper_BitsPerPixel: Word;
+//  FHelper_mouseFlags: DWORD;
+//  FHelper_mouseCursor: HCURSOR;
+//  FHelper_mouseX, FHelper_mouseY: LongInt;
 
 implementation
 
