@@ -108,9 +108,9 @@ type
   TPortalConnection = record
     ThisThread: PPortalThread;
     ThreadID: Cardinal;
-    UserName: String;
+    UserName: String; //Initial connection user
     UserPass: String;
-    ID: String;
+    ID: String; //User to connent
     Action: String;
     DataModule: TUIDataModule;
     UIHandle: THandle;
@@ -9945,7 +9945,7 @@ begin
     pPCItem := GetPortalConnection('desk', user);
     if pPCItem <> nil then
     //begin
-      pPCItem^.DataModule := DesktopsForm.AddNewTab(pPCItem^.UserName, GetUserDescription(user), pPCItem^.UserPass, pPCItem^.ThreadID, pPCItem^.StartLockedState, pPCItem^.StartServiceStarted, Sender);
+      pPCItem^.DataModule := DesktopsForm.AddNewTab(pPCItem^.ID, GetUserDescription(pPCItem^.ID), pPCItem^.UserPass, pPCItem^.ThreadID, pPCItem^.StartLockedState, pPCItem^.StartServiceStarted, Sender);
 //      DesktopsForm.PartnerLockedState := pPCItem^.StartLockedState;
 //      DesktopsForm.PartnerServiceStarted := pPCItem^.StartServiceStarted;
 //      DesktopsForm.SetFormState;
