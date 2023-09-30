@@ -737,7 +737,7 @@ type
     procedure ShowMessageBox(AText, ACaption, AType, AUID: string);
     procedure ShowAboutForm;
     procedure DoDeleteDeviceGroup(AUID: String);
-    procedure SendManualLogoutToControl(AControlID, AHostID: String);
+    procedure SendManualLogoutToControl(AAction, AControlID, AHostID: String);
     procedure DoExit;
     procedure CloseAllActiveUI;
 
@@ -771,7 +771,7 @@ type
     procedure RemoveProgressDialogByValue(AProgressDialog: PProgressDialog);
     procedure RemoveProgressDialogByUserName(AUserName: String);
 
-    procedure AddIncomeConnection(AUserName, AUserDesc: String);
+    procedure AddIncomeConnection(AAction, AUserName, AUserDesc: String);
     procedure RemoveIncomeConnection(AUserName: String);
     function GetIncomeConnectionsCount: Integer;
     function IsIncomeConnectionExists(AUserName: String): Boolean;
@@ -2011,7 +2011,7 @@ begin
   end;
 end;
 
-procedure TMainForm.SendManualLogoutToControl(AControlID, AHostID: String);
+procedure TMainForm.SendManualLogoutToControl(AAction, AControlID, AHostID: String);
 begin
   //XLog('DoDeleteDeviceGroup');
 
@@ -2019,6 +2019,7 @@ begin
   try
     with Data.NewFunction('Account.ManualLogout') do
     begin
+      asString['Action'] := AAction;
       asString['ControlID'] := AControlID;
       asString['HostID'] := AHostID;
       Call(rManualLogout);
@@ -6622,7 +6623,7 @@ begin
   begin
     DData := twIncomes.GetNodeData(Node);
 //    TSendDestroyClientToGatewayThread.Create(False, tPHostThread.Gateway, DData^.Name, False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, False);
-    SendManualLogoutToControl(GetUserFromFromUserName(DData^.Name), DeviceId);
+    SendManualLogoutToControl(DData^.Action, GetUserFromFromUserName(DData^.Name), DeviceId);
     twIncomes.DeleteNode(Node);
   end;
 end;
@@ -7374,7 +7375,7 @@ begin
   begin
     DData := twIncomes.GetNodeData(Node);
 //    TSendDestroyClientToGatewayThread.Create(False, tPHostThread.Gateway, GetUserFromFromUserName(DData^.Name), False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, True);
-    SendManualLogoutToControl(GetUserFromFromUserName(DData^.Name), DeviceId);
+    SendManualLogoutToControl(DData^.Action, GetUserFromFromUserName(DData^.Name), DeviceId);
     Node := twIncomes.GetNext(Node);
   end;
 
@@ -8403,7 +8404,7 @@ procedure TMainForm.resHostTimerReturn(Sender: TRtcConnection; Data,
 var
   i: Integer;
   fname: String;
-  PRItem: PPendingRequestItem;
+  pPC:  PPortalConnection;
 begin
 //  XLog('resHostTimerReturn');
 
@@ -8499,9 +8500,9 @@ begin
 //                make_notify(fname, 'manual_logout');
 //              if isFriend(fname) then
 //                FriendList_Status(fname, MSG_STATUS_OFFLINE);
-                PRItem := GetPendingItem(asWideString['user'], asString['action']);
-                if PRItem <> nil then
-                  DesktopsForm.CloseUIAndTab(asRecord['manual_logout'].asText['user'], True, PRItem^.ThreadID);
+                pPC := GetPortalConnection(asRecord['manual_logout'].asString['action'], asRecord['manual_logout'].asWideString['user']);
+                if pPC <> nil then
+                  DesktopsForm.CloseUIAndTab(asRecord['manual_logout'].asText['user'], True, pPC^.ThreadID);
               end
             else if not isNull['locked'] then // Friend locked status update
               begin
@@ -10301,7 +10302,7 @@ begin
 //  PDesktopHost.Restart;
 end;
 
-procedure TMainForm.AddIncomeConnection(AUserName, AUserDesc: String);
+procedure TMainForm.AddIncomeConnection(AAction, AUserName, AUserDesc: String);
 var
   Node: PVirtualNode;
   DData: PDeviceData;
@@ -10314,6 +10315,7 @@ begin
     DData := twDevices.GetNodeData(Node);
     DData^.Name := AUserName;
     DData^.Description := AUserDesc;
+    DData^.Action := AAction;
     DData^.HighLight := False;
     DData^.StateIndex := MSG_STATUS_ONLINE;
 
@@ -10404,23 +10406,33 @@ end;
 
 procedure TMainForm.PModuleUserJoined(Sender: TRtcPModule; const user:string);
 var
-  u, s, d: String;
+  u, s, d, a: String;
 begin
   if Sender is TRtcPFileTransfer then
-    s := 'Передача файлов'
+  begin
+    s := 'Передача файлов';
+    a := 'file';
+  end
   else
   if Sender is TRtcPChat then
-    s := 'Чат'
+  begin
+    s := 'Чат';
+    a := 'chat';
+  end
   else
   if Sender is TRtcPDesktopHost then
   begin
     s := 'Управление';
     Inc(DesktopCnt);
-    if DesktopCnt = 1 then
-      DragAcceptFiles(Handle, True)
+//    if DesktopCnt = 1 then
+//      DragAcceptFiles(Handle, True);
+    a := 'desk';
   end
   else
+  begin
     s := '???';
+    a := '???';
+  end;
 
   u := GetUserFromFromUserName(user);
   d := GetUserDescription(u);
@@ -10443,7 +10455,7 @@ begin
 
     pcDevAcc.ActivePage := tsIncomes;
 
-    AddIncomeConnection(user, s);
+    AddIncomeConnection(a, user, s);
   end;
 
 //  Memo1.Lines.Add(user + ' joined');

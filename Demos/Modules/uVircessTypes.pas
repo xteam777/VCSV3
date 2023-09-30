@@ -58,6 +58,7 @@ type
     Name: WideString;
     Password: WideString;
     Description: WideString;
+    Action: String;
     HighLight: Boolean;
     StateIndex: Integer;
   end;
