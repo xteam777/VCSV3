@@ -361,8 +361,6 @@ type
     procedure PChatNewUI(Sender: TRtcPChat; const user:string);
     procedure PDesktopControlNewUI(Sender: TRtcPDesktopControl;
       const user: String);
-
-    procedure HostFileTransferModuleUserLeft(Sender: TRtcPModule; const user:string);
     procedure PModuleUserJoined(Sender: TRtcPModule; const user:string);
     procedure PModuleUserLeft(Sender: TRtcPModule; const user:string);
 
@@ -772,7 +770,7 @@ type
     procedure RemoveProgressDialogByValue(AProgressDialog: PProgressDialog);
     procedure RemoveProgressDialogByUserName(AUserName: String);
 
-    procedure AddIncomeConnection(AAction, AUserName, AUserDesc: String);
+    procedure AddIncomeConnection(AAction, AID, AUserName, AUserDesc: String);
     procedure RemoveIncomeConnection(AUserName: String);
     function GetIncomeConnectionsCount: Integer;
     function IsIncomeConnectionExists(AID, AAction: String): Boolean;
@@ -1311,7 +1309,7 @@ begin
 //  else
 //    FFileTransfer.OnNewUI := MainForm.PFileTransExplorerNewUI_HideMode; //Для контроля указываем невидимый эксплорер
   FFileTransfer.OnUserJoined := MainForm.PModuleUserJoined;
-  FFileTransfer.OnUserLeft := MainForm.HostFileTransferModuleUserLeft; //MainForm.PModuleUserLeft;
+  FFileTransfer.OnUserLeft := MainForm.PModuleUserLeft; //MainForm.PModuleUserLeft;
   FFileTransfer.NotifyFileBatchSend := MainForm.OnDesktopHostNotifyFileBatchSend;
   FFileTransfer.Tag := ThreadID;
 
@@ -1384,6 +1382,7 @@ end;
 
 destructor TPortalHostThread.Destroy;
 begin
+  FGatewayClient.Module.WaitForCompletion(False, 2);
 //  try
     FGatewayClient.Disconnect;
 //  finally
@@ -6613,6 +6612,7 @@ var
   Node: PVirtualNode;
   p: TPoint;
   DData: PDeviceData;
+  cnt: Integer;
 begin
   GetCursorPos(p);
   p := twIncomes.ScreenToClient(p);
@@ -6625,8 +6625,13 @@ begin
   begin
     DData := twIncomes.GetNodeData(Node);
 //    TSendDestroyClientToGatewayThread.Create(False, tPHostThread.Gateway, DData^.Name, False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, False);
-    SendManualLogoutToControl(DData^.Action, GetUserFromFromUserName(DData^.Name), DeviceId);
+    SendManualLogoutToControl(DData^.Action, DData^.ID, DeviceId);
     twIncomes.DeleteNode(Node);
+
+    cnt := GetIncomeConnectionsCount;
+    tsIncomes.Caption := 'Входящие подключения (' + IntToStr(cnt) + ')';
+    if cnt = 0 then
+      pcDevAcc.ActivePage := tsMyDevices;
   end;
 end;
 
@@ -7371,6 +7376,7 @@ procedure TMainForm.bCloseAllIncomesClick(Sender: TObject);
 var
   Node: PVirtualNode;
   DData: PDeviceData;
+  cnt: Integer;
 begin
   Node := twIncomes.GetFirst;
   while Node <> nil do
@@ -7383,6 +7389,11 @@ begin
 
   twIncomes.Clear;
   twIncomes.Repaint;
+
+  cnt := GetIncomeConnectionsCount;
+  tsIncomes.Caption := 'Входящие подключения (' + IntToStr(cnt) + ')';
+  if cnt = 0 then
+    pcDevAcc.ActivePage := tsMyDevices;
 end;
 
 procedure TMainForm.bCloseAllIncomesMouseEnter(Sender: TObject);
@@ -10310,7 +10321,7 @@ begin
 //  PDesktopHost.Restart;
 end;
 
-procedure TMainForm.AddIncomeConnection(AAction, AUserName, AUserDesc: String);
+procedure TMainForm.AddIncomeConnection(AAction, AID, AUserName, AUserDesc: String);
 var
   Node: PVirtualNode;
   DData: PDeviceData;
@@ -10321,6 +10332,7 @@ begin
     Node := twIncomes.AddChild(nil, DData);
     Node.States := [vsInitialized, vsVisible];
     DData := twDevices.GetNodeData(Node);
+    DData^.ID := AID;
     DData^.Name := AUserName;
     DData^.Description := AUserDesc;
     DData^.Action := AAction;
@@ -10363,6 +10375,7 @@ end;
 procedure TMainForm.RemoveIncomeConnection(AUserName: String);
 var
   Node: PVirtualNode;
+  cnt: Integer;
 begin
 //  XLog('RemoveIncomeConnection');
 
@@ -10384,7 +10397,10 @@ begin
     CS_Incoming.Release;
   end;
 
-  tsIncomes.Caption := 'Входящие подключения (' + IntToStr(GetIncomeConnectionsCount) + ')';
+  cnt := GetIncomeConnectionsCount;
+  tsIncomes.Caption := 'Входящие подключения (' + IntToStr(cnt) + ')';
+  if cnt = 0 then
+    pcDevAcc.ActivePage := tsMyDevices;
 end;
 
 function TMainForm.IsIncomeConnectionExists(AID, AAction: String): Boolean;
@@ -10420,8 +10436,16 @@ var
 begin
 //  xLog('PModuleUserJoined');
 
-  if Copy(Sender.Client.LoginUserName, 1, Length(DeviceId)) = DeviceId then
-    Exit;
+  if Pos('_', Sender.Client.LoginUserName) > 0 then
+  begin
+    if Copy(Sender.Client.LoginUserName, 1, Length(DeviceId)) = DeviceId then
+      Exit;
+  end
+  else
+  begin
+    if Copy(user, 1, Length(DeviceId)) = DeviceId then
+      Exit;
+  end;
 
   if Sender is TRtcPFileTransfer then
     sAction := 'Передача файлов'
@@ -10442,7 +10466,7 @@ begin
   arr := user.Split(['_'], 3);
   if Length(arr) = 3 then
   begin
-    UserName := arr[1];
+    UserName := arr[0];
     Action := arr[2];
   end
   else
@@ -10470,7 +10494,7 @@ begin
 
     pcDevAcc.ActivePage := tsIncomes;
 
-    AddIncomeConnection(UserName, Action, FullDesc);
+    AddIncomeConnection(Action, UserName, user, FullDesc);
   end;
 
 //  Memo1.Lines.Add(user + ' joined');
@@ -10505,11 +10529,6 @@ begin
 //  eConnected.Update;
   end;
 
-procedure TMainForm.HostFileTransferModuleUserLeft(Sender: TRtcPModule; const user:string);
-begin
-  RemoveProgressDialogByUserName(user);
-end;
-
 procedure TMainForm.PModuleUserLeft(Sender: TRtcPModule; const user:string);
 //var
 //  u, s, d: String;
@@ -10517,8 +10536,16 @@ procedure TMainForm.PModuleUserLeft(Sender: TRtcPModule; const user:string);
 begin
 //  xLog('PModuleUserLeft');
 
-  if Copy(Sender.Client.LoginUserName, 1, Length(DeviceId)) = DeviceId then
-    Exit;
+  if Pos('_', Sender.Client.LoginUserName) > 0 then
+  begin
+    if Copy(Sender.Client.LoginUserName, 1, Length(DeviceId)) = DeviceId then
+      Exit;
+  end
+  else
+  begin
+    if Copy(user, 1, Length(DeviceId)) = DeviceId then
+      Exit;
+  end;
 
 //  if Sender is TRtcPFileTransfer then
 //    s := 'Передача файлов'
