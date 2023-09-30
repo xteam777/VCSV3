@@ -8500,9 +8500,13 @@ begin
 //                make_notify(fname, 'manual_logout');
 //              if isFriend(fname) then
 //                FriendList_Status(fname, MSG_STATUS_OFFLINE);
-                pPC := GetPortalConnection(asRecord['manual_logout'].asString['action'], asRecord['manual_logout'].asWideString['user']);
-                if pPC <> nil then
-                  DesktopsForm.CloseUIAndTab(asRecord['manual_logout'].asText['user'], True, pPC^.ThreadID);
+                with asRecord['manual_logout'] do
+                  if asString['action'] = 'desk' then
+                  begin
+                    pPC := GetPortalConnection(asString['action'], asWideString['user']);
+                    if pPC <> nil then
+                      DesktopsForm.CloseUIAndTab(asText['user'], True, pPC^.ThreadID);
+                  end;
               end
             else if not isNull['locked'] then // Friend locked status update
               begin
