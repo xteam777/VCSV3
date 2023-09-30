@@ -1584,7 +1584,7 @@ end;
 procedure TData_Provider.AccountManualLogoutExecute(Sender: TRtcConnection;
   Param: TRtcFunctionInfo; Result: TRtcValue);
 begin
-  Users.NotifyControlOfManualLogout(Param.asString['ControlID'], Param.asString['HostID']);
+  Users.NotifyControlOfManualLogout(Param.asString['Action'], Param.asString['ControlID'], Param.asString['HostID']);
 end;
 
 procedure TData_Provider.AccountPingExecute(Sender: TRtcConnection; Param: TRtcFunctionInfo; Result: TRtcValue);
