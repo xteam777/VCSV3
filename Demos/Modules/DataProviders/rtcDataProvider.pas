@@ -422,8 +422,8 @@ begin
 
         with Result.NewRecord do
         begin
-          asInteger['ID'] := SP.Parameters.ParamByName('@ID').Value;
-          asInteger['ID_Console'] := SP.Parameters.ParamByName('@ID_Console').Value;
+          asString['ID'] := SP.Parameters.ParamByName('@ID').Value;
+          asString['ID_Console'] := SP.Parameters.ParamByName('@ID_Console').Value;
           UserGateway := Users.GetAvailableGateway;
           if UserGateway <> '' then
           begin
@@ -905,7 +905,7 @@ begin
               begin
                 Append;
 
-                asInteger['ID'] := SP.FieldByName('ID').Value;
+                asString['ID'] := SP.FieldByName('ID').Value;
                 asString['UID'] := VarToStr(SP.FieldByName('UID').Value);
                 asWideString['Name'] := SP.FieldByName('Name').Value;
                 asWideString['Password'] := SP.FieldByName('Password').Value;
