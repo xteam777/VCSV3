@@ -5219,6 +5219,15 @@ object MainForm: TMainForm
         TabOrder = 2
         OnClick = rbFileTransClick
       end
+      object Button5: TButton
+        Left = 98
+        Top = 92
+        Width = 75
+        Height = 25
+        Caption = 'Button5'
+        TabOrder = 3
+        OnClick = Button5Click
+      end
     end
     object pcDevAcc: TPageControl
       Left = 542

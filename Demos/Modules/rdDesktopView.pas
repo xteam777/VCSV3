@@ -267,14 +267,14 @@ type
 
     function GetTab(AUserName: String): TChromeTab;
     function AddNewTab(AUserName, AUserDesc, AUserPass: String; AThreadID: Cardinal; AStartLockedState: Integer; AStartServiceStarted: Boolean; AModule: TRtcPDesktopControl): TUIDataModule;
-    procedure CloseUITab(AUserName: String; ACloseTab: Boolean);
+    procedure CloseUIAndTab(AUserName: String; ACloseTab: Boolean; AThreadID: Cardinal);
     procedure CloseTab(AUserName: String);
     procedure SetReconnectInterval(AUserName: String; AInterval: Integer);
     procedure SetActiveTab(AUserName: String);
     procedure ChangeLockedState(AUserName: String; ALockedState: Integer; AServiceStarted: Boolean);
     function GetRemovedUIDataModule(AUserName: String): TUIDataModule;
     function GetUIDataModule(AUserName: String): TUIDataModule;
-    procedure RemoveUIDataModule(AUserName: String);
+    procedure RemoveUIDataModule(AUserName: String; AThreadID: Cardinal);
     function FreeUIDataModule(AUserName: String; AThreadID: Cardinal): Integer;
     function GetActiveUIModulesCount: Integer;
     procedure DoReconnectToPartnerStart(user, username, pass, action: String);
@@ -342,16 +342,16 @@ begin
   end;
 end;
 
-procedure TrdDesktopViewer.CloseUITab(AUserName: String; ACloseTab: Boolean);
+procedure TrdDesktopViewer.CloseUIAndTab(AUserName: String; ACloseTab: Boolean; AThreadID: Cardinal);
 var
   i: Integer;
 begin
-  if Assigned(FOnUIClose) then
-    FOnUIClose('desk', AUserName);
+//  if Assigned(FOnUIClose) then
+//    FOnUIClose('desk', AUserName);
 
   UI_CS.Acquire;
   try
-    RemoveUIDataModule(AUserName);
+    RemoveUIDataModule(AUserName, AThreadID);
 
     if ACloseTab then
       CloseTab(AUserName);
@@ -366,11 +366,17 @@ end;
 
 procedure TrdDesktopViewer.MainChromeTabsChange(Sender: TObject;
   ATab: TChromeTab; TabChangeType: TTabChangeType);
+var
+  UIDM: TUIDataModule;
 begin
   if (TabChangeType = tcDeleted) then
   begin
     if ATab <> nil then
-      CloseUITab(ATab.UserName, False);
+    begin
+      UIDM := GetUIDataModule(GetUserToFromUserName(ATab.UserName));
+      if UIDM <> nil then
+        CloseUIAndTab(ATab.UserName, False, UIDM.ThreadID);
+    end;
 
     if (GetActiveUIModulesCount = 0) then
     begin
@@ -836,7 +842,7 @@ begin
   Handled := True;
 end;
 
-procedure TrdDesktopViewer.RemoveUIDataModule(AUserName: String);
+procedure TrdDesktopViewer.RemoveUIDataModule(AUserName: String; AThreadID: Cardinal);
 var
   i, RemovedInd, ActiveUICount: Integer;
   UIDM: TUIDataModule;
@@ -853,8 +859,18 @@ begin
       UIDM := UIModulesList[i];
 
       if (not UIDM.NeedFree)
-        and (UIDM.UserName = AUserName) then
+        and (UIDM.UserName = AUserName)
+        and (UIDM.ThreadID = AThreadID)
+        and (RemovedInd = -1) then
       begin
+//        if UIDM.HideWallpaper then
+//          UIDM.UI.Send_ShowDesktop;
+//        if UIDM.LockSystemOnClose then
+//          UIDM.UI.Send_LockSystem;
+
+        UIDM.UI.CloseAndClear;
+        UIDM.FT_UI.CloseAndClear;
+
         UIDM.NeedFree := True;
         FOnUIClose('desk', AUserName);
   //      FreeAndNil(TUIDataModule(UIModulesList[i]));

@@ -323,6 +323,7 @@ type
     bCloseAllIncomes: TColorSpeedButton;
     rManualLogout: TRtcResult;
     tFoldForm: TTimer;
+    Button5: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -551,6 +552,7 @@ type
     procedure bCloseAllIncomesClick(Sender: TObject);
     procedure tFoldFormTimer(Sender: TObject);
     procedure eAccountPasswordChange(Sender: TObject);
+    procedure Button5Click(Sender: TObject);
   protected
 
 //    FAutoRun: Boolean;
@@ -1767,16 +1769,19 @@ destructor TPortalThread.Destroy;
 var
   UIDM: TUIDataModule;
 begin
-  UIDM := DesktopsForm.GetRemovedUIDataModule(FUserName);
-  if UIDM <> nil then
-  begin
-    if UIDM.HideWallpaper then
-      UIDM.UI.Send_ShowDesktop;
-    if UIDM.LockSystemOnClose then
-      UIDM.UI.Send_LockSystem;
-  end;
+//  UIDM := DesktopsForm.GetRemovedUIDataModule(FUserName);
+//  if UIDM <> nil then
+//  begin
+//    if UIDM.HideWallpaper then
+//      UIDM.UI.Send_ShowDesktop;
+//    if UIDM.LockSystemOnClose then
+//      UIDM.UI.Send_LockSystem;
+//  end;
 
-  FGatewayClient.Module.WaitForCompletion(False, 2);
+//  FGatewayClient.Module.WaitForCompletion(False, 2);
+
+//  UIDM.UI.CloseAndClear;
+//  UIDM.FT_UI.CloseAndClear;
 
   FGatewayClient.Stop;
   FGatewayClient.Active := False;
@@ -1894,6 +1899,9 @@ begin
   CloseAllActiveUI;
 
   SetStatus(STATUS_NO_CONNECTION);
+
+  tPHostThread.Restart;
+
 //  SetConnectedState(False); //Сначала устанавливаем первичные насройки прокси
 //  SetStatusString('Подключение к серверу...', True);
   StartAccountLogin;
@@ -7700,6 +7708,11 @@ begin
 //  pd.Execute;
 end;
 
+procedure TMainForm.Button5Click(Sender: TObject);
+begin
+  tPHostThread.Restart;
+end;
+
 procedure TMainForm.AddHistoryRecord(username, userdesc: String);
 var
   hr: THistoryRec;
@@ -7963,7 +7976,7 @@ begin
       if PRItem^.IsReconnection then
       begin
         DeletePendingRequest(asWideString['user'], asString['action']);
-        DesktopsForm.CloseUITab(asWideString['user'], True);
+        DesktopsForm.CloseUIAndTab(asWideString['user'], True, PRItem^.ThreadID);
 
         Exit;
       end;
@@ -8003,7 +8016,7 @@ begin
       begin
       begin
         DeletePendingRequest(asWideString['user'], asString['action']);
-        DesktopsForm.CloseUITab(asWideString['user'], True);
+        DesktopsForm.CloseUIAndTab(asWideString['user'], True, PRItem^.ThreadID);
       end;
 
 //        if GetPendingRequestsCount > 0 then
@@ -8390,6 +8403,7 @@ procedure TMainForm.resHostTimerReturn(Sender: TRtcConnection; Data,
 var
   i: Integer;
   fname: String;
+  PRItem: PPendingRequestItem;
 begin
 //  XLog('resHostTimerReturn');
 
@@ -8485,7 +8499,9 @@ begin
 //                make_notify(fname, 'manual_logout');
 //              if isFriend(fname) then
 //                FriendList_Status(fname, MSG_STATUS_OFFLINE);
-                DesktopsForm.CloseUITab(asRecord['manual_logout'].asText['user'], True);
+                PRItem := GetPendingItem(asWideString['user'], asString['action']);
+                if PRItem <> nil then
+                  DesktopsForm.CloseUIAndTab(asRecord['manual_logout'].asText['user'], True, PRItem^.ThreadID);
               end
             else if not isNull['locked'] then // Friend locked status update
               begin
