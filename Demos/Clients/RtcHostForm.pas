@@ -1486,6 +1486,8 @@ begin
 
     if lNeedRestartThread then
     begin
+//      TSendDestroyClientToGatewayThread.Create(False, Gateway, FUserName, False, MainForm.hcAccounts.UseProxy, MainForm.hcAccounts.UserLogin.ProxyAddr, MainForm.hcAccounts.UserLogin.ProxyUserName, MainForm.hcAccounts.UserLogin.ProxyPassword, False);
+
       FGatewayClient.Disconnect;
       FGatewayClient.Stop;
       FGatewayClient.Active := False;
@@ -8762,7 +8764,7 @@ procedure TMainForm.nCopyPassClick(Sender: TObject);
 begin
 //  XLog('nCopyPassClick');
 
-  Clipboard.asText := ePassword.Text;
+  ePassword.CopyToClipboard;
 end;
 
 procedure TMainForm.nNewRandomPassClick(Sender: TObject);
@@ -10553,16 +10555,16 @@ begin
 //  if Sender is TRtcPChat then
 //    s := 'Чат'
 //  else
-//  if Sender is TRtcPDesktopHost then
-//  begin
+  if Sender is TRtcPDesktopHost then
+  begin
 //    s := 'Управление';
-//    Dec(DesktopCnt);
-//    if DesktopCnt = 0 then
-//    begin
-////      DragAcceptFiles(Handle, False);
-//      Show_Wallpaper;
-//    end;
-//  end
+    Dec(DesktopCnt);
+    if DesktopCnt = 0 then
+    begin
+//      DragAcceptFiles(Handle, False);
+      Show_Wallpaper;
+    end;
+  end
 //  else
 //    s := '???';
 //
