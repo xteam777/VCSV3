@@ -742,29 +742,29 @@ begin
             pUIItem.HideWallpaper := reg.ReadBool('HideWallpaper')
           else
             pUIItem.HideWallpaper := True;
-
-          aLockSystemOnClose.Checked := pUIItem.LockSystemOnClose;
-          aShowRemoteCursor.Checked := pUIItem.ShowRemoteCursor;
-          aSendShortcuts.Checked := pUIItem.SendShortcuts;
-          aBlockKeyboardMouse.Checked := pUIItem.BlockKeyboardMouse;
-          aPowerOffMonitor.Checked := pUIItem.PowerOffMonitor;
-          aOptimizeQuality.Checked := pUIItem.OptimizeQuality;
-          aOptimizeSpeed.Checked := pUIItem.OptimizeSpeed;
-          aStretchScreen.Checked := pUIItem.StretchScreen;
-          aHideWallpaper.Checked := pUIItem.HideWallpaper;
         end
         else
         begin
-          aLockSystemOnClose.Checked := False;
-          aShowRemoteCursor.Checked := False;
-          aSendShortcuts.Checked := True;
-          aBlockKeyboardMouse.Checked := False;
-          aPowerOffMonitor.Checked := False;
-          aOptimizeQuality.Checked := False;
-          aOptimizeSpeed.Checked := True;
-          aStretchScreen.Checked := False;
-          aHideWallpaper.Checked := True;
+          pUIItem.LockSystemOnClose := False;
+          pUIItem.ShowRemoteCursor := False;
+          pUIItem.SendShortcuts := True;
+          pUIItem.BlockKeyboardMouse := False;
+          pUIItem.PowerOffMonitor := False;
+          pUIItem.OptimizeQuality := True;
+          pUIItem.OptimizeSpeed := False;
+          pUIItem.StretchScreen := False;
+          pUIItem.HideWallpaper := True;
         end;
+
+        aLockSystemOnClose.Checked := pUIItem.LockSystemOnClose;
+        aShowRemoteCursor.Checked := pUIItem.ShowRemoteCursor;
+        aSendShortcuts.Checked := pUIItem.SendShortcuts;
+        aBlockKeyboardMouse.Checked := pUIItem.BlockKeyboardMouse;
+        aPowerOffMonitor.Checked := pUIItem.PowerOffMonitor;
+        aOptimizeQuality.Checked := pUIItem.OptimizeQuality;
+        aOptimizeSpeed.Checked := pUIItem.OptimizeSpeed;
+        aStretchScreen.Checked := pUIItem.StretchScreen;
+        aHideWallpaper.Checked := pUIItem.HideWallpaper;
       finally
         reg.Free;
       end;
