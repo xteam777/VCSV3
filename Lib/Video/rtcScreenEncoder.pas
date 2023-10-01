@@ -601,7 +601,7 @@ time := GetTickCount;
   begin
     if not FDesktopDuplicator.DDCaptureScreen then
     begin
-      FDesktopDuplicator.DDExists := False;
+      FDesktopDuplicator.DestroyDD;
       if not FDesktopDuplicator.DDCaptureScreen then
       begin
   //      DataCS.Leave;

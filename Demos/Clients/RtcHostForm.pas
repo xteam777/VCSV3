@@ -581,7 +581,7 @@ type
     function PartnerIsPending(uname, action: String; fIsReconnection: Boolean): Boolean; overload;
     function PartnerIsPending(uname: String): Boolean; overload;
     procedure ChangePendingRequestUser(action, userFrom, userTo: String);
-    procedure DeletePendingRequests(uname: String);
+//    procedure DeletePendingRequests(uname: String);
     procedure DeleteAllPendingRequests;
     procedure DeleteLastPendingItem;
     function GetCurrentPendingItemUserName: String;
@@ -808,7 +808,7 @@ var
   ChangedDragFullWindows: Boolean = False;
   OriginalDragFullWindows: LongBool = True;
   DeviceDisplayName: String;
-  CS_GW, CS_Status, CS_Pending, CS_ActivateHost, CS_HostGateway, CS_Incoming: TCriticalSection;
+  CS_GW, CS_Status, CS_Pending, CS_ActivateHost, CS_HostGateway, CS_Incoming, CS_PortalConn: TCriticalSection;
   DeviceId, ConsoleId: String;
   LastActiveExplorerHandle: THandle;
   CB_Monitor: TClipbrdMonitor;
@@ -1616,6 +1616,8 @@ constructor TPortalThread.Create(CreateSuspended: Boolean; AAction, AUserName, A
 begin
   inherited Create(CreateSuspended);
 
+  MainForm.AddPortalConnection(ThreadID, FAction, FUserName, FUserPass, FUserToConnect, AStartLockedStatus, AStartServiceStarted, @Self);
+
   FreeOnTerminate := True;
 
   FUserName := AUserName;
@@ -1778,8 +1780,6 @@ begin
   else
   if FAction = 'chat' then
     FChat.Open(FUserToConnect);
-
-  MainForm.AddPortalConnection(ThreadID, FAction, FUserName, FUserPass, FUserToConnect, AStartLockedStatus, AStartServiceStarted, @Self);
 end;
 
 destructor TPortalThread.Destroy;
@@ -6141,9 +6141,9 @@ begin
     if (DeviceId <> '') then
       if DData^.ID = DeviceId then
         if Name <> '' then
-          Name := Name + ' (этот компьютер)'
+          Name := Name + ' (это устройство)'
         else
-          Name := Name + '(этот компьютер)';
+          Name := Name + '(это устройство)';
 
     Font.Size := Sender.Font.Size;
     if Node.Parent = Sender.RootNode then
@@ -7781,7 +7781,7 @@ begin
   if user = '' then
   begin
 //    MessageBox(Handle, 'Введите ID компьютера, к которому хотите подключиться', 'Remox', MB_ICONWARNING or MB_OK);
-    SetStatusStringDelayed('Введите ID компьютера, к которому хотите подключиться');
+    SetStatusStringDelayed('Введите ID устройства, к которому хотите подключиться');
 //    SetStatusStringDelayed('Готов к подключению', 2000);
 //    bhMain.ShowHint(ePartnerID);
 
@@ -7796,7 +7796,7 @@ begin
   if not IsValidDeviceID(user) then
   begin
 //    MessageBox(Handle, 'ID компьютера может содержать только цифры', 'Remox', MB_ICONWARNING or MB_OK);
-    SetStatusStringDelayed('ID компьютера может содержать только цифры');
+    SetStatusStringDelayed('ID устройства может содержать только цифры');
 //    SetStatusStringDelayed('Готов к подключению', 2000);
 
     if Visible then
@@ -7810,7 +7810,7 @@ begin
   if user = DeviceId then
   begin
 //    MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'Remox', MB_ICONWARNING or MB_OK);
-    SetStatusStringDelayed('Подключение к своему компьютеру невозможно');
+    SetStatusStringDelayed('Подключение к своему устройству невозможно');
 //    SetStatusStringDelayed('Готов к подключению', 2000);
     Exit;
   end;
@@ -7952,10 +7952,15 @@ begin
         begin
 //        AddPendingRequest(asWideString['user'], asString['action'], asString['Address'] + ':' +  asString['Port'], 0);
 //          TSendDestroyClientToGatewayThread.Create(False, asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['user'] + '_' + asWideString['action'] + '_', False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword);
-          TSendDestroyClientToGatewayThread.Create(False, asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['UserToConnect'] + '_' + asWideString['action'] + '_', False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, False);
-          PortalThread := TPortalThread.Create(False, asString['action'], asWideString['user'], asWideString['pass'], asWideString['UserToConnect'], asString['Address'], asInteger['LockedState'], asBoolean['ServiceStarted'], True); //Для каждого соединения новый клиент
-          PRItem^.Gateway := asString['Address'];
-          PRItem^.ThreadID := PortalThread.ThreadID;
+          CS_PortalConn.Acquire; //На случай если CloseAllActiveUI сработает до создания PortalConnection
+          try
+            TSendDestroyClientToGatewayThread.Create(False, asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['UserToConnect'] + '_' + asWideString['action'] + '_', False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, False);
+            PortalThread := TPortalThread.Create(False, asString['action'], asWideString['user'], asWideString['pass'], asWideString['UserToConnect'], asString['Address'], asInteger['LockedState'], asBoolean['ServiceStarted'], True); //Для каждого соединения новый клиент
+            PRItem^.Gateway := asString['Address'];
+            PRItem^.ThreadID := PortalThread.ThreadID;
+          finally
+            CS_PortalConn.Release;
+          end;
         end;
       end;
 
@@ -7967,7 +7972,7 @@ begin
 //      ConnectToPartner(GatewayRec, asWideString['user'], username, asString['action']);
 
       if asString['action'] = 'desk' then
-        DesktopsForm.SetReconnectInterval(asWideString['user'], 60000);
+        DesktopsForm.SetReconnectInterval(asWideString['user'], 10000); //60000
     end
     else
     if asString['Result'] = 'PASS_NOT_VALID' then
@@ -10137,7 +10142,12 @@ begin
 //  finally
 //    CS_GW.Release;
 //  end;
-  DesktopsForm.Close;
+  CS_PortalConn.Acquire;
+  try
+    DesktopsForm.Close;
+  finally
+    CS_PortalConn.Release;
+  end;
 
   if (OpenedModalForm <> nil)
     and OpenedModalForm^.Visible
@@ -11372,7 +11382,7 @@ begin
   end;
 end;
 
-procedure TMainForm.DeletePendingRequests(uname: String);
+{procedure TMainForm.DeletePendingRequests(uname: String);
 var
   i: Integer;
 begin
@@ -11395,7 +11405,7 @@ begin
   finally
     CS_Pending.Release;
   end;
-end;
+end;}
 
 procedure TMainForm.DeleteAllPendingRequests;
 var
@@ -11884,6 +11894,7 @@ initialization
   CS_ActivateHost := TCriticalSection.Create;
   CS_HostGateway := TCriticalSection.Create;
   CS_Incoming := TCriticalSection.Create;
+  CS_PortalConn := TCriticalSection.Create;
   Randomize;
 
 finalization
@@ -11894,5 +11905,6 @@ finalization
   CS_ActivateHost.Free;
   CS_HostGateway.Free;
   CS_Incoming.Free;
+  CS_PortalConn.Free;
 
 end.
