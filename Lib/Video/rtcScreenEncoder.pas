@@ -601,15 +601,19 @@ time := GetTickCount;
   begin
     if not FDesktopDuplicator.DDCaptureScreen then
     begin
-//      DataCS.Leave;
+      FDesktopDuplicator.DDExists := False;
+      if not FDesktopDuplicator.DDCaptureScreen then
+      begin
+  //      DataCS.Leave;
 
-      ScrDelta^ := '';
-      if Assigned(ScrFull) then ScrFull^ := '';
+        ScrDelta^ := '';
+        if Assigned(ScrFull) then ScrFull^ := '';
 
-      Exit;
+        Exit;
+      end;
+  //    else
+  //      DataCS.Leave;
     end;
-//    else
-//      DataCS.Leave;
 
     FScreenBuff := FDesktopDuplicator.ScreenBuff;
   end;
@@ -687,6 +691,9 @@ time := GetTickCount;
 //
   IniF.Free;}
 
+  if (ClipRect.Width = 0) or (ClipRect.Height = 0) then //Не получилось создать DesktopDuplicator
+    //Ничего не делаем
+  else
   if InfoChanged or Assigned(ScrFull) then
   begin
     Rec := TRtcRecord.Create;

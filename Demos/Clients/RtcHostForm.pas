@@ -60,18 +60,19 @@ type
     FFileTransfer: TRtcPFileTransfer;
     FChat: TRtcPChat;
     FCS: TCriticalSection;
-  public
+
     Gateway: String;
     Port: String;
     ProxyEnabled: Boolean;
     ProxyAddr: String;
     ProxyUserName: String;
     ProxyPassword: String;
-
+  public
     constructor Create(CreateSuspended: Boolean; AUserName, AGateway, APort, AProxyAddr, AProxyUserName, AProxyPassword: String; AProxyEnabled: Boolean); overload;
     destructor Destroy; override;
     procedure Restart;
     procedure GetFilesFromClipboard(ACurExplorerHandle: THandle; ACurExplorerDir: String);
+    procedure ChangeParams(AProxyEnabled: Boolean; AProxyAddr, AProxyUserName, AProxyPassword: String);
   private
     procedure Execute; override;
 //  protected
@@ -1435,6 +1436,19 @@ begin
   end;
 end;
 
+procedure TPortalHostThread.ChangeParams(AProxyEnabled: Boolean; AProxyAddr, AProxyUserName, AProxyPassword: String);
+begin
+  FCS.Acquire;
+  try
+    FGatewayClient.Gate_Proxy := AProxyEnabled;
+    FGatewayClient.Gate_ProxyAddr := AProxyAddr;
+    FGatewayClient.Gate_ProxyUserName := AProxyUserName;
+    FGatewayClient.Gate_ProxyPassword := AProxyPassword;
+  finally
+    FCS.Release;
+  end;
+end;
+
 procedure TPortalHostThread.GetFilesFromClipboard(ACurExplorerHandle: THandle; ACurExplorerDir: String);
 var
   i: Integer;
@@ -1902,7 +1916,8 @@ begin
 
   SetStatus(STATUS_NO_CONNECTION);
 
-  tPHostThread.Restart;
+  if tPHostThread <> nil then
+    tPHostThread.Restart;
 
 //  SetConnectedState(False); //Сначала устанавливаем первичные насройки прокси
 //  SetStatusString('Подключение к серверу...', True);
@@ -6036,7 +6051,8 @@ begin
 //    PClient.Active := False;
 //    PClient.Active := True;
 
-    tPHostThread.Restart;
+    if tPHostThread <> nil then
+      tPHostThread.Restart;
 
     tPClientReconnect.Enabled := False;
   end
@@ -7726,7 +7742,8 @@ end;
 
 procedure TMainForm.Button5Click(Sender: TObject);
 begin
-  tPHostThread.Restart;
+  if tPHostThread <> nil then
+    tPHostThread.Restart;
 end;
 
 procedure TMainForm.AddHistoryRecord(username, userdesc: String);
@@ -10226,7 +10243,8 @@ begin
 
   TRtcHttpPortalClient(Sender).Disconnect;
 
-//  tPHostThread.Restart;
+//  if tPHostThread <> nil then
+//    tPHostThread.Restart;
 
 //  if Msg = 'Сервер недоступен.' then
 //    TRtcHttpPortalClient(Sender).Active := False;
@@ -10704,10 +10722,12 @@ begin
 
         if ProxyOption = PO_AUTOMATIC then
         begin
-          tPHostThread.ProxyEnabled := False;
-          tPHostThread.ProxyAddr := '';
-          tPHostThread.ProxyUserName := '';
-          tPHostThread.ProxyPassword := '';
+          if tPHostThread <> nil then
+            tPHostThread.ChangeParams(False, '', '', '');
+//          tPHostThread.ProxyEnabled := False;
+//          tPHostThread.ProxyAddr := '';
+//          tPHostThread.ProxyUserName := '';
+//          tPHostThread.ProxyPassword := '';
 
           hcAccounts.UseWinHTTP := True;
           hcAccounts.UseProxy := False;
@@ -10730,10 +10750,12 @@ begin
         else
         if ProxyOption = PO_MANUAL then
         begin
-          tPHostThread.ProxyEnabled := True;
-          tPHostThread.ProxyAddr := sett.CurProxyAddr;
-          tPHostThread.ProxyUserName := sett.CurProxyUserName;
-          tPHostThread.ProxyPassword := sett.CurProxyPassword;
+          if tPHostThread <> nil then
+            tPHostThread.ChangeParams(True, sett.CurProxyAddr, sett.CurProxyUserName, sett.CurProxyPassword);
+//          tPHostThread.ProxyEnabled := True;
+//          tPHostThread.ProxyAddr := sett.CurProxyAddr;
+//          tPHostThread.ProxyUserName := sett.CurProxyUserName;
+//          tPHostThread.ProxyPassword := sett.CurProxyPassword;
 
           hcAccounts.UseWinHTTP := True;
           hcAccounts.UseProxy := True;
@@ -10756,10 +10778,12 @@ begin
         else
         if ProxyOption = PO_DIRECT then
         begin
-          tPHostThread.ProxyEnabled := False;
-          tPHostThread.ProxyAddr := '';
-          tPHostThread.ProxyUserName := '';
-          tPHostThread.ProxyPassword := '';
+          if tPHostThread <> nil then
+            tPHostThread.ChangeParams(False, '', '', '');
+//          tPHostThread.ProxyEnabled := False;
+//          tPHostThread.ProxyAddr := '';
+//          tPHostThread.ProxyUserName := '';
+//          tPHostThread.ProxyPassword := '';
 
           hcAccounts.UseWinHTTP := True;
           hcAccounts.UseProxy := False;
@@ -10798,7 +10822,8 @@ begin
         HostTimerClient.ReconnectOn.ConnectFail := True;
         HostTimerClient.Connect(True, True);
 
-        tPHostThread.Restart;
+        if tPHostThread <> nil then
+          tPHostThread.Restart;
 
         tActivateHost.Enabled := True;
       end;

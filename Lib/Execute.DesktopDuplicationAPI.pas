@@ -45,7 +45,6 @@ type
 
     TempBuff : array [0..TempBuffLen] of Byte;
 
-    DDExists : Boolean;
 
     light_black: Boolean;
     desk_pixel_color: Cardinal;
@@ -54,6 +53,7 @@ type
     procedure DestroyDD;
     function GetScreenInfoChanged: Boolean;
   public
+    DDExists : Boolean;
     pScreenWidth, pScreenHeight, pBitsPerPixel, pClipRect: Pointer;
     DirtyR, MovedR : array [0..10000] of TRect;
     MovedRP : array [0..10000] of TPoint;
@@ -291,7 +291,7 @@ begin
  //fNeedRecreate := False;
   if not DDExists then
   begin
-    Debug.Log('DDExists is not eists');
+    Debug.Log('DD is not exists');
 
     goto ErrorInCapture;
   end;
