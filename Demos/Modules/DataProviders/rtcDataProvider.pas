@@ -1509,6 +1509,7 @@ begin
     Exit;
 
   Users.SetLastHostActiveTime(Param['user'], Now);
+  Users.SetHostGateway(Param['user'], Param['gateway']);
 
   cb := nil;
 
