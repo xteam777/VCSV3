@@ -1168,6 +1168,7 @@ procedure TrdChatForm.Close_Form(const mode: string);
 
   if not fIsPending then
   begin
+    FOnUIClose('desk', myUI.UserName);
     Close;
     Exit;
   end

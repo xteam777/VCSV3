@@ -2464,7 +2464,7 @@ object rdFileTransfer: TrdFileTransfer
         ExplicitHeight = 28
       end
       object SpeedButton2: TSpeedButton
-        Left = 620
+        Left = 616
         Top = 0
         Width = 27
         Height = 22

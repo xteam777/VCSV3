@@ -46,7 +46,7 @@ uses
   VirtualTrees.BaseTree, VirtualTrees.AncestorVCL;
 
 type
-  TSetHostGatewayClientActiveProc = procedure(AValue: Boolean);
+//  TSetHostGatewayClientActiveProc = procedure(AValue: Boolean);
 
   PPortalHostThread = ^TPortalHostThread;
   TPortalHostThread = class(TThread)
@@ -70,9 +70,9 @@ type
   public
     constructor Create(CreateSuspended: Boolean; AUserName, AGateway, APort, AProxyAddr, AProxyUserName, AProxyPassword: String; AProxyEnabled: Boolean); overload;
     destructor Destroy; override;
-    procedure Restart;
+    procedure Restart(AGateway: String = '');
     procedure GetFilesFromClipboard(ACurExplorerHandle: THandle; ACurExplorerDir: String);
-    procedure ChangeParams(AProxyEnabled: Boolean; AProxyAddr, AProxyUserName, AProxyPassword: String);
+    procedure ChangeProxyParams(AProxyEnabled: Boolean; AProxyAddr, AProxyUserName, AProxyPassword: String);
   private
     procedure Execute; override;
 //  protected
@@ -107,7 +107,6 @@ type
 
   PPortalConnection = ^TPortalConnection;
   TPortalConnection = record
-    ThisThread: PPortalThread;
     ThreadID: Cardinal;
     UserName: String; //Initial connection user
     UserPass: String;
@@ -340,7 +339,7 @@ type
     procedure WMDragFullWindows_Message(var Message: TMessage); message WM_DRAG_FULL_WINDOWS_MESSAGE;
 //    procedure Broadcast_Logoff(var Message: TMessage); message WM_BROADCAST_LOGOFF;
     // declare our DROPFILES message handler
-    procedure AcceptFiles( var msg : TMessage ); message WM_DROPFILES;
+//    procedure AcceptFiles( var msg : TMessage ); message WM_DROPFILES;
     procedure WMQueryEndSession(var Msg : TWMQueryEndSession); message WM_QueryEndSession;
     procedure btnSettingsClick(Sender: TObject);
     procedure cPriorityChange(Sender: TObject);
@@ -559,7 +558,7 @@ type
     DesktopCnt: Integer;
 
     FScreenLockedState: Integer;
-    FHostGatewayClientActive: Boolean;
+//    FHostGatewayClientActive: Boolean;
     DelayedStatus: String;
     FStatusUpdateThread: TStatusUpdateThread;
     tPHostThread: TPortalHostThread;
@@ -606,8 +605,8 @@ type
     procedure OnCustomFormOpen(AForm: PForm);
     procedure OnCustomFormClose;
 
-    function GetHostGatewayClientActive: Boolean;
-    procedure SetHostGatewayClientActive(AValue: Boolean);
+//    function GetHostGatewayClientActive: Boolean;
+//    procedure SetHostGatewayClientActive(AValue: Boolean);
 
     procedure AddHistoryRecord(username, userdesc: String);
     procedure AddPasswordsRecord(username, userpass: String);
@@ -762,7 +761,7 @@ type
 
   //  procedure TransStretchDraw(ACanvas: TCanvas; const Rect: TRect; SRC: TBitmap; TransParentColor: TColor);
   //  function ExecAndWait(const FileName, Params: ShortString; const WinState: Word): boolean;
-    property HostGatewayClientActive: Boolean read FHostGatewayClientActive write SetHostGatewayClientActive;
+//    property HostGatewayClientActive: Boolean read FHostGatewayClientActive write SetHostGatewayClientActive;
 
     function AddProgressDialog(ATaskId: TTaskId; AUserName: String): PProgressDialogData;
     function GetProgressDialogData(ATaskId: TTaskId): PProgressDialogData; overload;
@@ -1010,7 +1009,7 @@ begin
   OleUninitialize;
 end;
 
-function TMainForm.GetHostGatewayClientActive: Boolean;
+{function TMainForm.GetHostGatewayClientActive: Boolean;
 begin
   CS_HostGateway.Acquire;
   try
@@ -1030,7 +1029,7 @@ begin
   end;
 
   tPClientReconnect.Enabled := not AValue;
-end;
+end;}
 
 function GetUniqueString: String;
 var
@@ -1426,17 +1425,19 @@ begin
   TerminateThread(ThreadID, ExitCode);
 end;
 
-procedure TPortalHostThread.Restart;
+procedure TPortalHostThread.Restart(AGateway: String = '');
 begin
   FCS.Acquire;
   try
+    if AGateway <> '' then
+      Gateway := AGateway;
     FNeedRestartThread := True;
   finally
     FCS.Release;
   end;
 end;
 
-procedure TPortalHostThread.ChangeParams(AProxyEnabled: Boolean; AProxyAddr, AProxyUserName, AProxyPassword: String);
+procedure TPortalHostThread.ChangeProxyParams(AProxyEnabled: Boolean; AProxyAddr, AProxyUserName, AProxyPassword: String);
 begin
   FCS.Acquire;
   try
@@ -1916,8 +1917,8 @@ begin
 
   SetStatus(STATUS_NO_CONNECTION);
 
-  if tPHostThread <> nil then
-    tPHostThread.Restart;
+//  if tPHostThread <> nil then
+//    tPHostThread.Restart; //Запустится при реактивации
 
 //  SetConnectedState(False); //Сначала устанавливаем первичные насройки прокси
 //  SetStatusString('Подключение к серверу...', True);
@@ -2713,8 +2714,8 @@ begin
     pPC^.UserName := AUserName;
     pPC^.UserPass := AUserPass;
     pPC^.ID := AUserToConnect;
-    pPC^.ThisThread := AThread;
     pPC^.DataModule := nil;
+    pPC^.UIHandle := 0;
     PortalConnectionsList.Add(pPC);
   finally
     CS_GW.Release;
@@ -5628,7 +5629,7 @@ begin
   ShowAboutForm;
 end;
 
-procedure TMainForm.AcceptFiles( var msg : TMessage );
+{procedure TMainForm.AcceptFiles( var msg : TMessage );
 const
   cnMaxFileNameLen = 1024;
 var
@@ -5669,7 +5670,7 @@ begin
     msg.Result := 0;
 //    inherited;
   end;
-end;
+end;}
 
 procedure TMainForm.aCloseExecute(Sender: TObject);
 begin
@@ -6024,22 +6025,6 @@ var
 begin
 //  xLog('tPClientReconnectTimer');
 
-//  CS_GW.Acquire;
-//  try
-//    for i := 0 to GatewayClientsList.Count - 1 do
-//    begin
-//  //    if PGatewayRec(GatewayClientsList[i])^.GatewayClient^.Active then
-//  //      Continue;
-//
-//  //    PGatewayRec(GatewayClientsList[i])^.GatewayClient^.Disconnect;
-//  //    PGatewayRec(GatewayClientsList[i])^.GatewayClient^.Active := False;
-//  //    PGatewayRec(GatewayClientsList[i])^.GatewayClient^.Stop;
-//      PGatewayRec(GatewayClientsList[i])^.GatewayClient^.Active := True;
-//    end;
-//  finally
-//    CS_GW.Release;
-//  end;
-
   if (DeviceId <> '') then
   begin
     if (GetStatus = STATUS_READY) then
@@ -6059,7 +6044,6 @@ begin
   else
     tPClientReconnect.Enabled := True;
 
-
 //  if not PClient.Active then
 ////    and not PClient.Connected then
 //  begin
@@ -6067,21 +6051,6 @@ begin
 ////    PClient.Active := False;
 //    PClient.Stop;
 //    PClient.Active := True;
-//  end;
-
-//  //Если еще не было активации, ничего не делаем
-//  for i := 0 to GatewayClientsList.Count - 1 do
-//  begin
-//    if PGatewayRec(GatewayClientsList[i])^.GatewayClient^.LoginUserName = '' then
-//      Continue;
-//
-//    if not PGatewayRec(GatewayClientsList[i])^.GatewayClient^.Active
-//      and hcAccounts.isConnected then
-//    begin
-//      PGatewayRec(GatewayClientsList[i])^.GatewayClient^.Disconnect;
-//      PGatewayRec(GatewayClientsList[i])^.GatewayClient^.Active := False;
-//      PGatewayRec(GatewayClientsList[i])^.GatewayClient^.Active := True;
-//    end;
 //  end;
 end;
 
@@ -7717,7 +7686,7 @@ end;
 
 procedure TMainForm.Button3Click(Sender: TObject);
 begin
-  PPortalConnection(PortalConnectionsList[0])^.ThisThread^.Terminate;
+//  PPortalConnection(PortalConnectionsList[0])^.ThisThread^.Terminate;
 //  PostThreadMessage(PPortalConnection(PortalConnectionsList[0])^.ThreadID, WM_DESTROY, 0, 0);
 end;
 
@@ -7742,8 +7711,9 @@ end;
 
 procedure TMainForm.Button5Click(Sender: TObject);
 begin
-  if tPHostThread <> nil then
-    tPHostThread.Restart;
+//  if tPHostThread <> nil then
+//    tPHostThread.Restart;
+  ActivateHost;
 end;
 
 procedure TMainForm.AddHistoryRecord(username, userdesc: String);
@@ -9061,7 +9031,7 @@ begin
           if TPHostThread = nil then
             tPHostThread := TPortalHostThread.Create(False, DeviceId, asString['Gateway'], '443', hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, hcAccounts.UseProxy)
           else
-            tPHostThread.Restart;
+            tPHostThread.Restart(asString['Gateway']);
 
           GeneratePassword;
       //  TaskBarRemoveIcon;
@@ -10065,7 +10035,7 @@ begin
 
   if (Sender = tPHostThread.FGatewayClient) then
   begin
-    SetHostGatewayClientActive(True);
+//    SetHostGatewayClientActive(True);
     tPClientReconnect.Enabled := False;
   end;
 end;
@@ -10113,7 +10083,7 @@ begin
   if (Sender = tPHostThread.FGatewayClient)
     and (GetStatus = STATUS_CONNECTING_TO_GATE) then
   begin
-    SetHostGatewayClientActive(True);
+//    SetHostGatewayClientActive(True);
     SetStatus(STATUS_READY);
 
     if cbRememberAccount.Checked then
@@ -10211,7 +10181,7 @@ begin
 
   if (Sender = tPHostThread.FGatewayClient) then
   begin
-    SetHostGatewayClientActive(False);
+//    SetHostGatewayClientActive(False);
 //    TRtcHttpPortalClient(Sender).Disconnect;
 //    TRtcHttpPortalClient(Sender).Active := False;
   ////  TRtcHttpPortalClient(Sender).Active := True;
@@ -10723,7 +10693,7 @@ begin
         if ProxyOption = PO_AUTOMATIC then
         begin
           if tPHostThread <> nil then
-            tPHostThread.ChangeParams(False, '', '', '');
+            tPHostThread.ChangeProxyParams(False, '', '', '');
 //          tPHostThread.ProxyEnabled := False;
 //          tPHostThread.ProxyAddr := '';
 //          tPHostThread.ProxyUserName := '';
@@ -10751,7 +10721,7 @@ begin
         if ProxyOption = PO_MANUAL then
         begin
           if tPHostThread <> nil then
-            tPHostThread.ChangeParams(True, sett.CurProxyAddr, sett.CurProxyUserName, sett.CurProxyPassword);
+            tPHostThread.ChangeProxyParams(True, sett.CurProxyAddr, sett.CurProxyUserName, sett.CurProxyPassword);
 //          tPHostThread.ProxyEnabled := True;
 //          tPHostThread.ProxyAddr := sett.CurProxyAddr;
 //          tPHostThread.ProxyUserName := sett.CurProxyUserName;
@@ -10779,7 +10749,7 @@ begin
         if ProxyOption = PO_DIRECT then
         begin
           if tPHostThread <> nil then
-            tPHostThread.ChangeParams(False, '', '', '');
+            tPHostThread.ChangeProxyParams(False, '', '', '');
 //          tPHostThread.ProxyEnabled := False;
 //          tPHostThread.ProxyAddr := '';
 //          tPHostThread.ProxyUserName := '';
@@ -11130,7 +11100,7 @@ procedure TMainForm.PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttp
       if (Sender = tPHostThread.FGatewayClient)
         and (CurStatus = STATUS_READY) then
       begin
-        SetHostGatewayClientActive(False);
+//        SetHostGatewayClientActive(False);
         tPClientReconnect.Enabled := True;
       end;
     end;

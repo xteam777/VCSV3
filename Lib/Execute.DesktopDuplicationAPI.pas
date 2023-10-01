@@ -48,12 +48,11 @@ type
 
     light_black: Boolean;
     desk_pixel_color: Cardinal;
+    DDExists : Boolean;
 
     function CreateDD : Boolean;
-    procedure DestroyDD;
     function GetScreenInfoChanged: Boolean;
   public
-    DDExists : Boolean;
     pScreenWidth, pScreenHeight, pBitsPerPixel, pClipRect: Pointer;
     DirtyR, MovedR : array [0..10000] of TRect;
     MovedRP : array [0..10000] of TPoint;
@@ -62,6 +61,7 @@ type
     destructor Destroy; override;
     function DDCaptureScreen: Boolean;
     function DDReceiveRects: Boolean;
+    procedure DestroyDD;
 
     function InvertColor(clr: TColor): TColor;
 

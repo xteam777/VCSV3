@@ -661,8 +661,7 @@ var
   fIsPending, fIsReconnection: Boolean;
   reg: TRegistry;
 begin
-  if Assigned(FOnUIOpen) then
-    FOnUIOpen(AUserName, 'desk', fIsPending, fIsReconnection);
+  FOnUIOpen(AUserName, 'desk', fIsPending, fIsReconnection);
 
   pUIItem := GetUIDataModule(AUserName);
   if fIsReconnection
@@ -670,7 +669,10 @@ begin
     Exit;
 
   if not fIsPending then //Если подключение отменено, выходим
-    Exit
+  begin
+    FOnUIClose('desk', AUserName);
+    Exit;
+  end
   else
   if not fIsReconnection then
   begin

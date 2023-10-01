@@ -564,6 +564,7 @@ begin
 
   if not fIsPending then
   begin
+    FOnUIClose('desk', myUI.UserName);
     Close;
     Exit;
   end
