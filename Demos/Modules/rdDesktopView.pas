@@ -752,6 +752,18 @@ begin
           aOptimizeSpeed.Checked := pUIItem.OptimizeSpeed;
           aStretchScreen.Checked := pUIItem.StretchScreen;
           aHideWallpaper.Checked := pUIItem.HideWallpaper;
+        end
+        else
+        begin
+          aLockSystemOnClose.Checked := False;
+          aShowRemoteCursor.Checked := False;
+          aSendShortcuts.Checked := True;
+          aBlockKeyboardMouse.Checked := False;
+          aPowerOffMonitor.Checked := False;
+          aOptimizeQuality.Checked := False;
+          aOptimizeSpeed.Checked := True;
+          aStretchScreen.Checked := False;
+          aHideWallpaper.Checked := True;
         end;
       finally
         reg.Free;
