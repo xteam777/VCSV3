@@ -1616,7 +1616,7 @@ constructor TPortalThread.Create(CreateSuspended: Boolean; AAction, AUserName, A
 begin
   inherited Create(CreateSuspended);
 
-  MainForm.AddPortalConnection(ThreadID, FAction, FUserName, FUserPass, FUserToConnect, AStartLockedStatus, AStartServiceStarted, @Self);
+  MainForm.AddPortalConnection(ThreadID, AAction, AUserName, AUserPass, AUserToConnect, AStartLockedStatus, AStartServiceStarted, @Self);
 
   FreeOnTerminate := True;
 
@@ -8508,14 +8508,18 @@ begin
 //              if isFriend(fname) then
 //                FriendList_Status(fname, MSG_STATUS_OFFLINE);
                 with asRecord['manual_logout'] do
+                begin
+                  DeletePendingRequest(asWideString['user'], asString['action']);
+
                   if asString['action'] = 'desk' then
                   begin
                     pPC := GetPortalConnection(asString['action'], asWideString['user']);
                     if pPC <> nil then
-                      DesktopsForm.CloseUIAndTab(asText['user'], True, pPC^.ThreadID);
+                      DesktopsForm.CloseUIAndTab(asWideString['user'], True, pPC^.ThreadID);
                   end
                   else
                     RemovePortalConnection(asWideString['user'], asString['action'], True);
+                end;
               end
             else if not isNull['locked'] then // Friend locked status update
               begin
