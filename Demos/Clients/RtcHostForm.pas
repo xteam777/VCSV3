@@ -10564,7 +10564,7 @@ begin
 //      DragAcceptFiles(Handle, False);
       Show_Wallpaper;
     end;
-  end
+  end;
 //  else
 //    s := '???';
 //
