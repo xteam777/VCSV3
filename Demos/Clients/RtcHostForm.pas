@@ -589,7 +589,7 @@ type
 
     function CheckService(bServiceFilename: Boolean = True {False = Service Name} ): String;
 //
-    procedure AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; AThread: PPortalThread);
+    procedure AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean);
     function GetPortalConnection(AAction: String; AUserName: String): PPortalConnection;
     procedure RemovePortalConnection(AID, AAction: String; ACloseFUI: Boolean);
 
@@ -1616,7 +1616,7 @@ constructor TPortalThread.Create(CreateSuspended: Boolean; AAction, AUserName, A
 begin
   inherited Create(CreateSuspended);
 
-  MainForm.AddPortalConnection(ThreadID, AAction, AUserName, AUserPass, AUserToConnect, AStartLockedStatus, AStartServiceStarted, @Self);
+  MainForm.AddPortalConnection(ThreadID, AAction, AUserName, AUserPass, AUserToConnect, AStartLockedStatus, AStartServiceStarted);
 
   FreeOnTerminate := True;
 
@@ -2702,7 +2702,7 @@ begin
   end;
 end;
 
-procedure TMainForm.AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; AThread: PPortalThread);
+procedure TMainForm.AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean);
 var
   pPC: PPortalConnection;
 begin
