@@ -333,6 +333,7 @@ type
     { Private-Deklarationen }
 //    procedure WMLogEvent(var Message: TMessage); message WM_LOGEVENT;
     procedure WMTaskbarEvent(var Message: TMessage); message WM_TASKBAREVENT;
+    procedure WMNCHitTest(var Message: TWMNCHitTest); message WM_NCHITTEST;
     procedure WMWTSSESSIONCHANGE(var Message: TMessage); message WM_WTSSESSION_CHANGE;
 //    procedure WMActivate(var Message: TMessage); message WM_ACTIVATE;
 //    procedure WMBlockInput_Message(var Message: TMessage); message WM_BLOCK_INPUT_MESSAGE;
@@ -2614,6 +2615,34 @@ begin
   end;
 
 //  inherited;
+end;
+
+procedure TMainForm.WMNCHitTest(var Message: TWMNCHitTest);
+var
+  P: TPoint;
+  info: TTitleBarInfoEx ;
+  icons: TBorderIcons;
+begin
+  icons := [biMinimize, biMaximize] - BorderIcons;
+  if (biSystemMenu in BorderIcons) and (icons <> []) and not IsCustomStyleActive then
+    begin
+      P := Point(Message.XPos, Message.YPos);
+      info.cbSize := SizeOf(TTitleBarInfoEx);
+      if SendMessage(Handle, WM_GETTITLEBARINFOEX, 0, LPARAM(@info)) <> 0 then
+        begin
+          if info.rgrect[2].Contains(P) then
+            Message.Result := HTMINBUTTON else
+          if info.rgrect[3].Contains(P) then
+            Message.Result := HTMAXBUTTON else
+          if info.rgrect[5].Contains(P) then
+            Message.Result := HTCLOSE;
+          if ( (Message.Result = HTMINBUTTON) and (biMinimize in icons) ) or
+             ( (Message.Result = HTMAXBUTTON) and (biMaximize in icons) ) then
+             Message.Result := HTCAPTION;
+        end;
+    end;
+  if Message.Result = 0 then
+    inherited;
 end;
 
 //procedure TMainForm.WMLogEvent(var Message: TMessage);

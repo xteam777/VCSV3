@@ -320,14 +320,17 @@ begin
     begin
       case hit of
         HTCLOSE:
-          PostMessage(W, WM_SYSCOMMAND, SC_CLOSE, 0);
+          if TBorderIcon.biSystemMenu in frm.BorderIcons then
+            PostMessage(W, WM_SYSCOMMAND, SC_CLOSE, 0);
         HTMINBUTTON:
-          PostMessage(W, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+          if TBorderIcon.biMinimize in frm.BorderIcons then
+            PostMessage(W, WM_SYSCOMMAND, SC_MINIMIZE, 0);
         HTMAXBUTTON:
-          if frm.WindowState = wsMaximized then
-            PostMessage(W, WM_SYSCOMMAND, SC_RESTORE, 0)
-          else
-            PostMessage(W, WM_SYSCOMMAND, SC_MAXIMIZE, 0);
+          if TBorderIcon.biMaximize in frm.BorderIcons then
+            if frm.WindowState = wsMaximized then
+              PostMessage(W, WM_SYSCOMMAND, SC_RESTORE, 0)
+            else
+              PostMessage(W, WM_SYSCOMMAND, SC_MAXIMIZE, 0);
       end;
     end;
   end
