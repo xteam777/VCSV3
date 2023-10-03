@@ -590,7 +590,7 @@ type
 
     function CheckService(bServiceFilename: Boolean = True {False = Service Name} ): String;
 //
-    procedure AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean);
+    procedure AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedState: Integer; AStartServiceStarted: Boolean);
     function GetPortalConnection(AAction: String; AUserName: String): PPortalConnection;
     procedure RemovePortalConnection(AID, AAction: String; ACloseFUI: Boolean);
 
@@ -2731,7 +2731,7 @@ begin
   end;
 end;
 
-procedure TMainForm.AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean);
+procedure TMainForm.AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedState: Integer; AStartServiceStarted: Boolean);
 var
   pPC: PPortalConnection;
 begin
@@ -2743,6 +2743,8 @@ begin
     pPC^.UserName := AUserName;
     pPC^.UserPass := AUserPass;
     pPC^.ID := AUserToConnect;
+    pPC^.StartLockedState := AStartLockedState;
+    pPC^.StartServiceStarted := AStartServiceStarted;
     pPC^.DataModule := nil;
     pPC^.UIHandle := 0;
     PortalConnectionsList.Add(pPC);
