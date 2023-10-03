@@ -371,9 +371,9 @@ begin
   with TRtcDataServer(Sender) do
     with Result.NewRecord do
     begin
-      asString['User'] := Param['User'];
-      asInteger['State'] := Users.GetHostLockedState(Param['User']);
-      asBoolean['ServiceStarted'] := Users.GetHostServiceStarted(Param['User']);
+      asWideString['User'] := Param.asWideString['User'];
+      asInteger['LockedState'] := Users.GetHostLockedState(Param.asWideString['User']);
+      asBoolean['ServiceStarted'] := Users.GetHostServiceStarted(Param.asWideString['User']);
     end;
 end;
 
