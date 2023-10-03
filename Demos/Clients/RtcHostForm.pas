@@ -590,7 +590,7 @@ type
 
     function CheckService(bServiceFilename: Boolean = True {False = Service Name} ): String;
 //
-    procedure AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean);
+    procedure AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedState: Integer; AStartServiceStarted: Boolean);
     function GetPortalConnection(AAction: String; AUserName: String): PPortalConnection;
     procedure RemovePortalConnection(AID, AAction: String; ACloseFUI: Boolean);
 
@@ -809,7 +809,7 @@ var
   ChangedDragFullWindows: Boolean = False;
   OriginalDragFullWindows: LongBool = True;
   DeviceDisplayName: String;
-  CS_GW, CS_Status, CS_Pending, CS_ActivateHost, CS_HostGateway, CS_Incoming, CS_PortalConn: TCriticalSection;
+  CS_GW, CS_Status, CS_Pending, CS_ActivateHost, CS_HostGateway, CS_Incoming: TCriticalSection;
   DeviceId, ConsoleId: String;
   LastActiveExplorerHandle: THandle;
   CB_Monitor: TClipbrdMonitor;
@@ -1676,7 +1676,7 @@ begin
   FGatewayClient.Module.AutoSessionMode := rsm_Query;
   FGatewayClient.Module.AutoSessionsPing := 1;
 
-  xLog('Created gateway client: ' + 'PClient_' + FUID);
+  xLog('Client created: ' + 'PClient_' + FUID);
 
   FDesktopControl := nil;
   FFileTransfer := nil;
@@ -2731,7 +2731,7 @@ begin
   end;
 end;
 
-procedure TMainForm.AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean);
+procedure TMainForm.AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedState: Integer; AStartServiceStarted: Boolean);
 var
   pPC: PPortalConnection;
 begin
@@ -2743,6 +2743,8 @@ begin
     pPC^.UserName := AUserName;
     pPC^.UserPass := AUserPass;
     pPC^.ID := AUserToConnect;
+    pPC^.StartLockedState := AStartLockedState;
+    pPC^.StartServiceStarted := AStartServiceStarted;
     pPC^.DataModule := nil;
     pPC^.UIHandle := 0;
     PortalConnectionsList.Add(pPC);
@@ -2765,8 +2767,12 @@ begin
       if (PPortalConnection(PortalConnectionsList[i])^.Action = AAction)
         and (PPortalConnection(PortalConnectionsList[i])^.UserName = AUserName) then
       begin
-        Result := PortalConnectionsList[i];
-        Break;
+        if (PPortalConnection(PortalConnectionsList[i])^.DataModule = nil)
+          or (not PPortalConnection(PortalConnectionsList[i])^.DataModule.NeedFree) then
+        begin
+          Result := PortalConnectionsList[i];
+          Break;
+        end;
       end;
   finally
     CS_GW.Release;
@@ -7981,15 +7987,10 @@ begin
         begin
 //        AddPendingRequest(asWideString['user'], asString['action'], asString['Address'] + ':' +  asString['Port'], 0);
 //          TSendDestroyClientToGatewayThread.Create(False, asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['user'] + '_' + asWideString['action'] + '_', False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword);
-          CS_PortalConn.Acquire; //На случай если CloseAllActiveUI сработает до создания PortalConnection
-          try
-            TSendDestroyClientToGatewayThread.Create(False, asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['UserToConnect'] + '_' + asWideString['action'] + '_', False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, False);
-            PortalThread := TPortalThread.Create(False, asString['action'], asWideString['user'], asWideString['pass'], asWideString['UserToConnect'], asString['Address'], asInteger['LockedState'], asBoolean['ServiceStarted'], True); //Для каждого соединения новый клиент
-            PRItem^.Gateway := asString['Address'];
-            PRItem^.ThreadID := PortalThread.ThreadID;
-          finally
-            CS_PortalConn.Release;
-          end;
+          TSendDestroyClientToGatewayThread.Create(False, asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['UserToConnect'] + '_' + asWideString['action'] + '_', False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, False);
+          PortalThread := TPortalThread.Create(False, asString['action'], asWideString['user'], asWideString['pass'], asWideString['UserToConnect'], asString['Address'], asInteger['LockedState'], asBoolean['ServiceStarted'], True); //Для каждого соединения новый клиент
+          PRItem^.Gateway := asString['Address'];
+          PRItem^.ThreadID := PortalThread.ThreadID;
         end;
       end;
 
@@ -8536,7 +8537,7 @@ begin
 //                make_notify(fname, 'manual_logout');
 //              if isFriend(fname) then
 //                FriendList_Status(fname, MSG_STATUS_OFFLINE);
-                with asRecord['manual_logout'] do
+                  with asRecord['manual_logout'] do
                 begin
                   DeletePendingRequest(asWideString['user'], asString['action']);
 
@@ -10175,12 +10176,7 @@ begin
 //  finally
 //    CS_GW.Release;
 //  end;
-  CS_PortalConn.Acquire;
-  try
-    DesktopsForm.Close;
-  finally
-    CS_PortalConn.Release;
-  end;
+  DesktopsForm.Close;
 
   if (OpenedModalForm <> nil)
     and OpenedModalForm^.Visible
@@ -11927,7 +11923,6 @@ initialization
   CS_ActivateHost := TCriticalSection.Create;
   CS_HostGateway := TCriticalSection.Create;
   CS_Incoming := TCriticalSection.Create;
-  CS_PortalConn := TCriticalSection.Create;
   Randomize;
 
 finalization
@@ -11938,6 +11933,5 @@ finalization
   CS_ActivateHost.Free;
   CS_HostGateway.Free;
   CS_Incoming.Free;
-  CS_PortalConn.Free;
 
 end.

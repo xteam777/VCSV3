@@ -896,15 +896,15 @@ var
           SRCPAINT);
       end;
 
-      if (Scr.CursorUser <> Module.Client.LoginUserName) and
-        (FMarkRemoteCursor.Style <> rcm_None) then
+      if (Scr.CursorUser <> Module.Client.LoginUserName) {and
+        (FMarkRemoteCursor.Style <> rcm_None)} then
       begin
         FCurPaintX := FCurPaintX - FMarkRemoteCursor.Size;
         FCurPaintY := FCurPaintY - FMarkRemoteCursor.Size;
         FCurPaintW := FCurPaintW + FMarkRemoteCursor.Size * 2;
         FCurPaintH := FCurPaintH + FMarkRemoteCursor.Size * 2;
 
-        Image.Brush.Style := bsSolid;
+       { Image.Brush.Style := bsSolid;
         Image.Brush.Color := FMarkRemoteCursor.FColor1; // clMaroon;
         Image.Pen.Color := FMarkRemoteCursor.FColor2; // clRed;
 
@@ -946,7 +946,7 @@ var
               round((ImageHeight - Scale * Scr.Image.Height) / 2 + Scale * Scr.CursorY) - FMarkRemoteCursor.Size,
               round((ImageWidth - Scale * Scr.Image.Width) / 2 + Scale * Scr.CursorX) + FMarkRemoteCursor.Size,
               round((ImageHeight - Scale * Scr.Image.Height) / 2 + Scale * Scr.CursorY) + FMarkRemoteCursor.Size);
-        else
+        else}
           begin
             Image.MoveTo(round((ImageWidth - Scale * Scr.Image.Width) / 2 + Scale * Scr.CursorX) - FMarkRemoteCursor.Size,
               round((ImageHeight - Scale * Scr.Image.Height) / 2 + Scale * Scr.CursorY));
@@ -960,7 +960,7 @@ var
               round((ImageHeight - Scale * Scr.Image.Height) / 2 + Scale * Scr.CursorY) - 1, round((ImageWidth - Scale * Scr.Image.Width) / 2 + Scale * Scr.CursorX) + 1,
               round((ImageHeight - Scale * Scr.Image.Height) / 2 + Scale * Scr.CursorY) + 1);
           end;
-        end;
+        //end;
       end;
     end;
   end;
