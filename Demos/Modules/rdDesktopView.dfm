@@ -4369,6 +4369,9 @@ object rdDesktopViewer: TrdDesktopViewer
                 CommandProperties.Width = -1
               end
               item
+                Caption = #1054#1087#1090#1080#1084#1072#1083#1100#1085#1099#1077' '#1085#1072#1089#1090#1088#1086#1081#1082#1080
+              end
+              item
                 Action = aOptimizeSpeed
                 CommandStyle = csRadioButton
                 CommandProperties.Width = -1
@@ -4578,6 +4581,10 @@ object rdDesktopViewer: TrdDesktopViewer
     object aOptimizeQuality: TAction
       Caption = #1054#1087#1090#1080#1084#1080#1079#1080#1088#1086#1074#1072#1090#1100' '#1082#1072#1095#1077#1089#1090#1074#1086
       OnExecute = aOptimizeQualityExecute
+    end
+    object aOptimalSettings: TAction
+      Caption = #1054#1087#1090#1080#1084#1072#1083#1100#1085#1099#1077' '#1085#1072#1089#1090#1088#1086#1081#1082#1080
+      OnExecute = aOptimalSettingsExecute
     end
     object aOptimizeSpeed: TAction
       Caption = #1054#1087#1090#1080#1084#1080#1079#1080#1088#1086#1074#1072#1090#1100' '#1089#1082#1086#1088#1086#1089#1090#1100

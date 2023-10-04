@@ -82,6 +82,10 @@ const
   PO_AUTOMATIC = 0;
   PO_DIRECT = 1;
   PO_MANUAL = 2;
+
+  DS_QUIALITY = 0;
+  DS_OPTIMAL = 1;
+  DS_SPEED = 2;
 var
   MainFormHandle: THandle;
   CurrentSessionID: DWORD;

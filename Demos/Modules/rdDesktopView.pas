@@ -107,6 +107,7 @@ type
     iMove: TImage;
     iMiniPanelShow: TImage;
     iMiniPanelHide: TImage;
+    aOptimalSettings: TAction;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -135,7 +136,6 @@ type
     procedure aCtrlAltDelExecute(Sender: TObject);
     procedure aHideWallpaperExecute(Sender: TObject);
     procedure aShowRemoteCursorExecute(Sender: TObject);
-    procedure aOptimalScaleExecute(Sender: TObject);
     procedure aFullScreenExecute(Sender: TObject);
     procedure aBlockKeyboardMouseExecute(Sender: TObject);
     procedure aPowerOffMonitorExecute(Sender: TObject);
@@ -186,6 +186,7 @@ type
     procedure TimerResizeTimer(Sender: TObject);
     procedure MainChromeTabsChange(Sender: TObject; ATab: TChromeTab;
       TabChangeType: TTabChangeType);
+    procedure aOptimalSettingsExecute(Sender: TObject);
   private
 //    FVideoRecorder: TVideoRecorder;
 //    FVideoWriter: TRMXVideoWriter;
@@ -728,14 +729,9 @@ begin
             pUIItem.PowerOffMonitor := reg.ReadBool('PowerOffMonitor')
           else
             pUIItem.PowerOffMonitor := False;
-          if reg.ValueExists('OptimizeQuality') then
-            pUIItem.OptimizeQuality := reg.ReadBool('OptimizeQuality')
+          if reg.ValueExists('DisplaySetting') then
+            pUIItem.DisplaySetting := reg.ReadInteger('DisplaySetting')
           else
-            pUIItem.OptimizeQuality := True;
-          if reg.ValueExists('OptimizeSpeed') then
-            pUIItem.OptimizeSpeed := reg.ReadBool('OptimizeSpeed')
-          else
-            pUIItem.OptimizeSpeed := False;
           if reg.ValueExists('StretchScreen') then
             pUIItem.StretchScreen := reg.ReadBool('StretchScreen')
           else
@@ -752,8 +748,7 @@ begin
           pUIItem.SendShortcuts := True;
           pUIItem.BlockKeyboardMouse := False;
           pUIItem.PowerOffMonitor := False;
-          pUIItem.OptimizeQuality := True;
-          pUIItem.OptimizeSpeed := False;
+          pUIItem.DisplaySetting := DS_QUIALITY;
           pUIItem.StretchScreen := False;
           pUIItem.HideWallpaper := True;
         end;
@@ -763,8 +758,9 @@ begin
         aSendShortcuts.Checked := pUIItem.SendShortcuts;
         aBlockKeyboardMouse.Checked := pUIItem.BlockKeyboardMouse;
         aPowerOffMonitor.Checked := pUIItem.PowerOffMonitor;
-        aOptimizeQuality.Checked := pUIItem.OptimizeQuality;
-        aOptimizeSpeed.Checked := pUIItem.OptimizeSpeed;
+        aOptimizeQuality.Checked := (pUIItem.DisplaySetting = DS_QUIALITY);
+        aOptimalSettings.Checked := (pUIItem.DisplaySetting = DS_OPTIMAL);
+        aOptimizeSpeed.Checked := (pUIItem.DisplaySetting = DS_SPEED);
         aStretchScreen.Checked := pUIItem.StretchScreen;
         aHideWallpaper.Checked := pUIItem.HideWallpaper;
       finally
@@ -900,8 +896,7 @@ begin
             reg.WriteBool('SendShortcuts', UIDM.SendShortcuts);
             reg.WriteBool('BlockKeyboardMouse', UIDM.BlockKeyboardMouse);
             reg.WriteBool('PowerOffMonitor', UIDM.PowerOffMonitor);
-            reg.WriteBool('OptimizeQuality', UIDM.OptimizeQuality);
-            reg.WriteBool('OptimizeSpeed', UIDM.OptimizeSpeed);
+            reg.WriteInteger('DisplaySetting', UIDM.DisplaySetting);
             reg.WriteBool('StretchScreen', UIDM.StretchScreen);
             reg.WriteBool('HideWallpaper', UIDM.HideWallpaper);
           end;
@@ -1043,8 +1038,9 @@ begin
         aSendShortcuts.Checked := pUIItem.SendShortcuts;
         aBlockKeyboardMouse.Checked := pUIItem.BlockKeyboardMouse;
         aPowerOffMonitor.Checked := pUIItem.PowerOffMonitor;
-        aOptimizeQuality.Checked := pUIItem.OptimizeQuality;
-        aOptimizeSpeed.Checked := pUIItem.OptimizeSpeed;
+        aOptimizeQuality.Checked := (pUIItem.DisplaySetting = DS_QUIALITY);
+        aOptimalSettings.Checked := (pUIItem.DisplaySetting = DS_OPTIMAL);
+        aOptimizeSpeed.Checked := (pUIItem.DisplaySetting = DS_SPEED);
         aStretchScreen.Checked := pUIItem.StretchScreen;
         aHideWallpaper.Checked := pUIItem.HideWallpaper;
 
@@ -2141,14 +2137,6 @@ begin
   ActiveUIModule.UI.Send_LogoffSystem(Sender);
 end;
 
-procedure TrdDesktopViewer.aOptimalScaleExecute(Sender: TObject);
-begin
-//  UI.SmoothScale := not UI.SmoothScale;
-//  pImage.Repaint;
-//
-//  aOptimalScale.Checked := UI.SmoothScale;
-end;
-
 procedure TrdDesktopViewer.UpdateQuality;
 begin
   if ActiveUIModule = nil then
@@ -2195,6 +2183,21 @@ begin
   end;
 end;
 
+procedure TrdDesktopViewer.aOptimalSettingsExecute(Sender: TObject);
+begin
+  if ActiveUIModule = nil then
+    Exit;
+
+  if not aOptimalSettings.Checked then
+  begin
+    aOptimizeQuality.Checked := False;
+    aOptimizeSpeed.Checked := False;
+    ActiveUIModule.DisplaySetting := DS_OPTIMAL;
+
+    UpdateQuality;
+  end;
+end;
+
 procedure TrdDesktopViewer.aOptimizeQualityExecute(Sender: TObject);
 begin
   if ActiveUIModule = nil then
@@ -2202,10 +2205,9 @@ begin
 
   if not aOptimizeQuality.Checked then
   begin
-    aOptimizeQuality.Checked := not aOptimizeQuality.Checked;
-    aOptimizeSpeed.Checked := not aOptimizeQuality.Checked;
-    ActiveUIModule.OptimizeQuality := aOptimizeQuality.Checked;
-    ActiveUIModule.OptimizeSpeed := aOptimizeSpeed.Checked;
+    aOptimalSettings.Checked := False;
+    aOptimizeSpeed.Checked := False;
+    ActiveUIModule.DisplaySetting := DS_QUIALITY;
 
     UpdateQuality;
   end;
@@ -2218,10 +2220,9 @@ begin
 
   if not aOptimizeSpeed.Checked then
   begin
-    aOptimizeSpeed.Checked := not aOptimizeSpeed.Checked;
-    aOptimizeQuality.Checked := not aOptimizeSpeed.Checked;
-    ActiveUIModule.OptimizeQuality := aOptimizeQuality.Checked;
-    ActiveUIModule.OptimizeSpeed := aOptimizeSpeed.Checked;
+    aOptimizeQuality.Checked := False;
+    aOptimalSettings.Checked := False;
+    ActiveUIModule.DisplaySetting := DS_SPEED;
 
     UpdateQuality;
   end;
