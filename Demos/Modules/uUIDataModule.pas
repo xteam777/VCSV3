@@ -52,7 +52,8 @@ type
     PartnerServiceStarted: Boolean;
     ReconnectToPartnerStart: TReconnectToPartnerStart;
 //    RestoreBackgroundOnExit: Boolean;
-    LockSystemOnClose, ShowRemoteCursor, SendShortcuts, BlockKeyboardMouse, PowerOffMonitor, OptimizeQuality, OptimizeSpeed, StretchScreen, HideWallpaper: Boolean;
+    LockSystemOnClose, ShowRemoteCursor, SendShortcuts, BlockKeyboardMouse, PowerOffMonitor, StretchScreen, HideWallpaper: Boolean;
+    DisplaySetting: Integer;
     NeedFree: Boolean;
     ThreadID: Cardinal;
     pMainForm: PForm;
