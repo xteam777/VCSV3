@@ -1341,10 +1341,7 @@ begin
       DelUserFromAccountsID(uname);
       RemoveActiveConsoleClientFromService(uname);
 
-      if Pos('_', uname) = 0 then
-        FHostsCount := FHostsCount - 1
-      else
-        FConnectionsCount := FConnectionsCount - 1;
+      FHostsCount := FHostsCount - 1;
 
       if (HostsInfo.Child[uname]['session'] = sessid)
         or DisconnectAll then
@@ -1487,10 +1484,7 @@ begin
         if HostsInfo.Child[uname] = nil then
           HostsInfo.NewChild(uname);
 
-        if Pos('_', uname) = 0 then
-          FHostsCount := FHostsCount + 1
-        else
-          FConnectionsCount := FConnectionsCount + 1;
+        FHostsCount := FHostsCount + 1;
       end;
 //      if not HostsList.isNull[uname] then
 //        doHostLogIn(uname, gateway, Friends, sessid)
