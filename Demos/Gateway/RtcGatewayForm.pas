@@ -96,10 +96,12 @@ type
     MainGateServer: TRtcHttpServer;
     eMainGate: TEdit;
     Label8: TLabel;
-    lGateways: TLabel;
+    lConnections: TLabel;
     eMaxUsers: TEdit;
     Label9: TLabel;
     PortalGateServer: TRtcHttpServer;
+    lGateways: TLabel;
+    Label13: TLabel;
     procedure btnLoginClick(Sender: TObject);
     procedure btnLogoutClick(Sender: TObject);
     procedure xSSLClick(Sender: TObject);
@@ -226,6 +228,7 @@ procedure TMainForm.tGetStatsCountTimer(Sender: TObject);
 begin
   lAccounts.Caption := IntToStr(GetDataProvider(cbMainGate.Checked).GetAccountsCount);
   lHosts.Caption := IntToStr(GetDataProvider(cbMainGate.Checked).GetHostsCount);
+  lConnections.Caption := IntToStr(GetDataProvider(cbMainGate.Checked).GetConnectionsCount);
   lGateways.Caption := IntToStr(GetDataProvider(cbMainGate.Checked).GetGatewaysCount);
 
   l80.Caption := IntToStr(Gateway1.GetUsersCount);
@@ -389,8 +392,10 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
     Label11.Visible := True;
     Label10.Visible := True;
     Label8.Visible := True;
+    Label13.Visible := True;
     lAccounts.Visible := True;
     lHosts.Visible := True;
+    lConnections.Visible := True;
     lGateways.Visible := True;
 
     Label5.Visible := False;
@@ -464,8 +469,10 @@ procedure TMainForm.btnLoginClick(Sender: TObject);
     Label11.Visible := False;
     Label10.Visible := False;
     Label8.Visible := False;
+    Label13.Visible := False;
     lAccounts.Visible := False;
     lHosts.Visible := False;
+    lConnections.Visible := False;
     lGateways.Visible := False;
 
     Label5.Visible := True;

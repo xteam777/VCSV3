@@ -70,7 +70,7 @@ type
     FOnUserLogIn: TUserEvent;
     FOnUserLogOut: TUserEvent;
     FPingTimeout: Integer;
-    FAccountsCount, FHostsCount, FGatewaysCount: Integer;
+    FAccountsCount, FHostsCount, FConnectionsCount, FGatewaysCount: Integer;
     ThisGatewayAddress: String;
 
     constructor Create;
@@ -136,11 +136,13 @@ type
     function CheckPassword(uname, pass: String): Boolean;
 
     procedure SetLastHostActiveTime(uname: String; Time: TDateTime);
+    procedure SetHostGateway(uname: String; Gateway: String);
     procedure CheckDisconnectedHosts;
     procedure DelUserFromAccountsID(uname: String);
 
     function GetAccountsCount: Integer;
     function GetHostsCount: Integer;
+    function GetConnectionsCount: Integer;
     function GetGatewaysCount: Integer;
 
     procedure GatewayReLogin(address: String; MaxUsers: Integer);
@@ -180,6 +182,18 @@ begin
   end;
 end;
 
+function TVircessUsers.GetConnectionsCount: Integer;
+var
+  i: Integer;
+begin
+  userCS.Acquire;
+  try
+    Result := FConnectionsCount;
+  finally
+    userCS.Release;
+  end;
+end;
+
 function TVircessUsers.GetGatewaysCount: Integer;
 var
   i: Integer;
@@ -198,6 +212,7 @@ begin
 
   FAccountsCount := 0;
   FHostsCount := 0;
+  FConnectionsCount := 0;
   FGatewaysCount := 0;
 
   AccountsList := TRtcRecord.Create;
@@ -1040,6 +1055,24 @@ begin
   end;
 end;
 
+procedure TVircessUsers.SetHostGateway(uname: String; Gateway: String);
+begin
+  userCS.Acquire;
+  try
+    // Remember new session ID
+    if HostsInfo.Child[uname] = nil then
+      Exit
+      //raise Exception.Create('User ' + uname + ' not logged in.')
+    else
+//      if HostsInfo.Child[uname].is_Type['LastActive'] = nil then
+//        HostsInfo.Child[uname].NewString('LastActive');
+
+      HostsInfo.Child[uname].asString['Gateway'] := Gateway;
+  finally
+    userCS.Release;
+  end;
+end;
+
 function TVircessUsers.CheckPassword(uname, pass: String): Boolean;
 var
   i: Integer;
@@ -1256,6 +1289,7 @@ begin
     AddUserToGateway(uname, RtcString(gateway));
 
     SetLastHostActiveTime(uname, Now);
+    SetHostGateway(uname, gateway);
 
     NotifyAccountsOnHostLogIn(uname, Friends);
 
@@ -1307,7 +1341,10 @@ begin
       DelUserFromAccountsID(uname);
       RemoveActiveConsoleClientFromService(uname);
 
-      FHostsCount := FHostsCount - 1;
+      if Pos('_', uname) = 0 then
+        FHostsCount := FHostsCount - 1
+      else
+        FConnectionsCount := FConnectionsCount - 1;
 
       if (HostsInfo.Child[uname]['session'] = sessid)
         or DisconnectAll then
@@ -1450,7 +1487,10 @@ begin
         if HostsInfo.Child[uname] = nil then
           HostsInfo.NewChild(uname);
 
-        FHostsCount := FHostsCount + 1;
+        if Pos('_', uname) = 0 then
+          FHostsCount := FHostsCount + 1
+        else
+          FConnectionsCount := FConnectionsCount + 1;
       end;
 //      if not HostsList.isNull[uname] then
 //        doHostLogIn(uname, gateway, Friends, sessid)

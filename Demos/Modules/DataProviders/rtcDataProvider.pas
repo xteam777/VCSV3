@@ -187,6 +187,7 @@ type
       ParamName: WideString; DataType: TDataType; Direction: TParameterDirection; ParamValue: OleVariant);
     function GetAccountsCount: Integer;
     function GetHostsCount: Integer;
+    function GetConnectionsCount: Integer;
     function GetGatewaysCount: Integer;
     procedure SendGatewayRelogin;
     procedure SendGatewayLogOut;
@@ -268,6 +269,11 @@ end;
 function TData_Provider.GetHostsCount: Integer;
 begin
   Result := Users.GetHostsCount;
+end;
+
+function TData_Provider.GetConnectionsCount: Integer;
+begin
+  Result := Users.GetConnectionsCount;
 end;
 
 function TData_Provider.GetGatewaysCount: Integer;

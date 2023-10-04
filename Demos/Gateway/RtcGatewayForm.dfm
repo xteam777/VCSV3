@@ -27,20 +27,19 @@ object MainForm: TMainForm
     Height = 429
     Align = alClient
     TabOrder = 0
-    ExplicitTop = 28
-    ExplicitWidth = 595
-    ExplicitHeight = 441
+    ExplicitWidth = 571
+    ExplicitHeight = 428
     object Pages: TPageControl
       Left = 1
       Top = 1
-      Width = 581
-      Height = 428
-      ActivePage = Page_Setup
+      Width = 573
+      Height = 427
+      ActivePage = Page_Active
       Align = alClient
       TabOrder = 0
       TabStop = False
-      ExplicitWidth = 593
-      ExplicitHeight = 439
+      ExplicitWidth = 569
+      ExplicitHeight = 426
       object Page_Setup: TTabSheet
         Caption = 'Setup'
         object Label3: TLabel
@@ -361,12 +360,12 @@ object MainForm: TMainForm
         object Label8: TLabel
           Left = 75
           Top = 107
-          Width = 59
+          Width = 64
           Height = 14
           AutoSize = False
-          Caption = 'Gateways:'
+          Caption = 'Connections:'
         end
-        object lGateways: TLabel
+        object lConnections: TLabel
           Left = 145
           Top = 107
           Width = 59
@@ -374,6 +373,23 @@ object MainForm: TMainForm
           Alignment = taRightJustify
           AutoSize = False
           Caption = '0'
+        end
+        object lGateways: TLabel
+          Left = 145
+          Top = 131
+          Width = 59
+          Height = 14
+          Alignment = taRightJustify
+          AutoSize = False
+          Caption = '0'
+        end
+        object Label13: TLabel
+          Left = 75
+          Top = 131
+          Width = 59
+          Height = 14
+          AutoSize = False
+          Caption = 'Gateways:'
         end
         object eLogoff: TEdit
           Left = 8
@@ -437,12 +453,12 @@ object MainForm: TMainForm
     Font.Style = []
     ParentFont = False
     TabOrder = 1
-    ExplicitTop = 469
-    ExplicitWidth = 595
+    ExplicitTop = 428
+    ExplicitWidth = 571
     object lblStatus: TLabel
       Left = 2
       Top = 2
-      Width = 579
+      Width = 571
       Height = 29
       Align = alClient
       Alignment = taCenter

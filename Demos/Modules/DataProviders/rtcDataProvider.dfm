@@ -125,7 +125,7 @@ object Data_Provider: TData_Provider
     FunctionName = 'Account.ChangeGroup'
     OnExecute = AccountChangeGroupExecute
     Left = 126
-    Top = 387
+    Top = 379
   end
   object AccountAddAccount: TRtcFunction
     Group = GatewayFunctions
@@ -152,7 +152,7 @@ object Data_Provider: TData_Provider
     Group = GatewayFunctions
     FunctionName = 'Host.Activate'
     OnExecute = HostActivateExecute
-    Left = 392
+    Left = 408
     Top = 266
   end
   object HostLogin2: TRtcFunction
@@ -372,6 +372,6 @@ object Data_Provider: TData_Provider
     FunctionName = 'Account.ManualLogout'
     OnExecute = AccountManualLogoutExecute
     Left = 214
-    Top = 385
+    Top = 377
   end
 end
