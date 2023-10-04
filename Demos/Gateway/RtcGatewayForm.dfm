@@ -508,6 +508,7 @@ object MainForm: TMainForm
     Compression = cMax
     EncryptionKey = 16
     SecureKey = '2240897'
+    AutoSessionsLive = 10
     AutoSessions = True
     ModuleFileName = '/$rdgate'
     OnSessionClosing = Gateway1SessionClosing
@@ -603,6 +604,7 @@ object MainForm: TMainForm
     Compression = cMax
     EncryptionKey = 16
     SecureKey = '2240897'
+    AutoSessionsLive = 10
     AutoSessions = True
     ModuleFileName = '/$rdgate'
     OnSessionClosing = Gateway1SessionClosing
@@ -645,6 +647,7 @@ object MainForm: TMainForm
     Compression = cMax
     EncryptionKey = 16
     SecureKey = '2240897'
+    AutoSessionsLive = 10
     AutoSessions = True
     ModuleFileName = '/$rdgate'
     OnSessionClosing = Gateway1SessionClosing
@@ -675,11 +678,12 @@ object MainForm: TMainForm
     Compression = cMax
     EncryptionKey = 16
     SecureKey = '2240897'
+    AutoSessionsLive = 10
     AutoSessions = True
     ModuleFileName = '/$rdgate'
     OnSessionClosing = Gateway1SessionClosing
-    Left = 478
-    Top = 132
+    Left = 65534
+    Top = 348
   end
   object HttpServer4: TRtcHttpServer
     MultiThreaded = True
