@@ -251,6 +251,7 @@ object Data_Provider: TData_Provider
   end
   object MainGateServerModule: TRtcServerModule
     Link = MainGateServerLink
+    Compression = cMax
     SecureKey = '2240897'
     ModuleFileName = '/gategroup'
     FunctionGroup = MainGateServerGroup
