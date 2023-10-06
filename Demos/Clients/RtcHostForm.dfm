@@ -4,7 +4,7 @@ object MainForm: TMainForm
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'Remox'
   ClientHeight = 481
-  ClientWidth = 840
+  ClientWidth = 836
   Color = clBtnFace
   CustomTitleBar.CaptionAlignment = taCenter
   Constraints.MinWidth = 852
@@ -47,7 +47,7 @@ object MainForm: TMainForm
   object pInMain: TPanel
     Left = 0
     Top = 0
-    Width = 840
+    Width = 836
     Height = 481
     Margins.Left = 0
     Margins.Top = 0
@@ -61,16 +61,14 @@ object MainForm: TMainForm
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
-    ExplicitWidth = 836
-    ExplicitHeight = 480
     DesignSize = (
-      840
+      836
       481)
     object lblStatus: TLabel
       AlignWithMargins = True
       Left = 52
       Top = 467
-      Width = 514
+      Width = 510
       Height = 17
       Margins.Left = 75
       Anchors = [akLeft, akTop, akRight]
@@ -6064,10 +6062,14 @@ object MainForm: TMainForm
     end
   end
   object cmAccounts: TRtcClientModule
+    AutoSyncEvents = True
     Client = hcAccounts
     Compression = cMax
     HyperThreading = True
+    EncryptionKey = 16
     SecureKey = '2240897'
+    ForceEncryption = True
+    AutoSessions = True
     AutoRepost = 2
     ModuleFileName = '/gatefunc'
     Left = 209
@@ -6279,10 +6281,14 @@ object MainForm: TMainForm
     Top = 8
   end
   object TimerModule: TRtcClientModule
+    AutoSyncEvents = True
     Client = TimerClient
     Compression = cMax
     HyperThreading = True
+    EncryptionKey = 16
     SecureKey = '2240897'
+    ForceEncryption = True
+    AutoSessions = True
     AutoRepost = 2
     ModuleFileName = '/gatefunc'
     OnResponseAbort = TimerModuleResponseAbort
@@ -6308,10 +6314,14 @@ object MainForm: TMainForm
     Top = 85
   end
   object HostTimerModule: TRtcClientModule
+    AutoSyncEvents = True
     Client = HostTimerClient
     Compression = cMax
     HyperThreading = True
+    EncryptionKey = 16
     SecureKey = '2240897'
+    ForceEncryption = True
+    AutoSessions = True
     AutoRepost = 2
     ModuleFileName = '/gatefunc'
     OnResponseAbort = HostTimerModuleResponseAbort
