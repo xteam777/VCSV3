@@ -275,11 +275,6 @@ begin
   Debug.Log('Capturing screen');
   time := GetTickCount;
 
-//  desk_dc := GetDC(0); //рисую пиксель в левом нижнем углу экрана
-//  desk_pixel_color := InvertColor(desk_pixel_color);
-//  SetPixel(desk_dc, 0, pScreenHeight, desk_pixel_color);
-//  ReleaseDC(0, desk_dc);
-
   BadAttempt := False;
   AttemptId := 1;
 
@@ -367,6 +362,11 @@ begin
   Desc.BindFlags := 0;
   Desc.CPUAccessFlags := Ord(D3D11_CPU_ACCESS_READ) or Ord(D3D11_CPU_ACCESS_WRITE);
   Desc.MiscFlags := 0;
+
+//  desk_dc := GetDC(0); //рисую пиксель в левом нижнем углу экрана
+//  desk_pixel_color := InvertColor(desk_pixel_color);
+//  SetPixel(desk_dc, 0, Desc.Height, desk_pixel_color);
+//  ReleaseDC(0, desk_dc);
 
 //  Desc.BindFlags := 0;
 ////  Desc.Format := DXGI_FORMAT_B8G8R8X8_TYPELESS; //DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;

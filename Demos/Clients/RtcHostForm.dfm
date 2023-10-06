@@ -6068,15 +6068,11 @@ object MainForm: TMainForm
     Client = hcAccounts
     Compression = cMax
     HyperThreading = True
-    EncryptionKey = 16
     SecureKey = '2240897'
-    ForceEncryption = True
-    AutoSessions = True
-    AutoSessionsPing = 1
     AutoRepost = 2
     ModuleFileName = '/gatefunc'
-    Left = 155
-    Top = 192
+    Left = 209
+    Top = 156
   end
   object hcAccounts: TRtcHttpClient
     MultiThreaded = True
@@ -6098,8 +6094,8 @@ object MainForm: TMainForm
     MaxResponseSize = 128000
     MaxHeaderSize = 16000
     TimeoutsOfAPI.ConnectTimeout = 5
-    Left = 9
-    Top = 112
+    Left = 11
+    Top = 126
   end
   object rActivate: TRtcResult
     OnReturn = rActivateReturn
@@ -6253,7 +6249,7 @@ object MainForm: TMainForm
     MaxResponseSize = 128000
     MaxHeaderSize = 16000
     TimeoutsOfAPI.ConnectTimeout = 5
-    Left = 52
+    Left = 46
     Top = 95
   end
   object pingTimer: TTimer
@@ -6288,16 +6284,12 @@ object MainForm: TMainForm
     Client = TimerClient
     Compression = cMax
     HyperThreading = True
-    EncryptionKey = 16
     SecureKey = '2240897'
-    ForceEncryption = True
-    AutoSessions = True
-    AutoSessionsPing = 1
     AutoRepost = 2
     ModuleFileName = '/gatefunc'
     OnResponseAbort = TimerModuleResponseAbort
-    Left = 24
-    Top = 194
+    Left = 148
+    Top = 156
   end
   object HostTimerClient: TRtcHttpClient
     MultiThreaded = True
@@ -6314,24 +6306,20 @@ object MainForm: TMainForm
     MaxResponseSize = 128000
     MaxHeaderSize = 16000
     TimeoutsOfAPI.ConnectTimeout = 5
-    Left = 12
-    Top = 83
+    Left = 10
+    Top = 85
   end
   object HostTimerModule: TRtcClientModule
     AutoSyncEvents = True
     Client = HostTimerClient
     Compression = cMax
     HyperThreading = True
-    EncryptionKey = 16
     SecureKey = '2240897'
-    ForceEncryption = True
-    AutoSessions = True
-    AutoSessionsPing = 1
     AutoRepost = 2
     ModuleFileName = '/gatefunc'
     OnResponseAbort = HostTimerModuleResponseAbort
-    Left = 82
-    Top = 196
+    Left = 178
+    Top = 156
   end
   object HostPingTimer: TTimer
     Enabled = False
