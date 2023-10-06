@@ -1232,10 +1232,10 @@ begin
   FGatewayClient.LoginUserName := AUserName;
   FGatewayClient.LoginUserInfo.asText['RealName'] := AUserName;
   FGatewayClient.LoginPassword := '';
-  FGatewayClient.AutoSyncEvents := True;
+  FGatewayClient.AutoSyncEvents := False;
   FGatewayClient.DataCompress := rtcpCompMax;
-  FGatewayClient.DataEncrypt := 16;
-  FGatewayClient.DataForceEncrypt := True;
+  FGatewayClient.DataEncrypt := 0;
+  FGatewayClient.DataForceEncrypt := False;
   FGatewayClient.DataSecureKey := '2240897';
   FGatewayClient.GateAddr := AGateway;
   FGatewayClient.GatePort := APort;
