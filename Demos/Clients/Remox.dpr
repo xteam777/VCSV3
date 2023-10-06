@@ -111,7 +111,6 @@ begin
   Application.Title := 'Remox';
   Forms.Application.ShowMainForm := (Pos('/SILENT', UpperCase(CmdLine)) = 0);
   Forms.Application.CreateForm(TMainForm, MainForm);
-  Application.CreateForm(TUIDataModule, UIDataModule);
   Forms.Application.Run;
 //    else
 //    begin
@@ -159,6 +158,8 @@ end;
 
 procedure StartProcessInServiceMode;
 begin
+//Sleep(10000);
+
   xLog('Start Remox in service mode');
 
   IsService := True;
@@ -203,6 +204,8 @@ begin
   CurrentProcessId := GetCurrentProcessId;
   ProcessIdToSessionId(GetCurrentProcessId, CurrentSessionID);
   IsWinServer := IsWindowsServerPlatform;
+
+//Sleep(10000);
 
 //  CreateAttachedProcess('\Tor\tor.exe', 'SocksPort 9250 ControlPort 9251', SW_HIDE, TorProcessID);
 
@@ -322,10 +325,10 @@ begin
     begin
       pfFolder := GetSpecialFolderLocation(CSIDL_PROGRAM_FILESX86);
 
-      CreateRegistryKey;
+      CreateUninstallRegistryKey;
       CreateShortcuts;
-
       CreateProgramFolder;
+      CopyRegistrySettingsFromCurrentUserToLocalMachine;
 
       if not IsServiceExisted(RTC_HOSTSERVICE_NAME) then
         CreateServices(RTC_HOSTSERVICE_NAME, RTC_HOSTSERVICE_DISPLAY_NAME, pfFolder + '\Remox\Remox.exe');
@@ -365,7 +368,7 @@ begin
       UninstallService(RTC_HOSTSERVICE_NAME, 0);
 
       DeleteShortcuts;
-      DeleteRegistryKey;
+      DeleteUninstallRegistryKey;
       DeleteProgramFolder;
     end
     else

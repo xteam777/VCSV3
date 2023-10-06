@@ -17,10 +17,12 @@ uses
   ShellApi,
   CommonData;
 
+procedure CopyRegistrySettingsFromCurrentUserToLocalMachine;
 procedure CreateShortcuts;
 procedure DeleteShortcuts;
-procedure CreateRegistryKey;
-procedure DeleteRegistryKey;
+procedure CreateUninstallRegistryKey;
+procedure DeleteUninstallRegistryKey;
+procedure DeleteSettingsRegistryKeys;
 procedure CreateProgramFolder;
 procedure DeleteProgramFolder;
 function GetSpecialFolderLocation(nFolder: Integer): String;
@@ -29,6 +31,66 @@ procedure DeleteShortcut(sFileName: String; nFolder: Integer);
 //procedure ReadGroups(Strings: TStrings);
 
 implementation
+
+procedure CopyRegistrySettingsFromCurrentUserToLocalMachine;
+var
+  reg: TRegistry;
+  ProxyOption: Integer;
+  PermanentPassword, ProxyAddr, ProxyUsername, ProxyPassword: String;
+begin
+  reg := TRegistry.Create;
+  try
+    reg.RootKey := HKEY_CURRENT_USER;
+    reg.Access := KEY_READ;
+    if not reg.OpenKey('Software\Remox', False) then
+      Exit;
+
+    if reg.ValueExists('PermanentPassword') then
+      PermanentPassword := reg.ReadString('PermanentPassword')
+    else
+      PermanentPassword := '';
+
+    if reg.ValueExists('ProxyOption') then
+      ProxyOption := reg.ReadInteger('ProxyOption')
+    else
+      ProxyOption := PO_AUTOMATIC;
+
+    if reg.ValueExists('ProxyAddr') then
+      ProxyAddr := reg.ReadString('ProxyAddr')
+    else
+      ProxyAddr := '';
+    if reg.ValueExists('ProxyUsername') then
+      ProxyUserName := reg.ReadString('ProxyUsername')
+    else
+      ProxyUserName := '';
+    if reg.ValueExists('ProxyPassword') then
+      ProxyPassword := reg.ReadString('ProxyPassword')
+    else
+      ProxyPassword := '';
+
+    reg.CloseKey;
+  finally
+    reg.Free;
+  end;
+
+  reg := TRegistry.Create;
+  try
+    reg.RootKey := HKEY_LOCAL_MACHINE;
+    reg.Access := KEY_WRITE or KEY_WOW64_64KEY;
+    if not reg.OpenKey('SOFTWARE\Remox', True) then
+      Exit;
+
+    reg.WriteString('PermanentPassword', PermanentPassword);
+    reg.WriteInteger('ProxyOption', ProxyOption);
+    reg.WriteString('ProxyAddr', ProxyAddr);
+    reg.WriteString('ProxyUsername', ProxyUsername);
+    reg.WriteString('ProxyPassword', ProxyPassword);
+
+    reg.CloseKey;
+  finally
+    reg.Free;
+  end;
+end;
 
 function GetTempFile: String;
 var
@@ -111,7 +173,7 @@ begin
   DeleteShortcut(sFileName, CSIDL_PROGRAMS);
 end;
 
-procedure CreateRegistryKey;
+procedure CreateUninstallRegistryKey;
 var
   pfFolder, UninstallProgramName: String;
   Registry: TRegistry;
@@ -122,6 +184,7 @@ begin
   try
     // leave entry so Windows can do "Add-Remove Programs"
     Registry.RootKey := HKEY_LOCAL_MACHINE;
+    Registry.Access := KEY_WRITE or KEY_WOW64_64KEY;
     Registry.OpenKey('\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Remox', True);
     // ... uninstaller lives in Windows directory
     Registry.WriteString('DisplayName', 'Remox');
@@ -134,7 +197,7 @@ begin
   end;
 end;
 
-procedure DeleteRegistryKey;
+procedure DeleteUninstallRegistryKey;
 var
   Registry: TRegistry;
 begin
@@ -142,8 +205,36 @@ begin
   try
     // leave entry so Windows can do "Add-Remove Programs"
     Registry.RootKey := HKEY_LOCAL_MACHINE;
+    Registry.Access := KEY_WRITE or KEY_WOW64_64KEY;
     if Registry.KeyExists('\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Remox') then
       Registry.DeleteKey('\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Remox');
+  finally
+    Registry.Free;
+  end;
+end;
+
+procedure DeleteSettingsRegistryKeys;
+var
+  Registry: TRegistry;
+  i: Integer;
+  SubKeyNames: TStringList;
+begin
+  Registry := TRegistry.Create;
+  try
+    // leave entry so Windows can do "Add-Remove Programs"
+    Registry.RootKey := HKEY_USERS;
+    Registry.Access := KEY_ALL_ACCESS or KEY_WOW64_64KEY;
+    if not Registry.OpenKey('\', False) then
+      Exit;
+    SubKeyNames := TStringList.Create;
+    try
+      Registry.GetKeyNames(SubKeyNames);
+      for i := 0 to SubKeyNames.Count - 1 do
+        if Registry.KeyExists('\' + SubKeyNames[i] + '\SOFTWARE\Remox') then
+          Registry.DeleteKey('\' + SubKeyNames[i] + '\SOFTWARE\Remox');
+    finally
+      SubKeyNames.Free;
+    end;
   finally
     Registry.Free;
   end;

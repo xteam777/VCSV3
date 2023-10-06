@@ -248,7 +248,7 @@ begin
       SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0,
       psidAdmin));
 
-    // Проверяем, входим ли мы в группу админов (с учётов всех проверок на disabled SID)
+    // Проверяем, входим ли мы в группу админов (с учётом всех проверок на disabled SID)
     if CheckTokenMembership(0, psidAdmin, B) then
       Result := B
     else

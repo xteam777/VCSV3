@@ -71,9 +71,6 @@ Coordinates=948,276,107,36
 [GridPanel1]
 Coordinates=55,269,79,58
 
-[Label22]
-Coordinates=528,518,60,58
-
 [miSettings]
 Coordinates=888,386,75,36
 
@@ -139,9 +136,6 @@ Coordinates=1113,386,91,36
 
 [Label5]
 Coordinates=475,623,53,58
-
-[Label14]
-Coordinates=731,463,60,58
 
 [pInMain]
 Coordinates=337,623,60,58
@@ -272,9 +266,6 @@ Coordinates=1266,221,123,36
 [resLogout]
 Coordinates=330,793,72,36
 
-[Label10]
-Coordinates=528,232,60,58
-
 [miAbout]
 Coordinates=261,793,62,36
 
@@ -295,9 +286,6 @@ Coordinates=272,232,60,58
 
 [ilStatus]
 Coordinates=1044,551,57,36
-
-[Label8]
-Coordinates=173,527,53,58
 
 [iRegPassState]
 Coordinates=88,623,100,58
@@ -322,9 +310,6 @@ Coordinates=272,155,64,58
 
 [iStatus2]
 Coordinates=144,269,61,58
-
-[Label21]
-Coordinates=327,365,60,58
 
 [N4]
 Coordinates=1122,867,40,36
@@ -364,4 +349,19 @@ Coordinates=714,719,66,36
 
 [pcDevAcc]
 Coordinates=731,78,66,58
+
+[LabelPP1]
+Coordinates=173,527,53,58
+
+[LabelPP2]
+Coordinates=528,232,60,58
+
+[LabelPP3]
+Coordinates=731,463,60,58
+
+[LabelPP4]
+Coordinates=327,365,60,58
+
+[LabelPP5]
+Coordinates=528,518,60,58
 

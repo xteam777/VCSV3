@@ -4,7 +4,7 @@ object MainForm: TMainForm
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'Remox'
   ClientHeight = 481
-  ClientWidth = 836
+  ClientWidth = 840
   Color = clBtnFace
   CustomTitleBar.CaptionAlignment = taCenter
   Constraints.MinWidth = 852
@@ -47,7 +47,7 @@ object MainForm: TMainForm
   object pInMain: TPanel
     Left = 0
     Top = 0
-    Width = 836
+    Width = 840
     Height = 481
     Margins.Left = 0
     Margins.Top = 0
@@ -61,14 +61,16 @@ object MainForm: TMainForm
     ShowCaption = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
+    ExplicitWidth = 836
+    ExplicitHeight = 480
     DesignSize = (
-      836
+      840
       481)
     object lblStatus: TLabel
       AlignWithMargins = True
       Left = 52
       Top = 467
-      Width = 510
+      Width = 514
       Height = 17
       Margins.Left = 75
       Anchors = [akLeft, akTop, akRight]
@@ -4178,7 +4180,7 @@ object MainForm: TMainForm
         ExplicitTop = 0
         ExplicitWidth = 267
       end
-      object Label8: TLabel
+      object LabelPP1: TLabel
         Left = 10
         Top = 190
         Width = 214
@@ -4195,7 +4197,7 @@ object MainForm: TMainForm
         ParentFont = False
         Transparent = True
       end
-      object Label10: TLabel
+      object LabelPP2: TLabel
         Left = 10
         Top = 218
         Width = 239
@@ -4212,7 +4214,7 @@ object MainForm: TMainForm
         ParentFont = False
         Transparent = True
       end
-      object Label14: TLabel
+      object LabelPP3: TLabel
         Left = 10
         Top = 236
         Width = 239
@@ -4280,7 +4282,7 @@ object MainForm: TMainForm
         ParentFont = False
         Transparent = True
       end
-      object Label21: TLabel
+      object LabelPP4: TLabel
         Left = 10
         Top = 254
         Width = 239
@@ -4361,7 +4363,7 @@ object MainForm: TMainForm
         Stretch = True
         Transparent = True
       end
-      object Label22: TLabel
+      object LabelPP5: TLabel
         Left = 10
         Top = 276
         Width = 119
@@ -4377,7 +4379,7 @@ object MainForm: TMainForm
         ParentColor = False
         ParentFont = False
         Transparent = True
-        OnClick = Label22Click
+        OnClick = LabelPP5Click
         OnMouseEnter = lRegistrationMouseEnter
         OnMouseLeave = lRegistrationMouseLeave
       end
@@ -6003,7 +6005,7 @@ object MainForm: TMainForm
     end
     object miRegularAccess: TMenuItem
       Caption = #1053#1072#1089#1090#1088#1086#1080#1090#1100' '#1087#1086#1089#1090#1086#1103#1085#1085#1099#1081' '#1076#1086#1089#1090#1091#1087
-      OnClick = Label22Click
+      OnClick = LabelPP5Click
       OnDrawItem = miWebSite2DrawItem
     end
     object N2: TMenuItem

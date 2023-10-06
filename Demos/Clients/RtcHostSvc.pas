@@ -165,14 +165,18 @@ procedure TRemoxService.OnExecuteRequest(const Context: ICommContext; const Requ
 var
   reg: TRegistry;
 begin
-  if Request.Data.ReadInteger('QueryType') = QT_SET_PERMANENT_PASSWORD then
+  if Request.Data.ReadInteger('QueryType') = QT_SET_SETTINGS then
   begin
     reg := TRegistry.Create;
     try
       try
+        reg.Access := KEY_WRITE or KEY_WOW64_64KEY;
         reg.RootKey := HKEY_LOCAL_MACHINE;
-        reg.OpenKey('Software\Remox', True);
-        reg.WriteString('PermanentPassword', Request.Data.ReadString('PermanentPassword'));
+        if not reg.OpenKey('SOFTWARE\Remox', True) then
+          Exit;
+
+        if Request.Data.Exists('PermanentPassword') then
+          reg.WriteString('PermanentPassword', Request.Data.ReadString('PermanentPassword'));
         reg.WriteInteger('ProxyOption', Request.Data.ReadInteger('ProxyOption'));
         reg.WriteString('ProxyAddr', Request.Data.ReadString('ProxyAddr'));
         reg.WriteString('ProxyUsername', Request.Data.ReadString('ProxyUsername'));
@@ -402,9 +406,10 @@ procedure TRemoxService.ServiceStart(Sender: TService; var Started: Boolean);
 var
   s: RtcString;
 begin
+//  Sleep(10000);
+
   FIPCServer.Start;
 
-//  Sleep(10000);
   xLog('Service start pending');
   try
     StartHostLogin;
@@ -466,8 +471,8 @@ begin
 
   tStartHelpers.StartClientInAllSessions(True, False);
   tStartHelpers.Resume;
-  tStartClients.StartClientInAllSessions(False, True);
-  tStartClients.Resume;
+//  tStartClients.StartClientInAllSessions(False, True);
+//  tStartClients.Resume;
 end;
 
 {procedure TRemoxService.LogoutClientHosts; //Сделано на гейте
@@ -864,17 +869,17 @@ begin
       StartProcessAsSystem(HelperTempFileName, 'Winlogon', SessionId, TTSystem);
   end;
 
-  if doStartClient then
+  if doStartClient then //Служба не должна запускать клиентов. Только через автозагрузку
   begin
-    if not ProcessStartedInSession(ExtractFileName(AppFileName), SessionId, ProcessId)
-      and UserIsLoggedInSession(SessionId) then
-      StartProcessAsSystem(AppFileName + ' /SILENT', 'Default', SessionId, TTExplorer); // /ELEVATE
+//    if not ProcessStartedInSession(ExtractFileName(AppFileName), SessionId, ProcessId)
+//      and UserIsLoggedInSession(SessionId) then
+//      StartProcessAsSystem(AppFileName + ' /SILENT', 'Default', SessionId, {TTExplorer} TTSystem); // /ELEVATE - не работает. процесс из Program Files должен сразу запускаться с правами администратора
   end;
 end;
 
 procedure TRemoxService.HostLogOut;
 begin
-  with HostTimerModule, Data.NewFunction('Host.Logout') do
+  with HostTimerModule,Data.NewFunction('Host.Logout') do
   begin
     asWideString['User'] := UserName;
     asBoolean['IsService'] := True;
@@ -901,7 +906,8 @@ begin
   try
     reg.RootKey := HKEY_LOCAL_MACHINE;
     reg.Access := KEY_READ;
-    reg.OpenKey('Software\Remox', True);
+    if not reg.OpenKey('Software\Remox', False) then
+      Exit;
 
     if reg.ValueExists('PermanentPassword') then
       PermanentPassword := reg.ReadString('PermanentPassword')

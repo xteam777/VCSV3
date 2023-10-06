@@ -208,13 +208,13 @@ type
     Label3: TLabel;
     Label4: TLabel;
     Image1: TImage;
-    Label8: TLabel;
-    Label10: TLabel;
-    Label14: TLabel;
+    LabelPP1: TLabel;
+    LabelPP2: TLabel;
+    LabelPP3: TLabel;
     Label15: TLabel;
     Label16: TLabel;
     Label17: TLabel;
-    Label21: TLabel;
+    LabelPP4: TLabel;
     eUserName: TAlignedEdit;
     pRight: TPanel;
     Image2: TImage;
@@ -243,7 +243,7 @@ type
     iDeviceOffline: TImage;
     ePassword: TAlignedEdit;
     iRegPassState: TImage;
-    Label22: TLabel;
+    LabelPP5: TLabel;
     iRegPassYes: TImage;
     iRegPassNo: TImage;
     TimerClient: TRtcHttpClient;
@@ -440,7 +440,7 @@ type
     procedure lRestorePasswordClick(Sender: TObject);
     procedure N11DrawItem(Sender: TObject; ACanvas: TCanvas; ARect: TRect;
       Selected: Boolean);
-    procedure Label22Click(Sender: TObject);
+    procedure LabelPP5Click(Sender: TObject);
     procedure pingTimerTimer(Sender: TObject);
     procedure resPingReturn(Sender: TRtcConnection; Data, Result: TRtcValue);
     procedure resTimerLoginReturn(Sender: TRtcConnection; Data,
@@ -706,7 +706,7 @@ type
     function AddDotsToString(sCurString: String): String;
     procedure ShowDevicesPanel;
     procedure ShowSettingsForm(APage: String);
-    function SendSettingsToService(ANewPermanentPassword: String): Boolean;
+    function SendSettingsToService(ANewPermanentPassword: String; ASendPassword: Boolean): Boolean;
 //    procedure SettingsFormOnResult(sett: TrdClientSettings);
 //    procedure SetAutoRunToRegistry(AValue: Boolean);
     procedure ShowPermanentPasswordState();
@@ -1047,22 +1047,23 @@ procedure TMainForm.bSetupClick(Sender: TObject);
 var
   err: LongInt;
   EleavateSupport: TEleavateSupport;
-  fn: String;
+  fn, NewPermanentPassword: String;
 //  err: LongInt;
   fAcceptEULA: TfAcceptEULA;
 begin
   fAcceptEULA := TfAcceptEULA.Create(nil);
   try
-    fAcceptEULA.ePassword.Text := PermanentPassword;
-    fAcceptEULA.ePasswordConfirm.Text := PermanentPassword;
+    fAcceptEULA.ePassword.Text := '';
+    fAcceptEULA.ePasswordConfirm.Text := '';
 
     if fAcceptEULA.ShowModal = mrCancel then
       Exit
     else
     if fAcceptEULA.PasswordChanged then
     begin
-      PermanentPassword := System.Hash.THashMD5.GetHashString(fAcceptEULA.ePassword.Text);
-      ShowPermanentPasswordState();
+      NewPermanentPassword := fAcceptEULA.ePassword.Text;
+      PermanentPassword := System.Hash.THashMD5.GetHashString(NewPermanentPassword);
+//      ShowPermanentPasswordState();
       SendPasswordsToGateway;
 
       SaveSetup;
@@ -1100,11 +1101,16 @@ begin
         EleavateSupport.Free;
       end;
 
-    //  pBtnSetup.Visible := not IsServiceExisted(RTC_HOSTSERVICE_NAME);
-
-      Application.Terminate;
+//      Application.Terminate;
     end;
   end;
+
+  Application.ProcessMessages;
+
+  SendSettingsToService(NewPermanentPassword, True);
+
+  pBtnSetup.Visible := not IsServiceExisted(RTC_HOSTSERVICE_NAME);
+  ShowPermanentPasswordState();
 end;
 
 procedure TMainForm.bSetupMouseEnter(Sender: TObject);
@@ -1245,7 +1251,7 @@ begin
 //  FGatewayClient.Gate_ISAPI := MainForm.PClient.Gate_ISAPI;
   FGatewayClient.Gate_Proxy := MainForm.hcAccounts.UseProxy;
   FGatewayClient.Gate_ProxyAddr := ProxyAddr;
-  FGatewayClient.Gate_ProxyBypass := MainForm.hcAccounts.UserLogin.ProxyBypass;
+//  FGatewayClient.Gate_ProxyBypass := MainForm.hcAccounts.UserLogin.ProxyBypass;
   FGatewayClient.Gate_ProxyPassword := MainForm.hcAccounts.UserLogin.ProxyPassword;
   FGatewayClient.Gate_ProxyUserName := MainForm.hcAccounts.UserLogin.ProxyUserName;
   FGatewayClient.Gate_SSL := MainForm.hcAccounts.UseSSL;
@@ -2488,10 +2494,26 @@ procedure TMainForm.ShowPermanentPasswordState();
 begin
   //XLog('ShowPermanentPasswordState');
 
-  if PermanentPassword <> '' then
-    iRegPassState.Picture.Assign(iRegPassYes.Picture)
+  if IsServiceStarted(RTC_HOSTSERVICE_NAME) then
+  begin
+    LabelPP2.Caption := 'Установите пароль для';
+    LabelPP3.Caption := 'управления этим устройством в';
+    LabelPP4.Visible := True;
+    LabelPP5.Visible := True;
+
+    if (PermanentPassword <> '') then
+      iRegPassState.Picture.Assign(iRegPassYes.Picture)
+    else
+      iRegPassState.Picture.Assign(iRegPassNo.Picture);
+  end
   else
-    iRegPassState.Picture.Assign(iRegPassNo.Picture);
+  begin
+    LabelPP2.Caption := 'Установите Remox для';
+    LabelPP3.Caption := 'настройки неконтролируемого доступа';
+    LabelPP4.Visible := False;
+    LabelPP5.Visible := False;
+    iRegPassState.Visible := False;
+  end;
 end;
 
 //procedure TMainForm.WndProc(var Msg: TMessage);
@@ -3951,7 +3973,7 @@ begin
   end;
 end;
 
-procedure TMainForm.Label22Click(Sender: TObject);
+procedure TMainForm.LabelPP5Click(Sender: TObject);
 begin
 //  XLog('Label22Click');
 
@@ -4572,7 +4594,9 @@ begin
   reg := TRegistry.Create;
   try
     reg.RootKey := HKEY_CURRENT_USER;
-    reg.OpenKey('Software\Remox', True);
+    if not reg.OpenKey('Software\Remox', True) then
+      Exit;
+
     reg.WriteBool('StoreHistory', StoreHistory);
     reg.WriteBool('StorePasswords', StorePasswords);
     reg.WriteString('PermanentPassword', PermanentPassword);
@@ -9000,8 +9024,7 @@ begin
 //    lblStatus.Caption := 'Сервер недоступен';
 //    lblStatus.Update;
     if (not tHcAccountsReconnect.Enabled)
-      and (not isClosing)
-      then
+      and (not isClosing) then
       tHcAccountsReconnect.Enabled := True;
     //SetConnectedState(False);
     SetStatus(STATUS_NO_CONNECTION);
@@ -9011,11 +9034,10 @@ begin
   begin
 //    SetStatusString('Некорректный ответ от сервера');
     if (not tHcAccountsReconnect.Enabled)
-      and (not isClosing)
-      then
+      and (not isClosing) then
       tHcAccountsReconnect.Enabled := True;
 //    SetConnectedState(False);
-      SetStatus(STATUS_NO_CONNECTION);
+    SetStatus(STATUS_NO_CONNECTION);
   end
   else
     with Result.asRecord do
@@ -10840,7 +10862,7 @@ begin
       if sett.PermanentPasswordChanged then
       begin
         if IsServiceStarted(RTC_HOSTSERVICE_NAME)
-          and (not SendSettingsToService(sett.ePassword.Text)) then
+          and (not SendSettingsToService(sett.ePassword.Text, True)) then
         begin
           MessageBox(Handle, 'Ошибка при установке пароля. Проверьте что служба Remox запущена', 'Remox', MB_OKCANCEL);
           SettingsFormOpened := False;
@@ -10871,7 +10893,7 @@ begin
   end;
 end;
 
-function TMainForm.SendSettingsToService(ANewPermanentPassword: String): Boolean;
+function TMainForm.SendSettingsToService(ANewPermanentPassword: String; ASendPassword: Boolean): Boolean;
 var
   Request, Response: IIPCData;
   IPCClient: TIPCClient;
@@ -10888,8 +10910,13 @@ begin
       if IPCClient.IsConnected then
       begin
         Request := AcquireIPCData;
-        Request.Data.WriteInteger('QueryType', QT_SET_PERMANENT_PASSWORD);
-        Request.Data.WriteString('Password',ANewPermanentPassword);
+        Request.Data.WriteInteger('QueryType', QT_SET_SETTINGS);
+        if ASendPassword then
+          Request.Data.WriteString('PermanentPassword', ANewPermanentPassword);
+        Request.Data.WriteInteger('ProxyOption', ProxyOption);
+        Request.Data.WriteString('ProxyAddr', hcAccounts.UserLogin.ProxyAddr);
+        Request.Data.WriteString('ProxyUsername', hcAccounts.UserLogin.ProxyUsername);
+        Request.Data.WriteString('ProxyPassword', hcAccounts.UserLogin.ProxyPassword);
         Response := IPCClient.ExecuteConnectedRequest(Request);
 
         if IPCClient.AnswerValid then
