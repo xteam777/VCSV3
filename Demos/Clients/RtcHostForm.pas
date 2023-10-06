@@ -2494,7 +2494,8 @@ procedure TMainForm.ShowPermanentPasswordState();
 begin
   //XLog('ShowPermanentPasswordState');
 
-  if IsServiceStarted(RTC_HOSTSERVICE_NAME) then
+  if IsServiceStarting(RTC_HOSTSERVICE_NAME)
+    or IsServiceStarted(RTC_HOSTSERVICE_NAME) then
   begin
     LabelPP2.Caption := 'Установите пароль для';
     LabelPP3.Caption := 'управления этим устройством в';
