@@ -2089,17 +2089,10 @@ procedure TMainForm.tCheckServiceStartStopTimer(Sender: TObject);
 begin
   //XLog('tCheckServiceStartStopTimer');
 
-  if File_Exists(ChangeFileExt(ParamStr(0), '.svc')) then
-    if (File_Age(ChangeFileExt(ParamStr(0), '.svc')) >= IncSecond(Now, -3)) then //Если это старт/стоп службы
-    begin
-      tCheckLockedStateTimer(nil);
+  tCheckLockedStateTimer(nil);
 
-      SetIDContolsVisible;
-
-//      SetHostActive;
-    end
-    else
-      Delete_File(ChangeFileExt(ParamStr(0), '.svc'));
+  SetIDContolsVisible;
+  ShowPermanentPasswordState;
 end;
 
 function TMainForm.FileVersion(const FileName: TFileName): String;

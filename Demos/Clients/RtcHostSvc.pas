@@ -436,12 +436,6 @@ begin
     finally
     end;
 
-    //Создаем файл-флаг. В клиенте проверяется его наличие
-    with TStringList.Create do
-    begin
-      SaveToFile(ChangeFileExt(ParamStr(0), '.svc'));
-      Free;
-    end;
 //    StartClientInAllSessions;
 
 //    rtcStartProcess(AppFileName + ' -autorun -silent');
@@ -535,13 +529,6 @@ begin
 
     HostLogOut;
 //    LogoutClientHosts;
-
-    //Создаем файл-флаг. В клиенте проверяется его наличие
-    with TStringList.Create do
-    begin
-      SaveToFile(ChangeFileExt(ParamStr(0), '.svc')); //Чтобы клиенты обновили ID консоли
-      Free;
-    end;
 
     try
       if File_Exists(HelperTempFileName) then
