@@ -326,9 +326,9 @@ begin
       pfFolder := GetSpecialFolderLocation(CSIDL_PROGRAM_FILESX86);
 
       CreateUninstallRegistryKey;
+      CreateAutorunRegistryKey;
       CreateShortcuts;
       CreateProgramFolder;
-      CopyRegistrySettingsFromCurrentUserToLocalMachine;
 
       if not IsServiceExisted(RTC_HOSTSERVICE_NAME) then
         CreateServices(RTC_HOSTSERVICE_NAME, RTC_HOSTSERVICE_DISPLAY_NAME, pfFolder + '\Remox\Remox.exe');
@@ -369,6 +369,7 @@ begin
 
       DeleteShortcuts;
       DeleteUninstallRegistryKey;
+      DeleteAutorunRegistryKey;
       DeleteSettingsRegistryKeys;
       DeleteProgramFolder;
     end

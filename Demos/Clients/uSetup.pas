@@ -17,12 +17,14 @@ uses
   ShellApi,
   CommonData;
 
-procedure CopyRegistrySettingsFromCurrentUserToLocalMachine;
+procedure CreateAutorunRegistryKey;
+//procedure CopyRegistrySettingsFromCurrentUserToLocalMachine;
 procedure CreateShortcuts;
 procedure DeleteShortcuts;
 procedure CreateUninstallRegistryKey;
 procedure DeleteUninstallRegistryKey;
 procedure DeleteSettingsRegistryKeys;
+procedure DeleteAutorunRegistryKey;
 procedure CreateProgramFolder;
 procedure DeleteProgramFolder;
 function GetSpecialFolderLocation(nFolder: Integer): String;
@@ -32,7 +34,7 @@ procedure DeleteShortcut(sFileName: String; nFolder: Integer);
 
 implementation
 
-procedure CopyRegistrySettingsFromCurrentUserToLocalMachine;
+{procedure CopyRegistrySettingsFromCurrentUserToLocalMachine;
 var
   reg: TRegistry;
   ProxyOption: Integer;
@@ -90,7 +92,7 @@ begin
   finally
     reg.Free;
   end;
-end;
+end;}
 
 function GetTempFile: String;
 var
@@ -182,11 +184,10 @@ begin
 
   Registry := TRegistry.Create;
   try
-    // leave entry so Windows can do "Add-Remove Programs"
     Registry.RootKey := HKEY_LOCAL_MACHINE;
     Registry.Access := KEY_WRITE or KEY_WOW64_64KEY;
-    Registry.OpenKey('\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Remox', True);
-    // ... uninstaller lives in Windows directory
+    if not Registry.OpenKey('\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Remox', True) then
+      Exit;
     Registry.WriteString('DisplayName', 'Remox');
     Registry.WriteString('DisplayIcon', pfFolder + '\Remox\Remox.exe');
     Registry.WriteString('Publisher', 'Remox');
@@ -203,11 +204,44 @@ var
 begin
   Registry := TRegistry.Create;
   try
-    // leave entry so Windows can do "Add-Remove Programs"
     Registry.RootKey := HKEY_LOCAL_MACHINE;
     Registry.Access := KEY_WRITE or KEY_WOW64_64KEY;
     if Registry.KeyExists('\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Remox') then
       Registry.DeleteKey('\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Remox');
+  finally
+    Registry.Free;
+  end;
+end;
+
+procedure CreateAutorunRegistryKey;
+var
+  pfFolder, UninstallProgramName: String;
+  Registry: TRegistry;
+begin
+  pfFolder := GetSpecialFolderLocation(CSIDL_PROGRAM_FILESX86);
+
+  Registry := TRegistry.Create;
+  try
+    Registry.RootKey := HKEY_LOCAL_MACHINE;
+    Registry.Access := KEY_WRITE or KEY_WOW64_64KEY;
+    if Registry.OpenKey('\SOFTWARE\Microsoft\Windows\CurrentVersion\Run', False) then
+      Registry.WriteString('Remox', pfFolder + '\Remox\Remox.exe');
+  finally
+    Registry.Free;
+  end;
+end;
+
+procedure DeleteAutorunRegistryKey;
+var
+  Registry: TRegistry;
+begin
+  Registry := TRegistry.Create;
+  try
+    Registry.RootKey := HKEY_LOCAL_MACHINE;
+    Registry.Access := KEY_WRITE or KEY_WOW64_64KEY;
+    if Registry.OpenKey('\SOFTWARE\Microsoft\Windows\CurrentVersion\Run', False) then
+//      if Registry.ValueExists('Remox') then
+        Registry.DeleteValue('Remox');
   finally
     Registry.Free;
   end;
@@ -221,7 +255,6 @@ var
 begin
   Registry := TRegistry.Create;
   try
-    // leave entry so Windows can do "Add-Remove Programs"
     Registry.RootKey := HKEY_USERS;
     Registry.Access := KEY_ALL_ACCESS or KEY_WOW64_64KEY;
     if not Registry.OpenKey('\', False) then
