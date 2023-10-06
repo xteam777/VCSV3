@@ -7,11 +7,7 @@ object Data_Provider: TData_Provider
     Link = ServerLink1
     Compression = cMax
     DataFormats = [fmt_RTC, fmt_XMLRPC]
-    EncryptionKey = 16
     SecureKey = '2240897'
-    ForceEncryption = True
-    AutoSessions = True
-    AutoSessionsLive = 600
     ModuleFileName = '/gatefunc'
     FunctionGroup = GatewayFunctions
     OnSessionClose = Module1SessionClose
@@ -208,11 +204,7 @@ object Data_Provider: TData_Provider
     Link = ServerLink2
     Compression = cMax
     DataFormats = [fmt_RTC, fmt_XMLRPC]
-    EncryptionKey = 16
     SecureKey = '2240897'
-    ForceEncryption = True
-    AutoSessions = True
-    AutoSessionsLive = 600
     ModuleFileName = '/gatefunc'
     FunctionGroup = GatewayFunctions
     OnSessionClose = Module1SessionClose
@@ -231,11 +223,7 @@ object Data_Provider: TData_Provider
     Link = ServerLink3
     Compression = cMax
     DataFormats = [fmt_RTC, fmt_XMLRPC]
-    EncryptionKey = 16
     SecureKey = '2240897'
-    ForceEncryption = True
-    AutoSessions = True
-    AutoSessionsLive = 600
     ModuleFileName = '/gatefunc'
     FunctionGroup = GatewayFunctions
     OnSessionClose = Module1SessionClose
@@ -246,11 +234,7 @@ object Data_Provider: TData_Provider
     Link = ServerLink4
     Compression = cMax
     DataFormats = [fmt_RTC, fmt_XMLRPC]
-    EncryptionKey = 16
     SecureKey = '2240897'
-    ForceEncryption = True
-    AutoSessions = True
-    AutoSessionsLive = 600
     ModuleFileName = '/gatefunc'
     FunctionGroup = GatewayFunctions
     OnSessionClose = Module1SessionClose
@@ -267,10 +251,7 @@ object Data_Provider: TData_Provider
   end
   object MainGateServerModule: TRtcServerModule
     Link = MainGateServerLink
-    EncryptionKey = 16
     SecureKey = '2240897'
-    ForceEncryption = True
-    AutoSessions = True
     ModuleFileName = '/gategroup'
     FunctionGroup = MainGateServerGroup
     Left = 445
@@ -280,10 +261,7 @@ object Data_Provider: TData_Provider
     Link = MainGateClientLink
     Compression = cMax
     HyperThreading = True
-    EncryptionKey = 16
     SecureKey = '2240897'
-    ForceEncryption = True
-    AutoSessions = True
     ModuleFileName = '/gategroup'
     Left = 441
     Top = 84
@@ -329,10 +307,7 @@ object Data_Provider: TData_Provider
   object PortalGateServerModule: TRtcServerModule
     Link = PortalGateServerLink
     Compression = cMax
-    EncryptionKey = 16
     SecureKey = '2240897'
-    ForceEncryption = True
-    AutoSessions = True
     ModuleFileName = '/portalgategroup'
     FunctionGroup = PortalGateServerGroup
     Left = 677
