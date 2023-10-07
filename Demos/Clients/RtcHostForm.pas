@@ -1802,9 +1802,9 @@ begin
     begin
       asString['UID'] := FUID;
       if MainForm.LoggedIn then
-        asString['Account'] := MainForm.AccountUID
+        asString['AccountUID'] := MainForm.AccountUID
       else
-        asString['Account'] := MainForm.DeviceId;
+        asString['DeviceUID'] := MainForm.DeviceUID;
       asString['UserFrom'] := MainForm.DeviceId;
       asString['UserTo'] := FUserName;
       asString['Action'] := FAction;
