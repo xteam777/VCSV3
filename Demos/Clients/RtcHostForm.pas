@@ -8740,9 +8740,9 @@ begin
         if IsWinServer then
         begin
           DeviceId := IntToStr(asInteger['ID']);
-          DeviceUID := IntToStr(asInteger['ID_UID']);
+          DeviceUID := asString['ID_UID'];
           ConsoleId := IntToStr(asInteger['ID_Console']);
-          ConsoleUID := IntToStr(asInteger['ID_Console_UID']);
+          ConsoleUID := asString['ID_Console_UID'];
 
           DeviceDisplayName := FormatID(DeviceId);
           eUserName.Text := FormatID(DeviceId);
@@ -8753,9 +8753,9 @@ begin
           or IsServiceStarted(RTC_HOSTSERVICE_NAME) then
         begin
           DeviceId := IntToStr(asInteger['ID']);
-          DeviceUID := IntToStr(asInteger['ID_UID']);
+          DeviceUID := asString['ID_UID'];
           ConsoleId := IntToStr(asInteger['ID_Console']);
-          ConsoleUID := IntToStr(asInteger['ID_Console_UID']);
+          ConsoleUID := asString['ID_Console_UID'];
 
           DeviceDisplayName := FormatID(ConsoleId);
           eUserName.Text := DeviceDisplayName;
@@ -8763,9 +8763,9 @@ begin
         else
         begin
           DeviceId := IntToStr(asInteger['ID']);
-          DeviceUID := IntToStr(asInteger['ID_UID']);
+          DeviceUID := asString['ID_UID'];
           ConsoleId := IntToStr(asInteger['ID_Console']);
-          ConsoleUID := IntToStr(asInteger['ID_Console_UID']);
+          ConsoleUID := asString['ID_Console_UID'];
 
           DeviceDisplayName := FormatID(DeviceId);
           eUserName.Text := DeviceDisplayName;
