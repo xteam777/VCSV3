@@ -214,6 +214,11 @@
             <Form>UIDataModule</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="..\Modules\uPTDataModule.pas">
+            <Form>PTDataModule</Form>
+            <FormType>dfm</FormType>
+            <DesignClass>TDataModule</DesignClass>
+        </DCCReference>
         <RcItem Include="rmx_w32.exe">
             <ContainerId>ResourceItem</ContainerId>
             <ResourceType>RCDATA</ResourceType>

@@ -73,7 +73,7 @@ type
     procedure Restart(AGateway: String = '');
     procedure GetFilesFromClipboard(ACurExplorerHandle: THandle; ACurExplorerDir: String);
     procedure ChangeProxyParams(AProxyEnabled: Boolean; AProxyAddr, AProxyUserName, AProxyPassword: String);
-  private
+  protected
     procedure Execute; override;
 //  protected
 //    procedure ProcessMessage(MSG: TMSG);
@@ -83,8 +83,6 @@ type
   TPortalThread = class(TThread)
   private
     FDataModule: TDataModule;
-    FPingTimer: TTimer;
-    rResult: TRtcResult;
     FUserName: String;
     FUserPass: String;
     FUserToConnect: String;
@@ -93,25 +91,28 @@ type
     FUIDFull, FUID: String;
     FGateway: String;
     FLoggedIn: Boolean;
+    FDeviceId: String;
     FGatewayClient: TRtcHttpPortalClient;
     FDesktopControl: TRtcPDesktopControl;
     FFileTransfer: TRtcPFileTransfer;
     FChat: TRtcPChat;
     FNeedCloseUI: Boolean;
+    FResult: TRtcResult;
     { Private declarations }
-    procedure PortalThreadPingTimerTimer(Sender: TObject);
+    procedure SendPing;
   public
     constructor Create(CreateSuspended: Boolean; AAction, AUserName, AUserPass, AUserToConnect, AGateway: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; UIVisible: Boolean); overload;
     destructor Destroy; override;
-  private
-    procedure Execute; override;
   protected
-    procedure ProcessMessage(MSG: TMSG);
+    procedure Execute; override;
+//    procedure WndProc(var Message: TMessage);
+//    procedure ProcessMessage(MSG: TMSG);
   end;
 
   PPortalConnection = ^TPortalConnection;
   TPortalConnection = record
     ThreadID: Cardinal;
+    Thread: TPortalThread;
     UserName: String; //Initial connection user
     UserPass: String;
     ID: String; //User to connent
@@ -594,7 +595,7 @@ type
 
     function CheckService(bServiceFilename: Boolean = True {False = Service Name} ): String;
 //
-    procedure AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedState: Integer; AStartServiceStarted: Boolean);
+    procedure AddPortalConnection(AThread: TPortalThread; AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedState: Integer; AStartServiceStarted: Boolean);
     function GetPortalConnection(AAction: String; AUserName: String): PPortalConnection;
     procedure RemovePortalConnection(AID, AAction: String; ACloseFUI: Boolean);
 
@@ -1628,11 +1629,12 @@ constructor TPortalThread.Create(CreateSuspended: Boolean; AAction, AUserName, A
 begin
   inherited Create(CreateSuspended);
 
-  MainForm.AddPortalConnection(ThreadID, AAction, AUserName, AUserPass, AUserToConnect, AStartLockedStatus, AStartServiceStarted);
+  MainForm.AddPortalConnection(Self, ThreadID, AAction, AUserName, AUserPass, AUserToConnect, AStartLockedStatus, AStartServiceStarted);
 
   FreeOnTerminate := True;
 
   FLoggedIn := MainForm.LoggedIn;
+  FDeviceId := MainForm.DeviceId;
 
   FUserName := AUserName;
   FUserPass := AUserPass;
@@ -1644,16 +1646,12 @@ begin
   FUID := StringReplace(FUIDFull, '-', '', [rfReplaceAll]);
 
   FDataModule := TDataModule.Create(nil);
-  rResult := TRtcResult.Create(FDataModule);
-  FPingTimer := TTimer.Create(FDataModule);
-  FPingTimer.Interval := 1000;
-  FPingTimer.OnTimer := PortalThreadPingTimerTimer;
-  FPingTimer.Enabled := True;
+  FResult := TRtcResult.Create(FDataModule);
 
   FGatewayClient := TRtcHttpPortalClient.Create(FDataModule);
   FGatewayClient.Name := 'PClient_' + FUID;
   FGatewayClient.LoginUserName := MainForm.DeviceId + '_' + FUserToConnect + '_' + FAction + '_' + FUID; //IntToStr(GatewayClientsList.Count + 1);
-  FGatewayClient.LoginUserInfo.asText['RealName'] := MainForm.DeviceId;
+  FGatewayClient.LoginUserInfo.asText['RealName'] := FDeviceId;
   FGatewayClient.LoginPassword := '';
   FGatewayClient.AutoSyncEvents := True;
   FGatewayClient.DataCompress := rtcpCompMax;
@@ -1813,7 +1811,7 @@ begin
       asInteger['UserTo'] := StrToInt(FUserName);
       asString['Action'] := FAction;
       asString['Gateway'] := FGateway;
-      Call(rResult);
+      Call(FResult);
     end;
   except
     on E: Exception do
@@ -1821,7 +1819,7 @@ begin
   end;
 end;
 
-procedure TPortalThread.PortalThreadPingTimerTimer(Sender: TObject);
+procedure TPortalThread.SendPing;
 begin
   with MainForm.TimerModule do
   try
@@ -1829,7 +1827,7 @@ begin
     begin
       asBoolean['IsAccount'] := FLoggedIn;
       asString['UID'] := FUIDFull;
-      Call(rResult);
+      Call(FResult);
     end;
   except
     on E: Exception do
@@ -1838,8 +1836,8 @@ begin
 end;
 
 destructor TPortalThread.Destroy;
-var
-  UIDM: TUIDataModule;
+//var
+//  UIDM: TUIDataModule;
 begin
   with MainForm.TimerModule do
   try
@@ -1847,7 +1845,7 @@ begin
     begin
       asBoolean['IsAccount'] := FLoggedIn;
       asString['UID'] := FUIDFull;
-      Call(rResult);
+      Call(FResult);
     end;
   except
     on E: Exception do
@@ -1865,19 +1863,16 @@ begin
 //      UIDM.UI.Send_LockSystem;
 //  end;
 
-//  FGatewayClient.Module.WaitForCompletion(False, 2);
-
 //  UIDM.UI.CloseAndClear;
 //  UIDM.FT_UI.CloseAndClear;
 
+  FResult.Free;
   FGatewayClient.Stop;
   FGatewayClient.Active := False;
   FDesktopControl.Free;
   FFileTransfer.Free;
   FChat.Free;
   FGatewayClient.Free;
-  FPingTimer.Free;
-  rResult.Free;
   FDataModule.Free;
 
   if FNeedCloseUI then
@@ -1916,12 +1911,12 @@ begin
 //  finally
 //  end;
 
-  TSendDestroyClientToGatewayThread.Create(False, FGateway, MainForm.DeviceId + '_' + FUserName + '_' + FAction + '_' + FUID, False, MainForm.hcAccounts.UseProxy, MainForm.hcAccounts.UserLogin.ProxyAddr, MainForm.hcAccounts.UserLogin.ProxyUserName, MainForm.hcAccounts.UserLogin.ProxyPassword, False);
+  TSendDestroyClientToGatewayThread.Create(False, FGateway, FDeviceId + '_' + FUserName + '_' + FAction + '_' + FUID, False, MainForm.hcAccounts.UseProxy, MainForm.hcAccounts.UserLogin.ProxyAddr, MainForm.hcAccounts.UserLogin.ProxyUserName, MainForm.hcAccounts.UserLogin.ProxyPassword, False);
 
 //  TerminateThread(ThreadID, ExitCode);
 end;
 
-procedure TPortalThread.Execute;
+{procedure TPortalThread.Execute;
 var
   msg: TMsg;
 begin
@@ -1941,6 +1936,15 @@ begin
           ProcessMessage(msg);
       end;
   end;
+end;}
+
+procedure TPortalThread.Execute;
+begin
+  while not Terminated do
+  begin
+    Sleep(1000);
+    SendPing;
+  end;
 end;
 
 {procedure TPortalThread.Execute;
@@ -1952,7 +1956,18 @@ begin
   msg := msg;
 end;}
 
-procedure TPortalThread.ProcessMessage(MSG: TMSG);
+{procedure TPortalThread.WndProc(var Message: TMessage);
+begin
+  if (Message.Msg = WM_CLOSE) then
+  begin
+    FNeedCloseUI := Boolean(Message.wParam);
+    Message.Result := 0;
+
+    Terminate;
+  end;
+end;}
+
+{procedure TPortalThread.ProcessMessage(MSG: TMSG);
 var
   Message: TMessage;
 begin
@@ -1961,7 +1976,7 @@ begin
   Message.LParam := MSG.lParam;
   Message.Result := 0;
   Dispatch(Message);
-end;
+end; }
 
 procedure TMainForm.DoPowerPause;
 var
@@ -2812,7 +2827,7 @@ begin
   end;
 end;
 
-procedure TMainForm.AddPortalConnection(AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedState: Integer; AStartServiceStarted: Boolean);
+procedure TMainForm.AddPortalConnection(AThread: TPortalThread; AThreadID: Cardinal; AAction, AUserName, AUserPass, AUserToConnect: String; AStartLockedState: Integer; AStartServiceStarted: Boolean);
 var
   pPC: PPortalConnection;
 begin
@@ -2820,6 +2835,7 @@ begin
   try
     New(pPC);
     pPC^.ThreadID := AThreadID;
+    pPC^.Thread := AThread;
     pPC^.Action := AAction;
     pPC^.UserName := AUserName;
     pPC^.UserPass := AUserPass;
@@ -2882,7 +2898,8 @@ begin
 ////          PPortalConnection(PortalConnectionsList[i])^.ThisThread := nil;
 //          FreeAndNil(PPortalConnection(PortalConnectionsList[i])^.ThisThread);
 //        end;
-        PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, WPARAM(ACloseFUI), 0); //Закрываем поток с пклиентом
+        PPortalConnection(PortalConnectionsList[i])^.Thread.Terminate;
+        //PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, WPARAM(ACloseFUI), 0); //Закрываем поток с пклиентом
         if ACloseFUI
           and ((PPortalConnection(PortalConnectionsList[i])^.Action = 'file') or (PPortalConnection(PortalConnectionsList[i])^.Action = 'chat')) then
           PostMessage(PPortalConnection(PortalConnectionsList[i])^.UIHandle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
