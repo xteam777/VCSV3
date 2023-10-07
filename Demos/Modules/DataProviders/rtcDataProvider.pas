@@ -208,7 +208,7 @@ function GetDataProvider(AThisIsMainGate: Boolean): TData_Provider;
 
 var
   Data_Provider: TData_Provider;
-  CS_DB: TCriticalSection;
+//  CS_DB: TCriticalSection;
 
 implementation
 
@@ -341,8 +341,8 @@ begin
   if uname = '' then
     Exit;
 
-  CS_DB.Acquire;
-  try
+//  CS_DB.Acquire;
+//  try
 //    if not SQLConnection.Connected then
 //    begin
 //      SQLConnection.Connected := False;
@@ -375,9 +375,9 @@ begin
     finally
       SP.Free;
     end;
-  finally
-    CS_DB.Release;
-  end;
+//  finally
+//    CS_DB.Release;
+//  end;
 end;
 
 procedure TData_Provider.GetLockedStateExecute(Sender: TRtcConnection;
@@ -410,8 +410,8 @@ var
   SP: TADOStoredProc;
   UserGateway: String;
 begin
-  CS_DB.Acquire;
-  try
+//  CS_DB.Acquire;
+//  try
 //    if not SQLConnection.Connected then
 //    begin
 //      SQLConnection.Connected := False;
@@ -462,9 +462,9 @@ begin
     finally
       SP.Free;
     end;
-  finally
-    CS_DB.Release;
-  end;
+//  finally
+//    CS_DB.Release;
+//  end;
 end;
 
 procedure TData_Provider.HostGetUserInfoExecute(
@@ -823,8 +823,8 @@ function TData_Provider.AccountIsValid(name, pwd: String; var RealName, AccountU
 var
   SP: TADOStoredProc;
 begin
-  CS_DB.Acquire;
-  try
+//  CS_DB.Acquire;
+//  try
 //    if not SQLConnection.Connected then
 //    begin
 //      SQLConnection.Connected := False;
@@ -865,9 +865,9 @@ begin
     finally
       SP.Free;
     end;
-  finally
-    CS_DB.Release;
-  end;
+//  finally
+//    CS_DB.Release;
+//  end;
 end;
 
 function TData_Provider.LoadUserInfo(account, RealName, AccountUID: String): TRtcRecord;
@@ -878,8 +878,8 @@ begin
   Result := TRtcRecord.Create;
   Result.AutoCreate := True;
 
-  CS_DB.Acquire;
-  try
+//  CS_DB.Acquire;
+//  try
 //    if not SQLConnection.Connected then
 //    begin
 //      SQLConnection.Connected := False;
@@ -950,17 +950,17 @@ begin
     finally
       SP.Free;
     end;
-  finally
-    CS_DB.Release;
-  end;
+//  finally
+//    CS_DB.Release;
+//  end;
 end;
 
 function TData_Provider.AccountIsExists(email: String): Boolean;
 var
   SP: TADOStoredProc;
 begin
-  CS_DB.Acquire;
-  try
+//  CS_DB.Acquire;
+//  try
 //    if not SQLConnection.Connected then
 //    begin
 //      SQLConnection.Connected := False;
@@ -991,9 +991,9 @@ begin
     finally
       SP.Free;
     end;
-  finally
-    CS_DB.Release;
-  end;
+//  finally
+//    CS_DB.Release;
+//  end;
 end;
 
 procedure TData_Provider.AccountAddAccountExecute(Sender: TRtcConnection;
@@ -1001,8 +1001,8 @@ procedure TData_Provider.AccountAddAccountExecute(Sender: TRtcConnection;
 var
   SP: TADOStoredProc;
 begin
-  CS_DB.Acquire;
-  try
+//  CS_DB.Acquire;
+//  try
 //    if not SQLConnection.Connected then
 //    begin
 //      SQLConnection.Connected := False;
@@ -1048,9 +1048,9 @@ begin
     finally
       SP.Free;
     end;
-  finally
-    CS_DB.Release;
-  end;
+//  finally
+//    CS_DB.Release;
+//  end;
 end;
 
 procedure TData_Provider.AccountAddDeviceExecute(Sender: TRtcConnection;
@@ -1058,8 +1058,8 @@ procedure TData_Provider.AccountAddDeviceExecute(Sender: TRtcConnection;
 var
   SP: TADOStoredProc;
 begin
-  CS_DB.Acquire;
-  try
+//  CS_DB.Acquire;
+//  try
 //    if not SQLConnection.Connected then
 //    begin
 //      SQLConnection.Connected := False;
@@ -1101,9 +1101,9 @@ begin
     finally
       SP.Free;
     end;
-  finally
-    CS_DB.Release;
-  end;
+//  finally
+//    CS_DB.Release;
+//  end;
 end;
 
 procedure TData_Provider.AccountAddGroupExecute(Sender: TRtcConnection;
@@ -1111,8 +1111,8 @@ procedure TData_Provider.AccountAddGroupExecute(Sender: TRtcConnection;
 var
   SP: TADOStoredProc;
 begin
-  CS_DB.Acquire;
-  try
+//  CS_DB.Acquire;
+//  try
 //    if not SQLConnection.Connected then
 //    begin
 //      SQLConnection.Connected := False;
@@ -1146,9 +1146,9 @@ begin
   finally
     SP.Free;
   end;
-  finally
-    CS_DB.Release;
-  end;
+//  finally
+//    CS_DB.Release;
+//  end;
 end;
 
 procedure TData_Provider.AccountChangeDeviceExecute(Sender: TRtcConnection;
@@ -1156,8 +1156,8 @@ procedure TData_Provider.AccountChangeDeviceExecute(Sender: TRtcConnection;
 var
   SP: TADOStoredProc;
 begin
-  CS_DB.Acquire;
-  try
+//  CS_DB.Acquire;
+//  try
 //    if not SQLConnection.Connected then
 //    begin
 //      SQLConnection.Connected := False;
@@ -1199,9 +1199,9 @@ begin
     finally
       SP.Free;
     end;
-  finally
-    CS_DB.Release;
-  end;
+//  finally
+//    CS_DB.Release;
+//  end;
 end;
 
 procedure TData_Provider.AccountChangeGroupExecute(Sender: TRtcConnection;
@@ -1209,8 +1209,8 @@ procedure TData_Provider.AccountChangeGroupExecute(Sender: TRtcConnection;
 var
   SP: TADOStoredProc;
 begin
-  CS_DB.Acquire;
-  try
+//  CS_DB.Acquire;
+//  try
 //    if not SQLConnection.Connected then
 //    begin
 //      SQLConnection.Connected := False;
@@ -1243,9 +1243,9 @@ begin
     finally
       SP.Free;
     end;
-  finally
-    CS_DB.Release;
-  end;
+//  finally
+//    CS_DB.Release;
+//  end;
 end;
 
 procedure TData_Provider.AccountDeleteGroupExecute(Sender: TRtcConnection;
@@ -1253,8 +1253,8 @@ procedure TData_Provider.AccountDeleteGroupExecute(Sender: TRtcConnection;
 var
   SP: TADOStoredProc;
 begin
-  CS_DB.Acquire;
-  try
+//  CS_DB.Acquire;
+//  try
 //    if not SQLConnection.Connected then
 //    begin
 //      SQLConnection.Connected := False;
@@ -1286,9 +1286,9 @@ begin
     finally
       SP.Free;
     end;
-  finally
-    CS_DB.Release;
-  end;
+//  finally
+//    CS_DB.Release;
+//  end;
 end;
 
 function GetDataProvider(AThisIsMainGate: Boolean): TData_Provider;
@@ -1641,8 +1641,8 @@ procedure TData_Provider.DoConnectionAdd(AIsAccount: Boolean; AAccountUID, ADevi
 var
   SP: TADOStoredProc;
 begin
-  CS_DB.Acquire;
-  try
+//  CS_DB.Acquire;
+//  try
 //    if not SQLConnection.Connected then
 //    begin
 //      SQLConnection.Connected := False;
@@ -1682,17 +1682,17 @@ begin
     finally
       SP.Free;
     end;
-  finally
-    CS_DB.Release;
-  end;
+//  finally
+//    CS_DB.Release;
+//  end;
 end;
 
 procedure TData_Provider.DoConnectionUpdate(AIsAccount: Boolean; AUID: String; AFinalized: Integer);
 var
   SP: TADOStoredProc;
 begin
-  CS_DB.Acquire;
-  try
+//  CS_DB.Acquire;
+//  try
 //    if not SQLConnection.Connected then
 //    begin
 //      SQLConnection.Connected := False;
@@ -1725,16 +1725,16 @@ begin
     finally
       SP.Free;
     end;
-  finally
-    CS_DB.Release;
-  end;
+//  finally
+//    CS_DB.Release;
+//  end;
 end;
 
 initialization
-  CS_DB := TCriticalSection.Create;
+//  CS_DB := TCriticalSection.Create;
 
 finalization
-  CS_DB.Free;
+//  CS_DB.Free;
   if Assigned(Data_Provider) then
   begin
     Data_Provider.Free;
