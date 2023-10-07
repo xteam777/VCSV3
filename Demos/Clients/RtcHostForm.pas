@@ -53,7 +53,7 @@ type
   private
     FUserName: String;
     FAction: String;
-    FUIDFull, FUID: String;
+    FUID: String;
     FNeedRestartThread: Boolean;
     FGatewayClient: TRtcHttpPortalClient;
     FDesktopHost: TRtcPDesktopHost;
@@ -90,7 +90,7 @@ type
     FUserToConnect: String;
     FAction: String;
     FUIForm: TForm;
-    FUID: String;
+    FUIDFull, FUID: String;
     FGateway: String;
     FGatewayClient: TRtcHttpPortalClient;
     FDesktopControl: TRtcPDesktopControl;
@@ -1234,8 +1234,7 @@ begin
   ProxyUserName := AProxyUserName;
   ProxyPassword := AProxyPassword;
 
-  FUIDFull := GetUniqueString;
-  FUID := StringReplace(FUIDFull, '-', '', [rfReplaceAll]);
+  FUID := GetUniqueString;
 
   FGatewayClient := TRtcHttpPortalClient.Create(nil);
   FGatewayClient.Name := 'PClient_' + FUID;
@@ -1637,7 +1636,8 @@ begin
   FGateway := AGateway;
   FAction := AAction;
 
-  FUID := GetUniqueString;
+  FUIDFull := GetUniqueString;
+  FUID := StringReplace(FUIDFull, '-', '', [rfReplaceAll]);
 
   FDataModule := TDataModule.Create(nil);
   rResult := TRtcResult.Create(FDataModule);
