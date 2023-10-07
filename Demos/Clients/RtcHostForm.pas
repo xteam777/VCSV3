@@ -1800,7 +1800,7 @@ begin
   try
     with Data.NewFunction('Connection.Login') do
     begin
-      asWideString['UID'] := FUID;
+      asString['UID'] := FUID;
       asString['UserFrom'] := DeviceId;
       asString['UserTo'] := FUserName;
       asString['Action'] := FAction;
