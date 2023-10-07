@@ -1235,6 +1235,7 @@ begin
   ProxyPassword := AProxyPassword;
 
   FUID := GetUniqueString;
+  FUID := StringReplace(FUID, '-', '', [rfReplaceAll]);
 
   FGatewayClient := TRtcHttpPortalClient.Create(nil);
   FGatewayClient.Name := 'PClient_' + FUID;
