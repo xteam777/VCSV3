@@ -93,6 +93,7 @@ type
     FUIDFull, FUID: String;
     FGateway: String;
     FLoggedIn: Boolean;
+    FDeviceId: String;
     FGatewayClient: TRtcHttpPortalClient;
     FDesktopControl: TRtcPDesktopControl;
     FFileTransfer: TRtcPFileTransfer;
@@ -1109,7 +1110,7 @@ begin
     end;
   end;
 
-  Application.ProcessMessages;
+//  Application.ProcessMessages;
 
   SendSettingsToService(NewPermanentPassword, True);
 
@@ -1633,6 +1634,7 @@ begin
   FreeOnTerminate := True;
 
   FLoggedIn := MainForm.LoggedIn;
+  FDeviceId := MainForm.DeviceId;
 
   FUserName := AUserName;
   FUserPass := AUserPass;
@@ -1918,7 +1920,7 @@ begin
 //  finally
 //  end;
 
-  TSendDestroyClientToGatewayThread.Create(False, FGateway, MainForm.DeviceId + '_' + FUserName + '_' + FAction + '_' + FUID, False, MainForm.hcAccounts.UseProxy, MainForm.hcAccounts.UserLogin.ProxyAddr, MainForm.hcAccounts.UserLogin.ProxyUserName, MainForm.hcAccounts.UserLogin.ProxyPassword, False);
+  TSendDestroyClientToGatewayThread.Create(False, FGateway, FDeviceId + '_' + FUserName + '_' + FAction + '_' + FUID, False, MainForm.hcAccounts.UseProxy, MainForm.hcAccounts.UserLogin.ProxyAddr, MainForm.hcAccounts.UserLogin.ProxyUserName, MainForm.hcAccounts.UserLogin.ProxyPassword, False);
 
 //  TerminateThread(ThreadID, ExitCode);
 end;
