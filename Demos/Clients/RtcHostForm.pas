@@ -53,7 +53,7 @@ type
   private
     FUserName: String;
     FAction: String;
-    FUID: String;
+    FUIDFull, FUID: String;
     FNeedRestartThread: Boolean;
     FGatewayClient: TRtcHttpPortalClient;
     FDesktopHost: TRtcPDesktopHost;
@@ -1042,7 +1042,7 @@ begin
   CreateGuid(UID);
   Result := GUIDToString(UID);
   Result := StringReplace(Result, '{', '', [rfReplaceAll]);
-  Result := StringReplace(Result, '-', '', [rfReplaceAll]);
+//  Result := StringReplace(Result, '-', '', [rfReplaceAll]);
   Result := StringReplace(Result, '}', '', [rfReplaceAll]);
 end;
 
@@ -1234,7 +1234,8 @@ begin
   ProxyUserName := AProxyUserName;
   ProxyPassword := AProxyPassword;
 
-  FUID := GetUniqueString;
+  FUIDFull := GetUniqueString;
+  FUID := StringReplace(FUIDFull, '-', '', [rfReplaceAll]);
 
   FGatewayClient := TRtcHttpPortalClient.Create(nil);
   FGatewayClient.Name := 'PClient_' + FUID;
@@ -1800,7 +1801,7 @@ begin
   try
     with Data.NewFunction('Connection.Login') do
     begin
-      asString['UID'] := FUID;
+      asString['UID'] := FUIDFull;
       if MainForm.LoggedIn then
         asString['AccountUID'] := MainForm.AccountUID
       else
@@ -1823,7 +1824,7 @@ begin
   try
     with Data.NewFunction('Connection.Ping') do
     begin
-      asString['UID'] := FUID;
+      asString['UID'] := FUIDFull;
       asString['Gateway'] := FGateway;
       Call(rResult);
     end;
@@ -1841,7 +1842,7 @@ begin
   try
     with Data.NewFunction('Connection.Logout') do
     begin
-      asString['UID'] := FUID;
+      asString['UID'] := FUIDFull;
       Call(rResult);
     end;
   except
