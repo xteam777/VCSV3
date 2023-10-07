@@ -8416,16 +8416,16 @@ var
 begin
 //  XLog('N6Click');
 
-  if DirectoryExists(ExtractFilePath(Application.ExeName) + RTC_LOG_FOLDER) then
-  begin
-    Dir := ExtractFilePath(Application.ExeName) + RTC_LOG_FOLDER;
+//  if DirectoryExists(ExtractFilePath(Application.ExeName) + RTC_LOG_FOLDER) then
+//  begin
+    Dir := {ExtractFilePath(Application.ExeName) +} RTC_LOG_FOLDER;
     ShellExecute(Handle, 'open', 'explorer', LPWSTR(Dir), nil, SW_SHOWNORMAL)
-  end
-  else
-  begin
-    Dir := ExtractFilePath(Application.ExeName) + 'Logs';
-    ShellExecute(Handle, 'open', 'explorer', LPWSTR(Dir), nil, SW_SHOWNORMAL);
-  end;
+//  end
+//  else
+//  begin
+//    Dir := ExtractFilePath(Application.ExeName) + 'Logs';
+//    ShellExecute(Handle, 'open', 'explorer', LPWSTR(Dir), nil, SW_SHOWNORMAL);
+//  end;
 end;
 
 procedure TMainForm.nCopyPassClick(Sender: TObject);

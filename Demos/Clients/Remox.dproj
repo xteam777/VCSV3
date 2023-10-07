@@ -134,7 +134,6 @@
         <UWP_DelphiLogo44>48x48-3.png</UWP_DelphiLogo44>
         <UWP_DelphiLogo150>240x240-3.png</UWP_DelphiLogo150>
         <AppDPIAwarenessMode>none</AppDPIAwarenessMode>
-        <Debugger_RunParams>/UNINSTALL</Debugger_RunParams>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
         <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>

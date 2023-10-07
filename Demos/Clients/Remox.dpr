@@ -193,11 +193,22 @@ begin
 //  LOG_THREAD_EXCEPTIONS := True;
   LOG_EXCEPTIONS := True;
 
-  if not DirectoryExists(ExtractFilePath(ParamStr(0)) + 'Logs') then
-    CreateDir(ExtractFilePath(ParamStr(0)) + 'Logs');
-  if not DirectoryExists(ExtractFilePath(ParamStr(0)) + 'Logs\' + GetSystemUserName) then
-    CreateDir(ExtractFilePath(ParamStr(0)) + 'Logs\' + GetSystemUserName);
-  RTC_LOG_FOLDER := ExtractFilePath(ParamStr(0)) + 'Logs\' + GetSystemUserName + '\';
+  if Pos('\Program files', ParamStr(0)) > 0 then
+  begin
+    if not DirectoryExists(ExtractFilePath(ParamStr(0)) + 'Logs') then
+      CreateDir(ExtractFilePath(ParamStr(0)) + 'Logs');
+    if not DirectoryExists(ExtractFilePath(ParamStr(0)) + 'Logs\' + GetSystemUserName) then
+      CreateDir(ExtractFilePath(ParamStr(0)) + 'Logs\' + GetSystemUserName);
+    RTC_LOG_FOLDER := ExtractFilePath(ParamStr(0)) + 'Logs\' + GetSystemUserName + '\';
+  end
+  else
+  begin
+    if not DirectoryExists(System.SysUtils.GetEnvironmentVariable('APPDATA') + '\Logs') then
+      CreateDir(System.SysUtils.GetEnvironmentVariable('APPDATA') + '\Logs');
+    if not DirectoryExists(System.SysUtils.GetEnvironmentVariable('APPDATA') + '\Logs\' + GetSystemUserName) then
+      CreateDir(System.SysUtils.GetEnvironmentVariable('APPDATA') + '\Logs\' + GetSystemUserName);
+    RTC_LOG_FOLDER := System.SysUtils.GetEnvironmentVariable('APPDATA') + '\Logs\' + GetSystemUserName + '\';
+  end;
 
   AppFileName := ParamStr(0);
   ActiveConsoleSessionID := GetActiveConsoleSessionId;
