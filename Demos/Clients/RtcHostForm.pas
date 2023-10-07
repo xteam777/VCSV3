@@ -84,7 +84,7 @@ type
   private
     FDataModule: TDataModule;
     FPingTimer: TTimer;
-    resPing: TRtcResult;
+    rResult: TRtcResult;
     FUserName: String;
     FUserPass: String;
     FUserToConnect: String;
@@ -631,6 +631,7 @@ type
     TaskBarIcon: Boolean;
 
     AccountName, AccountUID: String;
+    DeviceId, DeviceUID, ConsoleId, ConsoleUID: String;
     HighLightedNode: PVirtualNode;
 
     ProxyOption: Integer;
@@ -813,7 +814,6 @@ var
   OriginalDragFullWindows: LongBool = True;
   DeviceDisplayName: String;
   CS_GW, CS_Status, CS_Pending, CS_ActivateHost, CS_HostGateway, CS_Incoming: TCriticalSection;
-  DeviceId, ConsoleId: String;
   LastActiveExplorerHandle: THandle;
   CB_Monitor: TClipbrdMonitor;
   DesktopsForm: TrdDesktopViewer;
@@ -1639,7 +1639,7 @@ begin
   FUID := GetUniqueString;
 
   FDataModule := TDataModule.Create(nil);
-  resPing := TRtcResult.Create(FDataModule);
+  rResult := TRtcResult.Create(FDataModule);
   FPingTimer := TTimer.Create(FDataModule);
   FPingTimer.Interval := 1000;
   FPingTimer.OnTimer := PortalThreadPingTimerTimer;
@@ -1647,8 +1647,8 @@ begin
 
   FGatewayClient := TRtcHttpPortalClient.Create(FDataModule);
   FGatewayClient.Name := 'PClient_' + FUID;
-  FGatewayClient.LoginUserName := DeviceId + '_' + FUserToConnect + '_' + FAction + '_' + FUID; //IntToStr(GatewayClientsList.Count + 1);
-  FGatewayClient.LoginUserInfo.asText['RealName'] := DeviceId;
+  FGatewayClient.LoginUserName := MainForm.DeviceId + '_' + FUserToConnect + '_' + FAction + '_' + FUID; //IntToStr(GatewayClientsList.Count + 1);
+  FGatewayClient.LoginUserInfo.asText['RealName'] := MainForm.DeviceId;
   FGatewayClient.LoginPassword := '';
   FGatewayClient.AutoSyncEvents := True;
   FGatewayClient.DataCompress := rtcpCompMax;
@@ -1801,10 +1801,15 @@ begin
     with Data.NewFunction('Connection.Login') do
     begin
       asString['UID'] := FUID;
-      asString['UserFrom'] := DeviceId;
+      if MainForm.LoggedIn then
+        asString['Account'] := MainForm.AccountUID
+      else
+        asString['Account'] := MainForm.DeviceId;
+      asString['UserFrom'] := MainForm.DeviceId;
       asString['UserTo'] := FUserName;
       asString['Action'] := FAction;
-      Call(resPing);
+      asString['Gateway'] := FGateway;
+      Call(rResult);
     end;
   except
     on E: Exception do
@@ -1818,8 +1823,9 @@ begin
   try
     with Data.NewFunction('Connection.Ping') do
     begin
-      asWideString['UID'] := FUID;
-      Call(resPing);
+      asString['UID'] := FUID;
+      asString['Gateway'] := FGateway;
+      Call(rResult);
     end;
   except
     on E: Exception do
@@ -1835,8 +1841,8 @@ begin
   try
     with Data.NewFunction('Connection.Logout') do
     begin
-      asWideString['UID'] := FUID;
-      Call(resPing);
+      asString['UID'] := FUID;
+      Call(rResult);
     end;
   except
     on E: Exception do
@@ -1864,7 +1870,7 @@ begin
   FChat.Free;
   FGatewayClient.Free;
   FPingTimer.Free;
-  resPing.Free;
+  rResult.Free;
   FDataModule.Free;
 
   if FNeedCloseUI then
@@ -1903,7 +1909,7 @@ begin
 //  finally
 //  end;
 
-  TSendDestroyClientToGatewayThread.Create(False, FGateway, DeviceId + '_' + FUserName + '_' + FAction + '_' + FUID, False, MainForm.hcAccounts.UseProxy, MainForm.hcAccounts.UserLogin.ProxyAddr, MainForm.hcAccounts.UserLogin.ProxyUserName, MainForm.hcAccounts.UserLogin.ProxyPassword, False);
+  TSendDestroyClientToGatewayThread.Create(False, FGateway, MainForm.DeviceId + '_' + FUserName + '_' + FAction + '_' + FUID, False, MainForm.hcAccounts.UseProxy, MainForm.hcAccounts.UserLogin.ProxyAddr, MainForm.hcAccounts.UserLogin.ProxyUserName, MainForm.hcAccounts.UserLogin.ProxyPassword, False);
 
 //  TerminateThread(ThreadID, ExitCode);
 end;
@@ -3197,7 +3203,9 @@ begin
   FUpdateAvailable := False;
 
   DeviceId := '';
+  DeviceUID := '';
   ConsoleId := '';
+  ConsoleUID := '';
 
   DesktopsForm := TrdDesktopViewer.Create(Self);
   DesktopsForm.OnUIOpen := OnUIOpen;
@@ -8732,7 +8740,9 @@ begin
         if IsWinServer then
         begin
           DeviceId := IntToStr(asInteger['ID']);
+          DeviceUID := IntToStr(asInteger['ID_UID']);
           ConsoleId := IntToStr(asInteger['ID_Console']);
+          ConsoleUID := IntToStr(asInteger['ID_Console_UID']);
 
           DeviceDisplayName := FormatID(DeviceId);
           eUserName.Text := FormatID(DeviceId);
@@ -8743,7 +8753,9 @@ begin
           or IsServiceStarted(RTC_HOSTSERVICE_NAME) then
         begin
           DeviceId := IntToStr(asInteger['ID']);
+          DeviceUID := IntToStr(asInteger['ID_UID']);
           ConsoleId := IntToStr(asInteger['ID_Console']);
+          ConsoleUID := IntToStr(asInteger['ID_Console_UID']);
 
           DeviceDisplayName := FormatID(ConsoleId);
           eUserName.Text := DeviceDisplayName;
@@ -8751,7 +8763,9 @@ begin
         else
         begin
           DeviceId := IntToStr(asInteger['ID']);
+          DeviceUID := IntToStr(asInteger['ID_UID']);
           ConsoleId := IntToStr(asInteger['ID_Console']);
+          ConsoleUID := IntToStr(asInteger['ID_Console_UID']);
 
           DeviceDisplayName := FormatID(DeviceId);
           eUserName.Text := DeviceDisplayName;
