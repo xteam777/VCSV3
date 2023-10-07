@@ -201,7 +201,7 @@ type
     procedure GatewayReloginStart;
     procedure GatewayLogOutStart;
     procedure DoConnectionAdd(AIsAccount: Boolean; AAccountUID, ADeviceUID, AUID, AAction, AGateway: String; AUserFrom, AUserTo: Integer);
-    procedure DoConnectionUpdate(AIsAccount: Boolean; AAccountUID, ADeviceUID, AUID: String; AFinalized: Integer);
+    procedure DoConnectionUpdate(AIsAccount: Boolean; AUID: String; AFinalized: Integer);
   end;
 
 function GetDataProvider(AThisIsMainGate: Boolean): TData_Provider;
@@ -1624,7 +1624,7 @@ end;
 procedure TData_Provider.ConnectionLogoutExecute(Sender: TRtcConnection;
   Param: TRtcFunctionInfo; Result: TRtcValue);
 begin
-  DoConnectionUpdate(Param.asBoolean['IsAccount'], Param.asString['AccountUID'], Param.asString['DeviceUID'], Param.asString['UID'], 1);
+  DoConnectionUpdate(Param.asBoolean['IsAccount'], Param.asString['UID'], 1);
 
   Result.asString := 'OK';
 end;
@@ -1632,7 +1632,7 @@ end;
 procedure TData_Provider.ConnectionPingExecute(Sender: TRtcConnection;
   Param: TRtcFunctionInfo; Result: TRtcValue);
 begin
-  DoConnectionUpdate(Param.asBoolean['IsAccount'], Param.asString['AccountUID'], Param.asString['DeviceUID'], Param.asString['UID'], 0);
+  DoConnectionUpdate(Param.asBoolean['IsAccount'], Param.asString['UID'], 0);
 
   Result.asString := 'OK';
 end;
@@ -1657,11 +1657,13 @@ begin
         if AIsAccount then
           SP.ProcedureName := 'AddAccountConnection'
         else
-          SP.ProcedureName := 'AddDeviceConnectionUpdate';
+          SP.ProcedureName := 'AddDeviceConnection';
         SP.Prepared := True;
         SP.Parameters.Refresh;
-        SP.Parameters.ParamByName('@AccountUID').Value := AAccountUID;
-        SP.Parameters.ParamByName('@DeviceUID').Value := ADeviceUID;
+        if AIsAccount then
+          SP.Parameters.ParamByName('@AccountUID').Value := AAccountUID
+        else
+          SP.Parameters.ParamByName('@DeviceUID').Value := ADeviceUID;
         SP.Parameters.ParamByName('@ConnectionUID').Value := AUID;
         SP.Parameters.ParamByName('@UserFrom').Value := AUserFrom;
         SP.Parameters.ParamByName('@UserTo').Value := AUserTo;
@@ -1685,7 +1687,7 @@ begin
   end;
 end;
 
-procedure TData_Provider.DoConnectionUpdate(AIsAccount: Boolean; AAccountUID, ADeviceUID, AUID: String; AFinalized: Integer);
+procedure TData_Provider.DoConnectionUpdate(AIsAccount: Boolean; AUID: String; AFinalized: Integer);
 var
   SP: TADOStoredProc;
 begin
@@ -1705,11 +1707,9 @@ begin
         if AIsAccount then
           SP.ProcedureName := 'UpdateAccountConnection'
         else
-          SP.ProcedureName := 'UpdateDeviceConnectionUpdate';
+          SP.ProcedureName := 'UpdateDeviceConnection';
         SP.Prepared := True;
         SP.Parameters.Refresh;
-        SP.Parameters.ParamByName('@AccountUID').Value := AAccountUID;
-        SP.Parameters.ParamByName('@DeviceUID').Value := ADeviceUID;
         SP.Parameters.ParamByName('@ConnectionUID').Value := AUID;
         SP.Parameters.ParamByName('@Finalized').Value := AFinalized;
         SP.ExecProc;
