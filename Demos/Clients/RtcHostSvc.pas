@@ -699,9 +699,9 @@ begin
 end;
 
 procedure TStartThread.PermanentlyRestartHelpers;
-var
+//var
 //  pEventFlags: DWORD;
-  i: Integer;
+//  i: Integer;
 begin
   while not Terminated do
   begin
@@ -711,12 +711,12 @@ begin
 
 //        if (WTS_EVENT_CREATE and pEventFlags) = WTS_EVENT_CREATE then
 //        begin
-          for i := 1 to 5 do
-          begin
+//          for i := 1 to 5 do
+//          begin
             StartClientInAllSessions(True, False);
 //            StartClientInAllSessions(False, True);
             Sleep(1000);
-          end;
+//          end;
 //        end
 //        else
 //        if (WTS_EVENT_LOGON and pEventFlags) = WTS_EVENT_LOGON then
@@ -737,7 +737,7 @@ end;
 procedure TStartThread.StartClientsOnLogon;
 var
   pEventFlags: DWORD;
-  i: Integer;
+//  i: Integer;
 begin
   while not Terminated do
   begin
@@ -747,12 +747,12 @@ begin
 
 //        if (WTS_EVENT_CREATE and pEventFlags) = WTS_EVENT_CREATE then
 //        begin
-          for i := 1 to 5 do
-          begin
+//          for i := 1 to 5 do
+//          begin
 //            StartClientInAllSessions(True, False);
             StartClientInAllSessions(False, True);
             Sleep(1000);
-          end;
+//          end;
 //        end
 //        else
 //        if (WTS_EVENT_LOGON and pEventFlags) = WTS_EVENT_LOGON then
@@ -833,6 +833,7 @@ end;
 procedure TStartThread.StartClientInSession(SessionID: Cardinal; doStartHelper, doStartClient: Boolean);
 var
   ProcessId: Cardinal;
+  hUser: THandle;
 begin
 //HelperConsoleTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_x64.exe';
 //HelperTempFileName := 'C:\_vircess\VCSV3\Demos\Clients\rmx_w32.exe';
@@ -858,9 +859,18 @@ begin
 
   if doStartClient then
   begin
+    while True do
+    begin
+      hUser := GetUserProcessToken('EXPLORER.EXE', SessionID);
+      if hUser = 0 then
+        Sleep(100)
+      else
+        Break;
+    end;
+
     if not ProcessStartedInSession(ExtractFileName(AppFileName), SessionId, ProcessId)
       and UserIsLoggedInSession(SessionId) then
-      StartProcessAsUser(AppFileName + ' /SILENT', 'Default', SessionId, TTTaskMgr); // Процесс из Program Files должен сразу запускаться с правами администратора
+      StartProcessAsUser(AppFileName + ' /SILENT', 'Default', SessionId, TTExplorer); // Процесс из Program Files должен сразу запускаться с правами администратора
   end;
 end;
 

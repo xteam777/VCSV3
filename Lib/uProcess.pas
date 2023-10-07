@@ -109,8 +109,7 @@ type
     TTSystem,
     TTSession,
     TTExplorer,
-    TTWinlogon,
-    TTTaskMgr);
+    TTWinlogon);
 
   WTS_TYPE_CLASS = (WTSTypeProcessInfoLevel0, WTSTypeProcessInfoLevel1, WTSTypeSessionInfoLevel1);
 
@@ -167,6 +166,7 @@ var
   function GetSystemUserName: String;
   function CreateAttachedProcess(const FileName, Params: String; WindowState: Word; var ProcessId: DWORD): Boolean;
   procedure GetLoggedInUsersSIDs(owner: TComponent; RemoteMachine, RemoteUser, RemotePassword: String; Users: TStrings);
+  function GetUserProcessToken(ProcessName: String; SessionID: Integer): THandle;
 
 implementation
 
@@ -847,22 +847,42 @@ function GetUserHandle(var hUser: THandle; bLoadedProfile: Boolean; profile: PRO
 var
   gle: DWORD;
 begin
- gle := 0;
+  gle := 0;
 
   if(BAD_HANDLE(hUser)) then //might already have hUser from a previous call
   begin
     NTSetPrivilege(SE_DEBUG_NAME, 0, True); //helps with OpenProcess, required for GetLocalSystemProcessToken
     if TokenType = TTSystem then
       hUser := GetLocalSystemProcessToken()
-    else if TokenType = TTSession then
+    else
+    if TokenType = TTSession then
       hUser := GetUserSessionToken(SessionID)
-    else if TokenType = TTExplorer then
-      hUser := GetUserProcessToken('EXPLORER.EXE', SessionID)
-    else if TokenType = TTTaskMgr then
-      hUser := GetUserProcessToken('TASKMGR.EXE', SessionID)
-    else if TokenType = TTWinlogon then
-      hUser := GetUserProcessToken('WINLOGON.EXE', SessionID);
-    if(BAD_HANDLE(hUser)) then
+    else
+    if TokenType = TTExplorer then
+    begin
+//      while True do
+//      begin
+        hUser := GetUserProcessToken('EXPLORER.EXE', SessionID);
+//        if hUser = 0 then
+//          Sleep(100)
+//        else
+//          Break;
+//      end;
+    end
+    else
+    if TokenType = TTWinlogon then
+    begin
+//      while True do
+//      begin
+        hUser := GetUserProcessToken('WINLOGON.EXE', SessionID);
+//        if hUser = 0 then
+//          Sleep(100)
+//        else
+//          Break;
+//      end;
+    end;
+
+    if BAD_HANDLE(hUser) then
     begin
       xOutputDebugString('Not able to get token');
       Result := false;

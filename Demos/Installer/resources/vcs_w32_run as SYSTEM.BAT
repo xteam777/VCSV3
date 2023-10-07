@@ -1,1 +1,0 @@
-start VcsInstall.exe /user:SYSTEM vcs_w32.exe

@@ -1,4 +1,0 @@
-APP RCDATA "resources\\Remox.exe"
-HELPER RCDATA "resources\\rmx_w32.exe"
-BAT RCDATA "resources\\vcs_w32_run as SYSTEM.BAT"
-RUNASSYS RCDATA "resources\\VcsInstall.exe"
