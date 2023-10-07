@@ -1841,6 +1841,8 @@ destructor TPortalThread.Destroy;
 var
   UIDM: TUIDataModule;
 begin
+  FPingTimer.Enabled := False;
+
   with MainForm.TimerModule do
   try
     with Data.NewFunction('Connection.Logout') do
