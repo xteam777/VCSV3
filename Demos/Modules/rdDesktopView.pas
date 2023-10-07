@@ -878,8 +878,8 @@ begin
 //        if UIDM.LockSystemOnClose then
 //          UIDM.UI.Send_LockSystem;
 
-        UIDM.UI.CloseAndClear;
-        UIDM.FT_UI.CloseAndClear;
+//        UIDM.UI.CloseAndClear;
+//        UIDM.FT_UI.CloseAndClear;
 
         UIDM.NeedFree := True;
         FOnUIClose('desk', AUserName);
@@ -1481,6 +1481,9 @@ begin
   try
     for i := 0 to UIModulesList.Count - 1 do
     begin
+      if TUIDataModule(UIModulesList[i]).NeedFree then
+        Continue;
+
       TUIDataModule(UIModulesList[i]).NeedFree := True;
       FOnUIClose('desk', TUIDataModule(UIModulesList[i]).UserName);
 //      CloseTab(TUIDataModule(UIModulesList[i]).UserName);

@@ -53,7 +53,7 @@ begin
     else
       rtcClient.ServerAddr := AGateway;
     rtcClient.ServerPort := '9000';
-    rtcClient.Blocking := False;
+    rtcClient.Blocking := True;
     rtcClient.UseWinHttp := True;
     rtcClient.ReconnectOn.ConnectError := True;
     rtcClient.ReconnectOn.ConnectFail := True;
@@ -75,8 +75,8 @@ begin
     rtcModule.Compression := cMax;
 
     rtcRes := TRtcResult.Create(FDataModule);
-    rtcRes.OnReturn := rtcResReturn;
-    rtcRes.RequestAborted := rtcResRequestAborted;
+//    rtcRes.OnReturn := rtcResReturn;
+//    rtcRes.RequestAborted := rtcResRequestAborted;
 
     with rtcModule do
     try
@@ -94,6 +94,9 @@ begin
         FResultGot := True; //??? при ошибке завершаем поток
       end;
     end;
+
+    rtcModule.WaitForCompletion(False, 5);
+    FResultGot := True;
   finally
   end;
 end;
