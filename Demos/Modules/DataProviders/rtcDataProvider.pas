@@ -368,8 +368,8 @@ begin
       except
         on E: Exception do
         begin
-          raise Exception(E.Message);
           xLog(E.Message);
+          raise Exception(E.Message);
         end;
       end;
     finally
@@ -455,8 +455,8 @@ begin
       except
         on E: Exception do
         begin
-          raise Exception(E.Message);
           xLog(E.Message);
+          raise Exception(E.Message);
         end;
       end;
     finally
@@ -606,8 +606,8 @@ begin
 //      except
 //        on E: Exception do
 //        begin
-//          raise Exception(E.Message);
 //          xLog(E.Message);
+//          raise Exception(E.Message);
 //        end;
 //      end;
 //    finally
@@ -858,8 +858,8 @@ begin
       except
         on E: Exception do
         begin
-          raise Exception(E.Message);
           xLog(E.Message);
+          raise Exception(E.Message);
         end;
       end;
     finally
@@ -925,13 +925,13 @@ begin
                 Append;
 
                 asString['ID'] := SP.FieldByName('ID').Value;
-                asString['UID'] := VarToStr(SP.FieldByName('UID').Value);
+                asString['UID'] := SP.FieldByName('UID').Value;
                 asWideString['Name'] := SP.FieldByName('Name').Value;
                 asWideString['Password'] := SP.FieldByName('Password').Value;
                 asWideString['Description'] := SP.FieldByName('Description').Value;
-                asString['GroupUID'] := VarToStr(SP.FieldByName('GroupUID').Value);
+                asString['GroupUID'] := SP.FieldByName('GroupUID').Value;
                 asWideString['GroupName'] := SP.FieldByName('GroupName').Value;
-                if Users.isHostLoggedIn(VarToStr(SP.FieldByName('ID').Value)) then
+                if Users.isHostLoggedIn(SP.FieldByName('ID').Value) then
                   asInteger['StateIndex'] := MSG_STATUS_ONLINE
                 else
                   asInteger['StateIndex'] := MSG_STATUS_OFFLINE;
@@ -943,8 +943,8 @@ begin
       except
         on E: Exception do
         begin
-          raise Exception(E.Message);
           xLog(E.Message);
+          raise Exception(E.Message);
         end;
       end;
     finally
@@ -984,8 +984,8 @@ begin
       except
         on E: Exception do
         begin
-          raise Exception(E.Message);
           xLog(E.Message);
+          raise Exception(E.Message);
         end;
       end;
     finally
@@ -1094,8 +1094,8 @@ begin
       except
         on E: Exception do
         begin
-          raise Exception(E.Message);
           xLog(E.Message);
+          raise Exception(E.Message);
         end;
       end;
     finally
@@ -1139,8 +1139,8 @@ begin
       except
         on E: Exception do
         begin
-          raise Exception(E.Message);
           xLog(E.Message);
+          raise Exception(E.Message);
         end;
       end;
   finally
@@ -1192,8 +1192,8 @@ begin
       except
         on E: Exception do
         begin
-          raise Exception(E.Message);
           xLog(E.Message);
+          raise Exception(E.Message);
         end;
       end;
     finally
@@ -1236,8 +1236,8 @@ begin
       except
         on E: Exception do
         begin
-          raise Exception(E.Message);
           xLog(E.Message);
+          raise Exception(E.Message);
         end;
       end;
     finally
@@ -1279,8 +1279,8 @@ begin
       except
         on E: Exception do
         begin
-          raise Exception(E.Message);
           xLog(E.Message);
+          raise Exception(E.Message);
         end;
       end;
     finally
