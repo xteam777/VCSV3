@@ -902,7 +902,7 @@ begin
   reg := TRegistry.Create;
   try
     reg.RootKey := HKEY_LOCAL_MACHINE;
-    reg.Access := KEY_READ;
+    reg.Access := KEY_READ or KEY_WOW64_64KEY;
     if not reg.OpenKey('Software\Remox', False) then
       Exit;
 
