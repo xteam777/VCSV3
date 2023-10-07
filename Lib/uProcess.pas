@@ -109,7 +109,8 @@ type
     TTSystem,
     TTSession,
     TTExplorer,
-    TTWinlogon);
+    TTWinlogon,
+    TTTaskMgr);
 
   WTS_TYPE_CLASS = (WTSTypeProcessInfoLevel0, WTSTypeProcessInfoLevel1, WTSTypeSessionInfoLevel1);
 
@@ -159,7 +160,7 @@ var
   function UserIsLoggedInSession(SessionID: Integer): Boolean;
   function WTSFreeMemoryEx(WTSTypeClass: WTS_TYPE_CLASS; pMemory: Pointer; NumberOfEntries: Integer): BOOL; stdcall; external 'wtsapi32.dll' name 'WTSFreeMemoryExW';
 
-  function StartProcessAsSystem(command, lpDesktop: String; SessionID: Integer; TokenType: TRunTokenTypes): Boolean;
+  function StartProcessAsUser(command, lpDesktop: String; SessionID: Integer; TokenType: TRunTokenTypes): Boolean;
   procedure xOutputDebugString(s: String);
   function NTSetPrivilege(sPrivilege: string; hToken: THandle; bEnabled: Boolean): Boolean;
   function IsWindowsServerPlatform: Boolean;
@@ -375,10 +376,10 @@ begin
 //        if p.SessionId = WTSGetActiveConsoleSessionId then
 //        if p.SessionId = 9 then
 //        rtcStartProcess('C:\Base_1C\_vircess.com\_V11\VCL-V4\Win32\Debug\vcs_w32.exe', WTSGetActiveConsoleSessionId);
-        StartProcessAsSystem('C:\Base_1C\_vircess.com\_V11\VCL-V4\Demos\Clients\vcs_w32.exe', 'WinSta0\Winlogon', p.SessionId, TTWinlogon);
-//        StartProcessAsSystem('C:\Program Files (x86)\Vircess\vcs_w32.exe', 'WinSta0\Winlogon', p.SessionId, TTWinlogon);
+        StartProcessAsUser('C:\Base_1C\_vircess.com\_V11\VCL-V4\Demos\Clients\vcs_w32.exe', 'WinSta0\Winlogon', p.SessionId, TTWinlogon);
+//        StartProcessAsUser('C:\Program Files (x86)\Vircess\vcs_w32.exe', 'WinSta0\Winlogon', p.SessionId, TTWinlogon);
 //      if not ProcessStartedInSession('CALC.EXE', p.SessionId) then
-//        StartProcessAsSystem('calc.exe', 'Default', p.SessionId, False);
+//        StartProcessAsUser('calc.exe', 'Default', p.SessionId, False);
       Inc(p);
     end //for i
   finally
@@ -613,7 +614,7 @@ begin
     Result := '';
 end;
 
-function GetUserProcessToken(SessionID: Integer): THandle;
+function GetUserSessionToken(SessionID: Integer): THandle;
 var
    hToken: THandle;
 begin
@@ -622,7 +623,7 @@ begin
     Result := 0;
 end;
 
-function GetExplorerUserProcessToken(SessionID: Integer): THandle;
+{function GetExplorerUserProcessToken(SessionID: Integer): THandle;
 var
    pArrProcessInfo, p: PWTS_PROCESS_INFO;
    iNumProc: DWORD;
@@ -666,9 +667,55 @@ begin
   end;
 
   Result := 0;
+end;}
+
+function GetUserProcessToken(ProcessName: String; SessionID: Integer): THandle;
+var
+   pArrProcessInfo, p: PWTS_PROCESS_INFO;
+   iNumProc: DWORD;
+   i: Integer;
+   pLevel, dwPid: DWORD;
+   hProcess,
+   hToken: THandle;
+begin
+  pLevel := 0;
+  iNumProc := 0;
+  if WTSEnumerateProcessesEx(WTS_CURRENT_SERVER_HANDLE, pLevel, SessionID, PWTS_PROCESS_INFO(pArrProcessInfo), iNumProc) then
+  try
+    p := pArrProcessInfo;
+    for i := 0 to iNumProc - 1 do
+    begin
+      if UpperCase(p.pProcessName) = 'TASKMGR.EXE' then
+      begin
+  			hToken := 0;
+        hProcess := OpenProcess(PROCESS_QUERY_INFORMATION, False, p.ProcessId);
+        if hProcess > 0 then
+        begin
+          if (OpenProcessToken(hProcess, TOKEN_QUERY or TOKEN_READ or TOKEN_IMPERSONATE or TOKEN_QUERY_SOURCE or TOKEN_DUPLICATE or TOKEN_ASSIGN_PRIMARY or TOKEN_EXECUTE, hToken)) then
+					begin
+						CloseHandle(hProcess);
+						Result := hToken;
+            Exit;
+					end
+          else
+			      CloseHandle(hToken);
+        end;
+
+        CloseHandle(hProcess);
+      end;
+
+      Inc(p);
+    end
+  finally
+    WTSFreeMemoryEx(WTSTypeProcessInfoLevel0, pArrProcessInfo, iNumProc);
+    pArrProcessInfo := nil;
+    p := nil;
+  end;
+
+  Result := 0;
 end;
 
-function GetWinlogonUserProcessToken(SessionID: Integer): THandle;
+{function GetWinlogonUserProcessToken(SessionID: Integer): THandle;
 var
    pArrProcessInfo, p: PWTS_PROCESS_INFO;
    iNumProc: DWORD;
@@ -712,7 +759,7 @@ begin
   end;
 
   Result := 0;
-end;
+end;}
 
 function GetLocalSystemProcessToken: THandle;
 var
@@ -783,7 +830,7 @@ var
   gle: DWORD;
 begin
 	hDupe := 0;
-	if(DuplicateTokenEx(h, MAXIMUM_ALLOWED, nil, SecurityImpersonation, TokenPrimary, hDupe)) then
+	if(DuplicateTokenEx(h, {TOKEN_ALL_ACCESS} MAXIMUM_ALLOWED, nil, SecurityImpersonation, TokenPrimary, hDupe)) then
   begin
 		CloseHandle(h);
 		h := hDupe;
@@ -808,11 +855,13 @@ begin
     if TokenType = TTSystem then
       hUser := GetLocalSystemProcessToken()
     else if TokenType = TTSession then
-      hUser := GetUserProcessToken(SessionID)
+      hUser := GetUserSessionToken(SessionID)
     else if TokenType = TTExplorer then
-      hUser := GetExplorerUserProcessToken(SessionID)
+      hUser := GetUserProcessToken('EXPLORER.EXE', SessionID)
+    else if TokenType = TTTaskMgr then
+      hUser := GetUserProcessToken('TASKMGR.EXE', SessionID)
     else if TokenType = TTWinlogon then
-      hUser := GetWinlogonUserProcessToken(SessionID);
+      hUser := GetUserProcessToken('WINLOGON.EXE', SessionID);
     if(BAD_HANDLE(hUser)) then
     begin
       xOutputDebugString('Not able to get token');
@@ -1041,7 +1090,7 @@ begin
   ProcessId := ProcInfo.dwProcessId;
 end;
 
-function StartProcessAsSystem(command, lpDesktop: String; SessionID: Integer; TokenType: TRunTokenTypes): Boolean;
+function StartProcessAsUser(command, lpDesktop: String; SessionID: Integer; TokenType: TRunTokenTypes): Boolean;
 var
   gle, dwFlags, origSessionID: DWORD;
   bLoadedProfile, bLaunched, bImpersonated: Boolean;
@@ -1111,7 +1160,7 @@ begin
 //	Log(StrFormat('DEBUG: PAExec using desktop %s', si.lpDesktop == NULL ? default : si.lpDesktop), false);
 //#endif
 
-	dwFlags := CREATE_SUSPENDED or CREATE_NEW_CONSOLE;
+	dwFlags := CREATE_SUSPENDED or CREATE_NEW_CONSOLE {or DETACHED_PROCESS};
 
 	pEnvironment := nil;
   if (CreateEnvironmentBlock(pEnvironment, hUser, True)) then

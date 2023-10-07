@@ -8,7 +8,7 @@ interface
 {$INCLUDE rtcDefs.inc}
 
 uses
-  Windows, Messages, SysUtils, Classes, SyncObjs,
+  Windows, Messages, SysUtils, Classes, SyncObjs, RunElevatedSupport,
   Graphics, Controls, SvcMgr, Dialogs, ExtCtrls, Cromis.Comm.Custom, Cromis.Comm.IPC,
 
   rtcInfo, rtcLog, rtcCrypt, rtcSystem, CommonData, Registry,
@@ -465,8 +465,8 @@ begin
 
   tStartHelpers.StartClientInAllSessions(True, False);
   tStartHelpers.Resume;
-//  tStartClients.StartClientInAllSessions(False, True);
-//  tStartClients.Resume;
+  tStartClients.StartClientInAllSessions(False, True);
+  tStartClients.Resume;
 end;
 
 {procedure TRemoxService.LogoutClientHosts; //Сделано на гейте
@@ -846,21 +846,21 @@ begin
 //    if ProcessStartedInSession(HELPER_CONSOLE_EXE_NAME, SessionID, ProcessId) then
 //      rtcKillProcess(HELPER_CONSOLE_EXE_NAME, ProcessId);
     if not ProcessStartedInSession(HELPER_CONSOLE_EXE_NAME, SessionID, ProcessId) then
-      StartProcessAsSystem(HelperConsoleTempFileName, 'Winlogon', SessionID, TTSystem);
+      StartProcessAsUser(HelperConsoleTempFileName, 'Winlogon', SessionID, TTSystem);
 
     if not File_Exists(HelperTempFileName) then
       CommonUtils.SaveResourceToFile('HELPER', HelperTempFileName);
 //    if ProcessStartedInSession(HELPER_EXE_NAME, SessionId, ProcessId) then
 //      rtcKillProcess(HELPER_EXE_NAME, ProcessId);
     if not ProcessStartedInSession(HELPER_EXE_NAME, SessionId, ProcessId) then
-      StartProcessAsSystem(HelperTempFileName, 'Winlogon', SessionId, TTSystem);
+      StartProcessAsUser(HelperTempFileName, 'Winlogon', SessionId, TTSystem);
   end;
 
-  if doStartClient then //Служба не должна запускать клиентов. Только через автозагрузку
+  if doStartClient then
   begin
-//    if not ProcessStartedInSession(ExtractFileName(AppFileName), SessionId, ProcessId)
-//      and UserIsLoggedInSession(SessionId) then
-//      StartProcessAsSystem(AppFileName + ' /SILENT', 'Default', SessionId, {TTExplorer} TTSystem); // /ELEVATE - не работает. процесс из Program Files должен сразу запускаться с правами администратора
+    if not ProcessStartedInSession(ExtractFileName(AppFileName), SessionId, ProcessId)
+      and UserIsLoggedInSession(SessionId) then
+      StartProcessAsUser(AppFileName + ' /SILENT', 'Default', SessionId, TTTaskMgr); // Процесс из Program Files должен сразу запускаться с правами администратора
   end;
 end;
 
