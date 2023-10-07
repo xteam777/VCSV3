@@ -152,6 +152,10 @@ type
       Param: TRtcFunctionInfo; Result: TRtcValue);
     procedure ConnectionLoginExecute(Sender: TRtcConnection;
       Param: TRtcFunctionInfo; Result: TRtcValue);
+    procedure ConnectionPingExecute(Sender: TRtcConnection;
+      Param: TRtcFunctionInfo; Result: TRtcValue);
+    procedure ConnectionLogoutExecute(Sender: TRtcConnection;
+      Param: TRtcFunctionInfo; Result: TRtcValue);
   private
     FOnUserLogin: TUserEvent;
     FOnUserLogOut: TUserEvent;
@@ -196,6 +200,8 @@ type
     procedure SendGatewayLogOut;
     procedure GatewayReloginStart;
     procedure GatewayLogOutStart;
+    procedure DoConnectionAdd(AIsAccount: Boolean; AAccountUID, ADeviceUID, AUID, AAction, AGateway: String; AUserFrom, AUserTo: Integer);
+    procedure DoConnectionUpdate(AIsAccount: Boolean; AAccountUID, ADeviceUID, AUID: String; AFinalized: Integer);
   end;
 
 function GetDataProvider(AThisIsMainGate: Boolean): TData_Provider;
@@ -1608,6 +1614,30 @@ end;
 
 procedure TData_Provider.ConnectionLoginExecute(Sender: TRtcConnection;
   Param: TRtcFunctionInfo; Result: TRtcValue);
+begin
+  DoConnectionAdd(Param.asBoolean['IsAccount'], Param.asString['AccountUID'], Param.asString['DeviceUID'], Param.asString['UID'],
+    Param.asString['Action'], Param.asString['Gateway'], Param.asInteger['UserFrom'], Param.asInteger['UserTo']);
+
+  Result.asString := 'OK';
+end;
+
+procedure TData_Provider.ConnectionLogoutExecute(Sender: TRtcConnection;
+  Param: TRtcFunctionInfo; Result: TRtcValue);
+begin
+  DoConnectionUpdate(Param.asBoolean['IsAccount'], Param.asString['AccountUID'], Param.asString['DeviceUID'], Param.asString['UID'], 1);
+
+  Result.asString := 'OK';
+end;
+
+procedure TData_Provider.ConnectionPingExecute(Sender: TRtcConnection;
+  Param: TRtcFunctionInfo; Result: TRtcValue);
+begin
+  DoConnectionUpdate(Param.asBoolean['IsAccount'], Param.asString['AccountUID'], Param.asString['DeviceUID'], Param.asString['UID'], 0);
+
+  Result.asString := 'OK';
+end;
+
+procedure TData_Provider.DoConnectionAdd(AIsAccount: Boolean; AAccountUID, ADeviceUID, AUID, AAction, AGateway: String; AUserFrom, AUserTo: Integer);
 var
   SP: TADOStoredProc;
 begin
@@ -1624,21 +1654,19 @@ begin
       SP := TADOStoredProc.Create(nil);
       try
         SP.Connection := SQLConnection;
-        if Param.isType['AccountUID'] <> rtc_Null then
-          SP.ProcedureName := 'AccountConnectionUpdate'
+        if AIsAccount then
+          SP.ProcedureName := 'AddAccountConnection'
         else
-          SP.ProcedureName := 'DeviceConnectionUpdate';
+          SP.ProcedureName := 'AddDeviceConnectionUpdate';
         SP.Prepared := True;
         SP.Parameters.Refresh;
-        if Param.isType['AccountUID'] <> rtc_Null then
-          SP.Parameters.ParamByName('@AccountUID').Value := Param.asString['AccountUID']
-        else
-          SP.Parameters.ParamByName('@DeviceUID').Value := Param.asString['DeviceUID'];
-        SP.Parameters.ParamByName('@ConnectionUID').Value := Param.asString['UID'];
-        SP.Parameters.ParamByName('@UserFrom').Value := Param.asInteger['UserFrom'];
-        SP.Parameters.ParamByName('@UserTo').Value := Param.asInteger['UserTo'];
-        SP.Parameters.ParamByName('@Action').Value := Param.asString['Action'];
-        SP.Parameters.ParamByName('@Gateway').Value := Param.asString['Gateway'];
+        SP.Parameters.ParamByName('@AccountUID').Value := AAccountUID;
+        SP.Parameters.ParamByName('@DeviceUID').Value := ADeviceUID;
+        SP.Parameters.ParamByName('@ConnectionUID').Value := AUID;
+        SP.Parameters.ParamByName('@UserFrom').Value := AUserFrom;
+        SP.Parameters.ParamByName('@UserTo').Value := AUserTo;
+        SP.Parameters.ParamByName('@Action').Value := AAction;
+        SP.Parameters.ParamByName('@Gateway').Value := AGateway;
         SP.ExecProc;
 
 //        if SP.Parameters.ParamByName('@IsExists').Value then
@@ -1655,7 +1683,51 @@ begin
   finally
     CS_DB.Release;
   end;
-  Result.asString := 'OK';
+end;
+
+procedure TData_Provider.DoConnectionUpdate(AIsAccount: Boolean; AAccountUID, ADeviceUID, AUID: String; AFinalized: Integer);
+var
+  SP: TADOStoredProc;
+begin
+  CS_DB.Acquire;
+  try
+//    if not SQLConnection.Connected then
+//    begin
+//      SQLConnection.Connected := False;
+//      SQLConnection.Connected := True;
+//    end;
+    SQLConnection.Open;
+
+    try
+      SP := TADOStoredProc.Create(nil);
+      try
+        SP.Connection := SQLConnection;
+        if AIsAccount then
+          SP.ProcedureName := 'UpdateAccountConnection'
+        else
+          SP.ProcedureName := 'UpdateDeviceConnectionUpdate';
+        SP.Prepared := True;
+        SP.Parameters.Refresh;
+        SP.Parameters.ParamByName('@AccountUID').Value := AAccountUID;
+        SP.Parameters.ParamByName('@DeviceUID').Value := ADeviceUID;
+        SP.Parameters.ParamByName('@ConnectionUID').Value := AUID;
+        SP.Parameters.ParamByName('@Finalized').Value := AFinalized;
+        SP.ExecProc;
+
+//        if SP.Parameters.ParamByName('@IsExists').Value then
+//          Result.asString := 'BUSY'
+//        else
+//          Result.asString := SP.Parameters.ParamByName('@UID').Value;
+      except
+        on E: Exception do
+          raise Exception(E.Message);
+      end;
+    finally
+      SP.Free;
+    end;
+  finally
+    CS_DB.Release;
+  end;
 end;
 
 initialization

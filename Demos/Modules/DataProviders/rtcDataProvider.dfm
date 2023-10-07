@@ -361,7 +361,7 @@ object Data_Provider: TData_Provider
   object ConnectionPing: TRtcFunction
     Group = GatewayFunctions
     FunctionName = 'Connection.Ping'
-    OnExecute = HostLoginExecute
+    OnExecute = ConnectionPingExecute
     Left = 688
     Top = 153
   end
@@ -375,7 +375,7 @@ object Data_Provider: TData_Provider
   object ConnectionLogout: TRtcFunction
     Group = GatewayFunctions
     FunctionName = 'Connection.Logout'
-    OnExecute = HostLoginExecute
+    OnExecute = ConnectionLogoutExecute
     Left = 728
     Top = 153
   end
