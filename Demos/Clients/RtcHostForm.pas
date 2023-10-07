@@ -1805,8 +1805,8 @@ begin
         asString['AccountUID'] := MainForm.AccountUID
       else
         asString['DeviceUID'] := MainForm.DeviceUID;
-      asString['UserFrom'] := MainForm.DeviceId;
-      asString['UserTo'] := FUserName;
+      asInteger['UserFrom'] := StrToInt(MainForm.DeviceId);
+      asInteger['UserTo'] := StrToInt(FUserName);
       asString['Action'] := FAction;
       asString['Gateway'] := FGateway;
       Call(rResult);
