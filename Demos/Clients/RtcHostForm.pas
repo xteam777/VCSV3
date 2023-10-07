@@ -83,6 +83,8 @@ type
   TPortalThread = class(TThread)
   private
     FDataModule: TDataModule;
+    FPingTimer: TTimer;
+    resPing: TRtcResult;
     FUserName: String;
     FUserPass: String;
     FUserToConnect: String;
@@ -96,6 +98,7 @@ type
     FChat: TRtcPChat;
     FNeedCloseUI: Boolean;
     { Private declarations }
+    procedure PortalThreadPingTimerTimer(Sender: TObject);
   public
     constructor Create(CreateSuspended: Boolean; AAction, AUserName, AUserPass, AUserToConnect, AGateway: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; UIVisible: Boolean); overload;
     destructor Destroy; override;
@@ -1636,6 +1639,11 @@ begin
   FUID := GetUniqueString;
 
   FDataModule := TDataModule.Create(nil);
+  resPing := TRtcResult.Create(FDataModule);
+  FPingTimer := TTimer.Create(FDataModule);
+  FPingTimer.Interval := 1000;
+  FPingTimer.OnTimer := PortalThreadPingTimerTimer;
+  FPingTimer.Enabled := True;
 
   FGatewayClient := TRtcHttpPortalClient.Create(FDataModule);
   FGatewayClient.Name := 'PClient_' + FUID;
@@ -1787,12 +1795,54 @@ begin
   else
   if FAction = 'chat' then
     FChat.Open(FUserToConnect);
+
+  with MainForm.TimerModule do
+  try
+    with Data.NewFunction('Connection.Login') do
+    begin
+      asWideString['UID'] := FUID;
+      asString['UserFrom'] := DeviceId;
+      asString['UserTo'] := FUserName;
+      asString['Action'] := FAction;
+      Call(resPing);
+    end;
+  except
+    on E: Exception do
+      Data.Clear;
+  end;
+end;
+
+procedure TPortalThread.PortalThreadPingTimerTimer(Sender: TObject);
+begin
+  with MainForm.TimerModule do
+  try
+    with Data.NewFunction('Connection.Ping') do
+    begin
+      asWideString['UID'] := FUID;
+      Call(resPing);
+    end;
+  except
+    on E: Exception do
+      Data.Clear;
+  end;
 end;
 
 destructor TPortalThread.Destroy;
 var
   UIDM: TUIDataModule;
 begin
+  with MainForm.TimerModule do
+  try
+    with Data.NewFunction('Connection.Logout') do
+    begin
+      asWideString['UID'] := FUID;
+      Call(resPing);
+    end;
+  except
+    on E: Exception do
+      Data.Clear;
+  end;
+
 //  UIDM := DesktopsForm.GetRemovedUIDataModule(FUserName);
 //  if UIDM <> nil then
 //  begin
@@ -1813,6 +1863,8 @@ begin
   FFileTransfer.Free;
   FChat.Free;
   FGatewayClient.Free;
+  FPingTimer.Free;
+  resPing.Free;
   FDataModule.Free;
 
   if FNeedCloseUI then
@@ -4265,6 +4317,24 @@ var
 begin
 //  xLog('LoadSetup: ' + RecordType);
 
+  if (RecordType = 'ALL')
+    or (RecordType = 'PERMANENT_PASS') then
+  begin
+    reg := TRegistry.Create;
+    try
+      reg.RootKey := HKEY_LOCAL_MACHINE;
+      reg.Access := KEY_READ or KEY_WOW64_64KEY;
+      if reg.ValueExists('PermanentPassword') then
+        PermanentPassword := reg.ReadString('PermanentPassword')
+      else
+        PermanentPassword := '';
+
+      reg.CloseKey;
+    finally
+      reg.Free;
+    end;
+  end;
+
   reg := TRegistry.Create;
   try
     reg.RootKey := HKEY_CURRENT_USER;
@@ -4357,13 +4427,6 @@ begin
       end;
 
       if (RecordType = 'ALL')
-        or (RecordType = 'PERMANENT_PASS') then
-        if reg.ValueExists('PermanentPassword') then
-          PermanentPassword := reg.ReadString('PermanentPassword')
-        else
-          PermanentPassword := '';
-
-      if (RecordType = 'ALL')
         or (RecordType = 'ACTIVE_NODE') then
         if reg.ValueExists('LastFocusedUID') then
           LastFocusedUID := reg.ReadString('LastFocusedUID')
@@ -4406,7 +4469,6 @@ begin
 
     reg.WriteBool('StoreHistory', StoreHistory);
     reg.WriteBool('StorePasswords', StorePasswords);
-    reg.WriteString('PermanentPassword', PermanentPassword);
     reg.WriteInteger('ProxyOption', ProxyOption);
     reg.WriteString('ProxyAddr', hcAccounts.UserLogin.ProxyAddr);
     reg.WriteString('ProxyPassword', hcAccounts.UserLogin.ProxyUserName);
