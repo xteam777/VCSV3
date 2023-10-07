@@ -92,6 +92,8 @@ type
     FUIForm: TForm;
     FUIDFull, FUID: String;
     FGateway: String;
+    FLoggedIn: Boolean;
+    FAccountUID, FDeviceUID: String;
     FGatewayClient: TRtcHttpPortalClient;
     FDesktopControl: TRtcPDesktopControl;
     FFileTransfer: TRtcPFileTransfer;
@@ -1631,6 +1633,10 @@ begin
 
   FreeOnTerminate := True;
 
+  FLoggedIn := MainForm.LoggedIn;
+  FAccountUID := MainForm.AccountUID;
+  FDeviceUID := MainForm.DeviceUID;
+
   FUserName := AUserName;
   FUserPass := AUserPass;
   FUserToConnect := AUserToConnect;
@@ -1803,10 +1809,9 @@ begin
     with Data.NewFunction('Connection.Login') do
     begin
       asString['UID'] := FUIDFull;
-      if MainForm.LoggedIn then
-        asString['AccountUID'] := MainForm.AccountUID
-      else
-        asString['DeviceUID'] := MainForm.DeviceUID;
+      asBoolean['IsAccount'] := FLoggedIn;
+      asString['AccountUID'] := FAccountUID;
+      asString['DeviceUID'] := FDeviceUID;
       asInteger['UserFrom'] := StrToInt(MainForm.DeviceId);
       asInteger['UserTo'] := StrToInt(FUserName);
       asString['Action'] := FAction;
@@ -1825,8 +1830,10 @@ begin
   try
     with Data.NewFunction('Connection.Ping') do
     begin
+      asBoolean['IsAccount'] := FLoggedIn;
+      asString['AccountUID'] := FAccountUID;
+      asString['DeviceUID'] := FDeviceUID;
       asString['UID'] := FUIDFull;
-      asString['Gateway'] := FGateway;
       Call(rResult);
     end;
   except
@@ -1843,6 +1850,9 @@ begin
   try
     with Data.NewFunction('Connection.Logout') do
     begin
+      asBoolean['IsAccount'] := FLoggedIn;
+      asString['AccountUID'] := FAccountUID;
+      asString['DeviceUID'] := FDeviceUID;
       asString['UID'] := FUIDFull;
       Call(rResult);
     end;
