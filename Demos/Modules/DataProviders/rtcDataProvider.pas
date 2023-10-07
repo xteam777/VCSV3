@@ -1,4 +1,4 @@
-unit rtcDataProvider;
+п»їunit rtcDataProvider;
 
 interface
 
@@ -87,9 +87,10 @@ type
     PortalGateServerGroup: TRtcFunctionGroup;
     rGateRelogin: TRtcResult;
     HostLogoutByHash: TRtcFunction;
-    AddConnection: TRtcFunction;
-    RemoveConnection: TRtcFunction;
+    ConnectionLogin: TRtcFunction;
+    ConnectionPing: TRtcFunction;
     AccountManualLogout: TRtcFunction;
+    ConnectionLogout: TRtcFunction;
     procedure DataModuleCreate(Sender: TObject);
     procedure DataModuleDestroy(Sender: TObject);
     procedure Module1SessionClose(Sender: TRtcConnection);
@@ -148,6 +149,8 @@ type
     procedure HostLogoutByHashExecute(Sender: TRtcConnection;
       Param: TRtcFunctionInfo; Result: TRtcValue);
     procedure AccountManualLogoutExecute(Sender: TRtcConnection;
+      Param: TRtcFunctionInfo; Result: TRtcValue);
+    procedure ConnectionLoginExecute(Sender: TRtcConnection;
       Param: TRtcFunctionInfo; Result: TRtcValue);
   private
     FOnUserLogin: TUserEvent;
@@ -423,13 +426,17 @@ begin
         SP.Parameters.ParamByName('@Hash').Value := Param.asString['Hash'];
         SP.Parameters.ParamByName('@Hash_Console').Value := Param.asString['Hash_Console'];
         SP.Parameters.ParamByName('@ID').Value := 0;
+        SP.Parameters.ParamByName('@ID_UID').Value := '';
         SP.Parameters.ParamByName('@ID_Console').Value := 0;
+        SP.Parameters.ParamByName('@ID_Console_UID').Value := '';
         SP.ExecProc;
 
         with Result.NewRecord do
         begin
           asString['ID'] := SP.Parameters.ParamByName('@ID').Value;
+          asString['ID_UID'] := SP.Parameters.ParamByName('@ID_UID').Value;
           asString['ID_Console'] := SP.Parameters.ParamByName('@ID_Console').Value;
+          asString['ID_Console_UID'] := SP.Parameters.ParamByName('@ID_Console_UID').Value;
           UserGateway := Users.GetAvailableGateway;
           if UserGateway <> '' then
           begin
@@ -480,7 +487,7 @@ begin
       asString['Result'] := 'PASS_NOT_VALID';
 
     if (Param.asString['Action'] <> 'desk')
-      and Users.HostIsService(Param.asWideString['User']) then //Если подключение к службе передачи файлов или чата и у службы указан активный консольный клиент передаем его
+      and Users.HostIsService(Param.asWideString['User']) then //Г…Г±Г«ГЁ ГЇГ®Г¤ГЄГ«ГѕГ·ГҐГ­ГЁГҐ ГЄ Г±Г«ГіГ¦ГЎГҐ ГЇГҐГ°ГҐГ¤Г Г·ГЁ ГґГ Г©Г«Г®Гў ГЁГ«ГЁ Г·Г ГІГ  ГЁ Гі Г±Г«ГіГ¦ГЎГ» ГіГЄГ Г§Г Г­ Г ГЄГІГЁГўГ­Г»Г© ГЄГ®Г­Г±Г®Г«ГјГ­Г»Г© ГЄГ«ГЁГҐГ­ГІ ГЇГҐГ°ГҐГ¤Г ГҐГ¬ ГҐГЈГ®
     begin
       ActiveConsoleClientId := Users.GetUserActiveConsoleClient(Param.asWideString['User']);
       if (ActiveConsoleClientId <> '') then
@@ -841,7 +848,7 @@ begin
 
         Result := (SP.Parameters.ParamByName('@IsValid').Value = 1);
         RealName := SP.Parameters.ParamByName('@Name').Value;
-        AccountUID := VarToStr(SP.Parameters.ParamByName('@AccountUID').Value);
+        AccountUID := SP.Parameters.ParamByName('@AccountUID').Value;
       except
         on E: Exception do
         begin
@@ -889,7 +896,7 @@ begin
             SP.Prepared := True;
             SP.Parameters.Refresh;
 //            AddParam(SP, '@AccountUID', ftGUID, pdInput, AccountUID);
-            SP.Parameters.ParamByName('@AccountUID').DataType := ftGuid;
+//            SP.Parameters.ParamByName('@AccountUID').DataType := ftGuid;
             SP.Parameters.ParamByName('@AccountUID').Value := AccountUID;
             SP.Open;
 
@@ -1007,7 +1014,7 @@ begin
 //        AddParam(SP, '@Email', ftWideString, pdInput, Param.asString['Email']);
 //        AddParam(SP, '@Name', ftWideString, pdInput, Param.asString['Name']);
 //        AddParam(SP, '@Password', ftWideString, pdInput, Param.asString['Pass']);
-//        AddParam(SP, '@GroupName', ftWideString, pdInput, 'Мои компьютеры');
+//        AddParam(SP, '@GroupName', ftWideString, pdInput, 'ГЊГ®ГЁ ГЄГ®Г¬ГЇГјГѕГІГҐГ°Г»');
 //        AddParam(SP, '@DeviceID', ftString, pdInput, Param.asString['DeviceID']);
 //        AddParam(SP, '@DeviceName', ftWideString, pdInput, Param.asString['DeviceName']);
 //        AddParam(SP, '@DevicePass', ftWideString, pdInput, Param.asString['DevicePass']);
@@ -1016,7 +1023,7 @@ begin
         SP.Parameters.ParamByName('@Email').Value := Param.asString['Email'];
         SP.Parameters.ParamByName('@Name').Value := Param.asWideString['Name'];
         SP.Parameters.ParamByName('@Password').Value := Param.asWideString['Pass'];
-        SP.Parameters.ParamByName('@GroupName').Value := 'Мои компьютеры';
+        SP.Parameters.ParamByName('@GroupName').Value := 'РњРѕРё СѓСЃС‚СЂРѕР№СЃС‚РІР°';
         SP.Parameters.ParamByName('@DeviceID').Value := Param.asString['DeviceID'];
         SP.Parameters.ParamByName('@DeviceName').Value := Param.asWideString['DeviceName'];
         SP.Parameters.ParamByName('@DevicePass').Value := Param.asWideString['DevicePass'];
@@ -1597,6 +1604,58 @@ end;
 procedure TData_Provider.AccountPingExecute(Sender: TRtcConnection; Param: TRtcFunctionInfo; Result: TRtcValue);
 begin
   //Nothing to do
+end;
+
+procedure TData_Provider.ConnectionLoginExecute(Sender: TRtcConnection;
+  Param: TRtcFunctionInfo; Result: TRtcValue);
+var
+  SP: TADOStoredProc;
+begin
+  CS_DB.Acquire;
+  try
+//    if not SQLConnection.Connected then
+//    begin
+//      SQLConnection.Connected := False;
+//      SQLConnection.Connected := True;
+//    end;
+    SQLConnection.Open;
+
+    try
+      SP := TADOStoredProc.Create(nil);
+      try
+        SP.Connection := SQLConnection;
+        if Param.isType['AccountUID'] <> rtc_Null then
+          SP.ProcedureName := 'AccountConnectionUpdate'
+        else
+          SP.ProcedureName := 'DeviceConnectionUpdate';
+        SP.Prepared := True;
+        SP.Parameters.Refresh;
+        if Param.isType['AccountUID'] <> rtc_Null then
+          SP.Parameters.ParamByName('@AccountUID').Value := Param.asString['AccountUID']
+        else
+          SP.Parameters.ParamByName('@DeviceUID').Value := Param.asString['DeviceUID'];
+        SP.Parameters.ParamByName('@ConnectionUID').Value := Param.asString['UID'];
+        SP.Parameters.ParamByName('@UserFrom').Value := Param.asInteger['UserFrom'];
+        SP.Parameters.ParamByName('@UserTo').Value := Param.asInteger['UserTo'];
+        SP.Parameters.ParamByName('@Action').Value := Param.asString['Action'];
+        SP.Parameters.ParamByName('@Gateway').Value := Param.asString['Gateway'];
+        SP.ExecProc;
+
+//        if SP.Parameters.ParamByName('@IsExists').Value then
+//          Result.asString := 'BUSY'
+//        else
+//          Result.asString := SP.Parameters.ParamByName('@UID').Value;
+      except
+        on E: Exception do
+          raise Exception(E.Message);
+      end;
+    finally
+      SP.Free;
+    end;
+  finally
+    CS_DB.Release;
+  end;
+  Result.asString := 'OK';
 end;
 
 initialization

@@ -1,4 +1,4 @@
- program Remox;
+п»ї program Remox;
 
 { Copyright (c) Danijel Tkalcec,
   RealThinClient components - http://www.realthinclient.com }
@@ -99,11 +99,11 @@ begin
 
   IsService := False;
 
-  AutoDesktopSwitch := False; //True; //Нужно для получения инфы об экране и курсоре
+  AutoDesktopSwitch := False; //True; //ГЌГіГ¦Г­Г® Г¤Г«Гї ГЇГ®Г«ГіГ·ГҐГ­ГЁГї ГЁГ­ГґГ» Г®ГЎ ГЅГЄГ°Г Г­ГҐ ГЁ ГЄГіГ°Г±Г®Г°ГҐ
 
 //      TStyleManager.LoadFromResource(hInstance, 'LIGHT', 'RCDATA');
 //  TStyleManager.TrySetStyle('Windows10');
-//доделать      TCustomStyleExt(TStyleManager.ActiveStyle).SetStyleColor(scPanel, clWhite);
+//Г¤Г®Г¤ГҐГ«Г ГІГј      TCustomStyleExt(TStyleManager.ActiveStyle).SetStyleColor(scPanel, clWhite);
   Forms.Application.Initialize;
 //      if Win32MajorVersion = 10 then
 //        TStyleManager.TrySetStyle('Windows10');
@@ -165,17 +165,17 @@ begin
   IsService := True;
 
 //  xLog('Kill Remox desktop process');
-//  rtcKillProcess(AppFileName); //<--Изза этого сервис завершается
+//  rtcKillProcess(AppFileName); //<--Г€Г§Г§Г  ГЅГІГ®ГЈГ® Г±ГҐГ°ГўГЁГ± Г§Г ГўГҐГ°ГёГ ГҐГІГ±Гї
 //    PostMessage(HWND_BROADCAST, WM_CLOSEVIRCESS, Application.Handle, 0);
 
 //      if not File_Exists(ChangeFileExt(AppFileName,'.run')) then
 //        xLog('Remox Service ...');
 
-  AutoDesktopSwitch := False; //True; //Нужно для получения инфы об экране и курсоре
+  AutoDesktopSwitch := False; //True; //РќСѓР¶РЅРѕ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ РёРЅС„С‹ РѕР± СЌРєСЂР°РЅРµ Рё РєСѓСЂСЃРѕСЂРµ
 
 //      TStyleManager.LoadFromResource(hInstance, 'LIGHTVSF');
 //  TStyleManager.TrySetStyle('Windows10');
-//доделать      TCustomStyleExt(TStyleManager.ActiveStyle).SetStyleColor(scPanel, clWhite);
+//Г¤Г®Г¤ГҐГ«Г ГІГј      TCustomStyleExt(TStyleManager.ActiveStyle).SetStyleColor(scPanel, clWhite);
   SvcMgr.Application.Initialize;
   SvcMgr.Application.CreateForm(TRemoxService, RemoxService);
 //      if Win32MajorVersion = 10 then
@@ -241,12 +241,12 @@ begin
 //  else
 //    Exit;
 
-//  AdjustPriviliges(SE_DEBUG_NAME); //Нужно для OpenProcess -> ReadProcessMemory
+//  AdjustPriviliges(SE_DEBUG_NAME); //ГЌГіГ¦Г­Г® Г¤Г«Гї OpenProcess -> ReadProcessMemory
 
 //  ProcessIdToSessionId(GetCurrentProcessId, CurrentSessionID);
 //  IsConsoleClient := (CurrentSessionID = WTSGetActiveConsoleSessionId);
 
-  //Сохраняться в HKLM
+  //Г‘Г®ГµГ°Г Г­ГїГІГјГ±Гї Гў HKLM
 //  RTC_LOG_FOLDER := GetDOSEnvVar('APPDATA') + '\Remox\';
 
   StartLog;
@@ -255,7 +255,7 @@ begin
   try
     if Pos('/UPDATE', UpperCase(CmdLine)) <> 0 then
     begin
-      //Обновлятор уже запускается с правами администратора
+      //ГЋГЎГ­Г®ГўГ«ГїГІГ®Г° ГіГ¦ГҐ Г§Г ГЇГіГ±ГЄГ ГҐГІГ±Гї Г± ГЇГ°Г ГўГ Г¬ГЁ Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГ®Г°Г 
       //Stop service
 
       with TStringList.Create do
@@ -373,7 +373,7 @@ begin
     else
     if Pos('/UNINSTALL', UpperCase(CmdLine)) > 0 then
     begin
-      if MessageBox(Application.Handle, 'Remox будет удален из системы. Продолжить?', 'Remox', MB_OKCANCEL) = ID_CANCEL then
+      if MessageBox(Application.Handle, 'Remox ГЎГіГ¤ГҐГІ ГіГ¤Г Г«ГҐГ­ ГЁГ§ Г±ГЁГ±ГІГҐГ¬Г». ГЏГ°Г®Г¤Г®Г«Г¦ГЁГІГј?', 'Remox', MB_OKCANCEL) = ID_CANCEL then
         Exit;
 
       UninstallService(RTC_HOSTSERVICE_NAME, 0);
@@ -406,11 +406,11 @@ begin
         end
         else
         begin
-  //      if FindWindow('Shell_TrayWnd', nil) = 0 then //Отключено для запуска в неактивной консольной сессии
+  //      if FindWindow('Shell_TrayWnd', nil) = 0 then //ГЋГІГЄГ«ГѕГ·ГҐГ­Г® Г¤Г«Гї Г§Г ГЇГіГ±ГЄГ  Гў Г­ГҐГ ГЄГІГЁГўГ­Г®Г© ГЄГ®Г­Г±Г®Г«ГјГ­Г®Г© Г±ГҐГ±Г±ГЁГЁ
   //        Exit;
 
   //      try
-  //        AdjustPriviliges(SE_CREATE_GLOBAL_NAME); //В вин10 АВ. Для вин10 не нужно?. Для открытия события не нужно. Только для создания
+  //        AdjustPriviliges(SE_CREATE_GLOBAL_NAME); //Г‚ ГўГЁГ­10 ГЂГ‚. Г„Г«Гї ГўГЁГ­10 Г­ГҐ Г­ГіГ¦Г­Г®?. Г„Г«Гї Г®ГІГЄГ°Г»ГІГЁГї Г±Г®ГЎГ»ГІГЁГї Г­ГҐ Г­ГіГ¦Г­Г®. Г’Г®Г«ГјГЄГ® Г¤Г«Гї Г±Г®Г§Г¤Г Г­ГЁГї
   //      finally
   //      end;
           StartProcessInDesktopMode;

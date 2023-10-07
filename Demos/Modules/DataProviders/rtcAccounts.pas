@@ -35,15 +35,20 @@ type
     AccountsList: TRtcRecord;
     AccountsInfo: TRtcInfo;
     AccountsID: TRtcInfo;
+    AccountsConnections: TRtcInfo;
+    AccountsConnectionsList: TRtcRecord;
     HostsList: TRtcRecord;
     HostsInfo: TRtcInfo;
     GatewaysList: TRtcRecord;
     GatewaysInfo: TRtcInfo;
+    ConnectionsList: TRtcRecord;
+    ConnectionsInfo: TRtcInfo;
 
     userCS: TRtcCritSec;
     accountsCS: TRtcCritSec;
     msgCS: TRtcCritSec;
     gatewayCS: TRtcCritSec;
+    connCS: TRtcCritSec;
 
     procedure doAccountLogIn(Account, uname: String; Friends: TRtcRecord; sessid: RtcString);
     procedure doAccountLogIn2(Account, uname: String; Friends: TRtcRecord; sessid: RtcString); // 2nd connnection
@@ -60,6 +65,9 @@ type
     procedure doHostLogIn(uname, gateway, ConsoleId: String; isService: Boolean; Friends: TRtcRecord; sessid: RtcString);
     procedure doHostLogIn2(uname, gateway, ConsoleId: String; isService: Boolean; Friends: TRtcRecord; sessid: RtcString); // 2nd connnection
     procedure doHostLogOut(uname, gateway, ConsoleId: String; Friends: TRtcRecord; sessid: RtcString; DisconnectAll: Boolean = False);
+
+//    procedure DoConnectionLogin(AUID, AUserFrom, AUserTo, AAction, AGateway: String);
+//    procedure DoConnectionLogOut(AUID, AGateway: String; DisconnectAll: Boolean);
 
     procedure NotifyAccountsOnHostLogIn(uname: String; Friends: TRtcRecord);
     procedure NotifyAccountsOnHostLogOut(uname: String; Friends: TRtcRecord; log_out: Boolean);
@@ -116,6 +124,15 @@ type
     function IsHostExists(uname: String): Boolean;
 
     function HostIsService(uname: String): Boolean;
+
+//    procedure ConnectionLogin(AUID, AUserFrom, AUserTo, AAction, AGateway: String);
+//    procedure ConnectionLogout(AUID, AGateway: String; DisconnectAll: Boolean);
+//    procedure ConnectionRegUser(AUID, AUserFrom, AUserTo, AAction, AGateway: String);
+//    procedure SetLastConnectionActiveTime(AUID: String; Time: TDateTime);
+//    procedure AddConnectionToGateway(AUID, AGateway: String);
+//    procedure DelConnectionFromGateway(AUID, AGateway: String);
+//    procedure AddConnectionFromAccountsConn(AAccount, AUID: String);
+//    procedure DelConnectionFromAccountsConn(AAccount, AUID: String);
 
     procedure EraseGatewayList;
     function GetAvailableGateway: String;
@@ -217,19 +234,24 @@ begin
 
   AccountsList := TRtcRecord.Create;
   HostsList := TRtcRecord.Create;
+  ConnectionsList := TRtcRecord.Create;
 
   AccountsInfo := TRtcInfo.Create;
   HostsInfo := TRtcInfo.Create;
+  ConnectionsInfo := TRtcInfo.Create;
 
   GatewaysList := TRtcRecord.Create;
   GatewaysInfo := TRtcInfo.Create;
 
   AccountsID := TRtcInfo.Create;
+  AccountsConnections := TRtcInfo.Create;
+  AccountsConnectionsList := TRtcRecord.Create;
 
   userCS := TRtcCritSec.Create;
   accountsCS := TRtcCritSec.Create;
   msgCS := TRtcCritSec.Create;
   gatewayCS := TRtcCritSec.Create;
+  connCS := TRtcCritSec.Create;
 
   UserDataFileName := ExtractFilePath(AppFileName);
   if Copy(UserDataFileName, Length(UserDataFileName),1) <> '\' then
@@ -263,16 +285,21 @@ begin
   EraseGatewayList;
 
   AccountsID.Free;
+  AccountsConnections.Free;
+  AccountsConnectionsList.Free;
   AccountsInfo.Free;
   AccountsList.Free;
   HostsInfo.Free;
   HostsList.Free;
+  ConnectionsInfo.Free;
+  ConnectionsList.Free;
   GatewaysInfo.Free;
   GatewaysList.Free;
   userCS.Free;
   accountsCS.Free;
   msgCS.Free;
   gatewayCS.Free;
+  connCS.Free;
 
   inherited;
 end;
@@ -1850,6 +1877,269 @@ begin
     gatewayCS.Release;
   end;
 end;
+
+{procedure TVircessUsers.ConnectionLogin(AUID, AUserFrom, AUserTo, AAction, AGateway: String);
+begin
+  connCS.Acquire;
+  try
+    if AUID = '' then
+      raise Exception.Create('UID required for Login.')
+    else
+    begin
+      if ConnectionsList.isType[AUID] <> rtc_Record then // user doesn't exist
+        //raise Exception.Create('User "'+uname+'" not registered.')
+        ConnectionRegUser(AUID, AUserFrom, AUserTo, AAction, AGateway)
+      else
+  //    begin
+//        with HostsList.asRecord[AUID] do
+  //        if asText['pass']<>upass then
+  //          raise Exception.Create('Wrong password for user "'+AUID+'".')
+  //        else
+            DoConnectionLogin(AUID, AUserFrom, AUserTo, AAction, AGateway);
+  //    end;
+    end;
+  finally
+    connCS.Release;
+  end;
+end;
+
+procedure TVircessUsers.ConnectionRegUser(AUID, AUserFrom, AUserTo, AAction, AGateway: String);
+begin
+  connCS.Acquire;
+  try
+    if AUID = '' then
+      raise Exception.Create('UID required to Register.')
+    else
+    begin
+      if ConnectionsInfo.Child[AUID] = nil then
+      begin
+        if ConnectionsList.isType[AUID] = rtc_Null then
+          ConnectionsList.NewRecord(AUID);
+        if ConnectionsInfo.Child[AUID] = nil then
+          ConnectionsInfo.NewChild(AUID);
+
+        FConnectionsCount := FConnectionsCount + 1;
+      end;
+//      if not HostsList.isNull[uname] then
+//        doHostLogIn(uname, gateway, Friends, sessid)
+//        raise Exception.Create('Username "' + uname + '" already taken. Can not register a new user with the same name.')
+//      else // user doesn't exists
+//      begin
+//        with HostsList.NewRecord(uname) do
+        //begin
+          DoConnectionLogin(AUID, AUserFrom, AUserTo, AAction, AGateway);
+        //end;
+      end;
+//    end;
+  finally
+    connCS.Release;
+  end;
+end;
+
+procedure TVircessUsers.DoConnectionLogin(AUID, AUserFrom, AUserTo, AAction, AGateway: String);
+begin
+  connCS.Acquire;
+  try
+    // Remove existing info.
+    if ConnectionsInfo.Child[AUID] <> nil then
+      DelUserFromGateway(AUID, AGateway);
+//    else
+//      FHostsCount := FHostsCount + 1;
+
+    // Get callback info, if exists
+//    cb := GetCallback(AUID);
+    // Remove existing info
+    ConnectionsInfo.SetNil(AUID);
+    // Remember new session ID
+    with ConnectionsInfo.NewChild(AUID) do
+    begin
+      asString['UID'] := AUID;
+      asString['UserFrom'] := AUserFrom;
+      asString['UserTo'] := AUserTo;
+      asString['Action'] := AAction;
+      asString['Gateway'] := RtcString(AGateway);
+    end;
+    AddUserToGateway(AUID, RtcString(AGateway));
+
+    SetLastConnectionActiveTime(AUID, Now);
+    SetHostGateway(AUID, AGateway);
+
+//    NotifyAccountsOnHostLogIn(uname, Friends);
+
+//    if Assigned(FOnUserLogIn) then
+//      FOnUserLogIn(uname);
+  finally
+    connCS.Release;
+  end;
+end;
+
+procedure TVircessUsers.SetLastConnectionActiveTime(AUID: String; Time: TDateTime);
+begin
+  connCS.Acquire;
+  try
+    // Remember new session ID
+    if ConnectionsInfo.Child[AUID] = nil then
+      Exit
+      //raise Exception.Create('User ' + uname + ' not logged in.')
+    else
+//      if HostsInfo.Child[uname].is_Type['LastActive'] = nil then
+//        HostsInfo.Child[uname].NewString('LastActive');
+
+      ConnectionsInfo.Child[AUID].asDateTime['LastActive'] := Time;
+  finally
+    connCS.Release;
+  end;
+end;
+
+procedure TVircessUsers.ConnectionLogOut(AUID, AGateway: String; DisconnectAll: Boolean);
+begin
+  DoConnectionLogOut(AUID, AGateway, DisconnectAll);
+end;
+
+procedure TVircessUsers.DoConnectionLogOut(AUID, AGateway: String; DisconnectAll: Boolean);
+begin
+  xLog('rtcAccounts DoConnectionLogOut Start ' + AUID);
+//  cb := nil;
+//  log_out := False;
+
+  connCS.Acquire;
+  try
+  // If logged in under this session ID, remove info
+  if ConnectionsInfo.Child[AUID] <> nil then
+//    if (HostsInfo.Child[uname]['session'] = sessid)
+//      or DisconnectAll then
+    begin
+//      Gateway1.StartForceUserLogoutThread(uname, True);
+//      Gateway2.StartForceUserLogoutThread(uname, True);
+//      Gateway3.StartForceUserLogoutThread(uname, True);
+//      Gateway4.StartForceUserLogoutThread(uname, True);
+
+      if DisconnectAll then
+      begin
+        TSendDestroyClientToGatewayThread.Create(False, ConnectionsInfo.Child[AUID]['gateway'], AUID, True, False, '', '', '', False);
+        DelConnectionFromGateway(AUID, ConnectionsInfo.Child[AUID]['gateway']) //Param gateway = ''
+      end
+      else
+      begin
+        TSendDestroyClientToGatewayThread.Create(False, AGateway, AUID + '_', False, False, '', '', '', False);
+        DelConnectionFromGateway(AUID, AGateway);
+      end;
+
+      DelConnectionFromAccountsConn(AUID);
+//      RemoveActiveConsoleClientFromService(uname);
+
+      FConnectionsCount := FConnectionsCount - 1;
+
+//      if (HostsInfo.Child[uname]['session'] = sessid)
+//        or DisconnectAll then
+//      begin
+//        cb := GetCallback(uname);
+////        HostsInfo.SetNil(uname);
+//        log_out := True;
+//      end;
+
+      ConnectionsDelUser(AUID);
+
+//      NotifyAccountsOnHostLogOut(uname, Friends, log_out);
+
+//      if Assigned(FOnUserLogOut) then
+//        FOnUserLogOut(uname);
+    end;
+  finally
+    connCS.Release;
+  end;
+  xLog('rtcAccounts DoConnectionLogOut End ' + AUID);
+end;
+
+procedure TVircessUsers.AddConnectionToGateway(AUID, AGateway: String);
+var
+  i: Integer;
+begin
+  gatewayCS.Acquire;
+  try
+    for i := 0 to GatewaysList.Count - 1 do
+      if GatewaysList.isType[GatewaysList.FieldName[i]] = rtc_Null then
+        Continue;
+
+      if GatewaysList.FieldName[i] = AGateway then
+        GatewaysList[GatewaysList.FieldName[i]].asRecord['connections'].asString[AUID] := AUID;
+  finally
+    gatewayCS.Release;
+  end;
+end;
+
+procedure TVircessUsers.DelConnectionFromGateway(AUID, AGateway: String);
+var
+  i: Integer;
+begin
+  gatewayCS.Acquire;
+  try
+    for i := 0 to GatewaysList.Count - 1 do
+      if GatewaysList.isType[GatewaysList.FieldName[i]] = rtc_Null then
+        Continue;
+
+      if GatewaysList.FieldName[i] = AGateway then
+        GatewaysList[GatewaysList.FieldName[i]].asRecord['connections'].is_Null[AUID] := True;
+  finally
+    gatewayCS.Release;
+  end;
+end;
+
+procedure TVircessUsers.AddConnectionFromAccountsConn(AAccount, AUID: String);
+var
+  i: Integer;
+begin
+  connCS.Acquire;
+  try
+    for i := 0 to AccountsConnectionsList.Count - 1 do
+    begin
+      if AccountsConnections.Child[AccountsConnectionsList.FieldName[i]] = nil then
+        Continue;
+
+      if AccountsConnections.Child[AccountsConnectionsList.FieldName[i]].isType['connections'] = rtc_Null then
+        Continue;
+
+      if AccountsConnections.Child[AccountsConnectionsList.FieldName[i]].asRecord['connections'].isType[AUID] <> rtc_Null then
+      begin
+        AccountsConnections.Child[AccountsConnectionsList.FieldName[i]].asRecord['connections'].isNull[AUID] := True;
+        AccountsConnections.Child[AccountsConnectionsList.FieldName[i]].asRecord['connections'].asInteger['ConnectionsCount'] := AccountsConnections.Child[AccountsConnectionsList.FieldName[i]].asRecord['connections'].asInteger['ConnectionsCount'] + 1;
+
+//        if AccountsID.Child[AccountsList.FieldName[i]].asRecord['connections'].asInteger['ConnectionsCount'] = 0 then
+//          doAccountLogOut(AccountsList.FieldName[i],  AUID, nil, '');
+      end;
+    end;
+  finally
+    connCS.Release;
+  end;
+end;
+
+procedure TVircessUsers.DelConnectionFromAccountsConn(AAccount, AUID: String);
+var
+  i: Integer;
+begin
+  connCS.Acquire;
+  try
+    for i := 0 to AccountsConnectionsList.Count - 1 do
+    begin
+      if AccountsConnections.Child[AccountsConnectionsList.FieldName[i]] = nil then
+        Continue;
+
+      if AccountsConnections.Child[AccountsConnectionsList.FieldName[i]].isType['connections'] = rtc_Null then
+        Continue;
+
+      if AccountsConnections.Child[AccountsConnectionsList.FieldName[i]].asRecord['connections'].isType[AUID] <> rtc_Null then
+      begin
+        AccountsConnections.Child[AccountsConnectionsList.FieldName[i]].asRecord['connections'].isNull[AUID] := True;
+        AccountsConnections.Child[AccountsConnectionsList.FieldName[i]].asRecord['connections'].asInteger['ConnectionsCount'] := AccountsConnections.Child[AccountsConnectionsList.FieldName[i]].asRecord['connections'].asInteger['ConnectionsCount'] - 1;
+
+//        if AccountsID.Child[AccountsList.FieldName[i]].asRecord['connections'].asInteger['ConnectionsCount'] = 0 then
+//          doAccountLogOut(AccountsList.FieldName[i],  AUID, nil, '');
+      end;
+    end;
+  finally
+    connCS.Release;
+  end;
+end;}
 
 
 end.

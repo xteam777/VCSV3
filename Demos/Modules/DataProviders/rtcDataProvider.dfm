@@ -351,19 +351,19 @@ object Data_Provider: TData_Provider
     Left = 556
     Top = 207
   end
-  object AddConnection: TRtcFunction
+  object ConnectionLogin: TRtcFunction
     Group = GatewayFunctions
-    FunctionName = 'Host.AddConnection'
-    OnExecute = HostLoginExecute
-    Left = 560
-    Top = 265
+    FunctionName = 'Connection.Login'
+    OnExecute = ConnectionLoginExecute
+    Left = 648
+    Top = 153
   end
-  object RemoveConnection: TRtcFunction
+  object ConnectionPing: TRtcFunction
     Group = GatewayFunctions
-    FunctionName = 'Host.RemoveConnection'
+    FunctionName = 'Connection.Ping'
     OnExecute = HostLoginExecute
-    Left = 624
-    Top = 265
+    Left = 688
+    Top = 153
   end
   object AccountManualLogout: TRtcFunction
     Group = GatewayFunctions
@@ -371,5 +371,12 @@ object Data_Provider: TData_Provider
     OnExecute = AccountManualLogoutExecute
     Left = 214
     Top = 377
+  end
+  object ConnectionLogout: TRtcFunction
+    Group = GatewayFunctions
+    FunctionName = 'Connection.Logout'
+    OnExecute = HostLoginExecute
+    Left = 728
+    Top = 153
   end
 end
