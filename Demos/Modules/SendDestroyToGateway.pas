@@ -67,7 +67,7 @@ begin
     rtcModule := TRtcClientModule.Create(FDataModule);
     rtcModule.Client := rtcClient;
     rtcModule.AutoRepost := 2;
-    rtcModule.AutoSyncEvents := True;
+    rtcModule.AutoSyncEvents := False;
     rtcModule.ModuleFileName := '/portalgategroup';
     rtcModule.SecureKey := '2240897';
     rtcModule.ForceEncryption := True;
