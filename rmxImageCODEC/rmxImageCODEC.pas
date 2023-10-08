@@ -127,25 +127,25 @@ end;
 class procedure TRMXEncoder.EncodeBMP(Src: PByte; dx, dy, dstBPP: Integer;
   out ms: TMemoryStream);
 var
-  bmp: TBitmap;
+  bmp32, bmp: TBitmap;
   bottom_up: Boolean;
   i, row: Integer;
   DS: TDIBSection;
   bmBits, scanline, p: PByte;
   line_width: Integer;
 begin
-  bmp := TBitmap.Create(dx, dy);
+  bmp32 := TBitmap.Create(dx, dy);
   try
     // init info
     //BitsPerPixel    := 32; // BitsPerPixel := DS.dsBm.bmBitsPixel * DS.dsbm.bmPlanes;
     line_width      := dx * 4;// BytesPerScanline(dx, bitsPerPixel, 32)
-    bmp.PixelFormat := pf32bit;
+    bmp32.PixelFormat := pf32bit;
 
-    if GetObject(bmp.Handle, SizeOf(DS), @DS) = 0 then
+    if GetObject(bmp32.Handle, SizeOf(DS), @DS) = 0 then
       raise Exception.Create('InvalidBitmap');
     bottom_up := DS.dsBm.bmHeight > 0;
     p := Src;
-    bmBits := bmp.ScanLine[0];
+    bmBits := bmp32.ScanLine[0];
     // save data to bitmap
     if bottom_up then
       begin
@@ -166,24 +166,32 @@ begin
       end;
 
     // convert
-    case dstBPP of
-     1: bmp.PixelFormat := pf1bit;
-     4: bmp.PixelFormat := pf4bit;
-     8: bmp.PixelFormat := pf8bit;
-     16:bmp.PixelFormat := pf16bit;
-    end;
-
-    // result
-    ms := TMemoryStream.Create;
+    bmp := TBitmap.Create(dx, dy);
     try
-      bmp.SaveToStream(ms);
-    except
-      ms.Free;
-      raise
+
+      case dstBPP of
+       1: bmp.PixelFormat := pf1bit;
+       4: bmp.PixelFormat := pf4bit;
+       8: bmp.PixelFormat := pf8bit;
+       16:bmp.PixelFormat := pf16bit;
+      end;
+
+      bmp.Canvas.Draw(0, 0, bmp32);
+      // result
+      ms := TMemoryStream.Create;
+      try
+        bmp.SaveToStream(ms);
+      except
+        ms.Free;
+        raise
+      end;
+
+    finally
+      bmp.Free;
     end;
 
   finally
-    bmp.Free;
+    bmp32.Free;
   end;
 end;
 
