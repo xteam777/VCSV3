@@ -379,4 +379,11 @@ object Data_Provider: TData_Provider
     Left = 728
     Top = 153
   end
+  object GetConnectionsList: TRtcFunction
+    Group = GatewayFunctions
+    FunctionName = 'Connection.GetList'
+    OnExecute = GetConnectionsListExecute
+    Left = 768
+    Top = 153
+  end
 end

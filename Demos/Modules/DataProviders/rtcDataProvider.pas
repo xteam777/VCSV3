@@ -91,6 +91,7 @@ type
     ConnectionPing: TRtcFunction;
     AccountManualLogout: TRtcFunction;
     ConnectionLogout: TRtcFunction;
+    GetConnectionsList: TRtcFunction;
     procedure DataModuleCreate(Sender: TObject);
     procedure DataModuleDestroy(Sender: TObject);
     procedure Module1SessionClose(Sender: TRtcConnection);
@@ -156,6 +157,8 @@ type
       Param: TRtcFunctionInfo; Result: TRtcValue);
     procedure ConnectionLogoutExecute(Sender: TRtcConnection;
       Param: TRtcFunctionInfo; Result: TRtcValue);
+    procedure GetConnectionsListExecute(Sender: TRtcConnection;
+      Param: TRtcFunctionInfo; Result: TRtcValue);
   private
     FOnUserLogin: TUserEvent;
     FOnUserLogOut: TUserEvent;
@@ -200,7 +203,7 @@ type
     procedure SendGatewayLogOut;
     procedure GatewayReloginStart;
     procedure GatewayLogOutStart;
-    procedure DoConnectionAdd(AIsAccount: Boolean; AAccountUID, ADeviceUID, AUID, AAction, AGateway: String; AUserFrom, AUserTo: Integer);
+    procedure DoConnectionAdd(AIsAccount: Boolean; AAccountUID, ADeviceUID, AUID, AAction, AGateway, AUserFrom, AUserTo: String);
     procedure DoConnectionUpdate(AIsAccount: Boolean; AUID: String; AFinalized: Integer);
   end;
 
@@ -283,6 +286,80 @@ end;
 function TData_Provider.GetConnectionsCount: Integer;
 begin
   Result := Users.GetConnectionsCount;
+end;
+
+procedure TData_Provider.GetConnectionsListExecute(Sender: TRtcConnection;
+  Param: TRtcFunctionInfo; Result: TRtcValue);
+var
+  SP: TADOStoredProc;
+  i: Integer;
+begin
+//  Result := TRtcRecord.Create;
+//  Result.AutoCreate := True;
+
+//  CS_DB.Acquire;
+//  try
+//    if not SQLConnection.Connected then
+//    begin
+//      SQLConnection.Connected := False;
+//      SQLConnection.Connected := True;
+//    end;
+    SQLConnection.Open;
+
+    SP := TADOStoredProc.Create(nil);
+    try
+      try
+        with Result.NewDataSet do
+        begin
+          SP.Connection := SQLConnection;
+          if Param.asBoolean['LoggedIn'] then
+            SP.ProcedureName := 'GetAccountConnections'
+          else
+             SP.ProcedureName := 'GetDeviceConnections';
+          SP.Prepared := True;
+          SP.Parameters.Refresh;
+          if Param.asBoolean['LoggedIn'] then
+            SP.Parameters.ParamByName('@AccountUID').Value := Param.asString['AccountUID']
+          else
+             SP.Parameters.ParamByName('@DeviceUID').Value := Param.asString['DeviceUID'];
+          SP.Open;
+
+          FieldType['UID'] := ft_String;
+          FieldType['UserFrom'] := ft_String;
+          FieldType['UserTo'] := ft_String;
+          FieldType['Action'] := ft_String;
+          FieldType['Gateway'] := ft_String;
+          FieldType['CreateDate'] := ft_DateTime;
+          if SP.RecordCount > 0 then
+          begin
+            SP.First;
+            for i := 0 to SP.RecordCount - 1 do
+            begin
+              Append;
+
+              asString['UID'] := SP.FieldByName('UID').Value;
+              asString['UserFrom'] := SP.FieldByName('UserFrom').Value;
+              asString['UserTo'] := SP.FieldByName('UserTo').Value;
+              asString['Action'] := SP.FieldByName('Action').Value;
+              asString['Gateway'] := SP.FieldByName('Gateway').Value;
+              asDateTime['CreateDate'] := SP.FieldByName('CreateDate').Value;
+              SP.Next;
+            end;
+          end;
+        end;
+      except
+        on E: Exception do
+        begin
+          xLog(E.Message);
+          raise Exception(E.Message);
+        end;
+      end;
+    finally
+      SP.Free;
+    end;
+//  finally
+//    CS_DB.Release;
+//  end;
 end;
 
 function TData_Provider.GetGatewaysCount: Integer;
@@ -919,7 +996,7 @@ begin
               FieldType['GroupUID'] := ft_String;
               FieldType['GroupName'] := ft_WideString;
               FieldType['StateIndex'] := ft_Integer;
-              SP.FindFirst;
+              SP.First;
               for i := 0 to SP.RecordCount - 1 do
               begin
                 Append;
@@ -1616,7 +1693,7 @@ procedure TData_Provider.ConnectionLoginExecute(Sender: TRtcConnection;
   Param: TRtcFunctionInfo; Result: TRtcValue);
 begin
   DoConnectionAdd(Param.asBoolean['IsAccount'], Param.asString['AccountUID'], Param.asString['DeviceUID'], Param.asString['UID'],
-    Param.asString['Action'], Param.asString['Gateway'], Param.asInteger['UserFrom'], Param.asInteger['UserTo']);
+    Param.asString['Action'], Param.asString['Gateway'], Param.asString['UserFrom'], Param.asString['UserTo']);
 
   Result.asString := 'OK';
 end;
@@ -1637,7 +1714,7 @@ begin
   Result.asString := 'OK';
 end;
 
-procedure TData_Provider.DoConnectionAdd(AIsAccount: Boolean; AAccountUID, ADeviceUID, AUID, AAction, AGateway: String; AUserFrom, AUserTo: Integer);
+procedure TData_Provider.DoConnectionAdd(AIsAccount: Boolean; AAccountUID, ADeviceUID, AUID, AAction, AGateway, AUserFrom, AUserTo: String);
 var
   SP: TADOStoredProc;
 begin
