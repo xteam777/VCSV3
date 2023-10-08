@@ -22,7 +22,6 @@ object fChannelsUsage: TfChannelsUsage
     Width = 500
     Height = 248
     Align = alClient
-    ColCount = 6
     DefaultColWidth = 118
     DrawingStyle = gdsClassic
     FixedColor = clWhite

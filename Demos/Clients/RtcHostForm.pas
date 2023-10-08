@@ -91,7 +91,7 @@ type
     FUIDFull, FUID: String;
     FGateway: String;
     FLoggedIn: Boolean;
-    FDeviceId: String;
+    FAccountUID, FDeviceId, FDeviceUID: String;
     FGatewayClient: TRtcHttpPortalClient;
     FDesktopControl: TRtcPDesktopControl;
     FFileTransfer: TRtcPFileTransfer;
@@ -1246,7 +1246,7 @@ begin
   FGatewayClient.LoginUserName := AUserName;
   FGatewayClient.LoginUserInfo.asText['RealName'] := AUserName;
   FGatewayClient.LoginPassword := '';
-  FGatewayClient.AutoSyncEvents := True;
+  FGatewayClient.AutoSyncEvents := False;
   FGatewayClient.DataCompress := rtcpCompMax;
   FGatewayClient.DataEncrypt := 16;
   FGatewayClient.DataForceEncrypt := True;
@@ -1636,7 +1636,9 @@ begin
   FreeOnTerminate := True;
 
   FLoggedIn := MainForm.LoggedIn;
+  FAccountUID := MainForm.AccountUID;
   FDeviceId := MainForm.DeviceId;
+  FDeviceUID := MainForm.DeviceUID;
 
   FUserName := AUserName;
   FUserPass := AUserPass;
@@ -1655,7 +1657,7 @@ begin
   FGatewayClient.LoginUserName := MainForm.DeviceId + '_' + FUserToConnect + '_' + FAction + '_' + FUID; //IntToStr(GatewayClientsList.Count + 1);
   FGatewayClient.LoginUserInfo.asText['RealName'] := FDeviceId;
   FGatewayClient.LoginPassword := '';
-  FGatewayClient.AutoSyncEvents := True;
+  FGatewayClient.AutoSyncEvents := False;
   FGatewayClient.DataCompress := rtcpCompMax;
   FGatewayClient.DataEncrypt := 16;
   FGatewayClient.DataForceEncrypt := True;
@@ -1823,14 +1825,12 @@ begin
   try
     with Data.NewFunction('Connection.Login') do
     begin
-      asString['UID'] := FUIDFull;
       asBoolean['IsAccount'] := FLoggedIn;
-      asString['AccountUID'] := MainForm.AccountUID;
-      asString['DeviceUID'] := MainForm.DeviceUID;
-      asString['UserFrom'] := MainForm.DeviceId;
+      asString['AccountUID'] := FAccountUID;
+      asString['DeviceUID'] := FDeviceUID;
+      asString['UserFrom'] := FDeviceId;
       asString['UserTo'] := FUserName;
       asString['Action'] := FAction;
-      asString['Gateway'] := FGateway;
       Call(FResult);
     end;
   except
@@ -1846,7 +1846,11 @@ begin
     with Data.NewFunction('Connection.Ping') do
     begin
       asBoolean['IsAccount'] := FLoggedIn;
-      asString['UID'] := FUIDFull;
+      asString['AccountUID'] := FAccountUID;
+      asString['DeviceUID'] := FDeviceUID;
+      asString['UserFrom'] := FDeviceId;
+      asString['UserTo'] := FUserName;
+      asString['Action'] := FAction;
       Call(FResult);
     end;
   except
@@ -1864,7 +1868,11 @@ begin
     with Data.NewFunction('Connection.Logout') do
     begin
       asBoolean['IsAccount'] := FLoggedIn;
-      asString['UID'] := FUIDFull;
+      asString['AccountUID'] := FAccountUID;
+      asString['DeviceUID'] := FDeviceUID;
+      asString['UserFrom'] := FDeviceId;
+      asString['UserTo'] := FUserName;
+      asString['Action'] := FAction;
       Call(FResult);
     end;
   except

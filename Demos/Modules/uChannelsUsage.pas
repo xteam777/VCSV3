@@ -57,7 +57,7 @@ begin
   try
     with Data.NewFunction('Connection.GetList') do
     begin
-      asBoolean['LoggedIn'] := FLoggedIn;
+      asBoolean['IsAccount'] := FLoggedIn;
       asString['AccountUID'] := FAccountUID;
       asString['DeviceUID'] := FDeviceUID;
       Call(rResult);
@@ -121,9 +121,8 @@ begin
   sgChannels.Cells[1, 0] := 'Партнер';
   sgChannels.Cells[2, 0] := 'Тип подключения';
   sgChannels.Cells[3, 0] := 'Начало';
-  sgChannels.Cells[4, 0] := 'Gateway';
-  sgChannels.Cells[5, 0] := 'Action';
-  sgChannels.HideColumns(4, 5);
+  sgChannels.Cells[4, 0] := 'Action';
+  sgChannels.HideColumns(4, 4);
 end;
 
 procedure TfChannelsUsage.FormKeyDown(Sender: TObject; var Key: Word;
@@ -157,8 +156,7 @@ begin
       sgChannels.Cells[1, i + 1] := asString['UserTo'];
       sgChannels.Cells[2, i + 1] := GetActionStr(asString['Action']);
       sgChannels.Cells[3, i + 1] := DateTimeToStr(asDateTime['CreateDate']);
-      sgChannels.Cells[4, i + 1] := asString['Gateway'];
-      sgChannels.Cells[5, i + 1] := asString['Action'];
+      sgChannels.Cells[4, i + 1] := asString['Action'];
 
       i := i + 1;
       Next;
