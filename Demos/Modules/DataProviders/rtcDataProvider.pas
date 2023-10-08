@@ -203,8 +203,8 @@ type
     procedure SendGatewayLogOut;
     procedure GatewayReloginStart;
     procedure GatewayLogOutStart;
-    procedure DoConnectionAdd(AIsAccount: Boolean; AAccountUID, ADeviceUID, AUID, AAction, AGateway, AUserFrom, AUserTo: String);
-    procedure DoConnectionUpdate(AIsAccount: Boolean; AUID: String; AFinalized: Integer);
+    procedure DoConnectionAdd(AIsAccount: Boolean; AAccountUID, ADeviceUID, AAction, AUserFrom, AUserTo: String);
+    procedure DoConnectionUpdate(AIsAccount: Boolean; AAccountUID, ADeviceUID, AAction, AUserFrom, AUserTo: String; AFinalized: Integer);
   end;
 
 function GetDataProvider(AThisIsMainGate: Boolean): TData_Provider;
@@ -312,23 +312,21 @@ begin
         with Result.NewDataSet do
         begin
           SP.Connection := SQLConnection;
-          if Param.asBoolean['LoggedIn'] then
+          if Param.asBoolean['IsAccount'] then
             SP.ProcedureName := 'GetAccountConnections'
           else
-             SP.ProcedureName := 'GetDeviceConnections';
+            SP.ProcedureName := 'GetDeviceConnections';
           SP.Prepared := True;
           SP.Parameters.Refresh;
-          if Param.asBoolean['LoggedIn'] then
+          if Param.asBoolean['IsAccount'] then
             SP.Parameters.ParamByName('@AccountUID').Value := Param.asString['AccountUID']
           else
              SP.Parameters.ParamByName('@DeviceUID').Value := Param.asString['DeviceUID'];
           SP.Open;
 
-          FieldType['UID'] := ft_String;
           FieldType['UserFrom'] := ft_String;
           FieldType['UserTo'] := ft_String;
           FieldType['Action'] := ft_String;
-          FieldType['Gateway'] := ft_String;
           FieldType['CreateDate'] := ft_DateTime;
           if SP.RecordCount > 0 then
           begin
@@ -337,11 +335,9 @@ begin
             begin
               Append;
 
-              asString['UID'] := SP.FieldByName('UID').Value;
               asString['UserFrom'] := SP.FieldByName('UserFrom').Value;
               asString['UserTo'] := SP.FieldByName('UserTo').Value;
               asString['Action'] := SP.FieldByName('Action').Value;
-              asString['Gateway'] := SP.FieldByName('Gateway').Value;
               asDateTime['CreateDate'] := SP.FieldByName('CreateDate').Value;
               SP.Next;
             end;
@@ -1692,8 +1688,8 @@ end;
 procedure TData_Provider.ConnectionLoginExecute(Sender: TRtcConnection;
   Param: TRtcFunctionInfo; Result: TRtcValue);
 begin
-  DoConnectionAdd(Param.asBoolean['IsAccount'], Param.asString['AccountUID'], Param.asString['DeviceUID'], Param.asString['UID'],
-    Param.asString['Action'], Param.asString['Gateway'], Param.asString['UserFrom'], Param.asString['UserTo']);
+  DoConnectionAdd(Param.asBoolean['IsAccount'], Param.asString['AccountUID'], Param.asString['DeviceUID'],
+    Param.asString['Action'], Param.asString['UserFrom'], Param.asString['UserTo']);
 
   Result.asString := 'OK';
 end;
@@ -1701,7 +1697,8 @@ end;
 procedure TData_Provider.ConnectionLogoutExecute(Sender: TRtcConnection;
   Param: TRtcFunctionInfo; Result: TRtcValue);
 begin
-  DoConnectionUpdate(Param.asBoolean['IsAccount'], Param.asString['UID'], 1);
+  DoConnectionUpdate(Param.asBoolean['IsAccount'], Param.asString['AccountUID'], Param.asString['DeviceUID'],
+    Param.asString['Action'], Param.asString['UserFrom'], Param.asString['UserTo'], 1);
 
   Result.asString := 'OK';
 end;
@@ -1709,12 +1706,13 @@ end;
 procedure TData_Provider.ConnectionPingExecute(Sender: TRtcConnection;
   Param: TRtcFunctionInfo; Result: TRtcValue);
 begin
-  DoConnectionUpdate(Param.asBoolean['IsAccount'], Param.asString['UID'], 0);
+  DoConnectionUpdate(Param.asBoolean['IsAccount'], Param.asString['AccountUID'], Param.asString['DeviceUID'],
+    Param.asString['Action'], Param.asString['UserFrom'], Param.asString['UserTo'], 0);
 
   Result.asString := 'OK';
 end;
 
-procedure TData_Provider.DoConnectionAdd(AIsAccount: Boolean; AAccountUID, ADeviceUID, AUID, AAction, AGateway, AUserFrom, AUserTo: String);
+procedure TData_Provider.DoConnectionAdd(AIsAccount: Boolean; AAccountUID, ADeviceUID, AAction, AUserFrom, AUserTo: String);
 var
   SP: TADOStoredProc;
 begin
@@ -1741,11 +1739,9 @@ begin
           SP.Parameters.ParamByName('@AccountUID').Value := AAccountUID
         else
           SP.Parameters.ParamByName('@DeviceUID').Value := ADeviceUID;
-        SP.Parameters.ParamByName('@ConnectionUID').Value := AUID;
         SP.Parameters.ParamByName('@UserFrom').Value := AUserFrom;
         SP.Parameters.ParamByName('@UserTo').Value := AUserTo;
         SP.Parameters.ParamByName('@Action').Value := AAction;
-        SP.Parameters.ParamByName('@Gateway').Value := AGateway;
         SP.ExecProc;
 
 //        if SP.Parameters.ParamByName('@IsExists').Value then
@@ -1764,7 +1760,7 @@ begin
 //  end;
 end;
 
-procedure TData_Provider.DoConnectionUpdate(AIsAccount: Boolean; AUID: String; AFinalized: Integer);
+procedure TData_Provider.DoConnectionUpdate(AIsAccount: Boolean; AAccountUID, ADeviceUID, AAction, AUserFrom, AUserTo: String; AFinalized: Integer);
 var
   SP: TADOStoredProc;
 begin
@@ -1787,7 +1783,13 @@ begin
           SP.ProcedureName := 'UpdateDeviceConnection';
         SP.Prepared := True;
         SP.Parameters.Refresh;
-        SP.Parameters.ParamByName('@ConnectionUID').Value := AUID;
+        if AIsAccount then
+          SP.Parameters.ParamByName('@AccountUID').Value := AAccountUID
+        else
+          SP.Parameters.ParamByName('@DeviceUID').Value := ADeviceUID;
+        SP.Parameters.ParamByName('@UserFrom').Value := AUserFrom;
+        SP.Parameters.ParamByName('@UserTo').Value := AUserTo;
+        SP.Parameters.ParamByName('@Action').Value := AAction;
         SP.Parameters.ParamByName('@Finalized').Value := AFinalized;
         SP.ExecProc;
 
