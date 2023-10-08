@@ -273,6 +273,10 @@ type
       have to specify the "UserName" parameter in ChgDesk_End. }
 
     procedure ChgDesktop_Begin;
+    procedure ChgDesktop_BitsPerPixelLimit(const Value: Integer;
+      const UserName: String = ''; Sender: TObject = nil);
+    procedure ChgDesktop_CompressImage(const Value: Boolean;
+      const UserName: String = ''; Sender: TObject = nil);
     procedure ChgDesktop_ColorLimit(const Value: TrdColorLimit;
       const UserName: String = ''; Sender: TObject = nil);
     procedure ChgDesktop_FrameRate(const Value: TrdFrameRate;
@@ -1325,6 +1329,28 @@ begin
   ChgDesktop_Begin;
   try
     FChg_Desktop.asBoolean['layered'] := Value;
+  finally
+    ChgDesktop_End(UserName, Sender);
+  end;
+end;
+
+procedure TRtcPDesktopControl.ChgDesktop_BitsPerPixelLimit(const Value: Integer;
+  const UserName: String = ''; Sender: TObject = nil);
+begin
+  ChgDesktop_Begin;
+  try
+    FChg_Desktop.asInteger['bpp'] := Value;
+  finally
+    ChgDesktop_End(UserName, Sender);
+  end;
+end;
+
+procedure TRtcPDesktopControl.ChgDesktop_CompressImage(const Value: Boolean;
+  const UserName: String = ''; Sender: TObject = nil);
+begin
+  ChgDesktop_Begin;
+  try
+    FChg_Desktop.asBoolean['compress_image'] := Value;
   finally
     ChgDesktop_End(UserName, Sender);
   end;

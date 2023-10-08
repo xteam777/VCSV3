@@ -4240,7 +4240,7 @@ object rdDesktopViewer: TrdDesktopViewer
       Caption = 'BitsPerPixel'
     end
     object lblCompressImage: TLabel
-      Left = 759
+      Left = 127
       Top = 10
       Width = 77
       Height = 14
@@ -4272,10 +4272,11 @@ object rdDesktopViewer: TrdDesktopViewer
     object cbxBPP: TComboBox
       Left = 78
       Top = 6
-      Width = 145
+      Width = 37
       Height = 22
       Style = csDropDownList
       TabOrder = 1
+      OnChange = cbxBPPChange
       Items.Strings = (
         '1'
         '4'
@@ -4285,12 +4286,13 @@ object rdDesktopViewer: TrdDesktopViewer
         '32')
     end
     object cbxCompressImage: TComboBox
-      Left = 846
+      Left = 214
       Top = 6
-      Width = 145
+      Width = 47
       Height = 22
       Style = csDropDownList
       TabOrder = 2
+      OnChange = cbxBPPChange
       Items.Strings = (
         'No'
         'Yes')
@@ -4410,7 +4412,7 @@ object rdDesktopViewer: TrdDesktopViewer
                 CommandProperties.Width = -1
               end
               item
-                Caption = #1054#1087#1090#1080#1084#1072#1083#1100#1085#1099#1077' '#1085#1072#1089#1090#1088#1086#1081#1082#1080
+                Action = aOptimalSettings
               end
               item
                 Action = aOptimizeSpeed

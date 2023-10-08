@@ -191,6 +191,7 @@ type
     procedure MainChromeTabsChange(Sender: TObject; ATab: TChromeTab;
       TabChangeType: TTabChangeType);
     procedure aOptimalSettingsExecute(Sender: TObject);
+    procedure cbxBPPChange(Sender: TObject);
   private
 //    FVideoRecorder: TVideoRecorder;
 //    FVideoWriter: TRMXVideoWriter;
@@ -618,6 +619,11 @@ begin
 //  end;
 
 //  MainChromeTabs.Visible := False;
+end;
+
+procedure TrdDesktopViewer.cbxBPPChange(Sender: TObject);
+begin
+  btnAcceptClick(nil);
 end;
 
 procedure TrdDesktopViewer.SetReconnectInterval(AUserName: String; AInterval: Integer);
@@ -2151,11 +2157,40 @@ begin
   if ActiveUIModule = nil then
     Exit;
 
-  if aOptimizeQuality.Checked then
+  if ActiveUIModule.DisplaySetting = DS_QUIALITY then
   begin
     ActiveUIModule.UI.ChgDesktop_Begin;
     try
-      ActiveUIModule.UI.ChgDesktop_ColorLimit(rdColor32bit);
+      ActiveUIModule.UI.ChgDesktop_BitsPerPixelLimit(32);
+      ActiveUIModule.UI.ChgDesktop_CompressImage(True);
+    finally
+      ActiveUIModule.UI.ChgDesktop_End;
+    end;
+  end
+  else
+  if ActiveUIModule.DisplaySetting = DS_OPTIMAL then
+  begin
+    ActiveUIModule.UI.ChgDesktop_Begin;
+    try
+      ActiveUIModule.UI.ChgDesktop_BitsPerPixelLimit(16);
+      ActiveUIModule.UI.ChgDesktop_CompressImage(True);
+    finally
+      ActiveUIModule.UI.ChgDesktop_End;
+    end;
+  end
+  else
+  if ActiveUIModule.DisplaySetting = DS_SPEED then
+  begin
+    ActiveUIModule.UI.ChgDesktop_Begin;
+    try
+      ActiveUIModule.UI.ChgDesktop_BitsPerPixelLimit(8);
+      ActiveUIModule.UI.ChgDesktop_CompressImage(True);
+    finally
+      ActiveUIModule.UI.ChgDesktop_End;
+    end;
+  end;
+
+//      ActiveUIModule.UI.ChgDesktop_ColorLimit(rdColor32bit);
 //      UI.ChgDesktop_FrameRate(rdFramesMax);
 //      UI.ChgDesktop_SendScreenInBlocks(rdBlocks1);
 //      UI.ChgDesktop_SendScreenRefineBlocks(rdBlocks12);
@@ -2163,33 +2198,9 @@ begin
 //      UI.ChgDesktop_SendScreenSizeLimit(rdBlockAnySize);
   //    if grpColorLow.ItemIndex>=0 then
   //      begin
-        ActiveUIModule.UI.ChgDesktop_ColorLowLimit(rd_ColorHigh);
+//        ActiveUIModule.UI.ChgDesktop_ColorLowLimit(rd_ColorHigh);
   //      UI.ChgDesktop_ColorReducePercent(cbReduceColors.Value);
   //      end;
-    finally
-      ActiveUIModule.UI.ChgDesktop_End;
-    end;
-  end
-  else
-  begin
-    ActiveUIModule.UI.ChgDesktop_Begin;
-    try
-      ActiveUIModule.UI.ChgDesktop_ColorLimit(rdColor8bit);
-//      UI.ChgDesktop_FrameRate(rdFramesMax);
-//      UI.ChgDesktop_SendScreenInBlocks(rdBlocks1);
-//      UI.ChgDesktop_SendScreenRefineBlocks(rdBlocks12);
-//  //    UI.ChgDesktop_SendScreenRefineDelay(grpScreen2Refine.ItemIndex);
-//      UI.ChgDesktop_SendScreenSizeLimit(rdBlockAnySize);
-//  //    if grpColorLow.ItemIndex>=0 then
-//  //      begin
-        ActiveUIModule.UI.ChgDesktop_ColorLowLimit(rd_ColorHigh);
-//  //      UI.ChgDesktop_ColorReducePercent(cbReduceColors.Value);
-//  //      end;
-  //      end;
-    finally
-      ActiveUIModule.UI.ChgDesktop_End;
-    end;
-  end;
 end;
 
 procedure TrdDesktopViewer.aOptimalSettingsExecute(Sender: TObject);
@@ -2200,6 +2211,7 @@ begin
   if not aOptimalSettings.Checked then
   begin
     aOptimizeQuality.Checked := False;
+    aOptimalSettings.Checked := True ;
     aOptimizeSpeed.Checked := False;
     ActiveUIModule.DisplaySetting := DS_OPTIMAL;
 
@@ -2214,6 +2226,7 @@ begin
 
   if not aOptimizeQuality.Checked then
   begin
+    aOptimizeQuality.Checked := True;
     aOptimalSettings.Checked := False;
     aOptimizeSpeed.Checked := False;
     ActiveUIModule.DisplaySetting := DS_QUIALITY;
@@ -2231,6 +2244,7 @@ begin
   begin
     aOptimizeQuality.Checked := False;
     aOptimalSettings.Checked := False;
+    aOptimizeSpeed.Checked := True;
     ActiveUIModule.DisplaySetting := DS_SPEED;
 
     UpdateQuality;
@@ -2596,7 +2610,7 @@ begin
       end;
   finally
     ActiveUIModule.UI.ChgDesktop_End;
-    end;
+  end;
 end;
 
 procedure TrdDesktopViewer.pImageMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);

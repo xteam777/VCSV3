@@ -683,6 +683,7 @@ type
 //    procedure SaveWindowPosition(Form: TForm; FormName: String; sizeable:boolean=False);
 
     function PartnerNeedHideWallpaper(AUserName: String): Boolean;
+    function PartnerGetQualitySetting(AUserName: String): Integer;
     procedure LoadSetup(RecordType: String);
     procedure SaveSetup;
     procedure GeneratePassword;
@@ -1774,7 +1775,26 @@ begin
     if MainForm.PartnerNeedHideWallpaper(FUserToConnect) then
       FDesktopControl.Send_HideDesktop(FUserToConnect);
 
-//    FDesktopControl.ChgDesktop_Begin;
+    FDesktopControl.ChgDesktop_Begin;
+    if MainForm.PartnerGetQualitySetting(FUserToConnect) = DS_QUIALITY then
+    begin
+      FDesktopControl.ChgDesktop_BitsPerPixelLimit(32);
+      FDesktopControl.ChgDesktop_CompressImage(True);
+    end
+    else
+    if MainForm.PartnerGetQualitySetting(FUserToConnect) = DS_OPTIMAL then
+    begin
+      FDesktopControl.ChgDesktop_BitsPerPixelLimit(16);
+      FDesktopControl.ChgDesktop_CompressImage(True);
+    end
+    else
+    if MainForm.PartnerGetQualitySetting(FUserToConnect) = DS_SPEED then
+    begin
+      FDesktopControl.ChgDesktop_BitsPerPixelLimit(32);
+      FDesktopControl.ChgDesktop_CompressImage(True);
+    end;
+    FDesktopControl.ChgDesktop_End(FUserToConnect);
+
 {//    FDesktopControl.ChgDesktop_UseMouseDriver(False);
 //    FDesktopControl.ChgDesktop_CaptureLayeredWindows(False);
     FDesktopControl.ChgDesktop_ColorLimit(rdColor8bit);
@@ -1788,7 +1808,6 @@ begin
 //      FDesktopControl.ChgDesktop_ColorLowLimit(rd_ColorHigh);
 //      FDesktopControl.ChgDesktop_ColorReducePercent(cbReduceColors.Value);
 //    FDesktopControl.ChgDesktop_SendScreenRefineDelay(grpScreen2Refine.ItemIndex);}
-//    FDesktopControl.ChgDesktop_End(FUserToConnect);
 
     FDesktopControl.Open(FUserToConnect);
   end
@@ -4335,6 +4354,31 @@ begin
       begin
         if reg.ValueExists('HideWallpaper') then
           Result := reg.ReadBool('HideWallpaper');
+
+        reg.CloseKey;
+      end;
+  finally
+    reg.Free;
+  end;
+end;
+
+function TMainForm.PartnerGetQualitySetting(AUserName: String): Integer;
+var
+  reg: TRegistry;
+begin
+//  xLog('PartnerNeedHideDesktop');
+
+  Result := DS_QUIALITY;
+
+  reg := TRegistry.Create;
+  try
+    reg.RootKey := HKEY_CURRENT_USER;
+    reg.Access := KEY_READ;
+    if reg.KeyExists('Software\Remox\Partners\' + AUserName) then
+      if reg.OpenKey('Software\Remox\Partners\' + AUserName, False) then
+      begin
+        if reg.ValueExists('DisplaySetting') then
+          Result := reg.ReadInteger('DisplaySetting');
 
         reg.CloseKey;
       end;
