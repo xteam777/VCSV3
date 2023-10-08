@@ -214,6 +214,10 @@
             <Form>UIDataModule</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="..\Modules\uChannelsUsage.pas">
+            <Form>fChannelsUsage</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <RcItem Include="rmx_w32.exe">
             <ContainerId>ResourceItem</ContainerId>
             <ResourceType>RCDATA</ResourceType>

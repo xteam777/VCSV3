@@ -6432,9 +6432,14 @@ object MainForm: TMainForm
         OnClick = btnGatewayClick
         OnDrawItem = N11DrawItem
       end
-      object N6: TMenuItem
+      object miChannelsUsage: TMenuItem
+        Caption = #1048#1089#1087#1086#1083#1100#1079#1086#1074#1072#1085#1080#1077' '#1082#1072#1085#1072#1083#1086#1074
+        OnClick = miChannelsUsageClick
+        OnDrawItem = N11DrawItem
+      end
+      object miLogFiles: TMenuItem
         Caption = #1060#1072#1081#1083#1099' '#1078#1091#1088#1085#1072#1083#1086#1074
-        OnClick = N6Click
+        OnClick = miLogFilesClick
         OnDrawItem = N11DrawItem
       end
       object N10: TMenuItem
@@ -6464,11 +6469,6 @@ object MainForm: TMainForm
       end
       object mmiSeparator2: TMenuItem
         Caption = '-'
-        OnDrawItem = N11DrawItem
-      end
-      object mmiActiveConnections: TMenuItem
-        Caption = #1040#1082#1090#1080#1074#1085#1099#1077' '#1089#1086#1077#1076#1080#1085#1077#1085#1080#1103
-        Visible = False
         OnDrawItem = N11DrawItem
       end
       object N11: TMenuItem
