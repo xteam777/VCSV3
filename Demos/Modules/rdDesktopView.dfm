@@ -4232,20 +4232,6 @@ object rdDesktopViewer: TrdDesktopViewer
     TabOrder = 2
     OnMouseLeave = panOptionsMouseLeave
     ExplicitWidth = 1058
-    object lblBitsPerPixel: TLabel
-      Left = 10
-      Top = 10
-      Width = 56
-      Height = 14
-      Caption = 'BitsPerPixel'
-    end
-    object lblCompressImage: TLabel
-      Left = 127
-      Top = 10
-      Width = 77
-      Height = 14
-      Caption = 'CompressImage'
-    end
     object ammbActions: TActionMainMenuBar
       Left = 352
       Top = 0
@@ -4268,34 +4254,6 @@ object rdDesktopViewer: TrdDesktopViewer
       ParentShowHint = False
       ShowHint = True
       Spacing = 0
-    end
-    object cbxBPP: TComboBox
-      Left = 78
-      Top = 6
-      Width = 37
-      Height = 22
-      Style = csDropDownList
-      TabOrder = 1
-      OnChange = cbxBPPChange
-      Items.Strings = (
-        '1'
-        '4'
-        '8'
-        '16'
-        '24'
-        '32')
-    end
-    object cbxCompressImage: TComboBox
-      Left = 214
-      Top = 6
-      Width = 47
-      Height = 22
-      Style = csDropDownList
-      TabOrder = 2
-      OnChange = cbxBPPChange
-      Items.Strings = (
-        'No'
-        'Yes')
     end
   end
   object DesktopTimer: TTimer

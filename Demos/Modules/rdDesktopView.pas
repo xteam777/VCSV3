@@ -108,10 +108,6 @@ type
     iMiniPanelShow: TImage;
     iMiniPanelHide: TImage;
     aOptimalSettings: TAction;
-    lblBitsPerPixel: TLabel;
-    cbxBPP: TComboBox;
-    cbxCompressImage: TComboBox;
-    lblCompressImage: TLabel;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -191,7 +187,6 @@ type
     procedure MainChromeTabsChange(Sender: TObject; ATab: TChromeTab;
       TabChangeType: TTabChangeType);
     procedure aOptimalSettingsExecute(Sender: TObject);
-    procedure cbxBPPChange(Sender: TObject);
   private
 //    FVideoRecorder: TVideoRecorder;
 //    FVideoWriter: TRMXVideoWriter;
@@ -619,11 +614,6 @@ begin
 //  end;
 
 //  MainChromeTabs.Visible := False;
-end;
-
-procedure TrdDesktopViewer.cbxBPPChange(Sender: TObject);
-begin
-  btnAcceptClick(nil);
 end;
 
 procedure TrdDesktopViewer.SetReconnectInterval(AUserName: String; AInterval: Integer);
