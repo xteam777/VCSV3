@@ -16,7 +16,7 @@ uses
   Dialogs, StdCtrls, ExtCtrls, ShellApi, rdFileTransLog, VirtualTrees.Types, SHDocVw, rtcpFileTransUI, Psapi, Winapi.SHFolder,
   Vcl.ComCtrls, Registry, Math, RtcIdentification, SyncObjs, System.Net.HTTPClient, System.Net.URLClient, ActiveX, ComObj, CommCtrl,
   rtcSystem, rtcInfo, uMessageBox, rtcScrUtils, IOUtils, uAcceptEula, ProgressDialog, ShlObj, RecvDataObject, SendDestroyToGateway,
-  ChromeTabsTypes, ChromeTabsClasses, ChromeTabsControls, uUIDataModule,
+  ChromeTabsTypes, ChromeTabsClasses, ChromeTabsControls, uUIDataModule, uChannelsUsage,
 
 {$IFDEF IDE_XE3up}
   UITypes,
@@ -290,7 +290,6 @@ type
     N10: TMenuItem;
     mmiService: TMenuItem;
     mmiSeparator2: TMenuItem;
-    mmiActiveConnections: TMenuItem;
     mmiServiceInstall: TMenuItem;
     mmiServiceStartStop: TMenuItem;
     mmiServiceUninstall: TMenuItem;
@@ -308,7 +307,7 @@ type
     tHostTimerClientReconnect: TTimer;
     tPClientReconnect: TTimer;
     lRegistration: TLabel;
-    N6: TMenuItem;
+    miLogFiles: TMenuItem;
     N11: TMenuItem;
     tActivateHost: TTimer;
     ApplicationEvents: TApplicationEvents;
@@ -330,6 +329,7 @@ type
     rManualLogout: TRtcResult;
     tFoldForm: TTimer;
     Button5: TButton;
+    miChannelsUsage: TMenuItem;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -526,7 +526,7 @@ type
     procedure pmIconMenuPopup(Sender: TObject);
     procedure hcAccountsReconnect(Sender: TRtcConnection);
     procedure hcAccountsException(Sender: TRtcConnection; E: Exception);
-    procedure N6Click(Sender: TObject);
+    procedure miLogFilesClick(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure tActivateHostTimer(Sender: TObject);
     procedure ApplicationEventsRestore(Sender: TObject);
@@ -558,6 +558,7 @@ type
     procedure tFoldFormTimer(Sender: TObject);
     procedure eAccountPasswordChange(Sender: TObject);
     procedure Button5Click(Sender: TObject);
+    procedure miChannelsUsageClick(Sender: TObject);
   protected
 
 //    FAutoRun: Boolean;
@@ -1826,8 +1827,8 @@ begin
       asBoolean['IsAccount'] := FLoggedIn;
       asString['AccountUID'] := MainForm.AccountUID;
       asString['DeviceUID'] := MainForm.DeviceUID;
-      asInteger['UserFrom'] := StrToInt(MainForm.DeviceId);
-      asInteger['UserTo'] := StrToInt(FUserName);
+      asString['UserFrom'] := MainForm.DeviceId;
+      asString['UserTo'] := FUserName;
       asString['Action'] := FAction;
       asString['Gateway'] := FGateway;
       Call(FResult);
@@ -8548,7 +8549,29 @@ begin
   end;
 end;
 
-procedure TMainForm.N6Click(Sender: TObject);
+procedure TMainForm.miChannelsUsageClick(Sender: TObject);
+var
+  fChannelsUsage: TfChannelsUsage;
+begin
+  //XLog('ShowAboutForm');
+
+  try
+    fChannelsUsage := TfChannelsUsage.Create(nil);
+    fChannelsUsage.FLoggedIn := LoggedIn;
+    fChannelsUsage.FAccountUID := AccountUID;
+    fChannelsUsage.FDeviceUID := DeviceUID;
+    fChannelsUsage.FSendManualLogoutToControl := SendManualLogoutToControl;
+    fChannelsUsage.FTimerModule := TimerModule;
+    fChannelsUsage.OnCustomFormClose := OnCustomFormClose;
+    OnCustomFormOpen(@fChannelsUsage);
+    fChannelsUsage.GetConnections;
+    fChannelsUsage.ShowModal;
+  finally
+    fChannelsUsage.Free;
+  end;
+end;
+
+procedure TMainForm.miLogFilesClick(Sender: TObject);
 var
   Dir: String;
 begin

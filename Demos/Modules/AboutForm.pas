@@ -39,8 +39,6 @@ begin
 end;
 
 procedure TfAboutForm.FormClose(Sender: TObject; var Action: TCloseAction);
-var
-  i: Integer;
 begin
   if Assigned(FOnCustomFormClose) then
     FOnCustomFormClose;
