@@ -22,7 +22,7 @@ uses
   IniFiles, System.SyncObjs,
   rtcCompress, Vcl.Imaging.JPEG, Vcl.Imaging.PNGImage, //RtcWebPCodec,
   {$IFDEF WithSynLZTest} SynLZ, {$ENDIF} lz4d, lz4d.lz4, lz4d.lz4s,
-  Math;
+  Math, Compressions;
 
 type
   TRtcScreenPlayback = class;
@@ -48,6 +48,7 @@ type
 
     FImage: TBitmap;
     FOnSetScreenData: TOnSetScreenData;
+    FCompressor: TCompressionLZMA2;
 
     function CreateBitmap: TBitmap;
     function SetScreenData(const Data: TRtcRecord): boolean; overload;
@@ -65,7 +66,7 @@ type
     procedure DecompressBlock2(const Offset: longint; const s: RtcByteArray);
     procedure DecompressBlock3(const Offset: longint; const s: RtcByteArray);
 
-
+    function FixDrawDirtyRects(const Rects : TRtcArray): Boolean;
   public
     constructor Create;
     destructor Destroy; override;
@@ -140,7 +141,7 @@ type
 implementation
 
 {$IFDEF DEBUG}
-uses rtcDebug;
+uses rtcDebug, rmxImageCODEC;
 {$ENDIF}
 
 
@@ -180,9 +181,65 @@ end;
 destructor TRtcScreenDecoder.Destroy;
 begin
   ReleaseStorage;
+  FreeAndNil(FCompressor);
   inherited;
 
   CS.Free;
+end;
+
+function TRtcScreenDecoder.FixDrawDirtyRects(const Rects: TRtcArray): Boolean;
+var
+  i: Integer;
+  ms: TMemoryStream;
+  Left, Top, Width, Height, CodecId, ScreenRowSize : Integer;
+  mime: string;
+  ms_decompressed: TMemoryStream;
+  ImageSize, CompressedSize: Integer;
+begin
+  Result := false;
+  FImage.Canvas.Lock;
+  try
+    for i := 0 to Integer(Rects.Count) - 1 do
+      with Rects.asRecord[i] do
+      begin
+        mime    := asString['MIME'];
+        if mime = '' then break;
+        Result := true;
+        Left    := asInteger['Left'];
+        Top     := asInteger['Top'];
+        Width   := asInteger['Width'];
+        Height  := asInteger['Height'];
+        CodecId := asInteger['Codec'];
+        ImageSize       := asInteger['ImageSize'];
+        CompressedSize  := asInteger['CompressedSize'];
+        ms              := RTCByteStream(asByteStream['Data']);
+        ms_decompressed := nil;
+        try
+          if CompressedSize > 0 then
+            begin
+              ms_decompressed := TMemoryStream.Create;
+              ms_decompressed.Size := ImageSize;
+              if not Assigned(FCompressor) then
+                FCompressor := TCompressionLZMA2.Create(5);
+              FCompressor.Decompress(ms.Memory, ms.Size, ms_decompressed.Memory, ms_decompressed.Size);
+              ms := ms_decompressed;
+            end;
+          if (FImage.Height < 2) or (Cardinal(FImage.ScanLine[0]) <
+             Cardinal(FImage.ScanLine[1])) then ScreenRowSize := 1 else
+             ScreenRowSize := -1;
+          ScreenRowSize := ScreenRowSize * ((FImage.Width * FSCreenBPP) shr 3);
+          TRMXDecoder.Decode(ms, Image,
+            Top * ScreenRowSize + ((Left * FScreenBPP) shr 3),
+            ScreenRowSize,
+            mime);
+        finally
+          if Assigned(ms_decompressed) then
+            ms_decompressed.Free;
+        end;
+      end;
+  finally
+    FImage.Canvas.UnLock;
+  end;
 end;
 
 function TRtcScreenDecoder.SetScreenData(const Data: RtcString): boolean;
@@ -405,6 +462,9 @@ var
   MS2 : TMemoryStream;
   TmpBuff : array of byte;
 begin
+  if FixDrawDirtyRects(Rects) then
+    Exit;
+
   FImage.Canvas.Lock;
  try
  //  CS.Enter;

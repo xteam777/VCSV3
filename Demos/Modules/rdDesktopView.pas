@@ -108,6 +108,10 @@ type
     iMiniPanelShow: TImage;
     iMiniPanelHide: TImage;
     aOptimalSettings: TAction;
+    lblBitsPerPixel: TLabel;
+    cbxBPP: TComboBox;
+    cbxCompressImage: TComboBox;
+    lblCompressImage: TLabel;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -2035,6 +2039,8 @@ begin
   panSettings.Top := 10;
   panSettings.Visible := True;
 
+//  cbxBPP.ItemIndex := -1;
+//  cbxCompressImage.ItemIndex := -1;
 //  // Clear Host Settings
 //  grpScreenBlocks.ItemIndex:=-1;
 //  grpScreenBlocks2.ItemIndex:=-1;
@@ -2581,6 +2587,8 @@ begin
     if grpScreenBlocks2.ItemIndex >= 0 then ActiveUIModule.UI.ChgDesktop_SendScreenRefineBlocks(TrdScreenBlocks(grpScreenBlocks2.ItemIndex));
     if grpScreen2Refine.ItemIndex >= 0 then  ActiveUIModule.UI.ChgDesktop_SendScreenRefineDelay(grpScreen2Refine.ItemIndex);
     if grpScreenLimit.ItemIndex >= 0 then  ActiveUIModule.UI.ChgDesktop_SendScreenSizeLimit(TrdScreenLimit(grpScreenLimit.ItemIndex));
+    if cbxBPP.ItemIndex >= 0 then ActiveUIModule.UI.ChgDesktop_BitsPerPixelLimit(StrToInt(cbxBPP.Text));
+    if cbxCompressImage.ItemIndex >= 0 then ActiveUIModule.UI.ChgDesktop_CompressImage(cbxCompressImage.ItemIndex > 0);
     if grpColorLow.ItemIndex >= 0 then
       begin
       ActiveUIModule.UI.ChgDesktop_ColorLowLimit(TrdLowColorLimit(grpColorLow.ItemIndex));

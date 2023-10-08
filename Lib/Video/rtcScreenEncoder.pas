@@ -3,6 +3,8 @@
 
 unit rtcScreenEncoder;
 
+{$DEFINE USE_FIXENCODE}
+
 interface
 {$INLINE AUTO}
 
@@ -20,7 +22,7 @@ uses
   ServiceMgr, CommonData, uVircessTypes,
   rtcCompress, Vcl.Imaging.JPEG, Vcl.Imaging.PNGImage, //RtcWebPCodec,//rtcXJPEGEncode,
    {$IFDEF WithSynLZTest} SynLZ, {$ENDIF} lz4d, lz4d.lz4, lz4d.lz4s,
- {ServiceMgr,} rtcWinLogon;
+ {ServiceMgr,} rtcWinLogon, rmxImageCODEC, Compressions;
 
 type
   TRtcScreenEncoder = class
@@ -45,6 +47,8 @@ type
 
     FHaveScreen: Boolean;
     FOnHaveScreenChanged: TNotifyEvent;
+    FEncodedImageBPP: Integer;
+    FCompressor: TCompressionLZMA2;
     HelperIOData: THelperIOData;
 
     function GetScreenWidth: Integer;
@@ -67,11 +71,16 @@ type
     function GetScreenInfoChanged: Boolean;
 
     procedure EncodeImage(Rec : TRtcRecord; Rect : TRect);
+    function FixEncodeImage(Rec : TRtcRecord; Rect : TRect): Boolean;
 
     function GetDataFromHelper(OnlyGetScreenParams: Boolean = False; fFirstScreen: Boolean = False): Boolean;
 
     function GetHaveScreen: Boolean;
     procedure SetHaveScreen(const Value: Boolean);
+
+    procedure SetEncodedImageBPP(const Value: Integer);
+    function GetCompressImage: Boolean;
+    procedure SetCompressImage(const Value: Boolean);
   public
     constructor Create;
     destructor Destroy; override;
@@ -91,6 +100,9 @@ type
     property MovedRP[Index: Integer]: TPoint read GetMovedRP write SetMovedRP;
     property ClipRect: TRect read GetClipRect write SetClipRect;
     property ScreenInfoChanged: Boolean read GetScreenInfoChanged;
+
+    property EncodedImageBPP: Integer read FEncodedImageBPP write SetEncodedImageBPP;
+    property CompressImage: Boolean read GetCompressImage write SetCompressImage;
 
     property HaveScreen: Boolean read GetHaveScreen write SetHaveScreen;
     property OnHaveScreeenChanged: TNotifyEvent read FOnHaveScreenChanged write FOnHaveScreenChanged;
@@ -128,8 +140,32 @@ begin
     pf32bit: Result := 32;
     else Result := 32;
   end;
+end;}
+
+function TRtcScreenEncoder.GetCompressImage: Boolean;
+begin
+  Result := Assigned(FCompressor);
 end;
- }
+
+procedure TRtcScreenEncoder.SetCompressImage(const Value: Boolean);
+begin
+  if CompressImage <> Value then
+    begin
+      if not Value then
+        FreeAndNil(FCompressor) else
+        FCompressor := TCompressionLZMA2.Create(5)
+    end;
+end;
+
+procedure TRtcScreenEncoder.SetEncodedImageBPP(const Value: Integer);
+begin
+  if FEncodedImageBPP <> Value then
+    begin
+      if not (Value in [1, 4, 8, 16, 24, 32]) then
+        raise Exception.Create('Invalid value for tEncodedImageBPP');
+      FEncodedImageBPP := Value;
+    end;
+end;
 
 function TRtcScreenEncoder.GetHaveScreen: Boolean;
 begin
@@ -334,6 +370,7 @@ end;
 
 destructor TRtcScreenEncoder.Destroy;
 begin
+  FreeAndNil(FCompressor);
   FreeAndNil(FDesktopDuplicator);
 
   HelperCS.Free;
@@ -354,6 +391,11 @@ var
   JPG : TJPEGImage;
   PNG : TPNGImage;
 begin
+  {$IFDEF USE_FIXENCODE}
+  if FixEncodeImage(Rec, Rect) then
+    exit;
+  {$ENDIF}
+
  // if (ImageCompressionType < 1) or (ImageCompressionType > 2) then
   //  ImageCompressionType := 1;
   //!!!!!!!!!!!!with Debug.ScreenCapture do
@@ -363,7 +405,7 @@ begin
 
     if CodecId in [0, 1, 5, 6, 7] then
     begin // No compression, passing bitmap
-      SetLength(Image, (Rect.Width * Rect.Height * BitsPerPixel) shr 3);
+      SetLength(Image, (Rect.Width * Rect.Height * BitsPerPixel) shr 3);  //<< width * height * bit_per_pixel
       ImagePos := FScreenBuff +
                 ((Rect.Top * ScreenWidth + Rect.Left) * BitsPerPixel) shr 3;
                  DataPos := @Image[0];
@@ -403,7 +445,7 @@ begin
     if CodecId = 1 then
     begin
       PackedImage := NIL;
-      SetLength(PackedImage, ((Rect.Width * Rect.Height * BitsPerPixel) shr 3) * 3);
+      SetLength(PackedImage, ((Rect.Width * Rect.Height * BitsPerPixel) shr 3) * 3);  // mul 3, for decompressi
    {  if (Rect.Height < 2) or (Cardinal(Bmp.ScanLine[0]) < Cardinal(Bmp.ScanLine[1]))
         then Len := DWordCompress_Normal(Bmp.ScanLine[0], Addr(PackedImage[0]),
       (Rect.Height * Rect.Width * BitsPerPixel) shr 3)
@@ -556,9 +598,88 @@ begin
       PackedImage := NIL;
     end;
 
+    Debug.Log(Format(
+      'Encoding image: mime=%s, BPP=%d, ms.size=%d, Rect(%d, %d, %d, %d), %dx%d',
+      [Rec.asString['MIME'], EncodedImageBPP, ms.Size, Rect.Left, Rect.Top, Rect.Right, Rect.Bottom,
+      Rect.Width, Rect.Height]
+      )
+    );
+
     MS.Free;
   end;
   //SetLength(Image);
+end;
+
+function TRtcScreenEncoder.FixEncodeImage(Rec: TRtcRecord; Rect: TRect): Boolean;
+var
+  ms, ms_compressed: TMemoryStream;
+  SrcPos : PByte;
+  DstPos : PByte;
+  Data: TArray<Byte>;
+  RowSize, ScreenRowSize, RowId: Integer;
+  ImageSize, CompressedSize: Integer;
+begin
+  if (Rect.Width = ScreenWidth) and (Rect.Height = ScreenHeight) then
+    begin
+      SrcPos := FScreenBuff +  ((Rect.Top * ScreenWidth + Rect.Left) * BitsPerPixel) shr 3;
+    end
+  else
+    begin
+      { TODO : NEED STRIDE }
+      SetLength(Data, (Rect.Width * Rect.Height * BitsPerPixel) shr 3);   //<< width * height * 4
+      SrcPos := FScreenBuff +
+                ((Rect.Top * ScreenWidth + Rect.Left) * BitsPerPixel) shr 3;
+      DstPos := @Data[0];
+      RowSize := (Rect.Width * BitsPerPixel) shr 3;
+      ScreenRowSize := (ScreenWidth * BitsPerPixel) shr 3;
+      for RowId := 0 to Rect.Height - 1 do
+      begin
+        Move(SrcPos^, DstPos^, Abs(RowSize));
+        Inc(SrcPos, ScreenRowSize);
+        Inc(DstPos, RowSize);
+      end;
+      SrcPos := @Data[0];
+    end;
+  Result := true;
+  Rec.asString['MIME'] := TRMXEncoder.Encode(SrcPos, Rect.Width, Rect.Height, EncodedImageBPP, ms);
+  ImageSize := ms.Size;
+  CompressedSize := 0;
+  if CompressImage then
+    begin
+      ms_compressed := TMemoryStream.Create;
+      try
+        ms_compressed.Size := ms.Size;
+        CompressedSize     := FCompressor.Compress(ms.Memory, ms.Size, ms_compressed.Memory, ms_compressed.Size);
+        ms_compressed.Size := CompressedSize;
+        ms.Free;
+        ms := ms_compressed;
+      except
+        ms_compressed.Free;
+        raise;
+      end;
+    end;
+  Debug.Log(Format(
+    'Encoding image: mime=%s, BPP=%d, Size=%d, CompressedSize=%d, Rect(%d, %d, %d, %d), %dx%d',
+    [Rec.asString['MIME'], EncodedImageBPP, ImageSize, CompressedSize, Rect.Left, Rect.Top, Rect.Right, Rect.Bottom,
+    Rect.Width, Rect.Height]
+    )
+  );
+  ms.Position := 0;
+  try
+    with Rec, Rect do
+    begin
+      asInteger['Left']           := Left;
+      asInteger['Top']            := Top;
+      asInteger['Width']          := Width;
+      asInteger['Height']         := Height;
+      asInteger['Codec']          := CodecId;
+      asInteger['ImageSize']      := ImageSize;
+      asInteger['CompressedSize'] := CompressedSize;
+      asByteStream['Data']        := ms;
+    end;
+  finally
+    ms.Free;
+  end;
 end;
 
 procedure TRtcScreenEncoder.GrabScreen(ScrDelta : PString; ScrFull : PString = NIL);
@@ -701,7 +822,11 @@ time := GetTickCount;
     begin
       asInteger['Width'] := ClipRect.Width;//ScreenDD.ScreenWidth;
       asInteger['Height'] := ClipRect.Height;//ScreenDD.ScreenHeight;
+      {$IFDEF USE_FIXENCODE}
+      asInteger['Bits'] := EncodedImageBPP; //  send to control
+      {$ELSE}
       asInteger['Bits'] := BitsPerPixel;
+      {$ENDIF}
       //if FullScreen then FScreenRect := ClipRect;
          // asInteger['BytesPerPixel'] := BytesPerPixel;
     end;

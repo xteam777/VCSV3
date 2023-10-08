@@ -128,6 +128,8 @@ type
    // function PackScreenImages(Data : RtcByteArray) : Cardinal;
     procedure GrabScreen(ScrDelta : PString; ScrFull : PString = NIL);
     procedure GrabMouse;
+    procedure SetBitsPerPixelLimit(Value: Integer);
+    procedure SetCompressImage(Value: Boolean);
 
     //function GetScreen: RtcString;
    // function GetScreenDelta: RtcString;
@@ -196,6 +198,16 @@ const
 implementation
 
 uses Types;
+
+procedure TRtcScreenCapture.SetBitsPerPixelLimit(Value: Integer);
+begin
+  ScrEnc.EncodedImageBPP := Value;
+end;
+
+procedure TRtcScreenCapture.SetCompressImage(Value: Boolean);
+begin
+  ScrEnc.CompressImage := Value;
+end;
 
 procedure SendIOToHelperByIPC(QueryType: Cardinal; IOType: DWORD; dwFlags: DWORD; dx, dy: Longint; mouseData: Integer; wVk, wScan: WORD; AText: WideString);
 var

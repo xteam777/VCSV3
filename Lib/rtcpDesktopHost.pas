@@ -69,6 +69,7 @@ type
     FScreenRefineDelay: integer;
     FScreenSizeLimit: TrdScreenLimit;
 
+    FBitsPerPixelLimit: Integer;
     FColorLimit: TrdColorLimit;
     FLowColorLimit: TrdLowColorLimit;
     FColorReducePercent: integer;
@@ -90,6 +91,7 @@ type
     FGatewayParams: boolean;
 
     FFileTrans: TRtcPFileTransfer;
+    FCompressImage: Boolean;
 
     procedure setClipboard(const username: String; const data: RtcString);
 
@@ -146,6 +148,9 @@ type
     procedure SetSendScreenRefineBlocks(const Value: TrdScreenBlocks);
     procedure SetSendScreenRefineDelay(const Value: integer);
     procedure SetSendScreenSizeLimit(const Value: TrdScreenLimit);
+
+    procedure SetBitsPerPixelLimit(const Value: Integer);
+    procedure SetCompressImage(const Value: Boolean);
 
   protected
     // Implement if you are linking to any other TRtcPModule. Usage:
@@ -273,6 +278,11 @@ type
     property GCaptureAllMonitors: boolean read GetCaptureAllMonitors
       write SetCaptureAllMonitors default False;
 
+    property GBitsPerPixelLimit: Integer read FBitsPerPixelLimit write SetBitsPerPixelLimit
+      default 24;
+    property GCompressImage: Boolean read FCompressImage write SetCompressImage
+      default false;
+
     { Limiting the number of colors can reduce bandwidth needs and improve performance.
       If gwStoreParams=True, this parameter will be stored on the Gateway. }
     property GColorLimit: TrdColorLimit read GetColorLimit write SetColorLimit
@@ -391,6 +401,8 @@ begin
   FLowColorLimit := rd_ColorHigh;
   FColorReducePercent := 0;
   FFrameRate := rdFramesMax;
+  FBitsPerPixelLimit := 24;
+  FCompressImage := false;
 end;
 
 destructor TRtcPDesktopHost.Destroy;
@@ -855,6 +867,20 @@ begin
     if MayControlDesktop(uname) then
     begin
       ScrChanged := False;
+      if (data.isType['compress_image'] = rtc_Integer) and
+        (GCompressImage <> data.asBoolean['compress_image']) then
+      begin
+        Scr.SetCompressImage(data.asBoolean['compress_image']);
+        GCompressImage := data.asBoolean['compress_image'];
+        ScrChanged := True;
+      end;
+      if (data.isType['bpp'] = rtc_Integer) and
+        (GBitsPerPixelLimit <> data.asInteger['bpp']) then
+      begin
+        Scr.SetBitsPerPixelLimit(data.asInteger['bpp']);
+        GBitsPerPixelLimit := data.asInteger['bpp'];
+        ScrChanged := True;
+      end;
       if (data.isType['color'] = rtc_Integer) and
         (GColorLimit <> TrdColorLimit(data.asInteger['color'])) then
       begin
@@ -1213,6 +1239,16 @@ begin
   end;
 end;
 
+procedure TRtcPDesktopHost.SetBitsPerPixelLimit(const Value: Integer);
+begin
+  if Value <> FBitsPerPixelLimit then
+  begin
+    if FGatewayParams and assigned(Client) then
+      Client.ParamSet(nil, 'BitsPerPixelLimit', TRtcIntegerValue.Create(Value));
+    FBitsPerPixelLimit := Value;
+  end;
+end;
+
 function TRtcPDesktopHost.GetAllowView: boolean;
 begin
   Result := FAllowView;
@@ -1429,6 +1465,16 @@ begin
   end;
 end;
 
+procedure TRtcPDesktopHost.SetCompressImage(const Value: Boolean);
+begin
+  if Value <> FCompressImage then
+  begin
+    if FGatewayParams and assigned(Client) then
+      Client.ParamSet(nil, 'CompressImage', TRtcBooleanValue.Create(Value));
+    FCompressImage := Value;
+  end;
+end;
+
 function TRtcPDesktopHost.GetColorReducePercent: integer;
 begin
   Result := FColorReducePercent;
@@ -1524,6 +1570,8 @@ begin
 
       Scr := TRtcScreenCapture.Create;
       Scr.FOnHaveScreenChanged := FOnHaveScreenChanged;
+      Scr.SetBitsPerPixelLimit(FBitsPerPixelLimit);
+      Scr.SetCompressImage(FCompressImage);
       case FColorLimit of
         rdColor4bit:
           begin

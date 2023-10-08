@@ -243,6 +243,10 @@ type
       then call "ChgDesktop_End" to send all changes. }
 
     procedure ChgDesktop_Begin;
+    procedure ChgDesktop_BitsPerPixelLimit(const Value: Integer;
+      Sender: TObject = nil);
+    procedure ChgDesktop_CompressImage(const Value: Boolean;
+      Sender: TObject = nil);
     procedure ChgDesktop_ColorLimit(const Value: TrdColorLimit;
       Sender: TObject = nil);
     procedure ChgDesktop_FrameRate(const Value: TrdFrameRate;
@@ -1792,6 +1796,17 @@ begin
   end;
 end;
 
+procedure TRtcPDesktopControlUI.ChgDesktop_BitsPerPixelLimit(
+  const Value: Integer; Sender: TObject);
+begin
+  ChgDesktop_Begin;
+  try
+    FChg_Desktop.asInteger['bpp'] := Value;
+  finally
+    ChgDesktop_End(Sender);
+  end;
+end;
+
 procedure TRtcPDesktopControlUI.ChgDesktop_End(Sender: TObject = nil);
 begin
   Dec(FChg_DeskCnt);
@@ -1860,6 +1875,17 @@ begin
   ChgDesktop_Begin;
   try
     FChg_Desktop.asInteger['colorpercent'] := Value;
+  finally
+    ChgDesktop_End(Sender);
+  end;
+end;
+
+procedure TRtcPDesktopControlUI.ChgDesktop_CompressImage(const Value: Boolean;
+  Sender: TObject);
+begin
+  ChgDesktop_Begin;
+  try
+    FChg_Desktop.asBoolean['compress_image'] := Value;
   finally
     ChgDesktop_End(Sender);
   end;
