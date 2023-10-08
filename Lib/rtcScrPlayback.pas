@@ -299,6 +299,8 @@ begin
   With Result do
   Begin
     case FScreenBPP of
+      1:
+        PixelFormat := pf1bit;
       4:
         PixelFormat := pf4bit;
       8:
