@@ -1246,7 +1246,7 @@ begin
   FGatewayClient.LoginUserName := AUserName;
   FGatewayClient.LoginUserInfo.asText['RealName'] := AUserName;
   FGatewayClient.LoginPassword := '';
-  FGatewayClient.AutoSyncEvents := False;
+  FGatewayClient.AutoSyncEvents := True;
   FGatewayClient.DataCompress := rtcpCompMax;
   FGatewayClient.DataEncrypt := 16;
   FGatewayClient.DataForceEncrypt := True;
@@ -1657,7 +1657,7 @@ begin
   FGatewayClient.LoginUserName := MainForm.DeviceId + '_' + FUserToConnect + '_' + FAction + '_' + FUID; //IntToStr(GatewayClientsList.Count + 1);
   FGatewayClient.LoginUserInfo.asText['RealName'] := FDeviceId;
   FGatewayClient.LoginPassword := '';
-  FGatewayClient.AutoSyncEvents := False;
+  FGatewayClient.AutoSyncEvents := True;
   FGatewayClient.DataCompress := rtcpCompMax;
   FGatewayClient.DataEncrypt := 16;
   FGatewayClient.DataForceEncrypt := True;
