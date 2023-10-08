@@ -30,6 +30,8 @@ type
     procedure bCloseMouseLeave(Sender: TObject);
     procedure bCloseClick(Sender: TObject);
     procedure bCloseAllClick(Sender: TObject);
+    procedure sgChannelsGetAlignment(Sender: TObject; ARow, ACol: Integer;
+      var HAlign: TAlignment; var VAlign: TVAlignment);
   private
     { Private declarations }
     FOnCustomFormClose: TOnCustomFormEvent;
@@ -162,6 +164,13 @@ begin
       Next;
     end;
   end;
+end;
+
+procedure TfChannelsUsage.sgChannelsGetAlignment(Sender: TObject; ARow,
+  ACol: Integer; var HAlign: TAlignment; var VAlign: TVAlignment);
+begin
+  if ARow = 0 then
+    HAlign := taCenter;
 end;
 
 procedure TfChannelsUsage.tRefreshTimer(Sender: TObject);
