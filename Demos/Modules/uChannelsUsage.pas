@@ -30,6 +30,8 @@ type
     procedure bCloseMouseLeave(Sender: TObject);
     procedure bCloseClick(Sender: TObject);
     procedure bCloseAllClick(Sender: TObject);
+    procedure sgChannelsGetAlignment(Sender: TObject; ARow, ACol: Integer;
+      var HAlign: TAlignment; var VAlign: TVAlignment);
   private
     { Private declarations }
     FOnCustomFormClose: TOnCustomFormEvent;
@@ -77,7 +79,7 @@ begin
   i := sgChannels.RowCount - 1;
   while i > 0 do
   begin
-    FSendManualLogoutToControl(sgChannels.Cells[5, i], sgChannels.Cells[0, i], sgChannels.Cells[1, i]);
+    FSendManualLogoutToControl(sgChannels.Cells[4, i], sgChannels.Cells[0, i], sgChannels.Cells[1, i]);
 
     i := i - 1;
   end;
@@ -86,7 +88,7 @@ end;
 procedure TfChannelsUsage.bCloseClick(Sender: TObject);
 begin
   if sgChannels.Row > 0 then
-    FSendManualLogoutToControl(sgChannels.Cells[5, sgChannels.Row], sgChannels.Cells[0, sgChannels.Row], sgChannels.Cells[1, sgChannels.Row]);
+    FSendManualLogoutToControl(sgChannels.Cells[4, sgChannels.Row], sgChannels.Cells[0, sgChannels.Row], sgChannels.Cells[1, sgChannels.Row]);
 end;
 
 procedure TfChannelsUsage.bCloseMouseEnter(Sender: TObject);
@@ -162,6 +164,13 @@ begin
       Next;
     end;
   end;
+end;
+
+procedure TfChannelsUsage.sgChannelsGetAlignment(Sender: TObject; ARow,
+  ACol: Integer; var HAlign: TAlignment; var VAlign: TVAlignment);
+begin
+  if ARow = 0 then
+    HAlign := taCenter;
 end;
 
 procedure TfChannelsUsage.tRefreshTimer(Sender: TObject);

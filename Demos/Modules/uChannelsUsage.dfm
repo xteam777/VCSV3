@@ -30,6 +30,7 @@ object fChannelsUsage: TfChannelsUsage
     TabOrder = 0
     GridLineColor = 13948116
     GridFixedLineColor = 11250603
+    OnGetAlignment = sgChannelsGetAlignment
     ActiveCellFont.Charset = DEFAULT_CHARSET
     ActiveCellFont.Color = 4474440
     ActiveCellFont.Height = -12
