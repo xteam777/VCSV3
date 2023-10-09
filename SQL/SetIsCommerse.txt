@@ -1,0 +1,53 @@
+
+SET NOCOUNT ON;
+
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+
+BEGIN TRANSACTION;
+
+--Пометка аккаунтов коммерции если более 3 уникальных подключений и прошел месяц после регистрации
+CREATE TABLE #TempAcc(AccountUID VARCHAR(50), UserFrom VARCHAR(50), UserTo VARCHAR(50), ConnCount INT);
+CREATE TABLE #TempAcc2(AccountUID VARCHAR(50));
+
+INSERT INTO #TempAcc
+SELECT AC.AccountUID, AC.UserFrom, AC.UserTo, COUNT(AC.Finalized) AS ConnCount 
+FROM Accounts_Connections AS AC
+	INNER JOIN Accounts AS A ON AC.AccountUID = A.UID AND A.CreateDate >= DATEADD(MONTH, -1, GETDATE())
+GROUP BY AC.AccountUID, AC.UserFrom, AC.UserTo
+HAVING COUNT(AC.Finalized) > 3;
+
+INSERT INTO #TempAcc2
+SELECT AccountUID 
+FROM #TempAcc
+GROUP BY AccountUID;
+
+UPDATE A
+SET A.IsCommerce = 1
+FROM Accounts AS A
+	INNER JOIN #TempAcc2 AS TA ON A.UID = TA.AccountUID;
+
+--Пометка устройств коммерции если более 3 уникальных подключений и прошел месяц после регистрации
+CREATE TABLE #TempDev(DeviceUID VARCHAR(50), UserFrom VARCHAR(50), UserTo VARCHAR(50), ConnCount INT);
+CREATE TABLE #TempDev2(DeviceUID VARCHAR(50));
+
+INSERT INTO #TempDev
+SELECT AC.DeviceUID, AC.UserFrom, AC.UserTo, COUNT(AC.Finalized) AS ConnCount 
+FROM Devices_Connections AS AC
+	INNER JOIN Devices AS A ON AC.DeviceUID = A.UID AND A.CreateDate >= DATEADD(MONTH, -1, GETDATE())
+GROUP BY AC.DeviceUID, AC.UserFrom, AC.UserTo
+HAVING COUNT(AC.Finalized) > 3;
+
+INSERT INTO #TempAcc2
+SELECT DeviceUID 
+FROM #TempDev
+GROUP BY DeviceUID;
+
+UPDATE A
+SET A.IsCommerce = 1
+FROM Devices AS A
+	INNER JOIN #TempDev2 AS TA ON A.UID = TA.DeviceUID;
+
+DROP TABLE #TempDev;
+DROP TABLE #TempDev2;
+
+ROLLBACK TRANSACTION;
