@@ -682,8 +682,8 @@ object MainForm: TMainForm
     AutoSessions = True
     ModuleFileName = '/$rdgate'
     OnSessionClosing = Gateway1SessionClosing
-    Left = 65534
-    Top = 348
+    Left = 478
+    Top = 132
   end
   object HttpServer4: TRtcHttpServer
     MultiThreaded = True

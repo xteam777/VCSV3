@@ -313,9 +313,9 @@ begin
         begin
           SP.Connection := SQLConnection;
           if Param.asBoolean['IsAccount'] then
-            SP.ProcedureName := 'GetAccountConnections'
+            SP.ProcedureName := 'Accounts_Connections_Get'
           else
-            SP.ProcedureName := 'GetDeviceConnections';
+            SP.ProcedureName := 'Devices_Connections_Get';
           SP.Prepared := True;
           SP.Parameters.Refresh;
           if Param.asBoolean['IsAccount'] then
@@ -426,7 +426,7 @@ begin
       SP := TADOStoredProc.Create(nil);
       try
         SP.Connection := SQLConnection;
-        SP.ProcedureName := 'GetAccountsByDeviceID';
+        SP.ProcedureName := 'Accounts_GetByDeviceID';
         SP.Prepared := True;
         SP.Parameters.Refresh;
         //AddParam(SP, '@ID', ftString, pdInput, StrToInt(uname));
@@ -495,7 +495,7 @@ begin
       SP := TADOStoredProc.Create(nil);
       try
         SP.Connection := SQLConnection;
-        SP.ProcedureName := 'GetDeviceID';
+        SP.ProcedureName := 'Devices_GetID';
         SP.Prepared := True;
         SP.Parameters.Refresh;
 //        AddParam(SP, '@Hash', ftString, pdInput, Param.asString['Hash']);
@@ -664,7 +664,7 @@ begin
 //      SP := TADOStoredProc.Create(nil);
 //      try
 //        SP.Connection := SQLConnection;
-//        SP.ProcedureName := 'GetDeviceIDNoCreate';
+//        SP.ProcedureName := 'Devices_GetIDNoCreate';
 //        SP.Prepared := True;
 //        SP.Parameters.Refresh;
 ////        AddParam(SP, '@Hash', ftString, pdInput, Param.asString['Hash']);
@@ -909,7 +909,7 @@ begin
     try
       try
         SP.Connection := SQLConnection;
-        SP.ProcedureName := 'AccountIsValid';
+        SP.ProcedureName := 'Accounts_IsValid';
         SP.Prepared := True;
         SP.Parameters.Refresh;
 //        AddParam(SP, '@Email', ftWideString, pdInput, name);
@@ -971,7 +971,7 @@ begin
             asWideString['AccountName'] := RealName;
 
             SP.Connection := SQLConnection;
-            SP.ProcedureName := 'GetAccountDevices';
+            SP.ProcedureName := 'AccountsDevices_Get';
             SP.Prepared := True;
             SP.Parameters.Refresh;
 //            AddParam(SP, '@AccountUID', ftGUID, pdInput, AccountUID);
@@ -1044,7 +1044,7 @@ begin
       try
         SP := TADOStoredProc.Create(nil);
         SP.Connection := GetDataProvider(ThisIsMainGate).SQLConnection;
-        SP.ProcedureName := 'AccountIsExists';
+        SP.ProcedureName := 'Accounts_IsExists';
         SP.Prepared := True;
         SP.Parameters.Refresh;
 //        AddParam(SP, '@Email', ftWideString, pdInput, email);
@@ -1087,7 +1087,7 @@ begin
       SP := TADOStoredProc.Create(nil);
       try
         SP.Connection := SQLConnection;
-        SP.ProcedureName := 'AddAccount';
+        SP.ProcedureName := 'Account_Add';
         SP.Prepared := True;
         SP.Parameters.Refresh;
 //        AddParam(SP, '@Email', ftWideString, pdInput, Param.asString['Email']);
@@ -1144,7 +1144,7 @@ begin
     try
       try
         SP.Connection := SQLConnection;
-        SP.ProcedureName := 'AddAccountDevice';
+        SP.ProcedureName := 'AccountDevices_Add';
         SP.Prepared := True;
         SP.Parameters.Refresh;
 //        AddParam(SP, '@Name', ftWideString, pdInput, Param.asString['Name']);
@@ -1197,7 +1197,7 @@ begin
   try
     try
       SP.Connection := SQLConnection;
-      SP.ProcedureName := 'AddDeviceGroup';
+      SP.ProcedureName := 'DeviceGroups_Add';
       SP.Prepared := True;
       SP.Parameters.Refresh;
 //      AddParam(SP, '@Name', ftWideString, pdInput, Param.asString['Name']);
@@ -1242,7 +1242,7 @@ begin
     try
       try
         SP.Connection := SQLConnection;
-        SP.ProcedureName := 'ChangeAccountDevice';
+        SP.ProcedureName := 'AccountsDevices_Change';
         SP.Prepared := True;
         SP.Parameters.Refresh;
 //        AddParam(SP, '@UID', ftGUID, pdInput, Param.asString['UID']);
@@ -1295,7 +1295,7 @@ begin
     try
       try
         SP.Connection := SQLConnection;
-        SP.ProcedureName := 'ChangeDeviceGroup';
+        SP.ProcedureName := 'DevicesGroups_Change';
         SP.Parameters.Refresh;
 //        AddParam(SP, '@UID', ftGUID, pdInput, Param.asString['UID']);
 //        AddParam(SP, '@Name', ftWideString, pdInput, Param.asString['Name']);
@@ -1339,7 +1339,7 @@ begin
     try
       try
         SP.Connection := SQLConnection;
-        SP.ProcedureName := 'DeleteDeviceGroup';
+        SP.ProcedureName := 'DevicesGroups_Delete';
         SP.Prepared := True;
         SP.Parameters.Refresh;
 //        AddParam(SP, '@UID', ftGUID, pdInput, Param.asString['UID']);
@@ -1730,9 +1730,9 @@ begin
       try
         SP.Connection := SQLConnection;
         if AIsAccount then
-          SP.ProcedureName := 'AddAccountConnection'
+          SP.ProcedureName := 'Accounts_Connections_Add'
         else
-          SP.ProcedureName := 'AddDeviceConnection';
+          SP.ProcedureName := 'Devices_Connections_Add';
         SP.Prepared := True;
         SP.Parameters.Refresh;
         if AIsAccount then
@@ -1778,9 +1778,9 @@ begin
       try
         SP.Connection := SQLConnection;
         if AIsAccount then
-          SP.ProcedureName := 'UpdateAccountConnection'
+          SP.ProcedureName := 'AccountsConnections_Update'
         else
-          SP.ProcedureName := 'UpdateDeviceConnection';
+          SP.ProcedureName := 'DevicesConnections_Update';
         SP.Prepared := True;
         SP.Parameters.Refresh;
         if AIsAccount then
