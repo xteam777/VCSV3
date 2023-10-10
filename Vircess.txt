@@ -6,6 +6,8 @@
 you need EV code signing certificate to SmartScreen ByPass https://www.gironsec.com/blog/2020/12/bypassing-windows-smartscreen/
 фм сетевые и вуртуальные папки
 ?права на удаление папки виндовс
+?кнопка подключиться мигает
+?colorspeedbtn отжимается только при моус лив. надо еще на маус ап. цвет подсветки при наведении есть. а при нажатии нет
 HostLogoutByHashExecute удалить
 rtcSockBase.pas TRtcSocketProtocol = (spTcp, spUdp);
 	?при запуске пг много хостов висит на разных порта. чекдис в пг закомментарен. расчет на сенд дестрой

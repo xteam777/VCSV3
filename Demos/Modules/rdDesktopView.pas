@@ -706,7 +706,7 @@ begin
       reg := TRegistry.Create;
       try
         reg.RootKey := HKEY_CURRENT_USER;
-        reg.Access := KEY_READ;
+        reg.Access := KEY_READ or KEY_WOW64_64KEY;
         if reg.OpenKey('Software\Remox\Partners\' + AUserName, False) then
         begin
           if reg.ValueExists('LockSystemOnClose') then

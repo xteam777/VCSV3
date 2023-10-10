@@ -19,7 +19,7 @@ type
   TEnableTimersProcedure = procedure(fEnable: Boolean) of object;
 
   TrdClientSettings = class(TForm)
-    tcSettings: TPageControl;
+    tcMain: TPageControl;
     tsNetwork: TTabSheet;
     gProxy: TGroupBox;
     Label1: TLabel;
@@ -28,17 +28,14 @@ type
     eProxyAddr: TEdit;
     eProxyUsername: TEdit;
     eProxyPassword: TEdit;
-    tsSequrity: TTabSheet;
+    tsGeneral: TTabSheet;
     rbNoProxy: TRadioButton;
     rbAutomatic: TRadioButton;
     rbManual: TRadioButton;
     eProxyPort: TEdit;
     Label2: TLabel;
-    cbOnlyAdminChanges: TCheckBox;
     ApplicationEvents1: TApplicationEvents;
-    cbStoreHistory: TCheckBox;
-    cbStorePasswords: TCheckBox;
-    GroupBox1: TGroupBox;
+    gbPermanentPassword: TGroupBox;
     Label7: TLabel;
     Label6: TLabel;
     ePassword: TEdit;
@@ -46,6 +43,9 @@ type
     bOK: TButton;
     bClose: TButton;
     Label8: TLabel;
+    cbStoreHistory: TCheckBox;
+    cbStorePasswords: TCheckBox;
+    cbAutomaticUpdate: TCheckBox;
 
     procedure xSSLClick(Sender: TObject);
     procedure btnCancelClick(Sender: TObject);
@@ -106,6 +106,8 @@ procedure TrdClientSettings.Setup;
 var
   i: Integer;
 begin
+    gbPermanentPassword.Visible := IsServiceStarted(RTC_HOSTSERVICE_NAME) or IsServiceStarting(RTC_HOSTSERVICE_NAME);
+
 //  if (Win32MajorVersion >= 6 {vista\server 2k8}) then
 //    PrevAutoRun := IsServiceStarted(RTC_HOSTSERVICE_NAME)
 //  else
@@ -385,7 +387,6 @@ var
 begin
   Reg := TRegistry.Create(KEY_WRITE);
   Reg.RootKey := HKEY_LOCAL_MACHINE;
-  Reg.LazyWrite := False;
   Reg.OpenKey('Software\Microsoft\Windows\CurrentVersion\Run', False);
 //    else Reg.OpenKey('SOFTWARE\Microsoft\Windows\CurrentVersion\Run',False);
   if Value then
@@ -402,7 +403,6 @@ var
 begin
   Reg := TRegistry.Create(KEY_READ);
   Reg.RootKey := HKEY_LOCAL_MACHINE;
-  Reg.LazyWrite := False;
   Reg.OpenKey('Software\Microsoft\Windows\CurrentVersion\Run', False);
 //    else Reg.OpenKey('SOFTWARE\Microsoft\Windows\CurrentVersion\Run',False);
   Result := (Reg.ReadString('Remox') = ParamStr(0));
@@ -453,7 +453,7 @@ begin
 
 //  xProxyClick(nil);
 
-  if (tcSettings.ActivePage = tsSequrity)
+  if (tcMain.ActivePage = tsGeneral)
     and Visible then
   begin
     ePassword.SetFocus;
