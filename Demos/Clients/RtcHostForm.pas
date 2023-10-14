@@ -125,15 +125,14 @@ type
 
   TExecuteProc = procedure of Object;
 
-  {TStatusUpdateThread = class(TThread)
+  TStatusUpdateThread = class(TThread)
   private
     FStatusUpdateProc: TExecuteProc;
-    FCheckUpdatesProc: TExecuteProc;
   protected
     constructor Create(CreateSuspended: Boolean;
-      StatusUpdateProc, CheckUpdatesProc: TExecuteProc); overload;
+      StatusUpdateProc: TExecuteProc); overload;
     procedure Execute; override;
-  end;}
+  end;
 
   {TPolygon class represents a polygon. It containes points that define a polygon and
   caches fill range list for fast polygon filling.}
@@ -567,7 +566,7 @@ type
     FScreenLockedState: Integer;
 //    FHostGatewayClientActive: Boolean;
     DelayedStatus: String;
-//    FStatusUpdateThread: TStatusUpdateThread;
+    FStatusUpdateThread: TStatusUpdateThread;
     tPHostThread: TPortalHostThread;
     FUpdateAvailable: Boolean;
     FProgressDialogsList: TList;
@@ -1569,14 +1568,13 @@ end;
 //  Dispatch(Message);
 //end;
 
-{constructor TStatusUpdateThread.Create(CreateSuspended: Boolean;
-  StatusUpdateProc, CheckUpdatesProc: TExecuteProc);
+constructor TStatusUpdateThread.Create(CreateSuspended: Boolean;
+  StatusUpdateProc: TExecuteProc);
 begin
   inherited Create(CreateSuspended);
 
   FreeOnTerminate := True;
   FStatusUpdateProc := StatusUpdateProc;
-  FCheckUpdatesProc := CheckUpdatesProc;
 end;
 
 procedure TStatusUpdateThread.Execute;
@@ -1590,16 +1588,8 @@ begin
       Synchronize(FStatusUpdateProc);
 
     Sleep(200);
-
-    if i = 4 then
-    begin
-      i := 0;
-      Synchronize(FCheckUpdatesProc);
-    end
-    else
-      i := i + 1;
   end;
-end;}
+end;
 
 procedure TMainform.ChangePort(AClient: TRtcHttpClient);
 begin
@@ -3260,7 +3250,7 @@ begin
   ActivationInProcess := False;
   AccountLoginInProcess := False;
 
-//  FStatusUpdateThread := TStatusUpdateThread.Create(False, UpdateStatus, CheckUpdates);
+  FStatusUpdateThread := TStatusUpdateThread.Create(False, UpdateStatus);
   tPHostThread := nil;
 
   OpenedModalForm := nil;
@@ -3430,7 +3420,7 @@ begin
 
   FreeAndNil(DMUpdate);
 
-//  FStatusUpdateThread.Terminate;
+  FStatusUpdateThread.Terminate;
 
 //  RestoreAero;
 
