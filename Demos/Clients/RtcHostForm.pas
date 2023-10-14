@@ -707,6 +707,7 @@ type
     function NodeByUID(const aTree:TVirtualStringTree; const anUID:String): PVirtualNode;
     function NodeByID(const aTree: TVirtualStringTree; const aID: String): PVirtualNode;
 
+    procedure UpdateOnSuccessCheck(Sender: TObject);
     procedure SetConnectedState(fConnected: Boolean);
 //    procedure WndProc(var Msg : TMessage); override;
     function GetSelectedGroup(): PVirtualNode;
@@ -3272,6 +3273,11 @@ end;
 //
 //end;
 
+procedure TMainForm.UpdateOnSuccessCheck(Sender: TObject);
+begin
+//  SetLastCheckUpdateTime(Now);
+end;
+
 procedure TMainForm.FormCreate(Sender: TObject);
 var
   err: LongInt;
@@ -3285,6 +3291,7 @@ begin
   FUpdateAvailable := False;
 
   DMUpdate := TDMUpdate.Create(Self);
+  DMUpdate.OnSuccessCheck := UpdateOnSuccessCheck;
 
   DeviceId := '';
   DeviceUID := '';

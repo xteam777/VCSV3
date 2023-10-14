@@ -27,6 +27,7 @@ type
     LastVersion, TempExeName: String;
     UpdateStatus: Integer;
     Progress: Double;
+    OnSuccessCheck: TNotifyEvent;
     procedure StartUpdate(AProxyEnabled: Boolean; AProxyAddr, AProxyUserName, AProxyPassword: String);
     procedure GetProgress(var AUpdateStatus: Integer; AProgress: Double);
   end;
