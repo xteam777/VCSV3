@@ -117,6 +117,8 @@ type
     procedure ChangePort(AClient: TRtcHttpClient);
     procedure ChangePortP(AClient: TRtcHttpPortalClient);
 
+    procedure UpdateOnSuccessCheck(Sender: TObject);
+
     function GetStatus: Integer;
     procedure SetStatus(Status: Integer);
     property CurStatus: Integer read GetStatus write SetStatus;
@@ -384,8 +386,6 @@ begin
   if (Win32MajorVersion >= 6 {vista\server 2k8}) then
     Interactive := False;
 
-  DMUpdate := TDMUpdate.Create(nil);
-
   ConfigLastDate := 0;
   CurStatus := STATUS_NO_CONNECTION;
   ActivationInProcess := False;
@@ -412,6 +412,9 @@ begin
   tStartClients := TStartThread.Create(True, 'StartClientsOnLogon');
 
   LoadSetup;
+
+  DMUpdate := TDMUpdate.Create(nil);
+  DMUpdate.OnSuccessCheck := UpdateOnSuccessCheck;
 
   FIPCServer := TIPCServer.Create;
   FIPCServer.OnExecuteRequest := OnExecuteRequest;
@@ -487,10 +490,12 @@ begin
   tStartClients.Resume;
 
   if IncDay(GetLastCheckUpdateTime, 1) <= Now then
-  begin
     DMUpdate.StartUpdate(HostTimerClient.UseProxy, HostTimerClient.UserLogin.ProxyAddr, HostTimerClient.UserLogin.ProxyUserName, HostTimerClient.UserLogin.ProxyPassword);
-    SetLastCheckUpdateTime(Now);
-  end;
+end;
+
+procedure TRemoxService.UpdateOnSuccessCheck(Sender: TObject);
+begin
+  SetLastCheckUpdateTime(Now);
 end;
 
 {procedure TRemoxService.LogoutClientHosts; //Сделано на гейте
