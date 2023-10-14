@@ -317,7 +317,7 @@ type
     Button3: TButton;
     bSetup: TColorSpeedButton;
     pBtnSetup: TPanel;
-    bGetUpdate: TSpeedButton;
+    bGetUpdate: TColorSpeedButton;
     rGetPartnerInfoReconnect: TRtcResult;
     tsIncomes: TTabSheet;
     tsMyDevices: TTabSheet;
@@ -558,6 +558,8 @@ type
     procedure eAccountPasswordChange(Sender: TObject);
     procedure Button5Click(Sender: TObject);
     procedure miChannelsUsageClick(Sender: TObject);
+    procedure bGetUpdateMouseEnter(Sender: TObject);
+    procedure bGetUpdateMouseLeave(Sender: TObject);
   protected
 
 //    FAutoRun: Boolean;
@@ -3876,20 +3878,20 @@ begin
       end
       else
       begin
-        bGetUpdate.Caption := '        Последняя версия';
+        bGetUpdate.Caption := 'Последняя версия';
         bGetUpdate.Font.Color := clBlack;
       end;
     end
     else
     if UpdateStatus = US_DOWNLOADING then
     begin
-      bGetUpdate.Caption := '        Загрузка ' + IntToStr(Ceil(Progress)) + '%';
+      bGetUpdate.Caption := 'Загрузка ' + IntToStr(Ceil(Progress)) + '%';
       bGetUpdate.Font.Color := clBlack;
     end
     else
     if UpdateStatus = US_INSTALLING then
     begin
-      bGetUpdate.Caption := '               Установка';
+      bGetUpdate.Caption := 'Установка';
       bGetUpdate.Font.Color := clBlack;
     end;
 
@@ -7248,6 +7250,16 @@ begin
     DMUpdate.StartUpdate(hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword);
 end;
 
+procedure TMainForm.bGetUpdateMouseEnter(Sender: TObject);
+begin
+  bGetUpdate.Color := $00615EF1;
+end;
+
+procedure TMainForm.bGetUpdateMouseLeave(Sender: TObject);
+begin
+  bGetUpdate.Color := clBtnFace;
+end;
+
 procedure TMainForm.cPriorityChange(Sender: TObject);
 //  var
 //    hProcess:Cardinal;
@@ -8902,7 +8914,7 @@ begin
         if CurBuildVersion < MinBuildVersion then
         begin
           FUpdateAvailable := True;
-          SetStatusStringDelayed('Версия устарела. Требуется обновление');
+          SetStatusStringDelayed('Текущая версия устарела. Требуется обновление');
           bGetUpdate.Caption := 'Установить обновление';
           bGetUpdate.Font.Color := clRed;
           //ActivationInProcess := False; //Не сбразываем флаг. Останавливаем повторную активацию
@@ -8913,7 +8925,7 @@ begin
         if CurBuildVersion < LastBuildVersion then
         begin
           FUpdateAvailable := True;
-          SetStatusStringDelayed('Версия устарела. Требуется обновление');
+          SetStatusStringDelayed('Текущая версия устарела. Требуется обновление');
           bGetUpdate.Caption := 'Установить обновление';
           bGetUpdate.Font.Color := clRed;
           //ActivationInProcess := False; //Не сбразываем флаг. Останавливаем повторную активацию
@@ -8923,7 +8935,7 @@ begin
         else //Версия последняя
         begin
           FUpdateAvailable := False;
-          bGetUpdate.Caption := '        Последняя версия';
+          bGetUpdate.Caption := 'Последняя версия';
           bGetUpdate.Font.Color := clBlack;
         end;
 

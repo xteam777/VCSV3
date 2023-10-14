@@ -3531,12 +3531,14 @@ object MainForm: TMainForm
         C3D9E7FF014A23F326C58CA0F60000000049454E44AE426082}
       Stretch = True
     end
-    object bGetUpdate: TSpeedButton
-      Left = 704
+    object bGetUpdate: TColorSpeedButton
+      Left = 674
       Top = 463
-      Width = 135
+      Width = 165
       Height = 21
-      Caption = '        '#1055#1086#1089#1083#1077#1076#1085#1103#1103' '#1074#1077#1088#1089#1080#1103
+      Alignment = taRightJustify
+      Caption = #1055#1086#1089#1083#1077#1076#1085#1103#1103' '#1074#1077#1088#1089#1080#1103
+      Color = clBtnFace
       Flat = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -3544,8 +3546,9 @@ object MainForm: TMainForm
       Font.Name = 'Arial'
       Font.Style = [fsBold]
       ParentFont = False
-      StyleElements = [seClient, seBorder]
       OnClick = bGetUpdateClick
+      OnMouseEnter = bGetUpdateMouseEnter
+      OnMouseLeave = bGetUpdateMouseLeave
     end
     object pLeft: TPanel
       Left = 0
@@ -5613,6 +5616,7 @@ object MainForm: TMainForm
               Top = 5
               Width = 35
               Height = 28
+              Alignment = taLeftJustify
               Anchors = []
               Color = clGray
               Flat = True
@@ -5896,8 +5900,8 @@ object MainForm: TMainForm
       end
     end
     object Button4: TButton
-      Left = 283
-      Top = 464
+      Left = 281
+      Top = 369
       Width = 75
       Height = 25
       Caption = 'Button4'
