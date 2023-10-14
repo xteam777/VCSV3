@@ -2200,7 +2200,7 @@ procedure TMainForm.tCheckServiceStartStopTimer(Sender: TObject);
 begin
   //XLog('tCheckServiceStartStopTimer');
 
-  tCheckLockedStateTimer(nil);
+//  tCheckLockedStateTimer(nil);
 
   SetIDContolsVisible;
   ShowPermanentPasswordState;

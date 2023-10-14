@@ -6396,7 +6396,6 @@ object MainForm: TMainForm
     Top = 9
   end
   object tCheckLockedState: TTimer
-    Interval = 100
     OnTimer = tCheckLockedStateTimer
     Left = 68
     Top = 254
