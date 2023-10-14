@@ -1063,7 +1063,7 @@ begin
       tHostTimerClientReconnect.Enabled := False;
       UserName := IntToStr(asInteger['ID']);
 
-      xLog('ID = ' + UserName);
+//      xLog('ID = ' + UserName);
 
       MinBuildVersion := asInteger['MinBiuld'];
       LastBuildVersion := asInteger['LastBuild'];
