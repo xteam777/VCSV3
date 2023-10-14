@@ -621,8 +621,6 @@ type
     procedure AddPasswordsRecord(username, userpass: String);
 
 //    function RunHTTPCall(verb, url, path, data: String): String;
-//    function FileVersion(const FileName: TFileName): String;
-    function FileBuildVersion(const FileName: TFileName): Integer;
 //    procedure CheckUpdates;
 
     procedure OnProgressDialogCancel(Sender: TObject);
@@ -636,7 +634,6 @@ type
     FCurStatus: Integer;
     TaskBarIcon: Boolean;
 
-    MinBuildVersion, LastBuildVersion: Integer;
     AccountName, AccountUID: String;
     DeviceId, DeviceUID, ConsoleId, ConsoleUID: String;
     HighLightedNode: PVirtualNode;
@@ -2211,52 +2208,6 @@ begin
 
   SetIDContolsVisible;
   ShowPermanentPasswordState;
-end;
-
-{function TMainForm.FileVersion(const FileName: TFileName): String;
-var
-  VerInfoSize: Cardinal;
-  VerValueSize: Cardinal;
-  Dummy: Cardinal;
-  PVerInfo: Pointer;
-  PVerValue: PVSFixedFileInfo;
-begin
-  Result := '';
-  VerInfoSize := GetFileVersionInfoSize(PChar(FileName), Dummy);
-  GetMem(PVerInfo, VerInfoSize);
-  try
-    if GetFileVersionInfo(PChar(FileName), 0, VerInfoSize, PVerInfo) then
-      if VerQueryValue(PVerInfo, '\', Pointer(PVerValue), VerValueSize) then
-        with PVerValue^ do
-          Result := Format('%d.%d.%d.%d', [
-            HiWord(dwFileVersionMS), //Major
-            LoWord(dwFileVersionMS), //Minor
-            HiWord(dwFileVersionLS), //Release
-            LoWord(dwFileVersionLS)]); //Build
-  finally
-    FreeMem(PVerInfo, VerInfoSize);
-  end;
-end;}
-
-function TMainForm.FileBuildVersion(const FileName: TFileName): Integer;
-var
-  VerInfoSize: Cardinal;
-  VerValueSize: Cardinal;
-  Dummy: Cardinal;
-  PVerInfo: Pointer;
-  PVerValue: PVSFixedFileInfo;
-begin
-  Result := 0;
-  VerInfoSize := GetFileVersionInfoSize(PChar(FileName), Dummy);
-  GetMem(PVerInfo, VerInfoSize);
-  try
-    if GetFileVersionInfo(PChar(FileName), 0, VerInfoSize, PVerInfo) then
-      if VerQueryValue(PVerInfo, '\', Pointer(PVerValue), VerValueSize) then
-        with PVerValue^ do
-          Result := LoWord(dwFileVersionLS); //Build
-  finally
-    FreeMem(PVerInfo, VerInfoSize);
-  end;
 end;
 
 {procedure TMainForm.CheckUpdates;
@@ -8857,7 +8808,7 @@ procedure TMainForm.rActivateReturn(Sender: TRtcConnection; Data,
 var
   PassRec: TRtcRecord;
   CurPass, sUserName, sConsoleName: String;
-  CurBuildVersion: Integer;
+  MinBuildVersion, LastBuildVersion, CurBuildVersion: Integer;
 begin
 //  xLog('rActivateReturn');
 
@@ -8898,40 +8849,6 @@ begin
         tHcAccountsReconnect.Enabled := False;
         sUserName := '';
         sConsoleName := '';
-
-        MinBuildVersion := asInteger['MinBiuld'];
-        LastBuildVersion := asInteger['LastBuild'];
-        CurBuildVersion := FileBuildVersion(ParamStr(0));
-
-        if CurBuildVersion < MinBuildVersion then
-        begin
-          FUpdateAvailable := True;
-          SetStatusStringDelayed('Версия устарела. Требуется обновление');
-
-          bGetUpdate.Caption := 'Установить обновление';
-          bGetUpdate.Font.Color := clRed;
-
-          //ActivationInProcess := False; //Не сбразываем флаг. Останавливаем повторную активацию
-          Exit;
-        end
-        else
-        if CurBuildVersion < LastBuildVersion then
-        begin
-          FUpdateAvailable := True;
-          SetStatusStringDelayed('Версия устарела. Требуется обновление');
-
-          bGetUpdate.Caption := 'Установить обновление';
-          bGetUpdate.Font.Color := clRed;
-
-          //ActivationInProcess := False; //Не сбразываем флаг. Останавливаем повторную активацию
-          Exit;
-        end
-        else //Версия последняя
-        begin
-          FUpdateAvailable := False;
-          bGetUpdate.Caption := '        Последняя версия';
-          bGetUpdate.Font.Color := clBlack;
-        end;
 
         ConsoleId := IntToStr(asInteger['ID_Console']);
 

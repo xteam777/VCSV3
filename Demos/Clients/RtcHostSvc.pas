@@ -11,7 +11,7 @@ uses
   Windows, Messages, SysUtils, Classes, SyncObjs, RunElevatedSupport, DateUtils,
   Graphics, Controls, SvcMgr, Dialogs, ExtCtrls, Cromis.Comm.Custom, Cromis.Comm.IPC,
 
-  rtcInfo, rtcLog, rtcCrypt, rtcSystem, CommonData, Registry,
+  rtcInfo, rtcLog, rtcCrypt, rtcSystem, CommonData, Registry, uSetup,
   rtcThrPool, WTSApi, uProcess, CommonUtils, uHardware, uDMUpdate,
 
   rtcWinLogon, wininet, rtcScrUtils, uVircessTypes, rtcpDesktopHost, rtcpChat,
@@ -488,9 +488,6 @@ begin
   tStartHelpers.Resume;
   tStartClients.StartClientInAllSessions(False, True);
   tStartClients.Resume;
-
-  if IncDay(GetLastCheckUpdateTime, 1) <= Now then
-    DMUpdate.StartUpdate(HostTimerClient.UseProxy, HostTimerClient.UserLogin.ProxyAddr, HostTimerClient.UserLogin.ProxyUserName, HostTimerClient.UserLogin.ProxyPassword);
 end;
 
 procedure TRemoxService.UpdateOnSuccessCheck(Sender: TObject);
@@ -1045,6 +1042,8 @@ var
   i: Integer;
   PassRec: TRtcRecord;
   CurPass: String;
+  MinBuildVersion, LastBuildVersion, CurBuildVersion: Integer;
+  FUpdateAvailable: Boolean;
 begin
   if Result.isType = rtc_Exception then
   begin
@@ -1065,6 +1064,37 @@ begin
       UserName := IntToStr(asInteger['ID']);
 
       xLog('ID = ' + UserName);
+
+      MinBuildVersion := asInteger['MinBiuld'];
+      LastBuildVersion := asInteger['LastBuild'];
+      CurBuildVersion := FileBuildVersion(ParamStr(0));
+
+      if IncDay(GetLastCheckUpdateTime, 1) <= Now then
+      begin
+        if CurBuildVersion < MinBuildVersion then
+        begin
+          FUpdateAvailable := True;
+
+          //ActivationInProcess := False; //Не сбразываем флаг. Останавливаем повторную активацию
+  //        Exit;
+        end
+        else
+        if CurBuildVersion < LastBuildVersion then
+        begin
+          FUpdateAvailable := True;
+
+          //ActivationInProcess := False; //Не сбразываем флаг. Останавливаем повторную активацию
+  //        Exit;
+        end
+        else //Версия последняя
+        begin
+          FUpdateAvailable := False;
+  //        bGetUpdate.Caption := '        Последняя версия';
+  //        bGetUpdate.Font.Color := clBlack;
+        end;
+
+        DMUpdate.StartUpdate(HostTimerClient.UseProxy, HostTimerClient.UserLogin.ProxyAddr, HostTimerClient.UserLogin.ProxyUserName, HostTimerClient.UserLogin.ProxyPassword);
+      end;
 
       PClient.Disconnect;
       PClient.Active := False;

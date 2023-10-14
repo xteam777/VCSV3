@@ -30,9 +30,57 @@ procedure DeleteProgramFolder;
 function GetSpecialFolderLocation(nFolder: Integer): String;
 function CreateDesktopShellLink(const TargetName: String; nFolder: Integer): Boolean;
 procedure DeleteShortcut(sFileName: String; nFolder: Integer);
+//    function FileVersion(const FileName: TFileName): String;
+function FileBuildVersion(const FileName: TFileName): Integer;
 //procedure ReadGroups(Strings: TStrings);
 
 implementation
+
+{function FileVersion(const FileName: TFileName): String;
+var
+  VerInfoSize: Cardinal;
+  VerValueSize: Cardinal;
+  Dummy: Cardinal;
+  PVerInfo: Pointer;
+  PVerValue: PVSFixedFileInfo;
+begin
+  Result := '';
+  VerInfoSize := GetFileVersionInfoSize(PChar(FileName), Dummy);
+  GetMem(PVerInfo, VerInfoSize);
+  try
+    if GetFileVersionInfo(PChar(FileName), 0, VerInfoSize, PVerInfo) then
+      if VerQueryValue(PVerInfo, '\', Pointer(PVerValue), VerValueSize) then
+        with PVerValue^ do
+          Result := Format('%d.%d.%d.%d', [
+            HiWord(dwFileVersionMS), //Major
+            LoWord(dwFileVersionMS), //Minor
+            HiWord(dwFileVersionLS), //Release
+            LoWord(dwFileVersionLS)]); //Build
+  finally
+    FreeMem(PVerInfo, VerInfoSize);
+  end;
+end;}
+
+function FileBuildVersion(const FileName: TFileName): Integer;
+var
+  VerInfoSize: Cardinal;
+  VerValueSize: Cardinal;
+  Dummy: Cardinal;
+  PVerInfo: Pointer;
+  PVerValue: PVSFixedFileInfo;
+begin
+  Result := 0;
+  VerInfoSize := GetFileVersionInfoSize(PChar(FileName), Dummy);
+  GetMem(PVerInfo, VerInfoSize);
+  try
+    if GetFileVersionInfo(PChar(FileName), 0, VerInfoSize, PVerInfo) then
+      if VerQueryValue(PVerInfo, '\', Pointer(PVerValue), VerValueSize) then
+        with PVerValue^ do
+          Result := LoWord(dwFileVersionLS); //Build
+  finally
+    FreeMem(PVerInfo, VerInfoSize);
+  end;
+end;
 
 {procedure CopyRegistrySettingsFromCurrentUserToLocalMachine;
 var
