@@ -65,7 +65,8 @@ uses
   Compressions in '..\..\rmxVideo\Compressor\Compressions.pas',
   SendDestroyToGateway in '..\Modules\SendDestroyToGateway.pas',
   uUIDataModule in '..\Modules\uUIDataModule.pas' {UIDataModule},
-  uChannelsUsage in '..\Modules\uChannelsUsage.pas' {fChannelsUsage};
+  uChannelsUsage in '..\Modules\uChannelsUsage.pas' {fChannelsUsage},
+  uDMUpdate in '..\Modules\uDMUpdate.pas' {DMUpdate: TDataModule};
 
 {$R *.res}
 
@@ -113,6 +114,7 @@ begin
   Forms.Application.ShowMainForm := (Pos('/SILENT', UpperCase(CmdLine)) = 0);
   Forms.Application.CreateForm(TMainForm, MainForm);
   Application.CreateForm(TfChannelsUsage, fChannelsUsage);
+  Application.CreateForm(TDMUpdate, DMUpdate);
   Forms.Application.Run;
 //    else
 //    begin
@@ -367,10 +369,17 @@ begin
     begin
       StartServices(RTC_HOSTSERVICE_NAME);
     end
-     else
+    else
     if Pos('/STOP', UpperCase(CmdLine)) > 0 then
     begin
       StopServices(RTC_HOSTSERVICE_NAME);
+    end
+    else
+    if Pos('/KILL', UpperCase(CmdLine)) > 0 then
+    begin
+      rtcKillProcess('rmx_x32');
+      rtcKillProcess('rmx_x64');
+      rtcKillProcess('remox.exe');
     end
     else
     if Pos('/UNINSTALL', UpperCase(CmdLine)) > 0 then

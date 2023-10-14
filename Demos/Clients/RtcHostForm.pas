@@ -16,7 +16,7 @@ uses
   Dialogs, StdCtrls, ExtCtrls, ShellApi, rdFileTransLog, VirtualTrees.Types, SHDocVw, rtcpFileTransUI, Psapi, Winapi.SHFolder,
   Vcl.ComCtrls, Registry, Math, RtcIdentification, SyncObjs, System.Net.HTTPClient, System.Net.URLClient, ActiveX, ComObj, CommCtrl,
   rtcSystem, rtcInfo, uMessageBox, rtcScrUtils, IOUtils, uAcceptEula, ProgressDialog, ShlObj, RecvDataObject, SendDestroyToGateway,
-  ChromeTabsTypes, ChromeTabsClasses, ChromeTabsControls, uUIDataModule, uChannelsUsage,
+  ChromeTabsTypes, ChromeTabsClasses, ChromeTabsControls, uUIDataModule, uChannelsUsage, uDMUpdate,
 
 {$IFDEF IDE_XE3up}
   UITypes,
@@ -125,7 +125,7 @@ type
 
   TExecuteProc = procedure of Object;
 
-  TStatusUpdateThread = class(TThread)
+  {TStatusUpdateThread = class(TThread)
   private
     FStatusUpdateProc: TExecuteProc;
     FCheckUpdatesProc: TExecuteProc;
@@ -133,7 +133,7 @@ type
     constructor Create(CreateSuspended: Boolean;
       StatusUpdateProc, CheckUpdatesProc: TExecuteProc); overload;
     procedure Execute; override;
-  end;
+  end;}
 
   {TPolygon class represents a polygon. It containes points that define a polygon and
   caches fill range list for fast polygon filling.}
@@ -567,13 +567,15 @@ type
     FScreenLockedState: Integer;
 //    FHostGatewayClientActive: Boolean;
     DelayedStatus: String;
-    FStatusUpdateThread: TStatusUpdateThread;
+//    FStatusUpdateThread: TStatusUpdateThread;
     tPHostThread: TPortalHostThread;
     FUpdateAvailable: Boolean;
     FProgressDialogsList: TList;
 
     PendingRequests: TList;
     PortalConnectionsList: TList;
+
+    DMUpdate: TDMUpdate;
 
     function FormatID(AID: String): String;
     function ConnectedToAllGateways: Boolean;
@@ -618,9 +620,10 @@ type
     procedure AddHistoryRecord(username, userdesc: String);
     procedure AddPasswordsRecord(username, userpass: String);
 
-    function RunHTTPCall(verb, url, path, data: String): String;
-    function FileVersion(const FileName: TFileName): String;
-    procedure CheckUpdates;
+//    function RunHTTPCall(verb, url, path, data: String): String;
+//    function FileVersion(const FileName: TFileName): String;
+    function FileBuildVersion(const FileName: TFileName): Integer;
+//    procedure CheckUpdates;
 
     procedure OnProgressDialogCancel(Sender: TObject);
     procedure OnDesktopHostNotifyFileBatchSend(Sender: TObject; const task: TBatchTask; mode: TModeBatchSend);
@@ -633,6 +636,7 @@ type
     FCurStatus: Integer;
     TaskBarIcon: Boolean;
 
+    MinBuildVersion, LastBuildVersion: Integer;
     AccountName, AccountUID: String;
     DeviceId, DeviceUID, ConsoleId, ConsoleUID: String;
     HighLightedNode: PVirtualNode;
@@ -715,6 +719,7 @@ type
     procedure ShowDevicesPanel;
     procedure ShowSettingsForm(APage: String);
     function GetAutoUpdateSetting: Boolean;
+    function SendStartUpdateToService: Boolean;
     function SendSettingsToService(ANewPermanentPassword: String; ASendPassword, AAutomaticUpdate: Boolean): Boolean;
 //    procedure SettingsFormOnResult(sett: TrdClientSettings);
 //    procedure SetAutoRunToRegistry(AValue: Boolean);
@@ -1566,7 +1571,7 @@ end;
 //  Dispatch(Message);
 //end;
 
-constructor TStatusUpdateThread.Create(CreateSuspended: Boolean;
+{constructor TStatusUpdateThread.Create(CreateSuspended: Boolean;
   StatusUpdateProc, CheckUpdatesProc: TExecuteProc);
 begin
   inherited Create(CreateSuspended);
@@ -1596,7 +1601,7 @@ begin
     else
       i := i + 1;
   end;
-end;
+end;}
 
 procedure TMainform.ChangePort(AClient: TRtcHttpClient);
 begin
@@ -2207,7 +2212,7 @@ begin
   ShowPermanentPasswordState;
 end;
 
-function TMainForm.FileVersion(const FileName: TFileName): String;
+{function TMainForm.FileVersion(const FileName: TFileName): String;
 var
   VerInfoSize: Cardinal;
   VerValueSize: Cardinal;
@@ -2230,9 +2235,30 @@ begin
   finally
     FreeMem(PVerInfo, VerInfoSize);
   end;
+end;}
+
+function TMainForm.FileBuildVersion(const FileName: TFileName): Integer;
+var
+  VerInfoSize: Cardinal;
+  VerValueSize: Cardinal;
+  Dummy: Cardinal;
+  PVerInfo: Pointer;
+  PVerValue: PVSFixedFileInfo;
+begin
+  Result := 0;
+  VerInfoSize := GetFileVersionInfoSize(PChar(FileName), Dummy);
+  GetMem(PVerInfo, VerInfoSize);
+  try
+    if GetFileVersionInfo(PChar(FileName), 0, VerInfoSize, PVerInfo) then
+      if VerQueryValue(PVerInfo, '\', Pointer(PVerValue), VerValueSize) then
+        with PVerValue^ do
+          Result := LoWord(dwFileVersionLS); //Build
+  finally
+    FreeMem(PVerInfo, VerInfoSize);
+  end;
 end;
 
-procedure TMainForm.CheckUpdates;
+{procedure TMainForm.CheckUpdates;
 var
   sResponse: String;
 begin
@@ -2245,9 +2271,9 @@ begin
     FUpdateAvailable := True
   else
     FUpdateAvailable := False;
-end;
+end;}
 
-function TMainForm.RunHTTPCall(verb, url, path, data: String): String;
+{function TMainForm.RunHTTPCall(verb, url, path, data: String): String;
 var
   FHTTPClient: THTTPClient;
   LRequest: IHTTPRequest;
@@ -2290,7 +2316,7 @@ begin
     FreeAndNil(sContent);
     FreeAndNil(FHTTPClient);
   end;
-end;
+end;}
 
 procedure TMainForm.SetIDContolsVisible;
 var
@@ -3258,6 +3284,8 @@ begin
 
   FUpdateAvailable := False;
 
+  DMUpdate := TDMUpdate.Create(Self);
+
   DeviceId := '';
   DeviceUID := '';
   ConsoleId := '';
@@ -3274,7 +3302,7 @@ begin
   ActivationInProcess := False;
   AccountLoginInProcess := False;
 
-  FStatusUpdateThread := TStatusUpdateThread.Create(False, UpdateStatus, CheckUpdates);
+//  FStatusUpdateThread := TStatusUpdateThread.Create(False, UpdateStatus, CheckUpdates);
   tPHostThread := nil;
 
   OpenedModalForm := nil;
@@ -3442,7 +3470,9 @@ begin
 
   FreeAndNil(CB_Monitor);
 
-  FStatusUpdateThread.Terminate;
+  FreeAndNil(DMUpdate);
+
+//  FStatusUpdateThread.Terminate;
 
 //  RestoreAero;
 
@@ -3831,6 +3861,8 @@ procedure TMainForm.UpdateStatus;
 var
   bmp: TBitmap;
   sDots: String;
+  UpdateStatus: Integer;
+  Progress: Double;
 begin
   //XLog('SetStatus: ' + IntToStr(CurStatus));
 
@@ -3878,14 +3910,30 @@ begin
       btnNewConnection.Color := $00A39323;
     end;
 
-    if FUpdateAvailable then
+    DMUpdate.GetProgress(UpdateStatus, Progress);
+    if UpdateStatus = US_READY then
     begin
-      bGetUpdate.Caption := 'Установить обновление';
-      bGetUpdate.Font.Color := clRed;
+      if FUpdateAvailable then
+      begin
+        bGetUpdate.Caption := 'Установить обновление';
+        bGetUpdate.Font.Color := clRed;
+      end
+      else
+      begin
+        bGetUpdate.Caption := '        Последняя версия';
+        bGetUpdate.Font.Color := clBlack;
+      end;
     end
     else
+    if UpdateStatus = US_DOWNLOADING then
     begin
-      bGetUpdate.Caption := '        Последняя версия';
+      bGetUpdate.Caption := '        Загрузка ' + IntToStr(Ceil(Progress)) + '%';
+      bGetUpdate.Font.Color := clBlack;
+    end
+    else
+    if UpdateStatus = US_INSTALLING then
+    begin
+      bGetUpdate.Caption := '               Установка';
       bGetUpdate.Font.Color := clBlack;
     end;
 
@@ -7234,7 +7282,12 @@ end;
 procedure TMainForm.bGetUpdateClick(Sender: TObject);
 begin
   if FUpdateAvailable then
-    ShellExecute(Handle, 'open', 'http://remox.com/download/', '', '', SW_SHOWNORMAL);
+//    ShellExecute(Handle, 'open', 'http://remox.com/download/', '', '', SW_SHOWNORMAL);
+  if IsServiceStarted(RTC_HOSTSERVICE_NAME)
+    or IsServiceStarting(RTC_HOSTSERVICE_NAME) then
+    SendStartUpdateToService
+  else
+    DMUpdate.StartUpdate(hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword);
 end;
 
 procedure TMainForm.cPriorityChange(Sender: TObject);
@@ -8797,6 +8850,7 @@ procedure TMainForm.rActivateReturn(Sender: TRtcConnection; Data,
 var
   PassRec: TRtcRecord;
   CurPass, sUserName, sConsoleName: String;
+  CurBuildVersion: Integer;
 begin
 //  xLog('rActivateReturn');
 
@@ -8837,6 +8891,40 @@ begin
         tHcAccountsReconnect.Enabled := False;
         sUserName := '';
         sConsoleName := '';
+
+        MinBuildVersion := asInteger['MinBiuld'];
+        LastBuildVersion := asInteger['LastBuild'];
+        CurBuildVersion := FileBuildVersion(ParamStr(0));
+
+        if CurBuildVersion < MinBuildVersion then
+        begin
+          FUpdateAvailable := True;
+          SetStatusStringDelayed('Версия устарела. Требуется обновление');
+
+          bGetUpdate.Caption := 'Установить обновление';
+          bGetUpdate.Font.Color := clRed;
+
+          //ActivationInProcess := False; //Не сбразываем флаг. Останавливаем повторную активацию
+          Exit;
+        end
+        else
+        if CurBuildVersion < LastBuildVersion then
+        begin
+          FUpdateAvailable := True;
+          SetStatusStringDelayed('Версия устарела. Требуется обновление');
+
+          bGetUpdate.Caption := 'Установить обновление';
+          bGetUpdate.Font.Color := clRed;
+
+          //ActivationInProcess := False; //Не сбразываем флаг. Останавливаем повторную активацию
+          Exit;
+        end
+        else //Версия последняя
+        begin
+          FUpdateAvailable := False;
+          bGetUpdate.Caption := '        Последняя версия';
+          bGetUpdate.Font.Color := clBlack;
+        end;
 
         ConsoleId := IntToStr(asInteger['ID_Console']);
 
@@ -10719,6 +10807,40 @@ begin
     SettingsFormOpened := False;
   finally
     sett.Free;
+  end;
+end;
+
+function TMainForm.SendStartUpdateToService: Boolean;
+var
+  Request, Response: IIPCData;
+  IPCClient: TIPCClient;
+  I, Len: Integer;
+begin
+  Result := False;
+
+  IPCClient := TIPCClient.Create;
+  try
+    IPCClient.ComputerName := 'localhost';
+    IPCClient.ServerName := 'Remox_IPC_Service';
+    IPCClient.ConnectClient(1000); //cDefaultTimeout
+    try
+      if IPCClient.IsConnected then
+      begin
+        Request := AcquireIPCData;
+        Request.Data.WriteInteger('QueryType', QT_START_UPDATE);
+        Response := IPCClient.ExecuteConnectedRequest(Request);
+
+        if IPCClient.AnswerValid then
+          Result := Response.Data.ReadBoolean('Result');
+
+//          if IPCClient.LastError <> 0 then
+//            ListBox1.Items.Add(Format('Error: Code %d', [IPCClient.LastError]));
+      end;
+    finally
+      IPCClient.DisconnectClient;
+    end;
+  finally
+    IPCClient.Free;
   end;
 end;
 
