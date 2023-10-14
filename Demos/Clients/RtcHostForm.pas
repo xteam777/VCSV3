@@ -7252,7 +7252,10 @@ end;
 
 procedure TMainForm.bGetUpdateMouseEnter(Sender: TObject);
 begin
-  bGetUpdate.Color := $00615EF1;
+  if FUpdateAvailable then
+    bGetUpdate.Color := clWhite
+  else
+    bGetUpdate.Color := $00615EF1;
 end;
 
 procedure TMainForm.bGetUpdateMouseLeave(Sender: TObject);
@@ -10772,13 +10775,13 @@ begin
             ShowPermanentPasswordState();
             SendPasswordsToGateway;
           end;
+        end
+        else
+        begin
+          MessageBox(Handle, 'Ошибка связи со службой. Проверьте что служба Remox запущена', 'Remox', MB_OKCANCEL);
+          SettingsFormOpened := False;
+          Exit;
         end;
-      end
-      else
-      begin
-        MessageBox(Handle, 'Ошибка связи со службой. Проверьте что служба Remox запущена', 'Remox', MB_OKCANCEL);
-        SettingsFormOpened := False;
-        Exit;
       end;
 
       StoreHistory := sett.cbStoreHistory.Checked;
