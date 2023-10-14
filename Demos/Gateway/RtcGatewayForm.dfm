@@ -706,8 +706,8 @@ object MainForm: TMainForm
   end
   object tGetStatsCount: TTimer
     OnTimer = tGetStatsCountTimer
-    Left = 521
-    Top = 192
+    Left = 361
+    Top = 296
   end
   object MainGateClient: TRtcHttpClient
     MultiThreaded = True
