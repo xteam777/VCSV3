@@ -22,8 +22,9 @@ object DMUpdate: TDMUpdate
     AutoSyncEvents = True
     Client = hcUpdate
     AutoRepost = 2
+    OnResponseAbort = drDownloadResponseAbort
     OnDataReceived = drDownloadDataReceived
     Left = 59
-    Top = 20
+    Top = 18
   end
 end

@@ -17,6 +17,7 @@ type
     drDownload: TRtcDataRequest;
     procedure DataModuleCreate(Sender: TObject);
     procedure drDownloadDataReceived(Sender: TRtcConnection);
+    procedure drDownloadResponseAbort(Sender: TRtcConnection);
   private
     { Private declarations }
     procedure InstallServiceUpdate;
@@ -129,6 +130,11 @@ begin
       end;
     end;
   end;
+end;
+
+procedure TDMUpdate.drDownloadResponseAbort(Sender: TRtcConnection);
+begin
+  Tag := Tag;
 end;
 
 procedure TDMUpdate.InstallServiceUpdate;

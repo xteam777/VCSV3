@@ -1144,7 +1144,7 @@ function TMainForm.ConnectedToAllGateways: Boolean;
 begin
   CS_Status.Acquire;
   try
-    Result := CurStatus >= 3;
+    Result := (CurStatus >= 3) and  (CurStatus <> STATUS_OLD_VERSION);
   finally
     CS_Status.Release;
   end;
@@ -6695,9 +6695,7 @@ begin
 
   case Key of
     VK_RETURN:
-      begin
         btnAccountLoginClick(nil);
-      end;
   end;
 end;
 
@@ -6985,12 +6983,12 @@ var
 begin
 //  XLog('lRegistrationClick');
 
-  if not ConnectedToAllGateways then
-  begin
-//    MessageBox(Handle, 'Нет подключения к серверу', 'Remox', MB_ICONWARNING or MB_OK);
-    SetStatusStringDelayed('Нет подключения к серверу');
-    Exit;
-  end;
+//  if not ConnectedToAllGateways then
+//  begin
+////    MessageBox(Handle, 'Нет подключения к серверу', 'Remox', MB_ICONWARNING or MB_OK);
+//    SetStatusStringDelayed('Нет подключения к серверу');
+//    Exit;
+//  end;
 
   ShellExecute(0, 'open', PChar('http://remox.com/register'), '', nil, SW_SHOW);
 
@@ -7240,6 +7238,8 @@ begin
 end;
 
 procedure TMainForm.bGetUpdateClick(Sender: TObject);
+var
+  UpdateStatus, Progress: Integer;
 begin
   if FUpdateAvailable then
 //    ShellExecute(Handle, 'open', 'http://remox.com/download/', '', '', SW_SHOWNORMAL);
@@ -7247,7 +7247,11 @@ begin
     or IsServiceStarting(RTC_HOSTSERVICE_NAME) then
     SendStartUpdateToService
   else
-    DMUpdate.StartUpdate(hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword);
+  begin
+    DMUpdate.GetProgress(UpdateStatus, Progress);
+    if UpdateStatus = US_READY then
+      DMUpdate.StartUpdate(hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword);
+  end;
 end;
 
 procedure TMainForm.bGetUpdateMouseEnter(Sender: TObject);
@@ -8968,6 +8972,9 @@ begin
 //        SetConnectedState(True);
         SetStatus(STATUS_CONNECTING_TO_GATE);
   //      LoggedIn := True;
+
+        if cbRememberAccount.Checked then
+          btnAccountLoginClick(nil);
 
   //      ConnectToGateway;
 //        if cbRememberAccount.Checked then
