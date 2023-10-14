@@ -8,11 +8,11 @@ interface
 {$INCLUDE rtcDefs.inc}
 
 uses
-  Windows, Messages, SysUtils, Classes, SyncObjs, RunElevatedSupport,
+  Windows, Messages, SysUtils, Classes, SyncObjs, RunElevatedSupport, DateUtils,
   Graphics, Controls, SvcMgr, Dialogs, ExtCtrls, Cromis.Comm.Custom, Cromis.Comm.IPC,
 
   rtcInfo, rtcLog, rtcCrypt, rtcSystem, CommonData, Registry,
-  rtcThrPool, WTSApi, uProcess, CommonUtils, uHardware,
+  rtcThrPool, WTSApi, uProcess, CommonUtils, uHardware, uDMUpdate,
 
   rtcWinLogon, wininet, rtcScrUtils, uVircessTypes, rtcpDesktopHost, rtcpChat,
   rtcPortalMod, rtcpFileTrans, rtcPortalCli, rtcPortalHttpCli, rtcConn,
@@ -101,10 +101,14 @@ type
     FPermanentPassword: String;
     FScreenLockedState: Integer;
 
+    DMUpdate: TDMUpdate;
+
     procedure UpdateMyPriority;
     function GetServiceController: TServiceController; override;
     procedure ActivateHost;
     procedure HostLogOut;
+    function GetLastCheckUpdateTime: TDateTime;
+    procedure SetLastCheckUpdateTime(AValue: TDateTime);
     procedure LoadSetup;
     procedure StartHostLogin;
     procedure msgHostTimerTimer(Sender: TObject);
@@ -191,6 +195,17 @@ begin
       end;
     finally
       reg.Free;
+    end;
+    Response.Data.WriteBoolean('Result', True);
+  end
+  else
+  if Request.Data.ReadInteger('QueryType') = QT_START_UPDATE then
+  begin
+    try
+      DMUpdate.StartUpdate(HostTimerClient.UseProxy, HostTimerClient.UserLogin.ProxyAddr, HostTimerClient.UserLogin.ProxyUserName, HostTimerClient.UserLogin.ProxyPassword);
+    except
+      Response.Data.WriteBoolean('Result', False);
+      Exit;
     end;
     Response.Data.WriteBoolean('Result', True);
   end;
@@ -369,6 +384,8 @@ begin
   if (Win32MajorVersion >= 6 {vista\server 2k8}) then
     Interactive := False;
 
+  DMUpdate := TDMUpdate.Create(nil);
+
   ConfigLastDate := 0;
   CurStatus := STATUS_NO_CONNECTION;
   ActivationInProcess := False;
@@ -468,6 +485,12 @@ begin
   tStartHelpers.Resume;
   tStartClients.StartClientInAllSessions(False, True);
   tStartClients.Resume;
+
+  if IncDay(GetLastCheckUpdateTime, 1) <= Now then
+  begin
+    DMUpdate.StartUpdate(HostTimerClient.UseProxy, HostTimerClient.UserLogin.ProxyAddr, HostTimerClient.UserLogin.ProxyUserName, HostTimerClient.UserLogin.ProxyPassword);
+    SetLastCheckUpdateTime(Now);
+  end;
 end;
 
 {procedure TRemoxService.LogoutClientHosts; //Сделано на гейте
@@ -620,6 +643,8 @@ begin
 
   tStartHelpers.Terminate;
   tStartClients.Terminate;
+
+  FreeAndNil(DMUpdate);
 
   StopLog;
 
@@ -893,6 +918,53 @@ begin
 //  HostTimerClient.Session.Close;
 
   HostTimerClient.Connect(True);
+end;
+
+function TRemoxService.GetLastCheckUpdateTime: TDateTime;
+var
+  reg: TRegistry;
+begin
+//  xLog('GetAutoUpdateSetting');
+
+  Result := EncodeDate(1970, 1, 1);
+
+  reg := TRegistry.Create;
+  try
+    reg.RootKey := HKEY_LOCAL_MACHINE;
+    reg.Access := KEY_READ or KEY_WOW64_64KEY;
+    if reg.KeyExists('SOFTWARE\Remox\') then
+      if reg.OpenKey('SOFTWARE\Remox\', False) then
+      begin
+        if reg.ValueExists('LaskCheckUpdate') then
+          Result := reg.ReadDateTime('LaskCheckUpdate');
+
+        reg.CloseKey;
+      end;
+  finally
+    reg.Free;
+  end;
+end;
+
+procedure TRemoxService.SetLastCheckUpdateTime(AValue: TDateTime);
+var
+  reg: TRegistry;
+begin
+//  xLog('SetLastCheckUpdateTime');
+
+  reg := TRegistry.Create;
+  try
+    reg.RootKey := HKEY_LOCAL_MACHINE;
+    reg.Access := KEY_WRITE or KEY_WOW64_64KEY;
+    if reg.KeyExists('SOFTWARE\Remox\') then
+      if reg.OpenKey('SOFTWARE\Remox\', False) then
+      begin
+        reg.WriteDateTime('LaskCheckUpdate', AValue);
+
+        reg.CloseKey;
+      end;
+  finally
+    reg.Free;
+  end;
 end;
 
 procedure TRemoxService.LoadSetup;

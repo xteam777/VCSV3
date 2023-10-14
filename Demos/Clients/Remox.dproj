@@ -127,13 +127,14 @@
         <DCC_DebugInfoInTds>true</DCC_DebugInfoInTds>
         <DCC_DebugDCUs>true</DCC_DebugDCUs>
         <DCC_MapFile>3</DCC_MapFile>
-        <VerInfo_Keys>CompanyName=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductVersion=1.0.0.0;Comments=;ProgramID=com.embarcadero.$(MSBuildProjectName);FileDescription=$(MSBuildProjectName);ProductName=$(MSBuildProjectName)</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=;FileVersion=1.0.0.11020;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductVersion=1.0.0.0;Comments=;ProgramID=com.embarcadero.$(MSBuildProjectName);FileDescription=$(MSBuildProjectName);ProductName=$(MSBuildProjectName)</VerInfo_Keys>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_DebugInfoInExe>true</DCC_DebugInfoInExe>
         <BT_BuildType>Debug</BT_BuildType>
         <UWP_DelphiLogo44>48x48-3.png</UWP_DelphiLogo44>
         <UWP_DelphiLogo150>240x240-3.png</UWP_DelphiLogo150>
         <AppDPIAwarenessMode>none</AppDPIAwarenessMode>
+        <VerInfo_Build>11020</VerInfo_Build>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
         <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
@@ -217,6 +218,11 @@
         <DCCReference Include="..\Modules\uChannelsUsage.pas">
             <Form>fChannelsUsage</Form>
             <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="..\Modules\uDMUpdate.pas">
+            <Form>DMUpdate</Form>
+            <FormType>dfm</FormType>
+            <DesignClass>TDataModule</DesignClass>
         </DCCReference>
         <RcItem Include="rmx_w32.exe">
             <ContainerId>ResourceItem</ContainerId>
