@@ -5,7 +5,7 @@ object rdClientSettings: TrdClientSettings
   BorderStyle = bsDialog
   Caption = #1053#1072#1089#1090#1088#1086#1081#1082#1080
   ClientHeight = 257
-  ClientWidth = 435
+  ClientWidth = 423
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -20,12 +20,12 @@ object rdClientSettings: TrdClientSettings
   OnCreate = FormCreate
   OnShow = FormShow
   TextHeight = 14
-  object tcSettings: TPageControl
+  object tcMain: TPageControl
     Left = 0
     Top = 2
-    Width = 431
+    Width = 423
     Height = 217
-    ActivePage = tsSequrity
+    ActivePage = tsGeneral
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -13
@@ -154,45 +154,16 @@ object rdClientSettings: TrdClientSettings
         end
       end
     end
-    object tsSequrity: TTabSheet
-      Caption = #1041#1077#1079#1086#1087#1072#1089#1085#1086#1089#1090#1100
+    object tsGeneral: TTabSheet
+      Caption = #1054#1089#1085#1086#1074#1085#1086#1077
       ImageIndex = 1
-      object cbOnlyAdminChanges: TCheckBox
-        Left = 3
-        Top = 167
-        Width = 410
-        Height = 17
-        Caption = #1056#1072#1079#1088#1077#1096#1080#1090#1100' '#1080#1079#1084#1077#1085#1077#1085#1080#1077' '#1085#1072#1089#1090#1088#1086#1077#1082' '#1090#1086#1083#1100#1082#1086' '#1072#1076#1084#1080#1085#1080#1089#1090#1088#1072#1090#1086#1088#1072#1084
-        TabOrder = 3
-        Visible = False
-        OnKeyDown = cbAutoRunKeyDown
-      end
-      object cbStoreHistory: TCheckBox
-        Left = 3
-        Top = 121
-        Width = 410
-        Height = 17
-        Caption = #1057#1086#1093#1088#1072#1085#1103#1090#1100' '#1080#1089#1090#1086#1088#1080#1102' '#1087#1086#1076#1082#1083#1102#1095#1077#1085#1080#1081
-        TabOrder = 0
-        OnClick = cbStoreHistoryClick
-        OnKeyDown = cbAutoRunKeyDown
-      end
-      object cbStorePasswords: TCheckBox
-        Left = 3
-        Top = 144
-        Width = 410
-        Height = 17
-        Caption = #1057#1086#1093#1088#1072#1085#1103#1090#1100' '#1074#1074#1077#1076#1077#1085#1085#1099#1077' '#1087#1072#1088#1086#1083#1080
-        TabOrder = 2
-        OnKeyDown = cbAutoRunKeyDown
-      end
-      object GroupBox1: TGroupBox
-        Left = 3
-        Top = 0
+      object gbPermanentPassword: TGroupBox
+        Left = 2
+        Top = 68
         Width = 410
         Height = 115
         Caption = #1053#1077#1082#1086#1085#1090#1088#1086#1083#1080#1088#1091#1077#1084#1099#1081' '#1076#1086#1089#1090#1091#1087
-        TabOrder = 1
+        TabOrder = 0
         object Label7: TLabel
           Left = 11
           Top = 82
@@ -249,10 +220,39 @@ object rdClientSettings: TrdClientSettings
           OnKeyDown = cbAutoRunKeyDown
         end
       end
+      object cbStoreHistory: TCheckBox
+        Left = 7
+        Top = 3
+        Width = 410
+        Height = 17
+        Caption = #1057#1086#1093#1088#1072#1085#1103#1090#1100' '#1080#1089#1090#1086#1088#1080#1102' '#1087#1086#1076#1082#1083#1102#1095#1077#1085#1080#1081
+        TabOrder = 1
+        OnClick = cbStoreHistoryClick
+        OnKeyDown = cbAutoRunKeyDown
+      end
+      object cbStorePasswords: TCheckBox
+        Left = 7
+        Top = 22
+        Width = 410
+        Height = 17
+        Caption = #1057#1086#1093#1088#1072#1085#1103#1090#1100' '#1074#1074#1077#1076#1077#1085#1085#1099#1077' '#1087#1072#1088#1086#1083#1080
+        TabOrder = 2
+        OnKeyDown = cbAutoRunKeyDown
+      end
+      object cbAutomaticUpdate: TCheckBox
+        Left = 7
+        Top = 41
+        Width = 410
+        Height = 17
+        Caption = #1040#1074#1090#1086#1084#1072#1090#1080#1095#1077#1089#1082#1086#1077' '#1086#1073#1085#1086#1074#1083#1077#1085#1080#1077' '#1087#1088#1080' '#1085#1072#1083#1080#1095#1080#1080' '#1085#1086#1074#1086#1081' '#1074#1077#1088#1089#1080#1080
+        TabOrder = 3
+        Visible = False
+        OnKeyDown = cbAutoRunKeyDown
+      end
     end
   end
   object bOK: TButton
-    Left = 211
+    Left = 195
     Top = 225
     Width = 107
     Height = 29
@@ -267,7 +267,7 @@ object rdClientSettings: TrdClientSettings
     OnClick = btnOKClick
   end
   object bClose: TButton
-    Left = 324
+    Left = 308
     Top = 225
     Width = 107
     Height = 29

@@ -208,7 +208,7 @@ object fAcceptEULA: TfAcceptEULA
         OnChange = ePasswordChange
       end
     end
-    object cbAutoUpdate: TCheckBox
+    object cbAutomaticUpdate: TCheckBox
       Left = 8
       Top = 156
       Width = 425

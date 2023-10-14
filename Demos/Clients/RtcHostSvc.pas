@@ -177,6 +177,7 @@ begin
 
         if Request.Data.Exists('PermanentPassword') then
           reg.WriteString('PermanentPassword', Request.Data.ReadString('PermanentPassword'));
+        reg.WriteString('AutomaticUpdate', Request.Data.ReadString('AutomaticUpdate'));
         reg.WriteInteger('ProxyOption', Request.Data.ReadInteger('ProxyOption'));
         reg.WriteString('ProxyAddr', Request.Data.ReadString('ProxyAddr'));
         reg.WriteString('ProxyUsername', Request.Data.ReadString('ProxyUsername'));

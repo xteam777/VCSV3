@@ -714,7 +714,8 @@ type
     function AddDotsToString(sCurString: String): String;
     procedure ShowDevicesPanel;
     procedure ShowSettingsForm(APage: String);
-    function SendSettingsToService(ANewPermanentPassword: String; ASendPassword: Boolean): Boolean;
+    function GetAutoUpdateSetting: Boolean;
+    function SendSettingsToService(ANewPermanentPassword: String; ASendPassword, AAutomaticUpdate: Boolean): Boolean;
 //    procedure SettingsFormOnResult(sett: TrdClientSettings);
 //    procedure SetAutoRunToRegistry(AValue: Boolean);
     procedure ShowPermanentPasswordState();
@@ -1054,9 +1055,10 @@ procedure TMainForm.bSetupClick(Sender: TObject);
 var
   err: LongInt;
   EleavateSupport: TEleavateSupport;
-  fn, NewPermanentPassword: String;
+  fn{, NewPermanentPassword}: String;
 //  err: LongInt;
   fAcceptEULA: TfAcceptEULA;
+  fAutoUpdate: Boolean;
 begin
   fAcceptEULA := TfAcceptEULA.Create(nil);
   try
@@ -1068,10 +1070,12 @@ begin
     else
     if fAcceptEULA.PasswordChanged then
     begin
-      NewPermanentPassword := fAcceptEULA.ePassword.Text;
-      PermanentPassword := System.Hash.THashMD5.GetHashString(NewPermanentPassword);
+//      NewPermanentPassword := fAcceptEULA.ePassword.Text;
+      PermanentPassword := System.Hash.THashMD5.GetHashString(fAcceptEULA.ePassword.Text {NewPermanentPassword});
 //      ShowPermanentPasswordState();
       SendPasswordsToGateway;
+
+      fAutoUpdate := fAcceptEULA.cbAutomaticUpdate.Checked;
 
       SaveSetup;
     end;
@@ -1114,7 +1118,7 @@ begin
 
   Application.ProcessMessages;
 
-  SendSettingsToService(NewPermanentPassword, True);
+  SendSettingsToService(PermanentPassword {NewPermanentPassword}, True, fAutoUpdate);
 
   pBtnSetup.Visible := not IsServiceExisted(RTC_HOSTSERVICE_NAME);
   ShowPermanentPasswordState();
@@ -2833,7 +2837,7 @@ begin
   reg:=TRegistry.Create;
   try
     reg.RootKey := HKEY_CURRENT_USER;
-    reg.Access := KEY_READ;
+    reg.Access := KEY_READ or KEY_WOW64_64KEY;
     if reg.OpenKey('\AppEvents\Schemes\Apps\.Default\CCSelect\.current', False) then
     try
       if reg.ValueExists('') then
@@ -4083,7 +4087,7 @@ procedure TMainForm.LabelPP5Click(Sender: TObject);
 begin
 //  XLog('Label22Click');
 
-  ShowSettingsForm('tsSequrity');
+  ShowSettingsForm('tsGeneral');
 end;
 
 procedure TMainForm.lHelpClick(Sender: TObject);
@@ -4357,7 +4361,7 @@ begin
   reg := TRegistry.Create;
   try
     reg.RootKey := HKEY_CURRENT_USER;
-    reg.Access := KEY_READ;
+    reg.Access := KEY_READ or KEY_WOW64_64KEY;
     if reg.KeyExists('Software\Remox\Partners\' + AUserName) then
       if reg.OpenKey('Software\Remox\Partners\' + AUserName, False) then
       begin
@@ -4382,7 +4386,7 @@ begin
   reg := TRegistry.Create;
   try
     reg.RootKey := HKEY_CURRENT_USER;
-    reg.Access := KEY_READ;
+    reg.Access := KEY_READ or KEY_WOW64_64KEY;
     if reg.KeyExists('Software\Remox\Partners\' + AUserName) then
       if reg.OpenKey('Software\Remox\Partners\' + AUserName, False) then
       begin
@@ -4423,7 +4427,7 @@ begin
   reg := TRegistry.Create;
   try
     reg.RootKey := HKEY_CURRENT_USER;
-    reg.Access := KEY_READ;
+    reg.Access := KEY_READ or KEY_WOW64_64KEY;
     if reg.KeyExists('Software\Remox') then
     begin
       reg.OpenKey('Software\Remox', False);
@@ -10466,6 +10470,31 @@ begin
   ShowSettingsForm('tsNetwork');
 end;
 
+function TMainForm.GetAutoUpdateSetting: Boolean;
+var
+  reg: TRegistry;
+begin
+//  xLog('GetAutoUpdateSetting');
+
+  Result := True;
+
+  reg := TRegistry.Create;
+  try
+    reg.RootKey := HKEY_LOCAL_MACHINE;
+    reg.Access := KEY_READ or KEY_WOW64_64KEY;
+    if reg.KeyExists('SOFTWARE\Remox\') then
+      if reg.OpenKey('SOFTWARE\Remox\', False) then
+      begin
+        if reg.ValueExists('AutomaticUpdate') then
+          Result := reg.ReadBool('AutomaticUpdate');
+
+        reg.CloseKey;
+      end;
+  finally
+    reg.Free;
+  end;
+end;
+
 procedure TMainForm.ShowSettingsForm(APage: String);
 var
   i: Integer;
@@ -10494,12 +10523,13 @@ begin
     end;
     sett.cbStoreHistory.Checked := StoreHistory;
     sett.cbStorePasswords.Checked := StorePasswords;
+    sett.cbAutomaticUpdate.Checked := GetAutoUpdateSetting;
     sett.OnCustomFormClose := OnCustomFormClose;
 
   //    sett.cbOnlyAdminChanges.Checked := OnlyAdminChanges;
-    for i := 0 to sett.tcSettings.PageCount - 1 do
-      if sett.tcSettings.Pages[i].Name = APage then
-        sett.tcSettings.ActivePage := sett.tcSettings.Pages[i];
+    for i := 0 to sett.tcMain.PageCount - 1 do
+      if sett.tcMain.Pages[i].Name = APage then
+        sett.tcMain.ActivePage := sett.tcMain.Pages[i];
 
     OnCustomFormOpen(@sett);
     sett.ModalResult := 0;
@@ -10653,18 +10683,24 @@ begin
       end;
 
       if sett.PermanentPasswordChanged then
-      begin
-        if IsServiceStarted(RTC_HOSTSERVICE_NAME)
-          and (not SendSettingsToService(sett.ePassword.Text, True)) then
-        begin
-          MessageBox(Handle, 'Ошибка при установке пароля. Проверьте что служба Remox запущена', 'Remox', MB_OKCANCEL);
-          SettingsFormOpened := False;
-          Exit;
-        end;
-
         PermanentPassword := System.Hash.THashMD5.GetHashString(sett.ePassword.Text);
-        ShowPermanentPasswordState();
-        SendPasswordsToGateway;
+
+      if IsServiceStarted(RTC_HOSTSERVICE_NAME) then
+      begin
+        if SendSettingsToService(PermanentPassword, sett.PermanentPasswordChanged, sett.cbAutomaticUpdate.Checked) then
+        begin
+          if sett.PermanentPasswordChanged then
+          begin
+            ShowPermanentPasswordState();
+            SendPasswordsToGateway;
+          end;
+        end;
+      end
+      else
+      begin
+        MessageBox(Handle, 'Ошибка связи со службой. Проверьте что служба Remox запущена', 'Remox', MB_OKCANCEL);
+        SettingsFormOpened := False;
+        Exit;
       end;
 
       StoreHistory := sett.cbStoreHistory.Checked;
@@ -10686,7 +10722,7 @@ begin
   end;
 end;
 
-function TMainForm.SendSettingsToService(ANewPermanentPassword: String; ASendPassword: Boolean): Boolean;
+function TMainForm.SendSettingsToService(ANewPermanentPassword: String; ASendPassword, AAutomaticUpdate: Boolean): Boolean;
 var
   Request, Response: IIPCData;
   IPCClient: TIPCClient;
@@ -10706,6 +10742,7 @@ begin
         Request.Data.WriteInteger('QueryType', QT_SET_SETTINGS);
         if ASendPassword then
           Request.Data.WriteString('PermanentPassword', ANewPermanentPassword);
+        Request.Data.WriteBoolean('AutomaticUpdate', AAutomaticUpdate);
         Request.Data.WriteInteger('ProxyOption', ProxyOption);
         Request.Data.WriteString('ProxyAddr', hcAccounts.UserLogin.ProxyAddr);
         Request.Data.WriteString('ProxyUsername', hcAccounts.UserLogin.ProxyUsername);
