@@ -1069,6 +1069,7 @@ begin
       LastBuildVersion := asInteger['LastBuild'];
       CurBuildVersion := FileBuildVersion(ParamStr(0));
 
+      FUpdateAvailable := False;
       if IncDay(GetLastCheckUpdateTime, 1) <= Now then
       begin
         if CurBuildVersion < MinBuildVersion then
@@ -1093,7 +1094,8 @@ begin
   //        bGetUpdate.Font.Color := clBlack;
         end;
 
-        DMUpdate.StartUpdate(HostTimerClient.UseProxy, HostTimerClient.UserLogin.ProxyAddr, HostTimerClient.UserLogin.ProxyUserName, HostTimerClient.UserLogin.ProxyPassword);
+        if FUpdateAvailable then
+          DMUpdate.StartUpdate(HostTimerClient.UseProxy, HostTimerClient.UserLogin.ProxyAddr, HostTimerClient.UserLogin.ProxyUserName, HostTimerClient.UserLogin.ProxyPassword);
       end;
 
       PClient.Disconnect;
