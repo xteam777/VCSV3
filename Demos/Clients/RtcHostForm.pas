@@ -12,7 +12,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, CommonData, System.Types, uProcess, ServiceMgr, Cromis.Comm.IPC, System.Hash,
-  Classes, Graphics, Controls, Forms, DateUtils, CommonUtils, WtsApi, uSysAccount, ClipbrdMonitor,
+  Classes, Graphics, Controls, Forms, DateUtils, CommonUtils, WtsApi, uSysAccount, ClipbrdMonitor, uSetup,
   Dialogs, StdCtrls, ExtCtrls, ShellApi, rdFileTransLog, VirtualTrees.Types, SHDocVw, rtcpFileTransUI, Psapi, Winapi.SHFolder,
   Vcl.ComCtrls, Registry, Math, RtcIdentification, SyncObjs, System.Net.HTTPClient, System.Net.URLClient, ActiveX, ComObj, CommCtrl,
   rtcSystem, rtcInfo, uMessageBox, rtcScrUtils, IOUtils, uAcceptEula, ProgressDialog, ShlObj, RecvDataObject, SendDestroyToGateway,
@@ -806,6 +806,7 @@ const
   STATUS_ACTIVATING_ON_MAIN_GATE = 1;
   STATUS_CONNECTING_TO_GATE = 2;
   STATUS_READY = 3;
+  STATUS_OLD_VERSION = 4;
 
   WH_MOUSE_LL = 14; // Используется для хука на низком уровне для мыши
 
@@ -1004,9 +1005,10 @@ begin
       SendMessage(pPc^.DataModule.Handle, WM_GET_FILES_FROM_CLIPBOARD, WPARAM(CurExplorerHandle), LPARAM(CurExplorerDir));
   end
   else
-  if tPHostThread.FFileTransfer.isSubscriber(AUserName) then  //Если мы хост, то с контроля-овнера-клибоарда тянем файлы
-    if GetCurrentExplorerDirectory(CurExplorerDir, CurExplorerHandle) then
-      tPHostThread.GetFilesFromClipboard(CurExplorerHandle, CurExplorerDir);
+  if tPHostThread <> nil then
+    if tPHostThread.FFileTransfer.isSubscriber(AUserName) then  //Если мы хост, то с контроля-овнера-клибоарда тянем файлы
+      if GetCurrentExplorerDirectory(CurExplorerDir, CurExplorerHandle) then
+        tPHostThread.GetFilesFromClipboard(CurExplorerHandle, CurExplorerDir);
 end;
 
 procedure TMainForm.SetFilesToClipboard(var Message: TMessage);
@@ -1218,7 +1220,8 @@ var
 begin
   pPDData := GetProgressDialogData(PProgressDialog(@Sender));
   if pPDData <> nil then
-    tPHostThread.FFileTransfer.CancelBatch(tPHostThread.FFileTransfer, pPDData^.taskId);
+    if tPHostThread <> nil then
+      tPHostThread.FFileTransfer.CancelBatch(tPHostThread.FFileTransfer, pPDData^.taskId);
 
   TProgressDialog(Sender).Stop;
   RemoveProgressDialogByValue(@Sender);
@@ -1620,8 +1623,9 @@ begin
   if TRtcHttpPortalClient(AClient).GatePort = '5938' then
     TRtcHttpPortalClient(AClient).GatePort := '80';
 
-  if TRtcHttpPortalClient(AClient) = tPHostThread.FGatewayClient then
-    tPHostThread.Port := TRtcHttpPortalClient(AClient).GatePort;
+  if tPHostThread <> nil then
+    if TRtcHttpPortalClient(AClient) = tPHostThread.FGatewayClient then
+      tPHostThread.Port := TRtcHttpPortalClient(AClient).GatePort;
 end;
 
 constructor TPortalThread.Create(CreateSuspended: Boolean; AAction, AUserName, AUserPass, AUserToConnect, AGateway: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; UIVisible: Boolean);
@@ -3439,7 +3443,8 @@ begin
     Dispose(PortalConnectionsList[i]);
   PortalConnectionsList.Free;
 
-  tPHostThread.Terminate;
+  if tPHostThread <> nil then
+    tPHostThread.Terminate;
 
   TaskBarRemoveIcon;
 //  if Assigned(Options) then
@@ -3602,8 +3607,8 @@ begin
     and (ProxyServer <> '') then
       CurProxy := ProxyServer + ':' + IntToStr(ProxyPort);
 
-  if (tPHostThread.ProxyEnabled <> ProxyEnabled)
-    or (tPHostThread.ProxyAddr <> CurProxy) then
+  if (hcAccounts.UseProxy <> ProxyEnabled)
+    or (hcAccounts.UserLogin.ProxyAddr <> CurProxy) then
   begin
 {//    CS_GW.Acquire;
 //    try
@@ -3624,11 +3629,14 @@ begin
 //      CS_GW.Release;
 //    end;}
 
-    tPHostThread.ProxyEnabled := ProxyEnabled;
-    if ProxyEnabled then
-      tPHostThread.ProxyAddr := CurProxy
-    else
-      tPHostThread.ProxyAddr := '';
+    if tPHostThread <> nil then
+    begin
+      tPHostThread.ProxyEnabled := ProxyEnabled;
+      if ProxyEnabled then
+        tPHostThread.ProxyAddr := CurProxy
+      else
+        tPHostThread.ProxyAddr := '';
+    end;
 
     hcAccounts.AutoConnect := False;
     TimerClient.AutoConnect := False;
@@ -7099,6 +7107,8 @@ var
   Options: TrdHostSettings;
 begin
 //  XLog('btnSettingsClick');
+  if tPHostThread = nil then
+    Exit;
 
   Options := TrdHostSettings.Create(self);
   try
@@ -7297,7 +7307,10 @@ begin
         with Data.NewFunction('Host.Ping') do
         begin
           asWideString['User'] := DeviceId;
-          asString['Gateway'] := tPHostThread.Gateway + ':' + tPHostThread.Port;
+          if tPHostThread <> nil  then
+            asString['Gateway'] := tPHostThread.Gateway + ':' + tPHostThread.Port
+          else
+            asString['Gateway'] := '';
           asRecord['Passwords'] := PassRec;
           if ActiveConsoleSessionID = CurrentSessionID then
             asString['ConsoleId'] := ConsoleId
@@ -8876,6 +8889,37 @@ begin
           eUserName.Text := DeviceDisplayName;
         end;
 
+        MinBuildVersion := asInteger['MinBuild'];
+        LastBuildVersion := asInteger['LastBuild'];
+        CurBuildVersion := FileBuildVersion(ParamStr(0));
+        if CurBuildVersion < MinBuildVersion then
+        begin
+          FUpdateAvailable := True;
+          SetStatusStringDelayed('Версия устарела. Требуется обновление');
+          bGetUpdate.Caption := 'Установить обновление';
+          bGetUpdate.Font.Color := clRed;
+          //ActivationInProcess := False; //Не сбразываем флаг. Останавливаем повторную активацию
+          SetStatus(STATUS_OLD_VERSION);
+          Exit;
+        end
+        else
+        if CurBuildVersion < LastBuildVersion then
+        begin
+          FUpdateAvailable := True;
+          SetStatusStringDelayed('Версия устарела. Требуется обновление');
+          bGetUpdate.Caption := 'Установить обновление';
+          bGetUpdate.Font.Color := clRed;
+          //ActivationInProcess := False; //Не сбразываем флаг. Останавливаем повторную активацию
+          SetStatus(STATUS_OLD_VERSION);
+          Exit;
+        end
+        else //Версия последняя
+        begin
+          FUpdateAvailable := False;
+          bGetUpdate.Caption := '        Последняя версия';
+          bGetUpdate.Font.Color := clBlack;
+        end;
+
 {          PClient.Disconnect;
           PClient.Active := False;
 
@@ -8933,7 +8977,10 @@ begin
               begin
                 asWideString['User'] := LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]));
                 asRecord['Passwords'] := PassRec;
-                asString['Gateway'] := tPHostThread.Gateway + ':' + tPHostThread.Port; //asString['Gateway'] + ':' + asString['Port'];
+                if tPHostThread <> nil then
+                  asString['Gateway'] := tPHostThread.Gateway + ':' + tPHostThread.Port
+                else
+                  asString['Gateway'] := ''; //asString['Gateway'] + ':' + asString['Port'];
                 if ActiveConsoleSessionID = CurrentSessionID then
                   asString['ConsoleId'] := ConsoleId
                 else
@@ -8953,7 +9000,10 @@ begin
               begin
                 asWideString['User'] := LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]));
                 asRecord['Passwords'] := PassRec;
-                asString['Gateway'] := tPHostThread.Gateway + ':' + tPHostThread.Port; //asString['Gateway'] + ':' + asString['Port'];
+                if tPHostThread <> nil then
+                  asString['Gateway'] := tPHostThread.Gateway + ':' + tPHostThread.Port
+                else
+                  asString['Gateway'] := ''; //asString['Gateway'] + ':' + asString['Port'];
                 if ActiveConsoleSessionID = CurrentSessionID then
                   asString['ConsoleId'] := ConsoleId
                 else
@@ -9292,7 +9342,10 @@ begin
         with Data.NewFunction('GetData') do
         begin
           Value['User'] := DeviceId; //LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]));
-          Value['Gateway'] := tPHostThread.Gateway + ':' + tPHostThread.Port;
+          if tPHostThread <> nil then
+            Value['Gateway'] := tPHostThread.Gateway + ':' + tPHostThread.Port
+          else
+            Value['Gateway'] := '';
           Value['Check'] := myCheckTime;
           asRecord['Passwords'] := PassRec;
           asInteger['LockedState'] := ScreenLockedState;
@@ -9893,11 +9946,12 @@ begin
 //  if FAutoRun then
 //    PostMessage(Handle, WM_AUTOMINIMIZE, 0, 0);
 
-  if (Sender = tPHostThread.FGatewayClient) then
-  begin
-//    SetHostGatewayClientActive(True);
-    tPClientReconnect.Enabled := False;
-  end;
+  if tPHostThread <> nil then
+    if (Sender = tPHostThread.FGatewayClient) then
+    begin
+  //    SetHostGatewayClientActive(True);
+      tPClientReconnect.Enabled := False;
+    end;
 end;
 
 procedure TMainForm.PClientParams(Sender: TAbsPortalClient; const Data: TRtcValue);
@@ -9940,15 +9994,16 @@ begin
 //    end;
 //  SetStatusString('Готов к подключению');
 
-  if (Sender = tPHostThread.FGatewayClient)
-    and (GetStatus = STATUS_CONNECTING_TO_GATE) then
-  begin
-//    SetHostGatewayClientActive(True);
-    SetStatus(STATUS_READY);
+  if tPHostThread <> nil then
+    if (Sender = tPHostThread.FGatewayClient)
+      and (GetStatus = STATUS_CONNECTING_TO_GATE) then
+    begin
+  //    SetHostGatewayClientActive(True);
+      SetStatus(STATUS_READY);
 
-    if cbRememberAccount.Checked then
-      btnAccountLoginClick(nil);
-  end;
+      if cbRememberAccount.Checked then
+        btnAccountLoginClick(nil);
+    end;
 
   tPClientReconnect.Enabled := False;
 
@@ -10039,14 +10094,15 @@ begin
 
 //  TRtcHttpPortalClient(Sender).Active := True;
 
-  if (Sender = tPHostThread.FGatewayClient) then
-  begin
-//    SetHostGatewayClientActive(False);
-//    TRtcHttpPortalClient(Sender).Disconnect;
-//    TRtcHttpPortalClient(Sender).Active := False;
-  ////  TRtcHttpPortalClient(Sender).Active := True;
-    tPClientReconnect.Enabled := True;
-  end;
+  if tPHostThread <> nil then
+    if (Sender = tPHostThread.FGatewayClient) then
+    begin
+  //    SetHostGatewayClientActive(False);
+  //    TRtcHttpPortalClient(Sender).Disconnect;
+  //    TRtcHttpPortalClient(Sender).Active := False;
+    ////  TRtcHttpPortalClient(Sender).Active := True;
+      tPClientReconnect.Enabled := True;
+    end;
 
 //  Tag := Tag;
 //  if assigned(Options) and Options.Visible then
@@ -10128,9 +10184,10 @@ begin
 //    and (Msg = 'Не удалось подключиться к серверу.') then
 //    TRtcHttpPortalClient(Sender).Active := False;
 
-  if (Sender = tPHostThread.FGatewayClient)
-    and (Msg = 'Не удалось подключиться к серверу.') then
-    ChangePortP(Sender);
+  if tPHostThread <> nil then
+    if (Sender = tPHostThread.FGatewayClient)
+      and (Msg = 'Не удалось подключиться к серверу.') then
+      ChangePortP(Sender);
 
 //  if Msg = S_RTCP_ERROR_CONNECT then
 //    tPClientReconnect.Enabled := True;
@@ -11029,12 +11086,13 @@ procedure TMainForm.PClientStatusGet(Sender: TAbsPortalClient; Status: TRtcPHttp
 //        tPClientReconnect.Enabled := True;
 //      end;
 
-      if (Sender = tPHostThread.FGatewayClient)
-        and (CurStatus = STATUS_READY) then
-      begin
-//        SetHostGatewayClientActive(False);
-        tPClientReconnect.Enabled := True;
-      end;
+      if tPHostThread <> nil then
+        if (Sender = tPHostThread.FGatewayClient)
+          and (CurStatus = STATUS_READY) then
+        begin
+  //        SetHostGatewayClientActive(False);
+          tPClientReconnect.Enabled := True;
+        end;
     end;
     rtccOpen:
     begin

@@ -1065,7 +1065,7 @@ begin
 
 //      xLog('ID = ' + UserName);
 
-      MinBuildVersion := asInteger['MinBiuld'];
+      MinBuildVersion := asInteger['MinBuild'];
       LastBuildVersion := asInteger['LastBuild'];
       CurBuildVersion := FileBuildVersion(ParamStr(0));
 
