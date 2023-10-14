@@ -10778,7 +10778,7 @@ begin
         end
         else
         begin
-          MessageBox(Handle, 'Ошибка связи со службой. Проверьте что служба Remox запущена', 'Remox', MB_OKCANCEL);
+          MessageBox(Handle, 'Ошибка при изменении параметров. Проверьте что служба Remox запущена', 'Remox', MB_OKCANCEL);
           SettingsFormOpened := False;
           Exit;
         end;
