@@ -508,6 +508,8 @@ begin
         SP.Parameters.ParamByName('@ID_UID').Value := '';
         SP.Parameters.ParamByName('@ID_Console').Value := 0;
         SP.Parameters.ParamByName('@ID_Console_UID').Value := '';
+        SP.Parameters.ParamByName('@MinBuild').Value := 0;
+        SP.Parameters.ParamByName('@LastBuild').Value := 0;
         SP.ExecProc;
 
         with Result.NewRecord do
@@ -516,6 +518,8 @@ begin
           asString['ID_UID'] := SP.Parameters.ParamByName('@ID_UID').Value;
           asString['ID_Console'] := SP.Parameters.ParamByName('@ID_Console').Value;
           asString['ID_Console_UID'] := SP.Parameters.ParamByName('@ID_Console_UID').Value;
+          asInteger['MinBuild'] := SP.Parameters.ParamByName('@MinBuild').Value;
+          asInteger['LastBuild'] := SP.Parameters.ParamByName('@LastBuild').Value;
           UserGateway := Users.GetAvailableGateway;
           if UserGateway <> '' then
           begin
