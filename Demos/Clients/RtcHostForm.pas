@@ -7662,6 +7662,13 @@ begin
 //      SetStatusString('Готов к подключению');
 //    Exit;
 //  end;
+  if CurStatus = STATUS_OLD_VERSION then
+  begin
+//    MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'Remox', MB_ICONWARNING or MB_OK);
+    SetStatusStringDelayed('Подключение невозможно. Обновите программу');
+//    SetStatusStringDelayed('Готов к подключению', 2000);
+    Exit;
+  end;
 
   if UseConnectionsLimit then
   begin
