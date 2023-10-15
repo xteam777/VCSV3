@@ -166,18 +166,16 @@ var
   HeaderSize: Integer;
   err: LongInt;
   fHaveScreen: Boolean;
-
   dwFlags, wVk, wScan: DWORD;
   IOtype, dx, dy, mouseData: Integer;
-
   FShiftDown, FCtrlDown, FAltDown: Boolean;
-
   fRes, fCreated, fNeedRecreate: Boolean;
   FDesktopDuplicator: TDesktopDuplicationWrapper;
-
   time: DWORD;
-
   HelperIOData: THelperIOData;
+  LockWindow: TLockWindow;
+  LastScreenGet: TDateTime;
+  ID_CloseLockForm_Timer: UINT_PTR;
 
   function RpcRevertToSelf: RPC_STATUS; stdcall; external 'rpcrt4.dll';
   function RpcImpersonateClient(BindingHandle: RPC_BINDING_HANDLE): RPC_STATUS; stdcall; external 'rpcrt4.dll';
@@ -2195,7 +2193,7 @@ begin
   begin
     if (msg.message = WM_TIMER)
       and (msg.wParam = WORD(id)) then
-        Break;
+      Break;
 
     TranslateMessage(msg);
     DispatchMessage(msg);
@@ -2550,19 +2548,23 @@ begin
   begin
     // Block Keyboard and Mouse
 //    SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 0, 0);
+    if LockWindow <> nil then
+      LockWindow.DisableInput(True);
   end
   else
   if Request.Data.ReadInteger('QueryType') = QT_SENDUBKM then
   begin
     // UnBlock Keyboard and Mouse
 //    SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 1, 0);
+    if LockWindow <> nil then
+      LockWindow.DisableInput(False);
   end
   else
   if Request.Data.ReadInteger('QueryType') = QT_SENDOFFMON then
   begin
     // Power Off Monitor
 //    SetBlankMonitor(True);
-    TLockWindow.Show();
+    LockWindow := TLockWindow.Show();
   end
   else
   if Request.Data.ReadInteger('QueryType') = QT_SENDONMON then
@@ -2844,6 +2846,13 @@ begin
 //  time := GetTickCount - time;
 end;}
 
+procedure TimerProc(hwnd: HWND; uMsg: UINT; idEvent: UINT_PTR; dwTime: DWORD); stdcall;
+begin
+  if idEvent = ID_CloseLockForm_Timer then
+    if IncSecond(LastScreenGet, 10) < Now then
+      TLockWindow.Close;
+end;
+
 function ScreenShotThreadProc(pParam: Pointer): DWORD; stdcall;
 //var
 //  SaveBitMap: TBitmap;
@@ -2879,6 +2888,8 @@ begin
 
           fHaveScreen := True;
 
+          LastScreenGet := Now;
+          ID_CloseLockForm_Timer := SetTimer(0, 42, 10000, @TimerProc);
 
 //          if FDesktopDuplicator.Bitmap <> nil then
 //            FDesktopDuplicator.Bitmap.SaveToFile('C:\Rufus\rmx_x64_' + StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
@@ -2922,7 +2933,6 @@ begin
     ExitThread(0);
   end;
 end;
-
 
 begin
 //  Sleep(10000);
@@ -3000,9 +3010,11 @@ begin
 
     while GetMessage(msg, 0, 0, 0) do
       if msg.message <> WM_QUIT then
-      DispatchMessage(msg);
+        DispatchMessage(msg);
 
 //  Sleep(500);
+
+    KillTimer(0, ID_CloseLockForm_Timer);
 
     FIPCServer.Stop;
     FIPCServer.Free;
