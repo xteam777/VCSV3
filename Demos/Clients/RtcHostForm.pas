@@ -96,7 +96,7 @@ type
     FDesktopControl: TRtcPDesktopControl;
     FFileTransfer: TRtcPFileTransfer;
     FChat: TRtcPChat;
-    FNeedCloseUI: Boolean;
+//    FNeedCloseUI: Boolean;
     FResult: TRtcResult;
     { Private declarations }
     procedure SendPing;
@@ -1909,8 +1909,8 @@ begin
   FGatewayClient.Free;
   FDataModule.Free;
 
-  if FNeedCloseUI then
-    PostMessage(DesktopsForm.Handle, WM_CLOSE_UI, WPARAM(PChar(FUserName)), LPARAM(ThreadID));
+//  if FNeedCloseUI then
+//    PostMessage(DesktopsForm.Handle, WM_CLOSE_UI, WPARAM(PChar(FUserName)), LPARAM(ThreadID));
 
 //  try
 //    FGatewayClient.Disconnect;
@@ -2021,7 +2021,7 @@ begin
   Message.LParam := MSG.lParam;
   Message.Result := 0;
   Dispatch(Message);
-end; }
+end;}
 
 procedure TMainForm.DoPowerPause;
 var
