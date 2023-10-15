@@ -6569,6 +6569,7 @@ object MainForm: TMainForm
   end
   object tCheckUpdateStatus: TTimer
     Enabled = False
+    Interval = 500
     OnTimer = tCheckUpdateStatusTimer
     Left = 154
     Top = 298

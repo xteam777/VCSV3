@@ -2227,12 +2227,19 @@ begin
   if not FUpdateAvailable then
   begin
     tCheckUpdateStatus.Enabled := False;
+    Exit;
   end;
 
   if IsServiceStarted(RTC_HOSTSERVICE_NAME) then
     GetUpdateProgressFromService(UpdateStatus, Progress)
   else
     tDMUpdate.DMUpdate.GetProgress(UpdateStatus, Progress);
+
+  if UpdateStatus = US_READY then
+  begin
+    tCheckUpdateStatus.Enabled := False;
+    Exit;
+  end;
 
   if UpdateStatus = US_READY then
   begin
