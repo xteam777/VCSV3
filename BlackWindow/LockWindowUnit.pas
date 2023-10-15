@@ -73,7 +73,6 @@ type
     procedure DestroyWindow();
     procedure DisableWindowForRecord(Disable: Boolean);
     procedure ApplyLayeredWindow(Percent: Byte);
-    procedure DisableInput(Disable: Boolean);
 
 
     /// class var, alias global
@@ -115,6 +114,7 @@ type
     procedure WmSendInput(var Msg: TMessageInput); message WM_SEND_INPUT;
 
   public
+    procedure DisableInput(Disable: Boolean);
     procedure DefaultHandler(var Message); override;
 
     constructor Create;
