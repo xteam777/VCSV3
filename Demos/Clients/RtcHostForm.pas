@@ -2224,6 +2224,11 @@ procedure TMainForm.tCheckUpdateStatusTimer(Sender: TObject);
 var
   UpdateStatus, Progress: Integer;
 begin
+  if not FUpdateAvailable then
+  begin
+    tCheckUpdateStatus.Enabled := False;
+  end;
+
   if IsServiceStarted(RTC_HOSTSERVICE_NAME) then
     GetUpdateProgressFromService(UpdateStatus, Progress)
   else
