@@ -576,7 +576,7 @@ type
     PendingRequests: TList;
     PortalConnectionsList: TList;
 
-    DMUpdate: TDMUpdate;
+    tDMUpdate: TDMUpdateThread;
 
     function FormatID(AID: String): String;
     function ConnectedToAllGateways: Boolean;
@@ -788,6 +788,8 @@ type
     procedure RemoveIncomeConnection(AUserName: String);
     function GetIncomeConnectionsCount: Integer;
     function IsIncomeConnectionExists(AID, AAction: String): Boolean;
+
+    procedure OnUpdateProgressChange(AUpdateStatus, AProgress: Integer);
   end;
 
 //type
@@ -831,6 +833,37 @@ var
 implementation
 
 {$R *.dfm}
+
+procedure TMainForm.OnUpdateProgressChange(AUpdateStatus, AProgress: Integer);
+begin
+  if AUpdateStatus = US_READY then
+  begin
+    if FUpdateAvailable then
+    begin
+      bGetUpdate.Caption := 'Установить обновление';
+      bGetUpdate.Font.Color := clRed;
+    end
+    else
+    begin
+      bGetUpdate.Caption := 'Последняя версия';
+      bGetUpdate.Font.Color := clBlack;
+    end;
+  end
+  else
+  if AUpdateStatus = US_DOWNLOADING then
+  begin
+    bGetUpdate.Caption := 'Загрузка ' + IntToStr(AProgress) + '%';
+    bGetUpdate.Font.Color := clBlack;
+  end
+  else
+  if AUpdateStatus = US_INSTALLING then
+  begin
+    bGetUpdate.Caption := 'Установка';
+    bGetUpdate.Font.Color := clBlack;
+  end;
+
+  Application.ProcessMessages;
+end;
 
 function TMainForm.AddProgressDialog(ATaskId: TTaskId; AUserName: String): PProgressDialogData;
 begin
@@ -1970,11 +2003,22 @@ begin
 end;}
 
 procedure TPortalThread.Execute;
+var
+  i: Integer;
 begin
+  i := 0;
   while not Terminated do
   begin
-    Sleep(1000);
-    SendPing;
+    if i = 10 then
+    begin
+      SendPing;
+
+      i := 0;
+    end;
+
+    Sleep(100);
+
+    i := i + 1;
   end;
 end;
 
@@ -3237,8 +3281,8 @@ begin
 
   FUpdateAvailable := False;
 
-  DMUpdate := TDMUpdate.Create(Self);
-  DMUpdate.OnSuccessCheck := UpdateOnSuccessCheck;
+  tDMUpdate := TDMUpdateThread.Create(False, UpdateOnSuccessCheck);
+  tDMUpdate.DMUpdate.FOnProgressChange := OnUpdateProgressChange;
 
   DeviceId := '';
   DeviceUID := '';
@@ -3424,7 +3468,7 @@ begin
 
   FreeAndNil(CB_Monitor);
 
-  FreeAndNil(DMUpdate);
+  FreeAndNil(tDMUpdate);
 
   FStatusUpdateThread.Terminate;
 
@@ -3868,32 +3912,32 @@ begin
       btnNewConnection.Color := $00A39323;
     end;
 
-    DMUpdate.GetProgress(UpdateStatus, Progress);
-    if UpdateStatus = US_READY then
-    begin
-      if FUpdateAvailable then
-      begin
-        bGetUpdate.Caption := 'Установить обновление';
-        bGetUpdate.Font.Color := clRed;
-      end
-      else
-      begin
-        bGetUpdate.Caption := 'Последняя версия';
-        bGetUpdate.Font.Color := clBlack;
-      end;
-    end
-    else
-    if UpdateStatus = US_DOWNLOADING then
-    begin
-      bGetUpdate.Caption := 'Загрузка ' + IntToStr(Ceil(Progress)) + '%';
-      bGetUpdate.Font.Color := clBlack;
-    end
-    else
-    if UpdateStatus = US_INSTALLING then
-    begin
-      bGetUpdate.Caption := 'Установка';
-      bGetUpdate.Font.Color := clBlack;
-    end;
+//    tDMUpdate.DMUpdate.GetProgress(UpdateStatus, Progress);
+//    if UpdateStatus = US_READY then
+//    begin
+//      if FUpdateAvailable then
+//      begin
+//        bGetUpdate.Caption := 'Установить обновление';
+//        bGetUpdate.Font.Color := clRed;
+//      end
+//      else
+//      begin
+//        bGetUpdate.Caption := 'Последняя версия';
+//        bGetUpdate.Font.Color := clBlack;
+//      end;
+//    end
+//    else
+//    if UpdateStatus = US_DOWNLOADING then
+//    begin
+//      bGetUpdate.Caption := 'Загрузка ' + IntToStr(Ceil(Progress)) + '%';
+//      bGetUpdate.Font.Color := clBlack;
+//    end
+//    else
+//    if UpdateStatus = US_INSTALLING then
+//    begin
+//      bGetUpdate.Caption := 'Установка';
+//      bGetUpdate.Font.Color := clBlack;
+//    end;
 
     btnNewConnection.Enabled := ConnectedToAllGateways;
     btnAccountLogin.Enabled := (not LoggedIn) and ConnectedToAllGateways and (not AccountLoginInProcess);
@@ -7239,7 +7283,8 @@ end;
 
 procedure TMainForm.bGetUpdateClick(Sender: TObject);
 var
-  UpdateStatus, Progress: Integer;
+  UpdateStatus: Integer;
+  Progress: Double;
 begin
   if FUpdateAvailable then
 //    ShellExecute(Handle, 'open', 'http://remox.com/download/', '', '', SW_SHOWNORMAL);
@@ -7248,9 +7293,9 @@ begin
     SendStartUpdateToService
   else
   begin
-    DMUpdate.GetProgress(UpdateStatus, Progress);
+    tDMUpdate.DMUpdate.GetProgress(UpdateStatus, Progress);
     if UpdateStatus = US_READY then
-      DMUpdate.StartUpdate(hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword);
+      tDMUpdate.DMUpdate.StartUpdate(hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword);
   end;
 end;
 

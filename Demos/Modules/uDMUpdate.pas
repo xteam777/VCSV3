@@ -4,7 +4,7 @@ interface
 
 uses
   WinApi.Windows, System.SysUtils, System.Classes, rtcSystem, rtcInfo, rtcConn, rtcDataCli,
-  rtcHttpCli, rtcCliModule, ShellApi, uSetup, ShlObj, CommonData, SyncObjs;
+  rtcHttpCli, rtcCliModule, ShellApi, uSetup, ShlObj, CommonData, SyncObjs, Math;
 
 const
   US_READY = 0;
@@ -12,12 +12,15 @@ const
   US_INSTALLING = 1;
 
 type
+  TOnProgressChange = procedure (AUpdateStatus, AProgress: Integer) of Object;
+
   TDMUpdate = class(TDataModule)
     hcUpdate: TRtcHttpClient;
     drDownload: TRtcDataRequest;
     procedure DataModuleCreate(Sender: TObject);
     procedure drDownloadDataReceived(Sender: TRtcConnection);
     procedure drDownloadResponseAbort(Sender: TRtcConnection);
+    procedure drDownloadBeginRequest(Sender: TRtcConnection);
   private
     { Private declarations }
     procedure InstallServiceUpdate;
@@ -27,14 +30,27 @@ type
     CurFilePos: Integer;
     LastVersion, TempExeName: String;
     UpdateStatus: Integer;
-    Progress: Double;
+    Progress: Integer;
     OnSuccessCheck: TNotifyEvent;
+    FOnProgressChange: TOnProgressChange;
     procedure StartUpdate(AProxyEnabled: Boolean; AProxyAddr, AProxyUserName, AProxyPassword: String);
-    procedure GetProgress(var AUpdateStatus: Integer; AProgress: Double);
+    procedure GetProgress(var AUpdateStatus: Integer; var AProgress: Double);
+    procedure DoProgressChange(AProgress: Integer);
+  end;
+
+  PDMUpdateThread = ^TDMUpdateThread;
+  TDMUpdateThread = class(TThread)
+  private
+  public
+    DMUpdate: TDMUpdate;
+    constructor Create(CreateSuspended: Boolean; AOnSuccessCheck: TNotifyEvent); overload;
+    destructor Destroy; override;
+  protected
+    procedure Execute; override;
   end;
 
 var
-  DMUpdate: TDMUpdate;
+//  DMUpdate: TDMUpdate;
   CS: TCriticalSection;
 
 implementation
@@ -43,7 +59,26 @@ implementation
 
 {$R *.dfm}
 
-procedure TDMUpdate.GetProgress(var AUpdateStatus: Integer; AProgress: Double);
+constructor TDMUpdateThread.Create(CreateSuspended: Boolean; AOnSuccessCheck: TNotifyEvent);
+begin
+  inherited Create(CreateSuspended);
+
+  DMUpdate := TDMUpdate.Create(nil);
+  DMUpdate.OnSuccessCheck := AOnSuccessCheck;
+end;
+
+destructor TDMUpdateThread.Destroy;
+begin
+  FreeAndNil(DMUpdate);
+end;
+
+procedure TDMUpdateThread.Execute;
+begin
+  while not Terminated do
+    Sleep(100);
+end;
+
+procedure TDMUpdate.GetProgress(var AUpdateStatus: Integer; var AProgress: Double);
 begin
   CS.Acquire;
   try
@@ -54,14 +89,52 @@ begin
   end;
 end;
 
+procedure TDMUpdate.DoProgressChange(AProgress: Integer);
+begin
+  CS.Acquire;
+  try
+    if (AProgress <> Progress) then
+      if Assigned(FOnProgressChange) then
+        FOnProgressChange(UpdateStatus, AProgress);
+
+    AProgress := Progress;
+  finally
+    CS.Release;
+  end;
+end;
+
 procedure TDMUpdate.DataModuleCreate(Sender: TObject);
 begin
   UpdateStatus := US_READY;
+  DoProgressChange(UpdateStatus, Progress);
   Progress := 0;
   hcUpdate.ServerAddr := 'remox.com';
 end;
 
+procedure TDMUpdate.drDownloadBeginRequest(Sender: TRtcConnection);
+begin
+  with Sender as TRtcDataClient do
+  begin
+    // Make sure that our request starts with "/"
+    if Copy(Request.FileName, 1, 1) <> '/' then
+      Request.FileName := '/' + Trim(Request.FileName);
+
+//    edFileName.Text := Request.FileName;
+    // Define the "HOST" header
+    if Request.Host = '' then
+    begin
+      ServerAddr := 'remox.com';
+      Request.Host := ServerAddr;
+    end;
+
+    // Send Request Header out
+    WriteHeader;
+  end;
+end;
+
 procedure TDMUpdate.drDownloadDataReceived(Sender: TRtcConnection);
+var
+  Progress: Double;
 begin
   with Sender as TRtcDataClient do
   begin
@@ -74,13 +147,16 @@ begin
 
       CS.Acquire;
       try
-        if Request.ContentLength <> 0 then
-          Progress := CurFilePos / Request.ContentLength * 100
+//        if Request.ContentLength <> 0 then
+//          Progress := CurFilePos / Request.ContentLength * 100\
+        if Response.DataSize <> 0 then
+          Progress := CurFilePos / Response.DataSize * 100
         else
           Progress := 0;
       finally
         CS.Release;
       end;
+      DoProgressChange(Ceil(Progress));
 
       Exit;
     end;
@@ -90,13 +166,16 @@ begin
 
     CS.Acquire;
     try
-      if Request.ContentLength <> 0 then
-        Progress := CurFilePos / Request.ContentLength * 100
+//      if Request.ContentLength <> 0 then
+//        Progress := CurFilePos / Request.ContentLength * 100
+      if Response.DataSize <> 0 then
+        Progress := CurFilePos / Response.DataSize * 100
       else
         Progress := 0;
     finally
       CS.Release;
     end;
+    DoProgressChange(Ceil(Progress));
 
     if Response.Done then
     begin
@@ -116,6 +195,7 @@ begin
       finally
         CS.Release;
       end;
+      DoProgressChange(Ceil(Progress));
 
       if IsService then
         InstallServiceUpdate
@@ -128,6 +208,7 @@ begin
       finally
         CS.Release;
       end;
+      DoProgressChange(Ceil(Progress));
     end;
   end;
 end;
@@ -188,6 +269,7 @@ begin
   finally
     CS.Release;
   end;
+  DoProgressChange(UpdateStatus, Progress);
 
   hcUpdate.UseProxy := AProxyEnabled;
   hcUpdate.UserLogin.ProxyAddr := AProxyAddr;
