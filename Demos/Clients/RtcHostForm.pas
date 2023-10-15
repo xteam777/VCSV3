@@ -329,6 +329,7 @@ type
     tFoldForm: TTimer;
     Button5: TButton;
     miChannelsUsage: TMenuItem;
+    tCheckUpdateStatus: TTimer;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnMinimizeClick(Sender: TObject);
@@ -560,6 +561,7 @@ type
     procedure miChannelsUsageClick(Sender: TObject);
     procedure bGetUpdateMouseEnter(Sender: TObject);
     procedure bGetUpdateMouseLeave(Sender: TObject);
+    procedure tCheckUpdateStatusTimer(Sender: TObject);
   protected
 
 //    FAutoRun: Boolean;
@@ -720,6 +722,7 @@ type
     function GetAutoUpdateSetting: Boolean;
     function SendStartUpdateToService: Boolean;
     function SendSettingsToService(ANewPermanentPassword: String; ASendPassword, AAutomaticUpdate: Boolean): Boolean;
+    function GetUpdateProgressFromService(var AUpdateStatus, AProgress: Integer): Boolean;
 //    procedure SettingsFormOnResult(sett: TrdClientSettings);
 //    procedure SetAutoRunToRegistry(AValue: Boolean);
     procedure ShowPermanentPasswordState();
@@ -788,8 +791,6 @@ type
     procedure RemoveIncomeConnection(AUserName: String);
     function GetIncomeConnectionsCount: Integer;
     function IsIncomeConnectionExists(AID, AAction: String): Boolean;
-
-    procedure OnUpdateProgressChange(AUpdateStatus, AProgress: Integer);
   end;
 
 //type
@@ -833,37 +834,6 @@ var
 implementation
 
 {$R *.dfm}
-
-procedure TMainForm.OnUpdateProgressChange(AUpdateStatus, AProgress: Integer);
-begin
-  if AUpdateStatus = US_READY then
-  begin
-    if FUpdateAvailable then
-    begin
-      bGetUpdate.Caption := 'Установить обновление';
-      bGetUpdate.Font.Color := clRed;
-    end
-    else
-    begin
-      bGetUpdate.Caption := 'Последняя версия';
-      bGetUpdate.Font.Color := clBlack;
-    end;
-  end
-  else
-  if AUpdateStatus = US_DOWNLOADING then
-  begin
-    bGetUpdate.Caption := 'Загрузка ' + IntToStr(AProgress) + '%';
-    bGetUpdate.Font.Color := clBlack;
-  end
-  else
-  if AUpdateStatus = US_INSTALLING then
-  begin
-    bGetUpdate.Caption := 'Установка';
-    bGetUpdate.Font.Color := clBlack;
-  end;
-
-  Application.ProcessMessages;
-end;
 
 function TMainForm.AddProgressDialog(ATaskId: TTaskId; AUserName: String): PProgressDialogData;
 begin
@@ -2250,6 +2220,42 @@ begin
   ShowPermanentPasswordState;
 end;
 
+procedure TMainForm.tCheckUpdateStatusTimer(Sender: TObject);
+var
+  UpdateStatus, Progress: Integer;
+begin
+  if IsServiceStarted(RTC_HOSTSERVICE_NAME) then
+    GetUpdateProgressFromService(UpdateStatus, Progress)
+  else
+    tDMUpdate.DMUpdate.GetProgress(UpdateStatus, Progress);
+
+  if UpdateStatus = US_READY then
+  begin
+    if FUpdateAvailable then
+    begin
+      bGetUpdate.Caption := 'Установить обновление';
+      bGetUpdate.Font.Color := clRed;
+    end
+    else
+    begin
+      bGetUpdate.Caption := 'Последняя версия';
+      bGetUpdate.Font.Color := clBlack;
+    end;
+  end
+  else
+  if UpdateStatus = US_DOWNLOADING then
+  begin
+    bGetUpdate.Caption := 'Загрузка ' + IntToStr(Ceil(Progress)) + '%';
+    bGetUpdate.Font.Color := clBlack;
+  end
+  else
+  if UpdateStatus = US_INSTALLING then
+  begin
+    bGetUpdate.Caption := 'Установка';
+    bGetUpdate.Font.Color := clBlack;
+  end;
+end;
+
 {procedure TMainForm.CheckUpdates;
 var
   sResponse: String;
@@ -3282,7 +3288,6 @@ begin
   FUpdateAvailable := False;
 
   tDMUpdate := TDMUpdateThread.Create(False, UpdateOnSuccessCheck);
-  tDMUpdate.DMUpdate.FOnProgressChange := OnUpdateProgressChange;
 
   DeviceId := '';
   DeviceUID := '';
@@ -3468,7 +3473,7 @@ begin
 
   FreeAndNil(CB_Monitor);
 
-  FreeAndNil(tDMUpdate);
+  tDMUpdate.Terminate;
 
   FStatusUpdateThread.Terminate;
 
@@ -3911,33 +3916,6 @@ begin
       btnNewConnection.Caption := 'ПОДКЛЮЧИТЬСЯ';
       btnNewConnection.Color := $00A39323;
     end;
-
-//    tDMUpdate.DMUpdate.GetProgress(UpdateStatus, Progress);
-//    if UpdateStatus = US_READY then
-//    begin
-//      if FUpdateAvailable then
-//      begin
-//        bGetUpdate.Caption := 'Установить обновление';
-//        bGetUpdate.Font.Color := clRed;
-//      end
-//      else
-//      begin
-//        bGetUpdate.Caption := 'Последняя версия';
-//        bGetUpdate.Font.Color := clBlack;
-//      end;
-//    end
-//    else
-//    if UpdateStatus = US_DOWNLOADING then
-//    begin
-//      bGetUpdate.Caption := 'Загрузка ' + IntToStr(Ceil(Progress)) + '%';
-//      bGetUpdate.Font.Color := clBlack;
-//    end
-//    else
-//    if UpdateStatus = US_INSTALLING then
-//    begin
-//      bGetUpdate.Caption := 'Установка';
-//      bGetUpdate.Font.Color := clBlack;
-//    end;
 
     btnNewConnection.Enabled := ConnectedToAllGateways;
     btnAccountLogin.Enabled := (not LoggedIn) and ConnectedToAllGateways and (not AccountLoginInProcess);
@@ -7284,7 +7262,7 @@ end;
 procedure TMainForm.bGetUpdateClick(Sender: TObject);
 var
   UpdateStatus: Integer;
-  Progress: Double;
+  Progress: Integer;
 begin
   if FUpdateAvailable then
 //    ShellExecute(Handle, 'open', 'http://remox.com/download/', '', '', SW_SHOWNORMAL);
@@ -7295,7 +7273,10 @@ begin
   begin
     tDMUpdate.DMUpdate.GetProgress(UpdateStatus, Progress);
     if UpdateStatus = US_READY then
+    begin
       tDMUpdate.DMUpdate.StartUpdate(hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword);
+      tCheckUpdateStatus.Enabled := True;
+    end;
   end;
 end;
 
@@ -10930,6 +10911,44 @@ begin
   end;
 end;
 
+function TMainForm.GetUpdateProgressFromService(var AUpdateStatus, AProgress: Integer): Boolean;
+var
+  Request, Response: IIPCData;
+  IPCClient: TIPCClient;
+  I, Len: Integer;
+begin
+  Result := False;
+
+  IPCClient := TIPCClient.Create;
+  try
+    IPCClient.ComputerName := 'localhost';
+    IPCClient.ServerName := 'Remox_IPC_Service';
+    IPCClient.ConnectClient(1000); //cDefaultTimeout
+    try
+      if IPCClient.IsConnected then
+      begin
+        Request := AcquireIPCData;
+        Request.Data.WriteInteger('QueryType', QT_GET_UPDATE_PROGRESS);
+        Response := IPCClient.ExecuteConnectedRequest(Request);
+
+        if IPCClient.AnswerValid then
+        begin
+          Result := Response.Data.ReadBoolean('Result');
+          AUpdateStatus := Response.Data.ReadInteger('UpdateStatus');
+          AProgress := Response.Data.ReadInteger('Progress');
+        end;
+
+//          if IPCClient.LastError <> 0 then
+//            ListBox1.Items.Add(Format('Error: Code %d', [IPCClient.LastError]));
+      end;
+    finally
+      IPCClient.DisconnectClient;
+    end;
+  finally
+    IPCClient.Free;
+  end;
+end;
+
 {procedure TMainForm.SettingsFormOnResult(sett: TrdClientSettings);
 begin
   xLog('SettingsFormOnResult');
@@ -11564,7 +11583,6 @@ var
   i: Integer;
 begin
   //xLog('FormShow');
-  DeviceId := DeviceId;
 
 //  if not SilentMode then
 //  begin

@@ -101,7 +101,7 @@ type
     FPermanentPassword: String;
     FScreenLockedState: Integer;
 
-    DMUpdate: TDMUpdate;
+    tDMUpdate: TDMUpdateThread;
 
     procedure UpdateMyPriority;
     function GetServiceController: TServiceController; override;
@@ -170,6 +170,8 @@ implementation
 procedure TRemoxService.OnExecuteRequest(const Context: ICommContext; const Request, Response: IMessageData);
 var
   reg: TRegistry;
+  UpdateStatus: Integer;
+  Progress: Integer;
 begin
   if Request.Data.ReadInteger('QueryType') = QT_SET_SETTINGS then
   begin
@@ -204,12 +206,29 @@ begin
   if Request.Data.ReadInteger('QueryType') = QT_START_UPDATE then
   begin
     try
-      DMUpdate.StartUpdate(HostTimerClient.UseProxy, HostTimerClient.UserLogin.ProxyAddr, HostTimerClient.UserLogin.ProxyUserName, HostTimerClient.UserLogin.ProxyPassword);
+      tDMUpdate.DMUpdate.GetProgress(UpdateStatus, Progress);
+      if UpdateStatus = US_READY then
+        tDMUpdate.DMUpdate.StartUpdate(HostTimerClient.UseProxy, HostTimerClient.UserLogin.ProxyAddr, HostTimerClient.UserLogin.ProxyUserName, HostTimerClient.UserLogin.ProxyPassword);
     except
       Response.Data.WriteBoolean('Result', False);
       Exit;
     end;
     Response.Data.WriteBoolean('Result', True);
+  end
+  else
+  if Request.Data.ReadInteger('QueryType') = QT_GET_UPDATE_PROGRESS then
+  begin
+    try
+      tDMUpdate.DMUpdate.GetProgress(UpdateStatus, Progress);
+    except
+      Response.Data.WriteBoolean('Result', False);
+      Response.Data.WriteInteger('UpdateStatus', 0);
+      Response.Data.WriteInteger('Progress', 0);
+      Exit;
+    end;
+    Response.Data.WriteBoolean('Result', True);
+    Response.Data.WriteInteger('UpdateStatus', UpdateStatus);
+    Response.Data.WriteInteger('Progress', Progress);
   end;
 end;
 
@@ -413,8 +432,8 @@ begin
 
   LoadSetup;
 
-  DMUpdate := TDMUpdate.Create(nil);
-  DMUpdate.OnSuccessCheck := UpdateOnSuccessCheck;
+  tDMUpdate := TDMUpdateThread.Create(False, UpdateOnSuccessCheck);
+//  tDMUpdate.DMUpdate.FOnProgressChange := OnUpdateProgressChange;
 
   FIPCServer := TIPCServer.Create;
   FIPCServer.OnExecuteRequest := OnExecuteRequest;
@@ -646,7 +665,7 @@ begin
   tStartHelpers.Terminate;
   tStartClients.Terminate;
 
-  FreeAndNil(DMUpdate);
+  tDMUpdate.Terminate;
 
   StopLog;
 
@@ -1044,6 +1063,7 @@ var
   CurPass: String;
   MinBuildVersion, LastBuildVersion, CurBuildVersion: Integer;
   FUpdateAvailable: Boolean;
+  UpdateStatus, Progress: Integer;
 begin
   if Result.isType = rtc_Exception then
   begin
@@ -1094,8 +1114,9 @@ begin
   //        bGetUpdate.Font.Color := clBlack;
         end;
 
-        if FUpdateAvailable then
-          DMUpdate.StartUpdate(HostTimerClient.UseProxy, HostTimerClient.UserLogin.ProxyAddr, HostTimerClient.UserLogin.ProxyUserName, HostTimerClient.UserLogin.ProxyPassword);
+        tDMUpdate.DMUpdate.GetProgress(UpdateStatus, Progress);
+        if UpdateStatus = US_READY then
+          tDMUpdate.DMUpdate.StartUpdate(HostTimerClient.UseProxy, HostTimerClient.UserLogin.ProxyAddr, HostTimerClient.UserLogin.ProxyUserName, HostTimerClient.UserLogin.ProxyPassword);
       end;
 
       PClient.Disconnect;

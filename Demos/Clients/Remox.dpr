@@ -252,12 +252,10 @@ begin
 //  RTC_LOG_FOLDER := GetDOSEnvVar('APPDATA') + '\Remox\';
 
   StartLog;
-  xLog('');
-  xLog('--------------------------');
   try
     if Pos('/UPDATE', UpperCase(CmdLine)) <> 0 then
     begin
-      //Îáíîâëÿòîð óæå çàïóñêàåòñÿ ñ ïðàâàìè àäìèíèñòðàòîðà
+      //Обновлятор уже запускается с правами администратора
       //Stop service
 
       with TStringList.Create do
@@ -342,6 +340,8 @@ begin
       CreateAutorunRegistryKey;
       CreateShortcuts;
       CreateProgramFolder;
+      AddFireWallRules(ParamStr(0));
+      AddExceptionToFireWall;
 
       if not IsServiceExisted(RTC_HOSTSERVICE_NAME) then
         CreateServices(RTC_HOSTSERVICE_NAME, RTC_HOSTSERVICE_DISPLAY_NAME, pfFolder + '\Remox\Remox.exe');
@@ -382,11 +382,13 @@ begin
     else
     if Pos('/UNINSTALL', UpperCase(CmdLine)) > 0 then
     begin
-      if MessageBox(Application.Handle, 'Remox áóäåò óäàëåí èç ñèñòåìû. Ïðîäîëæèòü?', 'Remox', MB_OKCANCEL) = ID_CANCEL then
+      if MessageBox(Application.Handle, 'Remox ,будет удален из системы. Продолжить?', 'Remox', MB_OKCANCEL) = ID_CANCEL then
         Exit;
 
       UninstallService(RTC_HOSTSERVICE_NAME, 0);
 
+      RemoveFireWallRules(ParamStr(0));
+      RemoveExceptionToFireWall;
       DeleteShortcuts;
       DeleteUninstallRegistryKey;
       DeleteAutorunRegistryKey;
@@ -415,11 +417,11 @@ begin
         end
         else
         begin
-  //      if FindWindow('Shell_TrayWnd', nil) = 0 then //Îòêëþ÷åíî äëÿ çàïóñêà â íåàêòèâíîé êîíñîëüíîé ñåññèè
+  //      if FindWindow('Shell_TrayWnd', nil) = 0 then //Отключено для запуска в неактивной консольной сессии
   //        Exit;
 
   //      try
-  //        AdjustPriviliges(SE_CREATE_GLOBAL_NAME); //Â âèí10 ÀÂ. Äëÿ âèí10 íå íóæíî?. Äëÿ îòêðûòèÿ ñîáûòèÿ íå íóæíî. Òîëüêî äëÿ ñîçäàíèÿ
+  //        AdjustPriviliges(SE_CREATE_GLOBAL_NAME); //В вин10 АВ. Для вин10 не нужно?. Для открытия события не нужно. Только для создания
   //      finally
   //      end;
           StartProcessInDesktopMode;
@@ -436,9 +438,9 @@ begin
     end;
 
   except
-  on E: Exception do
-    xLog('ERROR ' + E.ClassName + ': ' + E.Message);
-  end;
+    on E: Exception do
+      xLog('ERROR ' + E.ClassName + ': ' + E.Message);
+    end;
 end.
 
 

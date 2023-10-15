@@ -10,6 +10,8 @@ uses
   function GetDOSEnvVar(const VarName: string): string;
   procedure AddFireWallRules(Path: String);
   procedure AddExceptionToFireWall;
+  procedure RemoveFireWallRules(Path: String);
+  procedure RemoveExceptionToFireWall;
   function IsInternetConnected: Boolean;
   function InternetGetConnectedState(lpdwFlags: LPDWORD; dwReserved:DWORD):BOOL; stdcall; external 'wininet.dll' name 'InternetGetConnectedState';
   procedure GetProxyData(var ProxyEnabled: boolean; var ProxyServer: string; var ProxyPort: integer);
@@ -138,6 +140,25 @@ begin
   fw := TFireWall.Create;
   if not fw.ApplicationExists(ParamStr(0)) then
     fw.AddApplication('Remox', ParamStr(0));
+  fw.Free;
+end;
+
+procedure RemoveFireWallRules(Path: String);
+var
+  fw: TFireWall;
+begin
+  fw := TFireWall.Create;
+  fw.RemoveRule('Remox');
+  fw.Free;
+end;
+
+procedure RemoveExceptionToFireWall;
+var
+  fw: TFireWall;
+begin
+  fw := TFireWall.Create;
+  if fw.ApplicationExists(ParamStr(0)) then
+    fw.RemoveApplication('Remox');
   fw.Free;
 end;
 

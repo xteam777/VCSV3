@@ -213,15 +213,12 @@
         <DCCReference Include="..\Modules\SendDestroyToGateway.pas"/>
         <DCCReference Include="..\Modules\uUIDataModule.pas">
             <Form>UIDataModule</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="..\Modules\uChannelsUsage.pas">
             <Form>fChannelsUsage</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="..\Modules\uDMUpdate.pas">
             <Form>DMUpdate</Form>
-            <FormType>dfm</FormType>
             <DesignClass>TDataModule</DesignClass>
         </DCCReference>
         <RcItem Include="rmx_w32.exe">

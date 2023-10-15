@@ -22,6 +22,7 @@ type
     procedure drDownloadResponseAbort(Sender: TRtcConnection);
     procedure drDownloadBeginRequest(Sender: TRtcConnection);
   private
+    fOut: TRtcFileHdl;
     { Private declarations }
     procedure InstallServiceUpdate;
     procedure InstallClientUpdate;
@@ -32,10 +33,8 @@ type
     UpdateStatus: Integer;
     Progress: Integer;
     OnSuccessCheck: TNotifyEvent;
-    FOnProgressChange: TOnProgressChange;
     procedure StartUpdate(AProxyEnabled: Boolean; AProxyAddr, AProxyUserName, AProxyPassword: String);
-    procedure GetProgress(var AUpdateStatus: Integer; var AProgress: Double);
-    procedure DoProgressChange(AProgress: Integer);
+    procedure GetProgress(var AUpdateStatus, AProgress: Integer);
   end;
 
   PDMUpdateThread = ^TDMUpdateThread;
@@ -78,7 +77,7 @@ begin
     Sleep(100);
 end;
 
-procedure TDMUpdate.GetProgress(var AUpdateStatus: Integer; var AProgress: Double);
+procedure TDMUpdate.GetProgress(var AUpdateStatus, AProgress: Integer);
 begin
   CS.Acquire;
   try
@@ -89,24 +88,9 @@ begin
   end;
 end;
 
-procedure TDMUpdate.DoProgressChange(AProgress: Integer);
-begin
-  CS.Acquire;
-  try
-    if (AProgress <> Progress) then
-      if Assigned(FOnProgressChange) then
-        FOnProgressChange(UpdateStatus, AProgress);
-
-    AProgress := Progress;
-  finally
-    CS.Release;
-  end;
-end;
-
 procedure TDMUpdate.DataModuleCreate(Sender: TObject);
 begin
   UpdateStatus := US_READY;
-  DoProgressChange(UpdateStatus, Progress);
   Progress := 0;
   hcUpdate.ServerAddr := 'remox.com';
 end;
@@ -135,81 +119,68 @@ end;
 procedure TDMUpdate.drDownloadDataReceived(Sender: TRtcConnection);
 var
   Progress: Double;
+  data: RtcByteArray;
 begin
-  with Sender as TRtcDataClient do
-  begin
-    if Response.Started then
+  CS.Acquire;
+  try
+    with Sender as TRtcDataClient do
     begin
-      Delete_File(TempExeName);
-      CurFilePos := 0;
-      Write_FileEx(TempExeName, ReadEx, CurFilePos);
+      if Response.Started then
+      begin
+        Delete_File(TempExeName);
+        CurFilePos := 0;
+//        fOut := FileOpen(TempExeName, fmOpenReadWrite + fmShareDenyNone);
+        fOut := FileCreate(TempExeName);
+      end;
+
+      data := ReadEx;
+      if Length(data)>0 then
+      begin
+        if CurFilePos < 0 then
+        begin
+        FileSeek(fOut, 0, 2);
+        if FileWrite(fOut, data[0], Length(data)) = Length(data) then
+//            Result:=True;
+        end
+        else
+        begin
+        if FileSeek(fOut, CurFilePos, 0) = CurFilePos then
+          if FileWrite(fOut, data[0], Length(data)) = Length(data) then
+//              Result:=True;
+        end;
+      end;
+
+//      Write_FileEx(TempExeName, ReadEx, CurFilePos);
       CurFilePos := CurFilePos + DataIn;
 
-      CS.Acquire;
-      try
-//        if Request.ContentLength <> 0 then
-//          Progress := CurFilePos / Request.ContentLength * 100\
-        if Response.DataSize <> 0 then
-          Progress := CurFilePos / Response.DataSize * 100
-        else
-          Progress := 0;
-      finally
-        CS.Release;
-      end;
-      DoProgressChange(Ceil(Progress));
-
-      Exit;
-    end;
-
-    Write_FileEx(TempExeName, ReadEx, CurFilePos);
-    CurFilePos := CurFilePos + DataIn;
-
-    CS.Acquire;
-    try
-//      if Request.ContentLength <> 0 then
-//        Progress := CurFilePos / Request.ContentLength * 100
       if Response.DataSize <> 0 then
         Progress := CurFilePos / Response.DataSize * 100
       else
         Progress := 0;
-    finally
-      CS.Release;
-    end;
-    DoProgressChange(Ceil(Progress));
 
-    if Response.Done then
-    begin
-      Request.Host := '';
-      hcUpdate.Disconnect;
+      if Response.Done then
+      begin
+        FileClose(fOut);
 
-      CS.Acquire;
-      try
+        Request.Host := '';
+        hcUpdate.Disconnect;
+
         Progress := 100;
-      finally
-        CS.Release;
-      end;
 
-      CS.Acquire;
-      try
         UpdateStatus := US_INSTALLING;
-      finally
-        CS.Release;
-      end;
-      DoProgressChange(Ceil(Progress));
 
-      if IsService then
-        InstallServiceUpdate
-      else
-        InstallClientUpdate;
+        if IsService then
+          InstallServiceUpdate
+        else
+          InstallClientUpdate;
 
-      CS.Acquire;
-      try
         UpdateStatus := US_READY;
-      finally
-        CS.Release;
+
+        Halt;
       end;
-      DoProgressChange(Ceil(Progress));
     end;
+  finally
+    CS.Release;
   end;
 end;
 
@@ -226,10 +197,10 @@ begin
   with TStringList.Create do
   try
     Add('PING 127.0.0.1 -n 2 > NUL');
-    Add(TempExeName + ' /STOP');
-    Add(TempExeName + ' /KILL');
-    Add('COPY "' + TempExeName + '" "' + ' "' + pfFolder + '\Remox\Remox.exe"');
-    Add(TempExeName + ' /START');
+    Add('"' + TempExeName + '" /STOP');
+    Add('"' + TempExeName + '" /KILL');
+    Add('COPY "' + TempExeName + '" "' + pfFolder + '\Remox\Remox.exe" /Y');
+    Add('"' + TempExeName + '" /START');
     fn := GetTempFile + '.bat';
     Add('DEL "' + fn + '"');
     SaveToFile(fn, TEncoding.GetEncoding(866));
@@ -248,9 +219,9 @@ begin
   with TStringList.Create do
   try
     Add('PING 127.0.0.1 -n 2 > NUL');
-    Add(TempExeName + ' /KILL');
-    Add('COPY "' + TempExeName + '" "' + ' "' + ParamStr(0) + '"');
-    Add('START ' + ParamStr(0));
+    Add('"' + TempExeName + '" /KILL');
+    Add('COPY "' + TempExeName + '" "' + ParamStr(0) + '" /Y');
+    Add('"' + ParamStr(0) + '"');
     fn := GetTempFile + '.bat';
     Add('DEL "' + fn + '"');
     SaveToFile(fn, TEncoding.GetEncoding(866));
@@ -269,7 +240,6 @@ begin
   finally
     CS.Release;
   end;
-  DoProgressChange(UpdateStatus, Progress);
 
   hcUpdate.UseProxy := AProxyEnabled;
   hcUpdate.UserLogin.ProxyAddr := AProxyAddr;
