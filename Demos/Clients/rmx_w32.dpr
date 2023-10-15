@@ -1,6 +1,6 @@
-program rmx_w32;
+п»їprogram rmx_w32;
 
-//Переключение десктопа и снятие скриншота работает исключительно в потоке
+//РџРµСЂРµРєР»СЋС‡РµРЅРёРµ РґРµСЃРєС‚РѕРїР° Рё СЃРЅСЏС‚РёРµ СЃРєСЂРёРЅС€РѕС‚Р° СЂР°Р±РѕС‚Р°РµС‚ РёСЃРєР»СЋС‡РёС‚РµР»СЊРЅРѕ РІ РїРѕС‚РѕРєРµ
 
 uses
   //FastMM4,
@@ -160,7 +160,7 @@ var
   pMap: Pointer;
   hBmp: HBitmap;
   bitmap_info: BITMAPINFO;
-//  ipBase_Screen, ipBase_DirtyArray, ipBase_MovedArray: PByte; //Адрес MMF, передаваемый из клиента
+//  ipBase_Screen, ipBase_DirtyArray, ipBase_MovedArray: PByte; //ГЂГ¤Г°ГҐГ± MMF, ГЇГҐГ°ГҐГ¤Г ГўГ ГҐГ¬Г»Г© ГЁГ§ ГЄГ«ГЁГҐГ­ГІГ 
   hOld: HGDIOBJ;
   CurrentPID: DWORD;
   HeaderSize: Integer;
@@ -632,7 +632,7 @@ begin
         ExecuteCtrlAltDel
       else
       begin
-        file_name1 := GetTempFile + '.exe'; //Доделать через SAS
+        file_name1 := GetTempFile + '.exe'; //Г„Г®Г¤ГҐГ«Г ГІГј Г·ГҐГ°ГҐГ§ SAS
         SaveResourceToFile('RUNASSYS', file_name1);
 
         file_name2 := GetTempFile + '.bat';
@@ -1749,35 +1749,35 @@ var
   BitMapHandle, BufHandle: HDC;
   BitMap, Buf: HBitMap;
 begin
-  DesktopHandle := GetDC(GetDesktopWindow);//Handle экрана
-  //копия экрана
-  BitMapHandle := CreateCompatibleDC(GetDC(0));//создание совместимого handl-а
-  BitMap := CreateCompatibleBitmap(GetDC(0),GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));//создание совместимой битовой карты
-  SelectObject(BitMapHandle, BitMap);//применение
-  BitBlt(BitMapHandle,//копирование экрана
+  DesktopHandle := GetDC(GetDesktopWindow);//Handle ГЅГЄГ°Г Г­Г 
+  //ГЄГ®ГЇГЁГї ГЅГЄГ°Г Г­Г 
+  BitMapHandle := CreateCompatibleDC(GetDC(0));//Г±Г®Г§Г¤Г Г­ГЁГҐ Г±Г®ГўГ¬ГҐГ±ГІГЁГ¬Г®ГЈГ® handl-Г 
+  BitMap := CreateCompatibleBitmap(GetDC(0),GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));//Г±Г®Г§Г¤Г Г­ГЁГҐ Г±Г®ГўГ¬ГҐГ±ГІГЁГ¬Г®Г© ГЎГЁГІГ®ГўГ®Г© ГЄГ Г°ГІГ»
+  SelectObject(BitMapHandle, BitMap);//ГЇГ°ГЁГ¬ГҐГ­ГҐГ­ГЁГҐ
+  BitBlt(BitMapHandle,//ГЄГ®ГЇГЁГ°Г®ГўГ Г­ГЁГҐ ГЅГЄГ°Г Г­Г 
   0,0,GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
   DesktopHandle,0,0,
   SRCCOPY);
 
-  //буфер (чтобы избавиться от мерцания)
-  BufHandle := CreateCompatibleDC(GetDC(0));//создание совместимого handl-а
-  buf := CreateCompatibleBitmap(GetDC(0),GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));//создание совместимой битовой карты
-  SelectObject(BufHandle, Buf);//применение
+  //ГЎГіГґГҐГ° (Г·ГІГ®ГЎГ» ГЁГ§ГЎГ ГўГЁГІГјГ±Гї Г®ГІ Г¬ГҐГ°Г¶Г Г­ГЁГї)
+  BufHandle := CreateCompatibleDC(GetDC(0));//Г±Г®Г§Г¤Г Г­ГЁГҐ Г±Г®ГўГ¬ГҐГ±ГІГЁГ¬Г®ГЈГ® handl-Г 
+  buf := CreateCompatibleBitmap(GetDC(0),GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));//Г±Г®Г§Г¤Г Г­ГЁГҐ Г±Г®ГўГ¬ГҐГ±ГІГЁГ¬Г®Г© ГЎГЁГІГ®ГўГ®Г© ГЄГ Г°ГІГ»
+  SelectObject(BufHandle, Buf);//ГЇГ°ГЁГ¬ГҐГ­ГҐГ­ГЁГҐ
 
-  DeleteDC(DesktopHandle);//удаление Handl-а экрана
+  DeleteDC(DesktopHandle);//ГіГ¤Г Г«ГҐГ­ГЁГҐ Handl-Г  ГЅГЄГ°Г Г­Г 
 
-  BitBlt(BufHandle, //копирование снимка экрана в буфер
+  BitBlt(BufHandle, //ГЄГ®ГЇГЁГ°Г®ГўГ Г­ГЁГҐ Г±Г­ГЁГ¬ГЄГ  ГЅГЄГ°Г Г­Г  Гў ГЎГіГґГҐГ°
   0,0,GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
   BitMapHandle,0,0,
   SRCCOPY);
 
   DeleteDC(BitMapHandle);
 
-  BitBlt(SaveBitMap.Canvas.Handle, //куда
-  0,0,sWidth,sHeight,//координаты и размер
-  BufHandle, //откуда
-  0,0, //координаты
-  SRCCOPY); //режим копирования
+  BitBlt(SaveBitMap.Canvas.Handle, //ГЄГіГ¤Г 
+  0,0,sWidth,sHeight,//ГЄГ®Г®Г°Г¤ГЁГ­Г ГІГ» ГЁ Г°Г Г§Г¬ГҐГ°
+  BufHandle, //Г®ГІГЄГіГ¤Г 
+  0,0, //ГЄГ®Г®Г°Г¤ГЁГ­Г ГІГ»
+  SRCCOPY); //Г°ГҐГ¦ГЁГ¬ ГЄГ®ГЇГЁГ°Г®ГўГ Г­ГЁГї
 
   DeleteDC(BufHandle);
   DeleteObject(buf);
@@ -1987,7 +1987,7 @@ begin
     biWidth := sWidth;
     biHeight := -sHeight; //Use negative height to scan top-down.
     biPlanes := 1;
-    biBitCount := GetDeviceCaps(hScrDC, BITSPIXEL); //Будет обнлвлено после чтения данных от клиента
+    biBitCount := GetDeviceCaps(hScrDC, BITSPIXEL); //Р‘СѓРґРµС‚ РѕР±РЅРѕРІР»РµРЅРѕ РїРѕСЃР»Рµ С‡С‚РµРЅРёСЏ РґР°РЅРЅС‹С… РѕС‚ РєР»РёРµРЅС‚Р°
 
 //    cClrBits := biPlanes * biBitCount;
 //    if (cClrBits = 1) then
@@ -2624,7 +2624,7 @@ begin
    Result := (GetLastError <> ERROR_ALREADY_EXISTS);
 end;
 
-//В хелпере создается отображение в память и заполняется
+//Г‚ ГµГҐГ«ГЇГҐГ°ГҐ Г±Г®Г§Г¤Г ГҐГІГ±Гї Г®ГІГ®ГЎГ°Г Г¦ГҐГ­ГЁГҐ Гў ГЇГ Г¬ГїГІГј ГЁ Г§Г ГЇГ®Г«Г­ГїГҐГІГ±Гї
 procedure ReadWriteMMFData;
 var
   ci: TCursorInfo;
@@ -2646,7 +2646,7 @@ begin
   ci.hCursor := 0;
   GetCursorInfo(ci);
 
-  //Записываем выходные параметры
+  //Г‡Г ГЇГЁГ±Г»ГўГ ГҐГ¬ ГўГ»ГµГ®Г¤Г­Г»ГҐ ГЇГ Г°Г Г¬ГҐГІГ°Г»
 //  HelperIOData.ScreenWidth := FDesktopDuplicator.ScreenWidth;
 //  HelperIOData.ScreenHeight := FDesktopDuplicator.ScreenHeight;
 //  HelperIOData.BitsPerPixel := FDesktopDuplicator.BitsPerPixel;
@@ -2659,7 +2659,7 @@ begin
   HelperIOData.DirtyRCnt := FDesktopDuplicator.DirtyRCnt;
   HelperIOData.MovedRCnt := FDesktopDuplicator.MovedRCnt;
 
-//  //Инициализируем входные параметры
+//  //Г€Г­ГЁГ¶ГЁГ Г«ГЁГ§ГЁГ°ГіГҐГ¬ ГўГµГ®Г¤Г­Г»ГҐ ГЇГ Г°Г Г¬ГҐГІГ°Г»
 //  HelperIOData.PID := 0;
 //  HelperIOData.ipBase_ScreenBuff := nil;
 //  HelperIOData.ipBase_DirtyArray := nil;
@@ -2696,7 +2696,7 @@ begin
   if WaitForSingleObject(EventReadBegin, WaitTimeout) = WAIT_TIMEOUT then
     Exit;
 
- //Считываем входные параметры
+ //Г‘Г·ГЁГІГ»ГўГ ГҐГ¬ ГўГµГ®Г¤Г­Г»ГҐ ГЇГ Г°Г Г¬ГҐГІГ°Г»
 
  CopyMemory(@HelperIOData, PByte(pMap), SizeOf(HelperIOData));
 
@@ -2719,7 +2719,7 @@ begin
 //  CopyMemory(@PID, PByte(pMap) + CurOffset, sizeof(PID));
 //  CurOffset := CurOffset + sizeof(CurrentPID);
 //  CopyMemory(@ipBase_Screen, PByte(pMap) + CurOffset, sizeof(ipBase_Screen));
-//  CurOffset := CurOffset + sizeof(ipBase_Screen); //Адрес переменной, с выделенной памятью в процессе клиента для записи скриншота
+//  CurOffset := CurOffset + sizeof(ipBase_Screen); //ГЂГ¤Г°ГҐГ± ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г®Г©, Г± ГўГ»Г¤ГҐГ«ГҐГ­Г­Г®Г© ГЇГ Г¬ГїГІГјГѕ Гў ГЇГ°Г®Г¶ГҐГ±Г±ГҐ ГЄГ«ГЁГҐГ­ГІГ  Г¤Г«Гї Г§Г ГЇГЁГ±ГЁ Г±ГЄГ°ГЁГ­ГёГ®ГІГ 
 //  CopyMemory(PByte(pMap) + CurOffset, @ipBase_DirtyArray, sizeof(ipBase_DirtyArray));
 //  CurOffset := CurOffset + sizeof(ipBase_DirtyArray);
 //  CopyMemory(PByte(pMap) + CurOffset, @ipBase_MovedArray, sizeof(ipBase_MovedArray));
@@ -2750,17 +2750,17 @@ begin
 
 //  time := GetTickCount;
 
-  //Записываем данные в процесс
+  //Г‡Г ГЇГЁГ±Г»ГўГ ГҐГ¬ Г¤Г Г­Г­Г»ГҐ Гў ГЇГ°Г®Г¶ГҐГ±Г±
 
-  hProc := OpenProcess(PROCESS_VM_WRITE or PROCESS_VM_OPERATION, False, HelperIOData.PID); // подключаемся к процессу зная его ID
-  if hProc <> 0 then // условие проверки подключения к процессу
+  hProc := OpenProcess(PROCESS_VM_WRITE or PROCESS_VM_OPERATION, False, HelperIOData.PID); // ГЇГ®Г¤ГЄГ«ГѕГ·Г ГҐГ¬Г±Гї ГЄ ГЇГ°Г®Г¶ГҐГ±Г±Гі Г§Г­Г Гї ГҐГЈГ® ID
+  if hProc <> 0 then // ГіГ±Г«Г®ГўГЁГҐ ГЇГ°Г®ГўГҐГ°ГЄГЁ ГЇГ®Г¤ГЄГ«ГѕГ·ГҐГ­ГЁГї ГЄ ГЇГ°Г®Г¶ГҐГ±Г±Гі
   try
-    WriteProcessMemory(hProc, HelperIOData.ipBase_ScreenBuff, FDesktopDuplicator.ScreenBuff, HelperIOData.BitmapSize, numberWrite); // запись скриншота в память процесса
+    WriteProcessMemory(hProc, HelperIOData.ipBase_ScreenBuff, FDesktopDuplicator.ScreenBuff, HelperIOData.BitmapSize, numberWrite); // Г§Г ГЇГЁГ±Гј Г±ГЄГ°ГЁГ­ГёГ®ГІГ  Гў ГЇГ Г¬ГїГІГј ГЇГ°Г®Г¶ГҐГ±Г±Г 
     WriteProcessMemory(hProc, HelperIOData.ipBase_DirtyR, @FDesktopDuplicator.DirtyR, FDesktopDuplicator.DirtyRCnt * SizeOf(TRect), numberWrite);
     WriteProcessMemory(hProc, HelperIOData.ipBase_MovedR, @FDesktopDuplicator.MovedR, FDesktopDuplicator.MovedRCnt * SizeOf(TRect), numberWrite);
     WriteProcessMemory(hProc, HelperIOData.ipBase_MovedRP, @FDesktopDuplicator.MovedRP, FDesktopDuplicator.MovedRCnt * SizeOf(TPoint), numberWrite);
   finally
-    CloseHandle(hProc); // отсоединяемся от процесса
+    CloseHandle(hProc); // Г®ГІГ±Г®ГҐГ¤ГЁГ­ГїГҐГ¬Г±Гї Г®ГІ ГЇГ°Г®Г¶ГҐГ±Г±Г 
   end;
 
 //  time := GetTickCount - time;
@@ -2900,11 +2900,11 @@ begin
 //    SaveBitMap := TBitmap.Create;
 //    SaveBitMap.Width := sWidth;
 //    SaveBitMap.Height := sHeight;
-//    BitBlt(SaveBitMap.Canvas.Handle, //куда
-//    0,0,sWidth,sHeight,//координаты и размер
-//    hMemDC, //откуда
-//    0,0, //координаты
-//    SRCCOPY); //режим копирования
+//    BitBlt(SaveBitMap.Canvas.Handle, //ГЄГіГ¤Г 
+//    0,0,sWidth,sHeight,//ГЄГ®Г®Г°Г¤ГЁГ­Г ГІГ» ГЁ Г°Г Г§Г¬ГҐГ°
+//    hMemDC, //Г®ГІГЄГіГ¤Г 
+//    0,0, //ГЄГ®Г®Г°Г¤ГЁГ­Г ГІГ»
+//    SRCCOPY); //Г°ГҐГ¦ГЁГ¬ ГЄГ®ГЇГЁГ°Г®ГўГ Г­ГЁГї
 //    SaveBitMap.SaveToFile('C:\Rufus\rmx_x64_' + StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');
 //    SaveBitMap.Free;
 
