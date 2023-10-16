@@ -283,6 +283,7 @@ type
     procedure Send_ShowDesktop(Sender: TObject = nil);
 
     //+sstuman
+    procedure Send_RemoteUpdate(Sender: TObject);
     procedure Send_BlockKeyboardAndMouse(Sender: TObject = nil);
     procedure Send_UnBlockKeyboardAndMouse(Sender: TObject = nil);
     procedure Send_PowerOffMonitor(Sender: TObject = nil);
@@ -1723,6 +1724,11 @@ end;
 procedure TRtcPDesktopControlUI.Send_HideDesktop(Sender: TObject);
 begin
   Module.Send_HideDesktop(UserName, Sender);
+end;
+
+procedure TRtcPDesktopControlUI.Send_RemoteUpdate(Sender: TObject);
+begin
+  Module.Send_RemoteUpdate(UserName, Sender);
 end;
 
 procedure TRtcPDesktopControlUI.Send_BlockKeyboardAndMouse(Sender: TObject);
