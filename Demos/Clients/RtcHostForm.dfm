@@ -6076,6 +6076,7 @@ object MainForm: TMainForm
     SecureKey = '2240897'
     ForceEncryption = True
     AutoSessions = True
+    AutoSessionsPing = 1
     AutoRepost = 2
     ModuleFileName = '/gatefunc'
     Left = 209
@@ -6295,6 +6296,7 @@ object MainForm: TMainForm
     SecureKey = '2240897'
     ForceEncryption = True
     AutoSessions = True
+    AutoSessionsPing = 1
     AutoRepost = 2
     ModuleFileName = '/gatefunc'
     OnResponseAbort = TimerModuleResponseAbort
@@ -6328,6 +6330,7 @@ object MainForm: TMainForm
     SecureKey = '2240897'
     ForceEncryption = True
     AutoSessions = True
+    AutoSessionsPing = 1
     AutoRepost = 2
     ModuleFileName = '/gatefunc'
     OnResponseAbort = HostTimerModuleResponseAbort
