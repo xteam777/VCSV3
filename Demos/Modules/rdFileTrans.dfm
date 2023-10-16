@@ -2464,7 +2464,7 @@ object rdFileTransfer: TrdFileTransfer
         ExplicitHeight = 28
       end
       object SpeedButton2: TSpeedButton
-        Left = 616
+        Left = 612
         Top = 0
         Width = 27
         Height = 22
@@ -2871,7 +2871,7 @@ object rdFileTransfer: TrdFileTransfer
       object lg: TMemo
         Left = 0
         Top = 0
-        Width = 1188
+        Width = 1180
         Height = 100
         TabStop = False
         Align = alClient

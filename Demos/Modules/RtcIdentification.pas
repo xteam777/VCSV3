@@ -27,12 +27,15 @@ type
   private
     { Private declarations }
     FOnCustomFormClose: TOnCustomFormEvent;
+    FOnCloseForm: TNotifyEvent;
   public
     { Public declarations }
-    user: String;
+    UserName, UserDesc, Action: String;
     Active: Boolean;
+    ThreadId: Cardinal;
 
     property OnCustomFormClose: TOnCustomFormEvent read FOnCustomFormClose write FOnCustomFormClose;
+    property OnCloseForm: TNotifyEvent read FOnCloseForm write FOnCloseForm;
   end;
 
 var
@@ -71,7 +74,7 @@ end;
 procedure TfIdentification.bOKClick(Sender: TObject);
 begin
   ModalResult := mrOk;
-  Hide;
+  Close;
 end;
 
 procedure TfIdentification.ePasswordKeyDown(Sender: TObject; var Key: Word;
@@ -93,6 +96,8 @@ procedure TfIdentification.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   if Assigned(FOnCustomFormClose) then
     FOnCustomFormClose;
+
+  FOnCloseForm(Self);
 end;
 
 procedure TfIdentification.FormCreate(Sender: TObject);

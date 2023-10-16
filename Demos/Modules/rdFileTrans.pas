@@ -262,6 +262,7 @@ type
     FTaskPanelList: TTaskPanelList;
     FDirFilesInited: Boolean;
     FRepositionFolder: string;
+    fFormOpened: Boolean;
 
     function wrong_caption(s: string): Integer;
     function info2pn(lv: TRtcPFileExplorer): Int64;
@@ -279,7 +280,7 @@ type
 
   protected
 
-    procedure AcceptFiles(var msg : TMessage); message WM_DROPFILES;
+//    procedure AcceptFiles(var msg : TMessage); message WM_DROPFILES;
     procedure CreateParams(var params: TCreateParams); override;
     procedure ChangeLockedState(var Message: TMessage); message WM_CHANGE_LOCKED_STATUS;
 
@@ -420,7 +421,7 @@ begin
   params.WndParent := 0; //GetDeskTopWindow;
 end;
 
-procedure TrdFileTransfer.AcceptFiles( var msg : TMessage );
+{procedure TrdFileTransfer.AcceptFiles( var msg : TMessage );
   const
     cnMaxFileNameLen = 1024;
   var
@@ -452,7 +453,7 @@ procedure TrdFileTransfer.AcceptFiles( var msg : TMessage );
 
     DragFinish( msg.WParam );
     end;
-  end;
+  end;}
 
 
 procedure TrdFileTransfer.FormCreate(Sender: TObject);
@@ -478,9 +479,13 @@ begin
   FTaskPanelList.OnChange        := OnTaskPanelChange;
   FTaskPanelList.TaskRemoveLogic := trlManual;
 
-  b_ppClick(nil);
+  if not fFormOpened then
+  begin
+    b_ppClick(nil);
+    fFormOpened := True;
+  end;
 
-  DragAcceptFiles(Handle, True);
+//  DragAcceptFiles(Handle, True);
 end;
 
 procedure TrdFileTransfer.Image1Click(Sender: TObject);
@@ -698,7 +703,7 @@ end;
 
 procedure TrdFileTransfer.FormDestroy(Sender: TObject);
 begin
-  DragAcceptFiles(Handle, False);
+//  DragAcceptFiles(Handle, False);
   FBmpR.Free;
   FBmpL.Free;
   FRemoteRecent.Free;
@@ -1584,32 +1589,34 @@ end;
 function TrdFileTransfer.info2pn(lv: TRtcPFileExplorer): Int64;
 var p,i: integer; sz: int64; s,s2: string;
 begin
+  result:= 0;
 
- result:= 0;
-try
- sz:= 0; p:= 0;
+  try
+    sz:= 0; p:= 0;
 
-  for i:=0 to lv.Items.Count-1 do
-    with lv.Items[i] do
-      if Selected then
-      begin
-       Application.ProcessMessages;
-       inc(p);
-       if SubItems.Count > 0 then
-        sz := sz + get_size(SubItems[1]);
-      end;
+    if lv = nil then
+      Exit;
 
- result:= sz;
+    for i:=0 to lv.Items.Count-1 do
+      with lv.Items[i] do
+        if Selected then
+        begin
+         Application.ProcessMessages;
+         inc(p);
+         if SubItems.Count > 0 then
+          sz := sz + get_size(SubItems[1]);
+        end;
 
- s:= str_size(sz); s2:= str_size(sz,False,False);
- if s<>s2 then s:= s2+' ['+s+']';
+   result:= sz;
 
- if lv = FilesRemote then
-    pnlInfoRemote.caption:= 'Выбрано '+p.tostring+' объектов '+s else
-    pnlInfoLocal.caption:= 'Выбрано '+p.tostring+' объектов '+s
-except
+   s:= str_size(sz); s2:= str_size(sz,False,False);
+   if s<>s2 then s:= s2+' ['+s+']';
 
-end;
+   if lv = FilesRemote then
+      pnlInfoRemote.caption:= 'Выбрано '+p.tostring+' объектов '+s else
+      pnlInfoLocal.caption:= 'Выбрано '+p.tostring+' объектов '+s
+  except
+  end;
 end;
 
 procedure TrdFileTransfer.FilesRemoteSelectItem(Sender: TObject; Item: TListItem; Selected: Boolean);

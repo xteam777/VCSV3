@@ -51,6 +51,7 @@ type
   PPortalHostThread = ^TPortalHostThread;
   TPortalHostThread = class(TThread)
   private
+    FDataModule: TDataModule;
     FUserName: String;
     FAction: String;
     FUID: String;
@@ -59,20 +60,22 @@ type
     FDesktopHost: TRtcPDesktopHost;
     FFileTransfer: TRtcPFileTransfer;
     FChat: TRtcPChat;
+    FResult: TRtcResult;
     FCS: TCriticalSection;
-
     Gateway: String;
     Port: String;
     ProxyEnabled: Boolean;
     ProxyAddr: String;
     ProxyUserName: String;
     ProxyPassword: String;
+    procedure FResultReturn(Sender: TRtcConnection; Data, Result: TRtcValue);
   public
     constructor Create(CreateSuspended: Boolean; AUserName, AGateway, APort, AProxyAddr, AProxyUserName, AProxyPassword: String; AProxyEnabled: Boolean); overload;
     destructor Destroy; override;
     procedure Restart(AGateway: String = '');
     procedure GetFilesFromClipboard(ACurExplorerHandle: THandle; ACurExplorerDir: String);
     procedure ChangeProxyParams(AProxyEnabled: Boolean; AProxyAddr, AProxyUserName, AProxyPassword: String);
+    procedure SendPing;
   protected
     procedure Execute; override;
 //  protected
@@ -87,7 +90,6 @@ type
     FUserPass: String;
     FUserToConnect: String;
     FAction: String;
-    FUIForm: TForm;
     FUIDFull, FUID: String;
     FGateway: String;
     FLoggedIn: Boolean;
@@ -96,13 +98,14 @@ type
     FDesktopControl: TRtcPDesktopControl;
     FFileTransfer: TRtcPFileTransfer;
     FChat: TRtcPChat;
-//    FNeedCloseUI: Boolean;
+    FNeedCloseUI: Boolean;
     FResult: TRtcResult;
     { Private declarations }
     procedure SendPing;
   public
     constructor Create(CreateSuspended: Boolean; AAction, AUserName, AUserPass, AUserToConnect, AGateway: String; AStartLockedStatus: Integer; AStartServiceStarted: Boolean; UIVisible: Boolean); overload;
     destructor Destroy; override;
+    procedure SetNeedCloseUI(AValue: Boolean);
   protected
     procedure Execute; override;
 //    procedure WndProc(var Message: TMessage);
@@ -259,7 +262,6 @@ type
     TimerModule: TRtcClientModule;
     HostTimerClient: TRtcHttpClient;
     HostTimerModule: TRtcClientModule;
-    HostPingTimer: TTimer;
     resHostLogin: TRtcResult;
     resHostLogout: TRtcResult;
     resHostTimerLogin: TRtcResult;
@@ -463,9 +465,9 @@ type
       Result: TRtcValue);
     procedure resHostTimerReturn(Sender: TRtcConnection; Data,
       Result: TRtcValue);
-    procedure resHostPingReturn(Sender: TRtcConnection; Data,
-      Result: TRtcValue);
-    procedure HostPingTimerTimer(Sender: TObject);
+//    procedure resHostPingReturn(Sender: TRtcConnection; Data,
+//      Result: TRtcValue);
+//    procedure HostPingTimerTimer(Sender: TObject);
     procedure nNewRandomPassClick(Sender: TObject);
     procedure nCopyPassClick(Sender: TObject);
     procedure aFeedBackExecute(Sender: TObject);
@@ -642,7 +644,7 @@ type
     HighLightedNode: PVirtualNode;
 
     ProxyOption: Integer;
-    PermanentPassword, AccountPassword: String;
+    PermanentPassword, SessionPassword, AccountPassword: String;
 //    OnlyAdminChanges: Boolean;
     StoreHistory: Boolean;
     StorePasswords: Boolean;
@@ -732,8 +734,9 @@ type
     procedure SendPasswordsToGateway();
     procedure SendLockedStateToGateway;
     function IsValidDeviceID(const uname: String): Boolean;
-    procedure ConnectToPartnerStart(user, username, pass, action: String);
-    procedure ReconnectToPartnerStart(user, username, pass, action: String);
+    procedure ConnectToPartnerStart(UserName, UserDesc, UserPass, Action: String);
+    procedure ReconnectToPartnerStart(UserName, UserDesc, UserPass, Action: String);
+    procedure OnClosePassForm(Sender: TObject);
 //    function GetDeviceStatus(uname: String): Integer;
     function GetDeviceInfo(uname: String): PDeviceData;
     procedure DoAccountLogin;
@@ -1255,7 +1258,11 @@ begin
   FUID := GetUniqueString;
   FUID := StringReplace(FUID, '-', '', [rfReplaceAll]);
 
-  FGatewayClient := TRtcHttpPortalClient.Create(nil);
+  FDataModule := TDataModule.Create(nil);
+  FResult := TRtcResult.Create(FDataModule);
+  FResult.OnReturn := FResultReturn;
+
+  FGatewayClient := TRtcHttpPortalClient.Create(FDataModule);
   FGatewayClient.Name := 'PClient_' + FUID;
   FGatewayClient.LoginUserName := AUserName;
   FGatewayClient.LoginUserInfo.asText['RealName'] := AUserName;
@@ -1301,7 +1308,7 @@ begin
   FGatewayClient.OnUserLoggedOut := MainForm.PClientUserLoggedOut;
   FGatewayClient.Tag := ThreadID;
 
-  FFileTransfer := TRtcPFileTransfer.Create(nil);
+  FFileTransfer := TRtcPFileTransfer.Create(FDataModule);
   FFileTransfer.Name := 'PFileTransfer_' + FUID;
   FFileTransfer.Client := FGatewayClient;
   FFileTransfer.AccessControl := False;
@@ -1342,7 +1349,7 @@ begin
   FFileTransfer.NotifyFileBatchSend := MainForm.OnDesktopHostNotifyFileBatchSend;
   FFileTransfer.Tag := ThreadID;
 
-  FChat := TRtcPChat.Create(nil);
+  FChat := TRtcPChat.Create(FDataModule);
   FChat.Name := 'PChat_' + FUID;
   FChat.Client := FGatewayClient;
   FChat.AccessControl := False;
@@ -1355,7 +1362,7 @@ begin
   FChat.OnUserLeft := MainForm.PModuleUserLeft;
   FChat.Tag := ThreadID;
 
-  FDesktopHost := TRtcPDesktopHost.Create(nil);
+  FDesktopHost := TRtcPDesktopHost.Create(FDataModule);
   FDesktopHost.Name := 'PDesktopHost_' + FUID;
   FDesktopHost.Client := FGatewayClient;
 //  FDesktopHost.FileTransfer := FFileTransfer;
@@ -1412,39 +1419,19 @@ end;
 destructor TPortalHostThread.Destroy;
 begin
   FGatewayClient.Module.WaitForCompletion(False, 2);
-//  try
-    FGatewayClient.Disconnect;
-//  finally
-//  end;
-//  try
-    FGatewayClient.Active := False;
-//  finally
-//  end;
-//
-//  try
-    FDesktopHost.FileTransfer.Free;
-//  finally
-//  end;
-//  try
-    if FDesktopHost <> nil then
-      FDesktopHost.Free;
-//  finally
-//  end;
-//  try
-    if FFileTransfer <> nil then
-      FFileTransfer.Free;
-//  finally
-//  end;
-//  try
-    if FChat <> nil then
-      FChat.Free;
-//  finally
-//  end;
-//  try
-    FGatewayClient.Free;
-//  finally
-//  end;
+  FGatewayClient.Disconnect;
+  FGatewayClient.Active := False;
 
+  FResult.Free;
+  FDesktopHost.FileTransfer.Free;
+  if FDesktopHost <> nil then
+    FDesktopHost.Free;
+  if FFileTransfer <> nil then
+    FFileTransfer.Free;
+  if FChat <> nil then
+    FChat.Free;
+  FGatewayClient.Free;
+  FDataModule.Free;
   FCS.Free;
 
   TSendDestroyClientToGatewayThread.Create(False, Gateway, FUserName, False, MainForm.hcAccounts.UseProxy, MainForm.hcAccounts.UserLogin.ProxyAddr, MainForm.hcAccounts.UserLogin.ProxyUserName, MainForm.hcAccounts.UserLogin.ProxyPassword, False);
@@ -1476,6 +1463,112 @@ begin
     FGatewayClient.Gate_ProxyPassword := AProxyPassword;
   finally
     FCS.Release;
+  end;
+end;
+
+procedure TPortalHostThread.SendPing;
+var
+  PassRec: TRtcRecord;
+begin
+//  xLog('TPortalHostThread.SendPing');
+
+  PassRec := TRtcRecord.Create;
+  try
+    if Trim(MainForm.PermanentPassword) <> '' then
+      PassRec.asString['0'] := MainForm.SessionPassword;
+    if Trim(MainForm.PermanentPassword) <> '' then
+      PassRec.asString['1'] := MainForm.PermanentPassword;
+
+    with MainForm.TimerModule do
+    try
+      with Data.NewFunction('Host.Ping') do
+      begin
+        asWideString['User'] := MainForm.DeviceId;
+        asString['Gateway'] := Gateway + ':' + Port;
+        asRecord['Passwords'] := PassRec;
+        if ActiveConsoleSessionID = CurrentSessionID then
+          asString['ConsoleId'] := MainForm.ConsoleId
+        else
+          asString['ConsoleId'] := '';
+        asInteger['LockedState'] := MainForm.ScreenLockedState;
+        asBoolean['ServiceStarted'] := IsServiceStarted(RTC_HOSTSERVICE_NAME);
+        asBoolean['IsService'] := IsService;
+        Call(FResult);
+      end;
+    except
+      on E: Exception do
+        Data.Clear;
+    end;
+  finally
+    FreeAndNil(PassRec);
+  end;
+end;
+
+procedure TPortalHostThread.FResultReturn(Sender: TRtcConnection; Data, Result: TRtcValue);
+var
+  i: Integer;
+begin
+//  XLog('TPortalHostThread.FResultReturn');
+
+  if Result.isType = rtc_Exception then
+  begin
+//    HostLogOut;
+//    LogOut(nil);
+//    lblStatus.Caption := Result.asException;
+  end
+  else
+//    HostPingTimer.Enabled := True;
+
+  if Result.asRecord.asBoolean['NeedHostRelogin'] then
+  begin
+    xLog('resHostPingReturn: NeedHostRelogin');
+
+    MainForm.DeleteAllPendingRequests;
+    MainForm.CloseAllActiveUI;
+
+//    CS_GW.Acquire;
+//    try
+//      for i := 0 to GatewayClientsList.Count - 1 do
+//      begin
+//  //      PGatewayRec(GatewayClientsList[i])^.GatewayClient^.Module.SkipRequests;
+//  //      PGatewayRec(GatewayClientsList[i])^.GatewayClient^.Module.ResetLogin;
+//  //      PGatewayRec(GatewayClientsList[i])^.GatewayClient^.Module.StartCalls;
+//        PGatewayRec(GatewayClientsList[i])^.GatewayClient^.Disconnect;
+//        PGatewayRec(GatewayClientsList[i])^.GatewayClient^.Active := False;
+//      //  PGatewayRec(GatewayClientsList[i])^.GatewayClient^.Active := True;
+//      end;
+//    finally
+//      CS_GW.Release;
+//    end;
+
+    if (MainForm.DeviceId <> '') then
+    begin
+//      PClient.Disconnect;
+//      PClient.Active := False;
+      MainForm.tPClientReconnect.Enabled := True;
+    end;
+
+    //    CloseAllActiveUI;
+//
+//    for i := 0 to GatewayClientsList.Count - 1 do
+//    begin
+//  //    if PGatewayRec(GatewayClientsList[i])^.GatewayClient^.Active then
+//  //      Continue;
+//
+////      PGatewayRec(GatewayClientsList[i])^.GatewayClient^.Disconnect;
+////      PGatewayRec(GatewayClientsList[i])^.GatewayClient^.Active := False;
+//  //    PGatewayRec(GatewayClientsList[i])^.GatewayClient^.Stop;
+//      PGatewayRec(GatewayClientsList[i])^.GatewayClient^.Active := True;
+//    end;
+
+//    tPClientReconnect.Enabled := True;
+//    PClient.Active := True; //Доделать
+//    tPClientReconnectTimer(nil);
+//    hcAccounts.DisconnectNow(True);
+//    SetStatusString('Сервер недоступен');     asdsad
+//    SetConnectedState(False);
+//    if not isClosing then
+//      tHcAccountsReconnect.Enabled := True;
   end;
 end;
 
@@ -1518,9 +1611,17 @@ procedure TPortalHostThread.Execute;
 var
   msg: TMsg;
   lNeedRestartThread: Boolean;
+  i: Integer;
 begin
+  i := 0;
   while (not Terminated) do
   begin
+    if i = 10 then
+    begin
+      SendPing;
+      i := 0;
+    end;
+
     FCS.Acquire;
     try
       lNeedRestartThread := FNeedRestartThread;
@@ -1561,7 +1662,8 @@ begin
 //        ProcessMessage(msg);
 //    end;
 
-    Sleep(1);
+    Sleep(100);
+    i := i + 1;
   end;
 end;
 
@@ -1865,6 +1967,16 @@ begin
   end;
 end;
 
+procedure TPortalThread.SetNeedCloseUI(AValue: Boolean);
+begin
+  CS.Acquire;
+  try
+    FNeedCloseUI := AValue;
+  finally
+    CS.Release;
+  end;
+end;
+
 destructor TPortalThread.Destroy;
 //var
 //  UIDM: TUIDataModule;
@@ -1909,8 +2021,11 @@ begin
   FGatewayClient.Free;
   FDataModule.Free;
 
-//  if FNeedCloseUI then
-//    PostMessage(DesktopsForm.Handle, WM_CLOSE_UI, WPARAM(PChar(FUserName)), LPARAM(ThreadID));
+//  if (FAction = 'file') or (FAction = 'chat') then
+//    PostMessage(FUIForm.Handle, WM_CLOSE_UI, 0, 0)
+//  else
+  if FNeedCloseUI then
+    PostMessage(DesktopsForm.Handle, WM_CLOSE_UI, WPARAM(PChar(FUserName)), LPARAM(ThreadID));
 
 //  try
 //    FGatewayClient.Disconnect;
@@ -1981,7 +2096,7 @@ begin
   begin
     if i = 10 then
     begin
-      SendPing;
+//      SendPing;
 
       i := 0;
     end;
@@ -2966,11 +3081,12 @@ begin
 ////          PPortalConnection(PortalConnectionsList[i])^.ThisThread := nil;
 //          FreeAndNil(PPortalConnection(PortalConnectionsList[i])^.ThisThread);
 //        end;
+        PPortalConnection(PortalConnectionsList[i])^.Thread.SetNeedCloseUI(ACloseFUI);
         PPortalConnection(PortalConnectionsList[i])^.Thread.Terminate;
         //PostThreadMessage(PPortalConnection(PortalConnectionsList[i])^.ThreadID, WM_CLOSE, WPARAM(ACloseFUI), 0); //Закрываем поток с пклиентом
-        if ACloseFUI
-          and ((PPortalConnection(PortalConnectionsList[i])^.Action = 'file') or (PPortalConnection(PortalConnectionsList[i])^.Action = 'chat')) then
-          PostMessage(PPortalConnection(PortalConnectionsList[i])^.UIHandle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
+//        if ACloseFUI
+//          and ((PPortalConnection(PortalConnectionsList[i])^.Action = 'file') or (PPortalConnection(PortalConnectionsList[i])^.Action = 'chat')) then
+//          PostMessage(PPortalConnection(PortalConnectionsList[i])^.UIHandle, WM_CLOSE, 0, 0); //Закрываем форму UI. Нужно при отмене подключения
 
 //        Dispose(PPortalConnection(PortalConnectionsList[i])^.UIForm);
         Dispose(PortalConnectionsList[i]);
@@ -3299,6 +3415,8 @@ begin
 
   FUpdateAvailable := False;
 
+  SessionPassword := '';
+
   tDMUpdate := TDMUpdateThread.Create(False, UpdateOnSuccessCheck);
 
   DeviceId := '';
@@ -3312,7 +3430,7 @@ begin
   DesktopsForm.DoStartFileTransferring := StartFileTransferring;
   DesktopsForm.ReconnectToPartnerStart := ReconnectToPartnerStart;
 
-  PassForm := TfIdentification.Create(Self);
+  PassForm := TfIdentification.Create(Application);
 
   ActivationInProcess := False;
   AccountLoginInProcess := False;
@@ -3990,7 +4108,7 @@ begin
 
     if fConnected then
     begin
-      HostPingTimer.Enabled := True;
+//      HostPingTimer.Enabled := True;
 
   //    ePartnerID.Enabled := True;
 
@@ -4014,7 +4132,7 @@ begin
     end
     else
     begin
-      HostPingTimer.Enabled := False;
+//      HostPingTimer.Enabled := False;
 
       eConsoleID.Text := '-';
       eUserName.Text := '-';
@@ -4208,6 +4326,8 @@ begin
 
   for i := 1 to 6 do
     ePassword.Text := ePassword.Text + letters[Random(54)];
+
+  SessionPassword := System.Hash.THashMD5.GetHashString(ePassword.Text);
 
 //  PClient.LoginPassword := Trim(ePassword.Text);
 end;
@@ -5339,7 +5459,7 @@ begin
     tIconRefresh.Enabled := False;
 
     pingTimer.Enabled := False;
-    HostPingTimer.Enabled := False;
+//    HostPingTimer.Enabled := False;
 
     TaskBarRemoveIcon;
 
@@ -6985,7 +7105,7 @@ procedure TMainForm.HostLogOut;
 begin
 //  xLog('HostLogOut');
 
-  HostPingTimer.Enabled := False;
+//  HostPingTimer.Enabled := False;
 
   //Хост должен быть включен в клиенте только если не запущена служба на десктопной версии или если сервер
   //Этот модуль и так не работает в службе
@@ -7334,7 +7454,7 @@ begin
     Result := RTC_HOSTSERVICE_NAME;
 end;
 
-procedure TMainForm.HostPingTimerTimer(Sender: TObject);
+{procedure TMainForm.HostPingTimerTimer(Sender: TObject);
 var
   PassRec: TRtcRecord;
 begin
@@ -7351,7 +7471,7 @@ begin
 //    if not hcAccounts.IsConnected then
 //      Exit;
 
-    LoadSetup('PERMANENT_PASS');
+//    LoadSetup('PERMANENT_PASS');
 
     PassRec := TRtcRecord.Create;
     try
@@ -7385,7 +7505,7 @@ begin
     finally
       FreeAndNil(PassRec);
     end;
-end;
+end;}
 
 procedure TMainForm.HostTimerClientConnect(Sender: TRtcConnection);
 begin
@@ -7668,7 +7788,7 @@ begin
   Result := StringReplace(Result, '}', '', [rfReplaceAll]);
 end;
 
-procedure TMainForm.ConnectToPartnerStart(user, username, pass, action: String);
+procedure TMainForm.ConnectToPartnerStart(UserName, UserDesc, UserPass, Action: String);
 var
 //  p: TPoint;
   PortalConnection: PPortalConnection;
@@ -7677,7 +7797,7 @@ var
 begin
 //  xLog('ConnectToPartnerStart');
 
-  if user = '' then
+  if UserName = '' then
   begin
 //    MessageBox(Handle, 'Введите ID компьютера, к которому хотите подключиться', 'Remox', MB_ICONWARNING or MB_OK);
     SetStatusStringDelayed('Введите ID устройства, к которому хотите подключиться');
@@ -7692,7 +7812,7 @@ begin
 
     Exit;
   end;
-  if not IsValidDeviceID(user) then
+  if not IsValidDeviceID(UserName) then
   begin
 //    MessageBox(Handle, 'ID компьютера может содержать только цифры', 'Remox', MB_ICONWARNING or MB_OK);
     SetStatusStringDelayed('ID устройства может содержать только цифры');
@@ -7706,14 +7826,14 @@ begin
 
     Exit;
   end;
-  if user = DeviceId then
+  if UserName = DeviceId then
   begin
 //    MessageBox(Handle, 'Подключение к своему компьютеру невозможно', 'Remox', MB_ICONWARNING or MB_OK);
     SetStatusStringDelayed('Подключение к своему устройству невозможно');
 //    SetStatusStringDelayed('Готов к подключению', 2000);
     Exit;
   end;
-//  if GetDeviceStatus(user) = MSG_STATUS_OFFLINE then
+//  if GetDeviceStatus(UserName) = MSG_STATUS_OFFLINE then
 //  begin
 //    MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'Remox', MB_ICONWARNING or MB_OK);
 //      SetStatusString('Готов к подключению');
@@ -7745,34 +7865,34 @@ begin
     end;
   end;
 
-//  SetStatusString('Подключение к ' + username, True);
+//  SetStatusString('Подключение к ' + UserDesc, True);
 
-  PortalConnection := GetPortalConnection(action, user); //При повторном подключении ищем уже открытое
+  PortalConnection := GetPortalConnection(Action, UserName); //При повторном подключении ищем уже открытое
   if PortalConnection <> nil then
   begin
 //    BringWindowToTop(ActiveUIRec^.Handle);
 //    SetForegroundWindow(ActiveUIRec^.Handle);
     ForceForegroundWindow(DesktopsForm.Handle);
-    DesktopsForm.SetActiveTab(user);
+    DesktopsForm.SetActiveTab(UserName);
 //    SetStatusString('Готов к подключению');
     Exit;
   end;
 
-  AddPendingRequest(user, username, action, False);
+  AddPendingRequest(UserName, UserDesc, Action, False);
   SetStatusStringDelayed('');
 
   DoGetDeviceState(eAccountUserName.Text,
     LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll])),
     AccountPassword,
-    user);
+    UserName);
 
   with cmAccounts do
   try
     with Data.NewFunction('Host.GetUserInfo') do
     begin
-      asWideString['User'] := user;
-      asWideString['Pass'] := pass;
-      asString['Action'] := action;
+      asWideString['User'] := userName;
+      asWideString['Pass'] := UserPass;
+      asString['Action'] := Action;
       Call(rGetPartnerInfo);
     end;
   except
@@ -7792,10 +7912,8 @@ var
 //  PRItem: PPendingRequestItem;
   username, sUID: String;
   PortalThread: TPortalThread;
-  mResult: TModalResult;
 //  PassForm: TfIdentification;
   PRItem: PPendingRequestItem;
-  TempPass: String;
 begin
 //  xLog('rGetPartnerInfoReturn');
 
@@ -7856,9 +7974,7 @@ begin
         end
         else
         begin
-//        AddPendingRequest(asWideString['user'], asString['action'], asString['Address'] + ':' +  asString['Port'], 0);
-//          TSendDestroyClientToGatewayThread.Create(False, asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['user'] + '_' + asWideString['action'] + '_', False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword);
-          TSendDestroyClientToGatewayThread.Create(False, asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['UserToConnect'] + '_' + asWideString['action'] + '_', False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, False);
+//          TSendDestroyClientToGatewayThread.Create(False, asString['Address'], StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll]) + '_' + asWideString['UserToConnect'] + '_' + asWideString['action'] + '_', False, hcAccounts.UseProxy, hcAccounts.UserLogin.ProxyAddr, hcAccounts.UserLogin.ProxyUserName, hcAccounts.UserLogin.ProxyPassword, False);
           PortalThread := TPortalThread.Create(False, asString['action'], asWideString['user'], asWideString['pass'], asWideString['UserToConnect'], asString['Address'], asInteger['LockedState'], asBoolean['ServiceStarted'], True); //Для каждого соединения новый клиент
           PRItem^.Gateway := asString['Address'];
           PRItem^.ThreadID := PortalThread.ThreadID;
@@ -7892,11 +8008,9 @@ begin
 
       username := GetUserNameByID(asWideString['user']);
 
-      TempPass := '';
+//      PassForm.Parent := Self;
 
-//    PassForm.Parent := Self;
-
-      if PassForm.user <> asWideString['user'] then
+      if PassForm.UserName <> asWideString['user'] then
         PassForm.ePassword.Text := '';
 
 //      if StorePasswords then
@@ -7909,60 +8023,87 @@ begin
 //          end;
 //      end;
 
-      PassForm.user := asWideString['user'];
+      PassForm.UserName := asWideString['user'];
+      PassForm.UserDesc := username;
+      PassForm.Action := asString['action'];
+      PassForm.ThreadId := PRItem^.ThreadID;
       PassForm.OnCustomFormClose := OnCustomFormClose;
+      PassForm.OnCloseForm := OnClosePassForm;
       OnCustomFormOpen(@PassForm);
 //      DesktopsForm.SetReconnectInterval(asWideString['user'], 999999999);
-      PassForm.ShowModal;
-      mResult := PassForm.ModalResult;
-      TempPass := PassForm.ePassword.Text;
-      if mResult = mrOk then
-      begin
-        ConnectToPartnerStart(asWideString['user'], username, System.Hash.THashMD5.GetHashString(TempPass), asString['action']);
+      PassForm.Show;
+//      mResult := PassForm.ModalResult;
+//      if mResult = mrOk then
+//      begin
+//        ConnectToPartnerStart(asWideString['user'], username, System.Hash.THashMD5.GetHashString(PassForm.ePassword.Text), asString['action']);
+////        DesktopsForm.SetReconnectInterval(asWideString['user'], 60000);
+//      end
+//      else
+//      begin
+//        begin
+//          DeletePendingRequest(asWideString['user'], asString['action']);
+//          DesktopsForm.CloseUIAndTab(asWideString['user'], True, PRItem^.ThreadID);
+//        end;
+//
+////        if GetPendingRequestsCount > 0 then
+////          SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
+////        else
+////          SetStatusString('Готов к подключению');
+//      end;
+    end;
+  end;
+end;
+
+procedure TMainForm.OnClosePassForm(Sender: TObject);
+var
+  fPassform: TfIdentification;
+begin
+  fPassform := (Sender as TfIdentification);
+  if fPassform.ModalResult = mrOk then
+  begin
+    ConnectToPartnerStart(fPassform.UserName, fPassform.UserDesc, System.Hash.THashMD5.GetHashString(fPassform.ePassword.Text), fPassform.Action);
 //        DesktopsForm.SetReconnectInterval(asWideString['user'], 60000);
-      end
-      else
-      begin
-      begin
-        DeletePendingRequest(asWideString['user'], asString['action']);
-        DesktopsForm.CloseUIAndTab(asWideString['user'], True, PRItem^.ThreadID);
-      end;
+  end
+  else
+  begin
+    begin
+      DeletePendingRequest(fPassform.UserName, fPassform.Action);
+      DesktopsForm.CloseUIAndTab(fPassform.UserName, True, fPassform.ThreadID);
+    end;
 
 //        if GetPendingRequestsCount > 0 then
 //          SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
 //        else
 //          SetStatusString('Готов к подключению');
-      end;
-    end;
   end;
 end;
 
-procedure TMainForm.ReconnectToPartnerStart(user, username, pass, action: String);
+procedure TMainForm.ReconnectToPartnerStart(UserName, UserDesc, UserPass, Action: String);
 var
   PRItem: PPendingRequestItem;
 begin
-  RemovePortalConnection(user, action, False);
+  RemovePortalConnection(UserName, Action, False);
 
-  if PartnerIsPending(user, action, True) then
+  if PartnerIsPending(UserName, Action, True) then
   begin
-    PRItem := GetPendingItem(user, action);
+    PRItem := GetPendingItem(UserName, Action);
     PRItem^.IsReconnection := True;
   end
   else
-    AddPendingRequest(user, username, action, True);
+    AddPendingRequest(UserName, UserDesc, Action, True);
 
   DoGetDeviceState(eAccountUserName.Text,
     LowerCase(StringReplace(eUserName.Text, ' ' , '', [rfReplaceAll])),
     AccountPassword,
-    user);
+    UserName);
 
   with cmAccounts do
   try
     with Data.NewFunction('Host.GetUserInfo') do
     begin
-      asWideString['User'] := user;
-      asWideString['Pass'] := pass;
-      asString['Action'] := action;
+      asWideString['User'] := UserName;
+      asWideString['Pass'] := UserPass;
+      asString['Action'] := Action;
       Call(rGetPartnerInfoReconnect);
     end;
   except
@@ -7982,10 +8123,8 @@ var
 //  PRItem: PPendingRequestItem;
   username, sUID: String;
   PortalThread: TPortalThread;
-  mResult: TModalResult;
-  PassForm: TfIdentification;
+//  PassForm: TfIdentification;
   PRItem: PPendingRequestItem;
-  TempPass: String;
 begin
 //  xLog('rGetPartnerInfoReturn');
 
@@ -8063,11 +8202,10 @@ begin
 
       username := GetUserNameByID(asWideString['user']);
 
-      TempPass := '';
-      try
+//      try
 //      PassForm.Parent := Self;
 
-        if PassForm.user <> asWideString['user'] then
+        if PassForm.UserName <> asWideString['user'] then
           PassForm.ePassword.Text := '';
 
 //      if StorePasswords then
@@ -8080,26 +8218,28 @@ begin
 //          end;
 //      end;
 
-        PassForm.user := asWideString['user'];
+        PassForm.UserName := asWideString['user'];
+        PassForm.UserDesc := username;
+        PassForm.Action := asString['action'];
+        PassForm.ThreadId := PRItem^.ThreadId;
         PassForm.OnCustomFormClose := OnCustomFormClose;
+        PassForm.OnCloseForm := OnClosePassForm;
         OnCustomFormOpen(@PassForm);
-        PassForm.ShowModal;
-        mResult := PassForm.ModalResult;
-        TempPass := PassForm.ePassword.Text;
-      finally
-        PassForm.Free;
-      end;
-      if mResult = mrOk then
-        ConnectToPartnerStart(asWideString['user'], username, TempPass, asString['action'])
-      else
-      begin
-        DeletePendingRequest(asWideString['user'], asString['action']);
+        PassForm.Show;
+//      finally
+//        PassForm.Free;
+//      end;
+//      if PassForm.ModalResult = mrOk then
+//        ConnectToPartnerStart(asWideString['user'], username, PassForm.ePassword.Text, asString['action'])
+//      else
+//      begin
+//        DeletePendingRequest(asWideString['user'], asString['action']);
 
 //        if GetPendingRequestsCount > 0 then
 //          SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
 //        else
 //          SetStatusString('Готов к подключению');
-      end;
+//      end;
     end;
   end;
 end;
@@ -8225,11 +8365,11 @@ begin
     HostTimerClient.Connect;
     msgHostTimerTimer(nil);
 
-    HostPingTimer.Enabled := True;
+//    HostPingTimer.Enabled := True;
   end;
 end;
 
-procedure TMainForm.resHostPingReturn(Sender: TRtcConnection; Data,
+{procedure TMainForm.resHostPingReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
 var
   i: Integer;
@@ -8296,7 +8436,7 @@ begin
 //    if not isClosing then
 //      tHcAccountsReconnect.Enabled := True;
   end;
-end;
+end;}
 
 procedure TMainForm.resHostTimerLoginReturn(Sender: TRtcConnection; Data,
   Result: TRtcValue);
@@ -9034,7 +9174,7 @@ begin
         begin
           PassRec := TRtcRecord.Create;
           try
-            PassRec.asString['0'] := System.Hash.THashMD5.GetHashString(ePassword.Text);
+            PassRec.asString['0'] := SessionPassword;
             if Trim(PermanentPassword) <> '' then
               PassRec.asString['1'] := PermanentPassword;
 
@@ -9107,7 +9247,7 @@ begin
 
   PassRec := TRtcRecord.Create;
   try
-    PassRec.asString['0'] := System.Hash.THashMD5.GetHashString(ePassword.Text);
+    PassRec.asString['0'] := SessionPassword;
     if Trim(PermanentPassword) <> '' then
       PassRec.asString['1'] := PermanentPassword;
 
@@ -9400,7 +9540,7 @@ begin
 
     PassRec := TRtcRecord.Create;
     try
-      PassRec.asString['0'] := System.Hash.THashMD5.GetHashString(ePassword.Text);;
+      PassRec.asString['0'] := SessionPassword;
       if Trim(PermanentPassword) <> '' then
         PassRec.asString['1'] := PermanentPassword;
 

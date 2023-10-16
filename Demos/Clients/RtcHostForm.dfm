@@ -6334,12 +6334,6 @@ object MainForm: TMainForm
     Left = 178
     Top = 156
   end
-  object HostPingTimer: TTimer
-    Enabled = False
-    OnTimer = HostPingTimerTimer
-    Left = 123
-    Top = 240
-  end
   object resHostLogin: TRtcResult
     OnReturn = resHostLoginReturn
     Left = 221
@@ -6360,7 +6354,6 @@ object MainForm: TMainForm
     Top = 74
   end
   object resHostPing: TRtcResult
-    OnReturn = resHostPingReturn
     Left = 353
     Top = 91
   end

@@ -2,7 +2,7 @@
 Coordinates=701,610,88,36
 
 []
-Coordinates=528,441,87,58
+Coordinates=1266,386,100,36
 Visible=True
 LayerNames=
 
@@ -289,9 +289,6 @@ Coordinates=1044,551,57,36
 
 [iRegPassState]
 Coordinates=88,623,100,58
-
-[HostPingTimer]
-Coordinates=1266,386,100,36
 
 [hcAccounts]
 Coordinates=103,793,81,36
