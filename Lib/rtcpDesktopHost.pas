@@ -740,20 +740,28 @@ begin
                 Show_Wallpaper;
             end
             else
+            if data.asString['s'] = 'RUPD' then
+            begin
+              if IsService then
+                SendIOToHelperByIPC(QT_START_UPDATE, 0, 0, 0, 0, 0, 0, 0, '');
+//              else
+//                SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 0, 0);
+            end
+            else
             if data.asString['s'] = 'BKM' then
             begin
               if IsService then
-                SendIOToHelperByIPC(QT_SENDBKM, 0, 0, 0, 0, 0, 0, 0, '')
-              else
-                SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 0, 0);
+                SendIOToHelperByIPC(QT_SENDBKM, 0, 0, 0, 0, 0, 0, 0, '');
+//              else
+//                SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 0, 0);
             end
             else
             if data.asString['s'] = 'UBKM' then
             begin
               if IsService then
-                SendIOToHelperByIPC(QT_SENDUBKM, 0, 0, 0, 0, 0, 0, 0, '')
-              else
-                SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 1, 0);
+                SendIOToHelperByIPC(QT_SENDUBKM, 0, 0, 0, 0, 0, 0, 0, '');
+//              else
+//                SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 1, 0);
             end
             else
             {if data.asString['s'] = 'OFFMON' then

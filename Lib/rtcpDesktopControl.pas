@@ -248,6 +248,7 @@ type
     procedure Send_HideDesktop(const UserName: String; Sender: TObject = nil);
     procedure Send_ShowDesktop(const UserName: String; Sender: TObject = nil);
 
+    procedure Send_RemoteUpdate(const UserName: String; Sender: TObject = nil);
     procedure Send_BlockKeyboardAndMouse(const UserName: String; Sender: TObject = nil);
     procedure Send_UnBlockKeyboardAndMouse(const UserName: String; Sender: TObject = nil);
 
@@ -1230,6 +1231,12 @@ procedure TRtcPDesktopControl.Send_ShowDesktop(const UserName: String;
   Sender: TObject);
 begin
   Send_SpecialKey(UserName, 'SDESK', Sender);
+end;
+
+procedure TRtcPDesktopControl.Send_RemoteUpdate(const UserName: String;
+  Sender: TObject);
+begin
+  Send_SpecialKey(UserName, 'RUPD', Sender);
 end;
 
 procedure TRtcPDesktopControl.Send_BlockKeyboardAndMouse(const UserName: String;

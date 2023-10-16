@@ -4482,8 +4482,7 @@ object rdDesktopViewer: TrdDesktopViewer
                 CommandProperties.Height = 0
               end
               item
-                Visible = False
-                Caption = #1059#1076#1072#1083#1077#1085#1085#1086#1077' '#1086#1073#1085#1086#1074#1083#1077#1085#1080#1077
+                Action = aRemoteUpdate
               end>
             Caption = #1044#1086#1087#1086#1083#1085#1080#1090#1077#1083#1100#1085#1086
             CommandStyle = csMenu
@@ -4604,6 +4603,10 @@ object rdDesktopViewer: TrdDesktopViewer
     object aRecordCodecInfo: TAction
       Caption = #1048#1085#1092#1086#1088#1084#1072#1094#1080#1103' '#1086' '#1082#1086#1076#1077#1082#1072#1093
       OnExecute = aRecordCodecInfoExecute
+    end
+    object aRemoteUpdate: TAction
+      Caption = #1059#1076#1072#1083#1077#1085#1085#1086#1077' '#1086#1073#1085#1086#1074#1083#1077#1085#1080#1077
+      OnExecute = aRemoteUpdateExecute
     end
   end
   object XPColorMap1: TXPColorMap

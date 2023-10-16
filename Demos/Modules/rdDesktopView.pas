@@ -108,6 +108,7 @@ type
     iMiniPanelShow: TImage;
     iMiniPanelHide: TImage;
     aOptimalSettings: TAction;
+    aRemoteUpdate: TAction;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
 
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -187,6 +188,7 @@ type
     procedure MainChromeTabsChange(Sender: TObject; ATab: TChromeTab;
       TabChangeType: TTabChangeType);
     procedure aOptimalSettingsExecute(Sender: TObject);
+    procedure aRemoteUpdateExecute(Sender: TObject);
   private
 //    FVideoRecorder: TVideoRecorder;
 //    FVideoWriter: TRMXVideoWriter;
@@ -2281,6 +2283,14 @@ end;
 procedure TrdDesktopViewer.aRecordStopExecute(Sender: TObject);
 begin
   DoRecordAction(RECORD_STOP);
+end;
+
+procedure TrdDesktopViewer.aRemoteUpdateExecute(Sender: TObject);
+begin
+  if ActiveUIModule = nil then
+    Exit;
+
+  ActiveUIModule.UI.Send_RemoteUpdate(Sender);
 end;
 
 //procedure TrdDesktopViewer.aRecordStartExecute(Sender: TObject);
