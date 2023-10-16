@@ -8210,7 +8210,7 @@ begin
     else
     if asString['Result'] = 'PASS_NOT_VALID' then
     begin
-      PRItem := GetPendingItem(asWideString['user'], asString['action']);
+      {PRItem := GetPendingItem(asWideString['user'], asString['action']); //При реконнекте PortalThread удален
       if PRItem = nil then
         Exit;
 
@@ -8239,7 +8239,7 @@ begin
         PassForm.OnCustomFormClose := OnCustomFormClose;
         PassForm.OnCloseForm := OnClosePassForm;
         OnCustomFormOpen(@PassForm);
-        PassForm.Show;
+        PassForm.Show;}
 //      finally
 //        PassForm.Free;
 //      end;
@@ -8247,7 +8247,11 @@ begin
 //        ConnectToPartnerStart(asWideString['user'], username, PassForm.ePassword.Text, asString['action'])
 //      else
 //      begin
-//        DeletePendingRequest(asWideString['user'], asString['action']);
+//      RemovePortalConnection(asWideString['user'], asString['action'], True);
+      DeletePendingRequest(asWideString['user'], asString['action']);
+      DesktopsForm.CloseUIAndTab(asWideString['user'], True, 0 );
+      DesktopsForm.FreeUIDataModule(asWideString['user'], 0);
+//      DesktopsForm.SetReconnectInterval(asWideString['user'], 0);
 
 //        if GetPendingRequestsCount > 0 then
 //          SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)

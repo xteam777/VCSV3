@@ -624,7 +624,16 @@ var
 begin
   UIDM := GetUIDataModule(GetUserToFromUserName(AUserName));
   if UIDM <> nil then
-    UIDM.TimerReconnect.Interval := AInterval;
+    if AInterval > 0 then
+    begin
+      UIDM.TimerReconnect.Interval := AInterval;
+      UIDM.TimerReconnect.Enabled := True;
+    end
+    else
+    begin
+      UIDM.TimerReconnect.Interval := 10000;
+      UIDM.TimerReconnect.Enabled := False;
+    end;
 end;
 
 procedure TrdDesktopViewer.ChangeLockedState(AUserName: String; ALockedState: Integer; AServiceStarted: Boolean);
@@ -771,6 +780,7 @@ begin
 
         aBlockKeyboardMouse.Enabled := pUIItem.PartnerServiceStarted;
         aPowerOffMonitor.Enabled := pUIItem.PartnerServiceStarted;
+        aRemoteUpdate.Enabled := pUIItem.PartnerServiceStarted;
       finally
         reg.Free;
       end;
@@ -884,7 +894,7 @@ begin
 
       if (not UIDM.NeedFree)
         and (UIDM.UserName = AUserName)
-        and (UIDM.ThreadID = AThreadID)
+        and ((UIDM.ThreadID = AThreadID) or ((AThreadID = 0) and UIDM.TimerReconnect.Enabled))
         and (RemovedInd = -1) then
       begin
 //        if UIDM.HideWallpaper then
@@ -960,6 +970,7 @@ end;
 function TrdDesktopViewer.FreeUIDataModule(AUserName: String; AThreadID: Cardinal): Integer;
 var
   i: Integer;
+  UIDM: TUIDataModule;
 begin
   Result := -1;
 
@@ -968,9 +979,10 @@ begin
     i := UIModulesList.Count - 1;
     while i >= 0 do
     begin
-      if (TUIDataModule(UIModulesList[i]).NeedFree)
-        and (TUIDataModule(UIModulesList[i]).UserName = AUserName)
-        and (TUIDataModule(UIModulesList[i]).ThreadID = AThreadID) then
+      UIDM := TUIDataModule(UIModulesList[i]);
+      if (UIDM.NeedFree)
+        and (UIDM.UserName = AUserName)
+        and ((UIDM.ThreadID = AThreadID) or ((AThreadID = 0) and UIDM.TimerReconnect.Enabled)) then
       begin
         FreeAndNil(TUIDataModule(UIModulesList[i]));
         UIModulesList.Delete(i);
@@ -1856,7 +1868,8 @@ begin
   //tell Windows that you're accepting drag and drop files
   //DragAcceptFiles(Handle, False);
 
-  ActiveUIModule.TimerReconnect.Enabled := True;
+  if ActiveUIModule <> nil then
+    ActiveUIModule.TimerReconnect.Enabled := True;
 //  Close;
 end;
 

@@ -1,4 +1,4 @@
-﻿program rmx_w64;
+﻿program rmx_w32;
 
 //Переключение десктопа и снятие скриншота работает исключительно в потоке
 
@@ -2038,6 +2038,7 @@ var
   hToken, hProcess: THandle;
   pS: PSID;
   res: Boolean;
+  fIsLWVisible: Boolean;
 begin
   Result := 'Default';
 //  CS.Acquire;
@@ -2060,8 +2061,16 @@ begin
 
     if (InputDesktop <> 0) and (GetUserObjectName(InputDesktop) <> GetUserObjectName(CurDesktop)) then
     begin
+      fIsLWVisible := TLockWindow.IsVisible;
+      if fIsLWVisible then
+        TLockWindow.Close;
+
       res := SetThreadDesktop(InputDesktop);
       LogIfError('SetThreadDesktop', GetLastError);
+
+      if fIsLWVisible then
+        TLockWindow.Show;
+
 //      err := GetLastError;
 //      if res then
 //        Result := GetUserObjectName(LogonDesktop)
