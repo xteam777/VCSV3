@@ -6072,7 +6072,10 @@ object MainForm: TMainForm
     Client = hcAccounts
     Compression = cMax
     HyperThreading = True
+    EncryptionKey = 16
     SecureKey = '2240897'
+    ForceEncryption = True
+    AutoSessions = True
     AutoRepost = 2
     ModuleFileName = '/gatefunc'
     Left = 209
@@ -6288,7 +6291,10 @@ object MainForm: TMainForm
     Client = TimerClient
     Compression = cMax
     HyperThreading = True
+    EncryptionKey = 16
     SecureKey = '2240897'
+    ForceEncryption = True
+    AutoSessions = True
     AutoRepost = 2
     ModuleFileName = '/gatefunc'
     OnResponseAbort = TimerModuleResponseAbort
@@ -6318,7 +6324,10 @@ object MainForm: TMainForm
     Client = HostTimerClient
     Compression = cMax
     HyperThreading = True
+    EncryptionKey = 16
     SecureKey = '2240897'
+    ForceEncryption = True
+    AutoSessions = True
     AutoRepost = 2
     ModuleFileName = '/gatefunc'
     OnResponseAbort = HostTimerModuleResponseAbort
