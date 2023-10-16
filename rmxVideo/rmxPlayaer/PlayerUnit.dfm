@@ -1,7 +1,7 @@
-object MainForm: TMainForm
+object PlayerForm: TPlayerForm
   Left = 0
   Top = 0
-  Caption = 'rmxPlayer'
+  Caption = #1055#1088#1086#1080#1075#1088#1099#1074#1072#1090#1077#1083#1100
   ClientHeight = 350
   ClientWidth = 582
   Color = clBtnFace
@@ -13,6 +13,7 @@ object MainForm: TMainForm
   Font.Name = 'Tahoma'
   Font.Style = []
   StyleElements = [seFont, seClient]
+  OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnResize = FormResize

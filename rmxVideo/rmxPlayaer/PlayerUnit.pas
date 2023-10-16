@@ -1,4 +1,4 @@
-unit MainUnit;
+unit PlayerUnit;
 
 interface
 
@@ -9,7 +9,7 @@ uses
   Vcl.ActnList, Vcl.ComCtrls, ConvertUnit, SimleTrackBar;
 
 type
-  TMainForm = class(TForm)
+  TPlayerForm = class(TForm)
     pnlCommon: TPanel;
     btnSlide: TSpeedButton;
     btnPlay: TSpeedButton;
@@ -41,6 +41,7 @@ type
     procedure TrackBarChange(Sender: TObject);
     procedure actForwardExecute(Sender: TObject);
     procedure actBackwardExecute(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
   private
     { Private declarations }
     FFLoatPanel: TFloatPanelVCL;
@@ -64,10 +65,11 @@ type
     { Public declarations }
     procedure OnPanelSlideFinish(Sender: TObject);
     property FileName: string read FFileName write FFileName;
+    procedure OpenFile(AFileName: String);
   end;
 
 var
-  MainForm: TMainForm;
+  PlayerForm: TPlayerForm;
 
 implementation
 
@@ -75,14 +77,14 @@ implementation
 
 {$R *.dfm}
 
-procedure TMainForm.actBackwardExecute(Sender: TObject);
+procedure TPlayerForm.actBackwardExecute(Sender: TObject);
 begin
   if FPlayer.Running then
     FPlayer.Position := FPlayer.Position - FPlayer.FPS * 2
 
 end;
 
-procedure TMainForm.actConvertExecute(Sender: TObject);
+procedure TPlayerForm.actConvertExecute(Sender: TObject);
 var
   cvt: TConvertForm;
 begin
@@ -95,48 +97,68 @@ begin
   end;
 end;
 
-procedure TMainForm.actForwardExecute(Sender: TObject);
+procedure TPlayerForm.actForwardExecute(Sender: TObject);
 begin
   if FPlayer.Running then
     FPlayer.Position := FPlayer.Position + FPlayer.FPS * 2
 end;
 
-procedure TMainForm.actOpenFileExecute(Sender: TObject);
-
+procedure TPlayerForm.actOpenFileExecute(Sender: TObject);
 begin
   if FileOpenDialog.Execute then
     begin
       FFileName := FileOpenDialog.FileName;
+
+      FPlayer.Stop;
+      FPlayer.Play(FFileName);
+
       UpdateActions;
     end;
 end;
 
-procedure TMainForm.actPauseExecute(Sender: TObject);
+procedure TPlayerForm.OpenFile(AFileName: String);
+begin
+  Show;
+
+  FFileName := AFileName;
+
+  FPlayer.Stop;
+  FPlayer.Play(FFileName);
+
+  UpdateActions;
+end;
+
+procedure TPlayerForm.actPauseExecute(Sender: TObject);
 begin
   FPlayer.Pause := not FPlayer.Pause;
   UpdateActions;
 end;
 
-procedure TMainForm.actStopExecute(Sender: TObject);
+procedure TPlayerForm.actStopExecute(Sender: TObject);
 begin
   FPlayer.Stop;
   UpdateActions;
 end;
 
-procedure TMainForm.btnPlayClick(Sender: TObject);
+procedure TPlayerForm.btnPlayClick(Sender: TObject);
 begin
   FPlayer.Stop;
   FPlayer.Play(FFileName);
   UpdateActions;
 end;
 
-procedure TMainForm.btnSlideClick(Sender: TObject);
+procedure TPlayerForm.btnSlideClick(Sender: TObject);
 begin
   FFLoatPanel.StopValue := FFLoatPanel.Top - (pnlCommon.Height * FFLoatPanel.Tag);
   FFLoatPanel.StartAnimate;
 end;
 
-procedure TMainForm.FormCreate(Sender: TObject);
+procedure TPlayerForm.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+  Action := TCloseAction.caFree;
+end;
+
+procedure TPlayerForm.FormCreate(Sender: TObject);
 const
   DEF_COFFY_COLOR = $00001932;
 begin
@@ -196,14 +218,14 @@ begin
 end;
 
 
-procedure TMainForm.FormDestroy(Sender: TObject);
+procedure TPlayerForm.FormDestroy(Sender: TObject);
 begin
   F2DCanvas.Free;
   FPlayer.Free;
   FLastFrame.Free;
 end;
 
-procedure TMainForm.FormResize(Sender: TObject);
+procedure TPlayerForm.FormResize(Sender: TObject);
 begin
   {$ifdef FLOAT_PANEL_ALTOP}
     FFLoatPanel.BoundsRect := Rect(0, FFLoatPanel.Top, ClientWidth, FFLoatPanel.Height);
@@ -214,12 +236,12 @@ begin
   {$endif}
 end;
 
-function TMainForm.IsPanelPlayerVisible: Boolean;
+function TPlayerForm.IsPanelPlayerVisible: Boolean;
 begin
   Result := (FFLoatPanel.Tag > 0) or FFLoatPanel.Running;
 end;
 
-procedure TMainForm.OnApplyRegion(Sender: TObject; ctrl: TControl;
+procedure TPlayerForm.OnApplyRegion(Sender: TObject; ctrl: TControl;
   var r: TRect);
 begin
   // check if Button, reduce 1 pixel
@@ -228,7 +250,7 @@ begin
 
 end;
 
-procedure TMainForm.OnPaintPaintBox(Sender: TObject);
+procedure TPlayerForm.OnPaintPaintBox(Sender: TObject);
 var
   bmp: TBitmap;
 begin
@@ -244,7 +266,7 @@ begin
 
 end;
 
-procedure TMainForm.OnPanelSlideFinish(Sender: TObject);
+procedure TPlayerForm.OnPanelSlideFinish(Sender: TObject);
 begin
   FFLoatPanel.Tag := - FFLoatPanel.Tag;
   if FFLoatPanel.Tag < 0 then
@@ -253,13 +275,13 @@ begin
     btnSlide.Caption := 'p'
 end;
 
-procedure TMainForm.OnShowHintTrackBar(var HintStr: string;
+procedure TPlayerForm.OnShowHintTrackBar(var HintStr: string;
   var CanShow: Boolean; var HintInfo: Vcl.Controls.THintInfo);
 begin
   HintStr := PlayerTimerToStr( FPlayer.PositionToTime(FTRackBar.Position)  );
 end;
 
-procedure TMainForm.PaintFileNameOnTarget(Opacity: Single);
+procedure TPlayerForm.PaintFileNameOnTarget(Opacity: Single);
 var
   s: string;
   r: TRect;
@@ -276,7 +298,7 @@ begin
 
 end;
 
-procedure TMainForm.PaintImage(Sender: TObject; Bitmap: TBitmap; const Progress: TRMXPlayerProgress);
+procedure TPlayerForm.PaintImage(Sender: TObject; Bitmap: TBitmap; const Progress: TRMXPlayerProgress);
 const
   DEF_TIME_TEXT_VISIBLE = 2500;
   DEF_MIN_TIME_TEXT_OPACITY = 1000;
@@ -316,12 +338,12 @@ begin
   F2DCanvas.D2DCanvas.EndDraw;
 end;
 
-function TMainForm.PlayerTimerToStr(val: Int64): string;
+function TPlayerForm.PlayerTimerToStr(val: Int64): string;
 begin
   Result := Format('%2.2d:%2.2d',[val div 1000, (val mod 1000) div 10]);
 end;
 
-function TMainForm.PlayerTimerToStr(cur, max: Int64): string;
+function TPlayerForm.PlayerTimerToStr(cur, max: Int64): string;
 begin
   Result := Format('%2.2d:%2.2d/%2.2d:%2.2d',[cur div 1000, (cur mod 1000) div 10,
                                               max div 1000, (max mod 1000) div 10]);
@@ -330,7 +352,7 @@ begin
 end;
 
 
-procedure TMainForm.TrackBarChange(Sender: TObject);
+procedure TPlayerForm.TrackBarChange(Sender: TObject);
 var
   saved_pause: Boolean;
 begin
@@ -346,7 +368,7 @@ begin
 
 end;
 
-procedure TMainForm.UpdateUserActions;
+procedure TPlayerForm.UpdateUserActions;
 begin
 
   actPlay.Enabled     := not FPlayer.Running and FileExists(FFileName);

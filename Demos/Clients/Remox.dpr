@@ -66,7 +66,20 @@ uses
   SendDestroyToGateway in '..\Modules\SendDestroyToGateway.pas',
   uUIDataModule in '..\Modules\uUIDataModule.pas' {UIDataModule},
   uChannelsUsage in '..\Modules\uChannelsUsage.pas' {fChannelsUsage},
-  uDMUpdate in '..\Modules\uDMUpdate.pas' {DMUpdate: TDataModule};
+  uDMUpdate in '..\Modules\uDMUpdate.pas' {DMUpdate: TDataModule},
+  ConvertUnit in '..\..\rmxVideo\rmxPlayaer\Convert\ConvertUnit.pas' {ConvertForm},
+  FLoatPanelVCL in '..\..\rmxVideo\rmxPlayaer\FloatPanel\FLoatPanelVCL.pas',
+  AcceleratedPaintBox in '..\..\rmxVideo\rmxPlayaer\AcceleratedPaintBox.pas',
+  PlayerUnit in '..\..\rmxVideo\rmxPlayaer\PlayerUnit.pas' {PlayerForm},
+  PlayImage in '..\..\rmxVideo\rmxPlayaer\PlayImage.pas',
+  SimleTrackBar in '..\..\rmxVideo\rmxPlayaer\SimleTrackBar.pas',
+  rmxAVIConverter in '..\..\rmxVideo\rmxConverter\converters\rmxAVIConverter.pas',
+  rmxBitmapConverter in '..\..\rmxVideo\rmxConverter\converters\rmxBitmapConverter.pas',
+  rmxBitmaper in '..\..\rmxVideo\rmxConverter\converters\rmxBitmaper.pas',
+  RMXConverterBase in '..\..\rmxVideo\rmxConverter\converters\RMXConverterBase.pas',
+  rmxConverterUtils in '..\..\rmxVideo\rmxConverter\converters\rmxConverterUtils.pas',
+  CmdLineParams in '..\..\rmxVideo\rmxConverter\CmdLineParams.pas',
+  VideoRecorder in '..\..\rmxVideo\rmxConverter\VideoRecorder.pas';
 
 {$R *.res}
 
@@ -113,6 +126,7 @@ begin
   Application.Title := 'Remox';
   Forms.Application.ShowMainForm := (Pos('/SILENT', UpperCase(CmdLine)) = 0);
   Forms.Application.CreateForm(TMainForm, MainForm);
+  Application.CreateForm(TPlayerForm, PlayerForm);
   Forms.Application.Run;
 //    else
 //    begin
@@ -253,6 +267,11 @@ begin
 
   StartLog;
   try
+    if Pos('.RMXV', UpperCase(ParamStr(1))) <> 0 then
+    begin
+      TPlayerForm.Create(nil).OpenFile(ParamStr(1));
+    end
+    else
     if Pos('/UPDATE', UpperCase(CmdLine)) <> 0 then
     begin
       //Обновлятор уже запускается с правами администратора
@@ -342,6 +361,7 @@ begin
       CreateProgramFolder;
       AddFireWallRules(ParamStr(0));
       AddExceptionToFireWall;
+      RegisterFileType('rmxv', 'Файл видеозаписи Remox', Application.ExeName, Application.ExeName, False);
 
       if not IsServiceExisted(RTC_HOSTSERVICE_NAME) then
         CreateServices(RTC_HOSTSERVICE_NAME, RTC_HOSTSERVICE_DISPLAY_NAME, pfFolder + '\Remox\Remox.exe');
@@ -387,6 +407,7 @@ begin
 
       UninstallService(RTC_HOSTSERVICE_NAME, 0);
 
+      UnregisterFileType('rmxv', False);
       RemoveFireWallRules(ParamStr(0));
       RemoveExceptionToFireWall;
       DeleteShortcuts;

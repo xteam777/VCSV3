@@ -33,8 +33,62 @@ procedure DeleteShortcut(sFileName: String; nFolder: Integer);
 //    function FileVersion(const FileName: TFileName): String;
 function FileBuildVersion(const FileName: TFileName): Integer;
 //procedure ReadGroups(Strings: TStrings);
+procedure RegisterFileType(FileExt: String; FileTypeDescription: String; ICONResourceFileFullPath: String; ApplicationFullPath: String; OnlyForCurrentUser: Boolean = True);
+procedure UnregisterFileType(FileExt: String; OnlyForCurrentUser: Boolean = True);
 
 implementation
+
+procedure RegisterFileType(FileExt: String; FileTypeDescription: String; ICONResourceFileFullPath: String; ApplicationFullPath: String; OnlyForCurrentUser: Boolean = True);
+var
+  Registry: TRegistry;
+begin
+  Registry := TRegistry.Create;
+  Registry.Access := KEY_WRITE or KEY_WOW64_64KEY;
+  try
+    if OnlyForCurrentUser then
+      Registry.RootKey := HKEY_CURRENT_USER
+    else
+      Registry.RootKey := HKEY_LOCAL_MACHINE;
+
+    if Registry.OpenKey('\Software\Classes\.' + FileExt, true) then
+    begin
+      Registry.WriteString('', FileExt + 'File');
+      if Registry.OpenKey('\Software\Classes\' + FileExt + 'File', true) then
+      begin
+        Registry.WriteString('', FileTypeDescription);
+        if Registry.OpenKey('\Software\Classes\' + FileExt + 'File\DefaultIcon', true) then
+        begin
+          Registry.WriteString('', ICONResourceFileFullPath);
+          if Registry.OpenKey('\Software\Classes\' + FileExt + 'File\shell\open\command', true) then
+            Registry.WriteString('', ApplicationFullPath + ' "%1"');
+        end;
+      end;
+    end;
+  finally
+    Registry.Free;
+  end;
+  SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, 0, 0);
+end;
+
+procedure UnregisterFileType(FileExt: String; OnlyForCurrentUser: Boolean = True);
+var
+  Registry: TRegistry;
+begin
+  Registry := TRegistry.Create;
+  Registry.Access := KEY_WRITE or KEY_WOW64_64KEY;
+  try
+    if OnlyForCurrentUser then
+      Registry.RootKey := HKEY_CURRENT_USER
+    else
+      Registry.RootKey := HKEY_LOCAL_MACHINE;
+
+    Registry.DeleteKey('\Software\Classes\.' + FileExt);
+    Registry.DeleteKey('\Software\Classes\' + FileExt + 'File');
+  finally
+    Registry.Free;
+  end;
+  SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, 0, 0);
+end;
 
 {function FileVersion(const FileName: TFileName): String;
 var

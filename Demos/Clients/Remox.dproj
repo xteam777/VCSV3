@@ -221,6 +221,25 @@
             <Form>DMUpdate</Form>
             <DesignClass>TDataModule</DesignClass>
         </DCCReference>
+        <DCCReference Include="..\..\rmxVideo\rmxPlayaer\Convert\ConvertUnit.pas">
+            <Form>ConvertForm</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="..\..\rmxVideo\rmxPlayaer\FloatPanel\FLoatPanelVCL.pas"/>
+        <DCCReference Include="..\..\rmxVideo\rmxPlayaer\AcceleratedPaintBox.pas"/>
+        <DCCReference Include="..\..\rmxVideo\rmxPlayaer\PlayerUnit.pas">
+            <Form>PlayerForm</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="..\..\rmxVideo\rmxPlayaer\PlayImage.pas"/>
+        <DCCReference Include="..\..\rmxVideo\rmxPlayaer\SimleTrackBar.pas"/>
+        <DCCReference Include="..\..\rmxVideo\rmxConverter\converters\rmxAVIConverter.pas"/>
+        <DCCReference Include="..\..\rmxVideo\rmxConverter\converters\rmxBitmapConverter.pas"/>
+        <DCCReference Include="..\..\rmxVideo\rmxConverter\converters\rmxBitmaper.pas"/>
+        <DCCReference Include="..\..\rmxVideo\rmxConverter\converters\RMXConverterBase.pas"/>
+        <DCCReference Include="..\..\rmxVideo\rmxConverter\converters\rmxConverterUtils.pas"/>
+        <DCCReference Include="..\..\rmxVideo\rmxConverter\CmdLineParams.pas"/>
+        <DCCReference Include="..\..\rmxVideo\rmxConverter\VideoRecorder.pas"/>
         <RcItem Include="rmx_w32.exe">
             <ContainerId>ResourceItem</ContainerId>
             <ResourceType>RCDATA</ResourceType>
