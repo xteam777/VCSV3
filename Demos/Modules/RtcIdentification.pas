@@ -94,6 +94,8 @@ end;
 
 procedure TfIdentification.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
+  Active := False;
+
   if Assigned(FOnCustomFormClose) then
     FOnCustomFormClose;
 
@@ -107,6 +109,8 @@ end;
 
 procedure TfIdentification.FormShow(Sender: TObject);
 begin
+  Active := True;
+
   ePassword.SetFocus;
   ePassword.SelectAll;
 end;

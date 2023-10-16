@@ -8066,10 +8066,8 @@ begin
   end
   else
   begin
-    begin
-      DeletePendingRequest(fPassform.UserName, fPassform.Action);
-      DesktopsForm.CloseUIAndTab(fPassform.UserName, True, fPassform.ThreadID);
-    end;
+    DeletePendingRequest(fPassform.UserName, fPassform.Action);
+    DesktopsForm.CloseUIAndTab(fPassform.UserName, True, fPassform.ThreadID);
 
 //        if GetPendingRequestsCount > 0 then
 //          SetStatusString('Подключение к ' + GetUserNameByID(GetCurrentPendingItemUserName), True)
@@ -11464,19 +11462,35 @@ end;
 procedure TMainForm.DeleteLastPendingItem;
 var
   i: Integer;
+  PRItem: PPendingRequestItem;
+  mUserName, mAction: String;
 begin
   CS_Pending.Acquire;
   try
     i := PendingRequests.Count - 1;
     while i >= 0 do
     begin
-      if not PPendingRequestItem(PendingRequests[i])^.IsReconnection then
+      PRItem := PPendingRequestItem(PendingRequests[i]);
+      if not PRItem^.IsReconnection then
       begin
-        RemovePortalConnection(PPendingRequestItem(PendingRequests[i])^.UserName, PPendingRequestItem(PendingRequests[i])^.Action, True);
+        mUserName := PRItem^.UserName;
+        mAction := PRItem^.Action;
+
+        RemovePortalConnection(PRItem^.UserName, PRItem^.Action, True);
 
 //        Dispose(PPendingRequestItem(PendingRequests[i])^.UIForm);
         Dispose(PendingRequests[i]);
         PendingRequests.Delete(i);
+
+        //Делаем после удаления пендинга
+        if PassForm.Active
+          and (PassForm.UserName = mUserName)
+          and (PassForm.Action = mAction) then
+        begin
+          PassForm.ModalResult := mrCancel;
+          PassForm.Close;
+        end;
+
         Break;
       end;
 
@@ -11513,7 +11527,9 @@ begin
   end;
 
   //Делаем после удаления пендинга
-  if PassForm.Active then
+  if PassForm.Active
+    and (PassForm.UserName = uname)
+    and (PassForm.Action = action) then
   begin
     PassForm.ModalResult := mrCancel;
     PassForm.Close;
