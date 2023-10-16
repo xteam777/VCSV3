@@ -1474,7 +1474,7 @@ begin
 
   PassRec := TRtcRecord.Create;
   try
-    if Trim(MainForm.PermanentPassword) <> '' then
+    if Trim(MainForm.SessionPassword) <> '' then
       PassRec.asString['0'] := MainForm.SessionPassword;
     if Trim(MainForm.PermanentPassword) <> '' then
       PassRec.asString['1'] := MainForm.PermanentPassword;
@@ -9184,7 +9184,8 @@ begin
         begin
           PassRec := TRtcRecord.Create;
           try
-            PassRec.asString['0'] := SessionPassword;
+            if Trim(SessionPassword) <> '' then
+              PassRec.asString['0'] := SessionPassword;
             if Trim(PermanentPassword) <> '' then
               PassRec.asString['1'] := PermanentPassword;
 
@@ -9257,7 +9258,8 @@ begin
 
   PassRec := TRtcRecord.Create;
   try
-    PassRec.asString['0'] := SessionPassword;
+    if Trim(SessionPassword) <> '' then
+      PassRec.asString['0'] := SessionPassword;
     if Trim(PermanentPassword) <> '' then
       PassRec.asString['1'] := PermanentPassword;
 
@@ -9550,7 +9552,8 @@ begin
 
     PassRec := TRtcRecord.Create;
     try
-      PassRec.asString['0'] := SessionPassword;
+      if Trim(SessionPassword) <> '' then
+        PassRec.asString['0'] := SessionPassword;
       if Trim(PermanentPassword) <> '' then
         PassRec.asString['1'] := PermanentPassword;
 

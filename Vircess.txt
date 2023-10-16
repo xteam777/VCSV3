@@ -10,6 +10,7 @@ you need EV code signing certificate to SmartScreen ByPass https://www.gironsec.
 ?colorspeedbtn отжимается только при моус лив. надо еще на маус ап. цвет подсветки при наведении есть. а при нажатии нет
 HostLogoutByHashExecute удалить
 rtcSockBase.pas TRtcSocketProtocol = (spTcp, spUdp);
+?Account.Ping в поток
 !последняя и минимальная версии в бд как номера билдов
 	?при запуске пг много хостов висит на разных порта. чекдис в пг закомментарен. расчет на сенд дестрой
 	?	перед сменой порта слать сендрестрой на порт
