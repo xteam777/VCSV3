@@ -2889,7 +2889,7 @@ begin
           fHaveScreen := True;
 
           LastScreenGet := Now;
-          ID_CloseLockForm_Timer := SetTimer(0, 42, 10000, @TimerProc);
+          ID_CloseLockForm_Timer := SetTimer(0, 42, 3000, @TimerProc);
 
 //          if FDesktopDuplicator.Bitmap <> nil then
 //            FDesktopDuplicator.Bitmap.SaveToFile('C:\Rufus\rmx_x64_' + StringReplace(DateTimeToStr(Now), ':', '_', [rfReplaceAll]) + '.bmp');

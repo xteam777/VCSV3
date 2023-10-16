@@ -7936,7 +7936,8 @@ begin
   else
   with Result.asRecord do
   begin
-    if PassForm.Active then //Ничего не подключаем если форма ввода пароля активна
+    if PassForm.Active
+      and (asWideString['user'] <> PassForm.UserName) then //Ничего не подключаем если форма ввода пароля активна
     begin
       RemovePortalConnection(asWideString['user'], asString['action'], False);
       DeletePendingRequest(asWideString['user'], asString['action']);

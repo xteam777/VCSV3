@@ -721,14 +721,14 @@ begin
             pUIItem.SendShortcuts := reg.ReadBool('SendShortcuts')
           else
             pUIItem.SendShortcuts := True;
-          if reg.ValueExists('BlockKeyboardMouse') then
-            pUIItem.BlockKeyboardMouse := reg.ReadBool('BlockKeyboardMouse')
-          else
-            pUIItem.BlockKeyboardMouse := False;
-          if reg.ValueExists('PowerOffMonitor') then
-            pUIItem.PowerOffMonitor := reg.ReadBool('PowerOffMonitor')
-          else
-            pUIItem.PowerOffMonitor := False;
+//          if reg.ValueExists('BlockKeyboardMouse') then
+//            pUIItem.BlockKeyboardMouse := reg.ReadBool('BlockKeyboardMouse')
+//          else
+//            pUIItem.BlockKeyboardMouse := False;
+//          if reg.ValueExists('PowerOffMonitor') then
+//            pUIItem.PowerOffMonitor := reg.ReadBool('PowerOffMonitor')
+//          else
+//            pUIItem.PowerOffMonitor := False;
           if reg.ValueExists('DisplaySetting') then
             pUIItem.DisplaySetting := reg.ReadInteger('DisplaySetting')
           else
@@ -746,12 +746,15 @@ begin
           pUIItem.LockSystemOnClose := False;
           pUIItem.ShowRemoteCursor := False;
           pUIItem.SendShortcuts := True;
-          pUIItem.BlockKeyboardMouse := False;
-          pUIItem.PowerOffMonitor := False;
+//          pUIItem.BlockKeyboardMouse := False;
+//          pUIItem.PowerOffMonitor := False;
           pUIItem.DisplaySetting := DS_QUIALITY;
           pUIItem.StretchScreen := False;
           pUIItem.HideWallpaper := True;
         end;
+
+        pUIItem.BlockKeyboardMouse := False;
+        pUIItem.PowerOffMonitor := False;
 
         aLockSystemOnClose.Checked := pUIItem.LockSystemOnClose;
         aShowRemoteCursor.Checked := pUIItem.ShowRemoteCursor;
@@ -763,6 +766,9 @@ begin
         aOptimizeSpeed.Checked := (pUIItem.DisplaySetting = DS_SPEED);
         aStretchScreen.Checked := pUIItem.StretchScreen;
         aHideWallpaper.Checked := pUIItem.HideWallpaper;
+
+        aBlockKeyboardMouse.Enabled := pUIItem.PartnerServiceStarted;
+        aPowerOffMonitor.Enabled := pUIItem.PartnerServiceStarted;
       finally
         reg.Free;
       end;
@@ -815,6 +821,12 @@ begin
 
     if pUIItem.HideWallpaper then
       pUIItem.UI.Send_HideDesktop;
+
+    if pUIItem.BlockKeyboardMouse then
+      pUIItem.UI.Send_UnBlockKeyboardAndMouse;
+
+    if pUIItem.PowerOffMonitor then
+      pUIItem.UI.Send_PowerOnMonitor;
 
     pUIItem.PFileTrans.Client := AModule.Client;
     pUIItem.PFileTrans.OnNewUI := PFileTransExplorerNewUI;
@@ -894,8 +906,8 @@ begin
             reg.WriteBool('LockSystemOnClose', UIDM.LockSystemOnClose);
             reg.WriteBool('ShowRemoteCursor', UIDM.ShowRemoteCursor);
             reg.WriteBool('SendShortcuts', UIDM.SendShortcuts);
-            reg.WriteBool('BlockKeyboardMouse', UIDM.BlockKeyboardMouse);
-            reg.WriteBool('PowerOffMonitor', UIDM.PowerOffMonitor);
+//            reg.WriteBool('BlockKeyboardMouse', UIDM.BlockKeyboardMouse);
+//            reg.WriteBool('PowerOffMonitor', UIDM.PowerOffMonitor);
             reg.WriteInteger('DisplaySetting', UIDM.DisplaySetting);
             reg.WriteBool('StretchScreen', UIDM.StretchScreen);
             reg.WriteBool('HideWallpaper', UIDM.HideWallpaper);

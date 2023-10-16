@@ -1624,11 +1624,7 @@ begin
       SendIOToHelperByIPC(QT_SENDOFFMON, 0, 0, 0, 0, 0, 0, 0, '')
     else
     begin
-//    SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 0, 0);
-//    SendMessage(MainFormHandle, WM_DRAG_FULL_WINDOWS_MESSAGE, 0, 0);
-//    SetBlankMonitor(True);
-//      BlankOutScreen(True);
-      TLockWindow.Show();
+//      TLockWindow.Show();
     end;
 
 
@@ -1657,11 +1653,7 @@ begin
       SendIOToHelperByIPC(QT_SENDONMON, 0, 0, 0, 0, 0, 0, 0, '')
     else
     begin
-//    SetBlankMonitor(False);
-//    SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 1, 0);
-//    SendMessage(MainFormHandle, WM_DRAG_FULL_WINDOWS_MESSAGE, 1, 0);
-//      RestoreScreen;
-      TLockWindow.Close();
+//      TLockWindow.Close();
     end;
 
 
