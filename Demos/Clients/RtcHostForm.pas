@@ -4760,6 +4760,9 @@ var
 begin
 //  XLog('StartFileTransferring');
 
+  if PassForm.Active then
+    Exit;
+
   if AUser = DeviceId then
   begin
 //      MessageBox(Handle, 'Подключение к своему устройству невозможно', 'Remox', MB_ICONWARNING or MB_OK);
@@ -5169,6 +5172,9 @@ var
   i: Integer;
 begin
 //  XLog('miDesktopControlClick');
+
+  if PassForm.Active then
+    Exit;
 
   GetCursorPos(p);
   p := twDevices.ScreenToClient(p);
@@ -7930,7 +7936,13 @@ begin
   else
   with Result.asRecord do
   begin
-    if asString['Result'] = 'IS_OFFLINE' then
+    if PassForm.Active then //Ничего не подключаем если форма ввода пароля активна
+    begin
+      RemovePortalConnection(asWideString['user'], asString['action'], False);
+      DeletePendingRequest(asWideString['user'], asString['action']);
+    end
+    else
+    if (asString['Result'] = 'IS_OFFLINE') then
     begin
 //      MessageBox(Handle, 'Партнер не в сети. Подключение невозможно', 'Remox', MB_ICONWARNING or MB_OK);
       SetStatusStringDelayed('Партнер не в сети. Подключение невозможно');
