@@ -5266,9 +5266,11 @@ begin
 //  XLog('btnAccountLoginClick');
 
   if not ConnectedToAllGateways then
+//  if CurStatus in [STATUS_CONNECTING_TO_GATE, STATUS_READY] then
   begin
 //    MessageBox(Handle, 'Нет подключения к серверу', 'Remox', MB_ICONWARNING or MB_OK);
-    SetStatusStringDelayed('Нет подключения к серверу');
+    if Sender <> nil then
+      SetStatusStringDelayed('Нет подключения к серверу');
     Exit;
   end;
 
@@ -6855,7 +6857,7 @@ begin
 
   case Key of
     VK_RETURN:
-        btnAccountLoginClick(nil);
+      btnAccountLoginClick(nil);
   end;
 end;
 
@@ -7566,7 +7568,8 @@ begin
   if not ConnectedToAllGateways then
   begin
 //    MessageBox(Handle, 'Нет подключения к серверу', 'Remox', MB_ICONWARNING or MB_OK);
-    SetStatusStringDelayed('Нет подключения к серверу');
+    if Sender <> nil then
+      SetStatusStringDelayed('Нет подключения к серверу');
     Exit;
   end;
 
