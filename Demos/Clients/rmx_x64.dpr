@@ -22,6 +22,7 @@ uses
   rtcWinLogon,
   WtsApi,
   DateUtils,
+//  SyncObjs,
   LockWindowUnit;
 
 //  rtcWinlogon,
@@ -165,7 +166,7 @@ var
   CurrentPID: DWORD;
   HeaderSize: Integer;
   err: LongInt;
-  fHaveScreen: Boolean;
+  fHaveScreen{, fRemoteSendCAD}: Boolean;
   dwFlags, wVk, wScan: DWORD;
   IOtype, dx, dy, mouseData: Integer;
   FShiftDown, FCtrlDown, FAltDown: Boolean;
@@ -176,6 +177,7 @@ var
   LockWindow: TLockWindow;
   LastScreenGet: TDateTime;
   ID_CloseLockForm_Timer: UINT_PTR;
+//  CS_CAD: TCriticalSection;
 
   function RpcRevertToSelf: RPC_STATUS; stdcall; external 'rpcrt4.dll';
   function RpcImpersonateClient(BindingHandle: RPC_BINDING_HANDLE): RPC_STATUS; stdcall; external 'rpcrt4.dll';
@@ -2038,7 +2040,7 @@ var
   hToken, hProcess: THandle;
   pS: PSID;
   res: Boolean;
-  fIsLWVisible: Boolean;
+  fIsLWVisible{, fRCADTemp}: Boolean;
 begin
   Result := 'Default';
 //  CS.Acquire;
@@ -2068,8 +2070,23 @@ begin
       res := SetThreadDesktop(InputDesktop);
       LogIfError('SetThreadDesktop', GetLastError);
 
-      if fIsLWVisible then
+//      CS_CAD.Acquire;
+//      try
+//        fRCADTemp := fRemoteSendCAD;
+//      finally
+//        CS_CAD.Release;
+//      end;
+
+      if fIsLWVisible
+        {and (not fRCADTemp)} then
         TLockWindow.Show;
+
+//      CS_CAD.Acquire;
+//      try
+//        fRCADTemp := False;
+//      finally
+//        CS_CAD.Release;
+//      end;
 
 //      err := GetLastError;
 //      if res then
@@ -2475,6 +2492,12 @@ begin
   else
   if Request.Data.ReadInteger('QueryType') = QT_SENDCAD then
   begin
+//    CS_CAD.Acquire;
+//    try
+//      fRemoteSendCAD := True;
+//    finally
+//      CS_CAD.Release;
+//    end;
     CreateThread(nil, 0, @CADThreadProc, nil, 0, tid);
   end
   else
@@ -2949,7 +2972,10 @@ begin
   hBmp := 0;
   hMemDC := 0;
 
+//  CS_CAD := TCriticalSection.Create;
+
   fHaveScreen := False;
+//  fRemoteSendCAD := False;
 
   FShiftDown := False;
   FCtrlDown := False;
@@ -3066,6 +3092,8 @@ begin
       CloseHandle(hMap);
 
     ReleaseAllKeys;
+
+//    CS_CAD.Free;
 
     StopLog;
   end;

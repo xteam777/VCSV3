@@ -257,12 +257,12 @@ begin
 //  else
 //    Exit;
 
-//  AdjustPriviliges(SE_DEBUG_NAME); //Íóæíî äëÿ OpenProcess -> ReadProcessMemory
+//  AdjustPriviliges(SE_DEBUG_NAME); //Нужно для OpenProcess -> ReadProcessMemory
 
 //  ProcessIdToSessionId(GetCurrentProcessId, CurrentSessionID);
 //  IsConsoleClient := (CurrentSessionID = WTSGetActiveConsoleSessionId);
 
-  //Ñîõðàíÿòüñÿ â HKLM
+  //Сохраняться в HKLM
 //  RTC_LOG_FOLDER := GetDOSEnvVar('APPDATA') + '\Remox\';
 
   StartLog;
