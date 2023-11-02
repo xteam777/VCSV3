@@ -24,7 +24,7 @@ uses
 
   {$IFDEF USE_GLASS_FORM}ChromeTabsGlassForm,{$ENDIF}
 
-  Vcl.Imaging.pngimage, VideoRecorder, rtcInfo, rmxVideoStorage, rmxVideoFile;
+  Vcl.Imaging.pngimage, VideoRecorder, rtcInfo, rmxVideoStorage, rmxVideoFile, DisplaySettingsEx;
 
 type
   TFormType = {$IFDEF USE_GLASS_FORM}
@@ -313,75 +313,105 @@ implementation
 
 procedure TrdDesktopViewer.FillMonitorsActionBar;
 var
-  i, cur: Integer;
+  i: Integer;
   mAction: TAction;
   mACItem: TActionClientItem;
 begin
   if ActiveUIModule = nil then
     Exit;
 
-  cur := -1;
   ActionManagerTop.ActionBars.BeginUpdate;
   try
     //Clear
-    i := ActionManagerTop.ActionBars[2].Items[2].Items.Count - 1;
+    i := ActionManagerTop.ActionBars[0].Items[2].Items[2].Items.Count - 1;
     while i >= 0 do
     begin
-      FreeAndNil(ActionManagerTop.ActionBars[2].Items[2].Items[i].Action);
-      FreeAndNil(ActionManagerTop.ActionBars[2].Items[2].Items[i]);
+      FreeAndNil(ActionManagerTop.ActionBars[0].Items[2].Items[2].Items[i].Action);
+      FreeAndNil(ActionManagerTop.ActionBars[0].Items[2].Items[2].Items[i]);
 
       i := i - 1;
     end;
 
     //Add
-    for i := 0 to Length(ActiveUIModule.FMonitorList) - 1 do
+    for i := 0 to Length(ActiveUIModule.UI.MonitorsData) - 1 do
     begin
       mAction := TAction.Create(Self);
-      mAction.Caption := ActiveUIModule.FMonitorList[i].MonitorName;
+      mAction.Caption := ActiveUIModule.UI.MonitorsData[i].MonitorName;
       mAction.OnExecute := MonitorItemExecute;
-      mACItem := ActionManagerTop.ActionBars[2].Items[2].Items.Add;
+      mAction.Tag := i;
+      mACItem := ActionManagerTop.ActionBars[0].Items[2].Items[2].Items.Add;
       mACItem.Action := mAction;
-      mAction.Checked := ActiveUIModule.FMonitorList[i].IsPrimary; //Доделать
+      mAction.Checked := (i = ActiveUIModule.FActiveMonitor); //ActiveUIModule.UI.MonitorsData[i].IsPrimary
     end;
   finally
     ActionManagerTop.ActionBars.EndUpdate;
   end;
-//  cbxMonitors.ItemIndex := cur;
 end;
 
 procedure TrdDesktopViewer.MonitorItemExecute(Sender: TObject);
+var
+  resolutions: TMonitorResolutionList;
+  i: Integer;
+  mAction: TAction;
+  mACItem: TActionClientItem;
 begin
+  if ActiveUIModule = nil then
+    Exit;
 
+  if Sender <> nil then
+    ActiveUIModule.FActiveMonitor := TAction(Sender).Tag;
+
+  ActionManagerTop.ActionBars.BeginUpdate;
+  try
+    //Clear
+    i := ActionManagerTop.ActionBars[0].Items[2].Items[3].Items.Count - 1;
+    while i >= 0 do
+    begin
+      FreeAndNil(ActionManagerTop.ActionBars[0].Items[2].Items[3].Items[i].Action);
+      FreeAndNil(ActionManagerTop.ActionBars[0].Items[2].Items[3].Items[i]);
+
+      i := i - 1;
+    end;
+
+    ActiveUIModule.FActiveMonitorResolution := ActiveUIModule.UI.MonitorsData[ActiveUIModule.FActiveMonitor].CurrentResolution;
+
+    //Add
+    for i := 0 to Length(ActiveUIModule.UI.MonitorsData[ActiveUIModule.FActiveMonitor].Resolutions) - 1 do
+    begin
+      mAction := TAction.Create(Self);
+      mAction.Caption := Format('%dx%d', [ActiveUIModule.UI.MonitorsData[ActiveUIModule.FActiveMonitor].Resolutions[i].width, ActiveUIModule.UI.MonitorsData[ActiveUIModule.FActiveMonitor].Resolutions[i].height]);
+      mAction.OnExecute := MonitorResolutionItemExecute;
+      mAction.Tag := i;
+      mACItem := ActionManagerTop.ActionBars[0].Items[2].Items[3].Items.Add;
+      mACItem.Action := mAction;
+      mAction.Checked := (i = ActiveUIModule.FActiveMonitorResolution);
+    end;
+  finally
+    ActionManagerTop.ActionBars.EndUpdate;
+  end;
 end;
 
 procedure TrdDesktopViewer.MonitorResolutionItemExecute(Sender: TObject);
-//var
-//  resolutions: TMonitorResolutionList;
-//  list: TStrings;
-//  cur, i: Integer;
+var
+  i: Integer;
 begin
-//  cur := -1;
-//  if cbxMonitors.ItemIndex = -1 then
-//    begin
-//      cbxResolutions.Items.Clear;
-//      cbxResolutions.ItemIndex := -1;
-//      cbxResolutions.Tag := -1;
-//      exit;
-//    end;
-//  list :=cbxResolutions.Items;
-//  list.BeginUpdate;
-//  try
-//    list.Clear;
-//    resolutions := FMonitorList[cbxMonitors.ItemIndex].Resolutions;
-//    for I := 0 to Length(resolutions)-1 do
-//      begin
-//        list.Add(Format('%dx%d', [resolutions[i].width, resolutions[i].height]))
-//      end;
-//  finally
-//    list.EndUpdate;
-//  end;
-//  cbxResolutions.ItemIndex := FMonitorList[cbxMonitors.ItemIndex].CurrentResolution;
-//  cbxResolutions.Tag := cbxResolutions.ItemIndex;
+  if ActiveUIModule = nil then
+    Exit;
+
+  if TAction(Sender).Tag <> ActiveUIModule.FActiveMonitorResolution then
+  begin
+    ActiveUIModule.FActiveMonitorResolution := TAction(Sender).Tag;
+
+    for i := 0 to Length(ActiveUIModule.UI.MonitorsData[ActiveUIModule.FActiveMonitor].Resolutions) - 1 do
+      ActionManagerTop.ActionBars[0].Items[2].Items[3].Items[i].Action.Checked := (i = ActiveUIModule.FActiveMonitorResolution);
+
+    ActiveUIModule.UI.Send_MonitorResolution(
+      ActiveUIModule.UI.MonitorsData[ActiveUIModule.FActiveMonitor].DeviceName,
+      ActiveUIModule.UI.MonitorsData[ActiveUIModule.FActiveMonitor].Resolutions[ActiveUIModule.FActiveMonitorResolution].width,
+      ActiveUIModule.UI.MonitorsData[ActiveUIModule.FActiveMonitor].Resolutions[ActiveUIModule.FActiveMonitorResolution].height,
+      True
+    );
+  end;
 end;
 
 procedure TrdDesktopViewer.WMCloseUI(var Message: TMessage);
@@ -1922,7 +1952,7 @@ begin
 //    UpdateQuality;
 
   if ActiveUIModule <> nil then
-    ActiveUIModule.UI.Get_MonitorResolutions(ActiveUIModule.FMonitorList);
+    ActiveUIModule.UI.Get_MonitorResolutions;
 
   DoResizeImage;
 end;
@@ -1930,7 +1960,7 @@ end;
 procedure TrdDesktopViewer.myUIGetMonitorResolution(Sender: TObject);
 begin
   FillMonitorsActionBar;
-  MonitorResolutionItemExecute(nil);
+  MonitorItemExecute(nil);
 end;
 
 procedure TrdDesktopViewer.myUIClose(Sender: TRtcPDesktopControlUI);

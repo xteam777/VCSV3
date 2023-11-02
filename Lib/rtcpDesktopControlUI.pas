@@ -309,7 +309,7 @@ type
 
     procedure Send_MonitorResolution(const DeviceName: string;
       Width, Height: Integer; Persist: Boolean; Sender: TObject = nil);
-    procedure Get_MonitorResolutions(var Infos: TMonitorInfoList; Sender: TObject = nil);
+    procedure Get_MonitorResolutions(Sender: TObject = nil);
 
     { Desktop Properties }
 
@@ -385,6 +385,7 @@ type
     property OnGetMonitorsResolution: TNotifyEvent read FOnGetMonitorsResolution write FOnGetMonitorsResolution;
 
     property ScreenInfoChanged: Boolean read GetScreenInfoChanged;
+    property MonitorsData: TMonitorInfoList read FMonitorsData write FMonitorsData;
   end;
 
 implementation
@@ -429,8 +430,7 @@ begin
         FOnGetMonitorsResolution(Self);
 end;
 
-procedure TRtcPDesktopControlUI.Get_MonitorResolutions(var Infos: TMonitorInfoList;
-  Sender: TObject);
+procedure TRtcPDesktopControlUI.Get_MonitorResolutions(Sender: TObject);
 //const
 //  TIME_OUT_WAIT = 5000;
 var

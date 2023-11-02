@@ -48,8 +48,8 @@ type
     FVideoImage: TBitmap;
     FLockVideoImage: Integer;
     FFirstImageArrived: Boolean;
-    FMonitorList: TMonitorInfoList;
-    FActiveMonitorIndex: Integer;
+    FActiveMonitor: Integer;
+    FActiveMonitorResolution: Integer;
     PartnerLockedState: Integer;
     PartnerServiceStarted: Boolean;
     ReconnectToPartnerStart: TReconnectToPartnerStart;

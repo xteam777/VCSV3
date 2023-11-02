@@ -1509,19 +1509,22 @@ var
 begin
   Result := TRtcArray.Create;
   infos := GetMonitorListEx();
-  for I := 0 to Length(infos)-1 do
-    begin
-        rec := TRtcRecord.Create;
-        rec.asString['DeviceName'] := infos[i].DeviceName;
-        rec.asString['MonitorName'] := infos[i].MonitorName;
-        rec.asString['AdapterName'] := infos[i].AdapterName;
-        rec.asBoolean['IsPrimary'] := infos[i].IsPrimary;
-        rec.asInteger['CurrentResolution'] := infos[i].CurrentResolution;
-        SetLength(a, Length(infos[i].Resolutions) * SizeOf(TMonitorResolution));
-        Move(infos[i].Resolutions[0], a[0], Length(a));
-        rec.asByteArray['Resolutions'] := RtcByteArray(a);
-        Result.asRecord[i] := rec;
-    end;
+  i := Length(infos) - 1;
+  while i >= 0 do
+  begin
+    rec := TRtcRecord.Create;
+    rec.asString['DeviceName'] := infos[i].DeviceName;
+    rec.asString['MonitorName'] := infos[i].MonitorName;
+    rec.asString['AdapterName'] := infos[i].AdapterName;
+    rec.asBoolean['IsPrimary'] := infos[i].IsPrimary;
+    rec.asInteger['CurrentResolution'] := infos[i].CurrentResolution;
+    SetLength(a, Length(infos[i].Resolutions) * SizeOf(TMonitorResolution));
+    Move(infos[i].Resolutions[0], a[0], Length(a));
+    rec.asByteArray['Resolutions'] := RtcByteArray(a);
+    Result.asRecord[i] := rec;
+
+    i := i -1;
+  end;
 end;
 
 function TRtcPDesktopHost.GetColorReducePercent: integer;
