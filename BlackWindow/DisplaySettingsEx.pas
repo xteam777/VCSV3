@@ -116,6 +116,27 @@ begin
 end;
 
 
+procedure InvertResolutionArray(var Info: TMonitorResolutionList);
+var
+  i, j: Integer;
+  temp: TMonitorResolution;
+begin
+  i := Low(Info);
+  j := High(Info);
+
+  while i < j do
+  begin
+    // Swap the elements
+    temp := Info[i];
+    Info[i] := Info[j];
+    Info[j] := temp;
+
+    // Move towards the array's center
+    Inc(i);
+    Dec(j);
+  end;
+end;
+
 function GetMonitorListEx: TMonitorInfoList;
 var
   dc: TDisplayDevice;
@@ -139,6 +160,7 @@ begin
           Result[monitor_idx].MonitorName := dc.DeviceString;
           Result[monitor_idx].AdapterName := adapter;
           Result[monitor_idx].Resolutions := GetMonitorResolutions(device, Result[monitor_idx].CurrentResolution);
+          InvertResolutionArray(Result[monitor_idx].Resolutions);
           Result[monitor_idx].IsPrimary   := is_primary;
           Inc(monitor_idx);
         end
@@ -150,6 +172,7 @@ begin
           Result[monitor_idx].MonitorName := 'device: '+ device+'adapter: '+adapter;
           Result[monitor_idx].AdapterName := adapter;
           Result[monitor_idx].Resolutions := GetMonitorResolutions(device, Result[monitor_idx].CurrentResolution);
+          InvertResolutionArray(Result[monitor_idx].Resolutions);
           Result[monitor_idx].IsPrimary   := is_primary;
           Inc(monitor_idx);
         end;
@@ -196,16 +219,10 @@ begin
   value.height := h;
 
   for I := 0 to Count-1 do
-    if Int64(Buf[i]) = Int64(value) then
-    Exit;
-
+    if Int64(Buf[i]) = Int64(value) then exit;
   if Count = Length(Buf) then
     SetLength(Buf, GrowCollection(Count, Count + 1));
-
-  for i := 0 to Length(Buf) - 2 do
-    buf[i + 1] := buf[i];
-
-  buf[0] := value;
+  buf[Count] := value;
   Result := Count;
   Inc(Count);
 end;

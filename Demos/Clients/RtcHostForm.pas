@@ -11,7 +11,7 @@ interface
 {$DEFINE RtcViewer}
 
 uses
-  Windows, Messages, SysUtils, CommonData, System.Types, uProcess, ServiceMgr, Cromis.Comm.IPC, System.Hash,
+  Windows, Messages, SysUtils, CommonData, System.Types, uProcess, ServiceMgr, Cromis.Comm.IPC, System.Hash, DisplaySettingsEx,
   Classes, Graphics, Controls, Forms, DateUtils, CommonUtils, WtsApi, uSysAccount, ClipbrdMonitor, uSetup,
   Dialogs, StdCtrls, ExtCtrls, ShellApi, rdFileTransLog, VirtualTrees.Types, SHDocVw, rtcpFileTransUI, Psapi, Winapi.SHFolder,
   Vcl.ComCtrls, Registry, Math, RtcIdentification, SyncObjs, System.Net.HTTPClient, System.Net.URLClient, ActiveX, ComObj, CommCtrl,
@@ -7738,7 +7738,10 @@ begin
 end;
 
 procedure TMainForm.Button5Click(Sender: TObject);
+var
+  infos: TMonitorInfoList;
 begin
+  infos := GetMonitorListEx();
 //  if tPHostThread <> nil then
 //    tPHostThread.Restart;
   ActivateHost;
