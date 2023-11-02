@@ -161,7 +161,7 @@ begin
           Result[monitor_idx].AdapterName := adapter;
           Result[monitor_idx].Resolutions := GetMonitorResolutions(device, Result[monitor_idx].CurrentResolution);
           InvertResolutionArray(Result[monitor_idx].Resolutions);
-          Result[monitor_idx].CurrentResolution := Length(Result[monitor_idx].Resolutions) - Result[monitor_idx].CurrentResolution;
+          Result[monitor_idx].CurrentResolution := Length(Result[monitor_idx].Resolutions) - 1 - Result[monitor_idx].CurrentResolution;
           Result[monitor_idx].IsPrimary   := is_primary;
           Inc(monitor_idx);
         end
@@ -174,7 +174,7 @@ begin
           Result[monitor_idx].AdapterName := adapter;
           Result[monitor_idx].Resolutions := GetMonitorResolutions(device, Result[monitor_idx].CurrentResolution);
           InvertResolutionArray(Result[monitor_idx].Resolutions);
-          Result[monitor_idx].CurrentResolution := Length(Result[monitor_idx].Resolutions) - Result[monitor_idx].CurrentResolution;
+          Result[monitor_idx].CurrentResolution := Length(Result[monitor_idx].Resolutions) - 1 - Result[monitor_idx].CurrentResolution ;
           Result[monitor_idx].IsPrimary   := is_primary;
           Inc(monitor_idx);
         end;
