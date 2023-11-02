@@ -170,21 +170,18 @@ begin
           if Length(Result) = monitor_idx then
             SetLength(Result, GrowCollection(monitor_idx, monitor_idx+1));
           Result[monitor_idx].DeviceName  := device;
-          Result[monitor_idx].MonitorName := 'device: '+ device+'adapter: '+adapter;
+          Result[monitor_idx].MonitorName := 'Device: '+ device + ' Adapter: ' + adapter;
           Result[monitor_idx].AdapterName := adapter;
           Result[monitor_idx].Resolutions := GetMonitorResolutions(device, Result[monitor_idx].CurrentResolution);
           InvertResolutionArray(Result[monitor_idx].Resolutions);
-          Result[monitor_idx].CurrentResolution := Length(Result[monitor_idx].Resolutions) - 1 - Result[monitor_idx].CurrentResolution ;
+          Result[monitor_idx].CurrentResolution := Length(Result[monitor_idx].Resolutions) - 1 - Result[monitor_idx].CurrentResolution;
           Result[monitor_idx].IsPrimary   := is_primary;
           Inc(monitor_idx);
         end;
       Inc(Num);
     end;
   SetLength(Result, monitor_idx);
-
 end;
-
-
 
 function SetMonitorResolution(const DeviceName: string; Width,
   Height: Integer; Persist: Boolean): Integer;
