@@ -196,7 +196,9 @@ begin
   value.height := h;
 
   for I := 0 to Count-1 do
-    if Int64(Buf[i]) = Int64(value) then exit;
+    if Int64(Buf[i]) = Int64(value) then
+    Exit;
+
   if Count = Length(Buf) then
     SetLength(Buf, GrowCollection(Count, Count + 1));
 
