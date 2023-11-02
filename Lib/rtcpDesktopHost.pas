@@ -9,7 +9,7 @@ interface
 {$INCLUDE rtcPortalDefs.inc}
 
 uses
-  Windows, Messages, Classes, SysUtils, Graphics, Controls, Forms, CommonData,
+  Windows, Messages, Classes, SysUtils, Graphics, Controls, Forms, CommonData, DisplaySettingsEx,
   ShlObj, Clipbrd, IOUtils, DateUtils, SHDocVw, ExtCtrls, ActiveX, ShellApi, ComObj, ClipbrdMonitor,
 {$IFNDEF IDE_1}
   Variants,
@@ -151,6 +151,8 @@ type
 
     procedure SetBitsPerPixelLimit(const Value: Integer);
     procedure SetCompressImage(const Value: Boolean);
+
+    function GetMonitorResolutinsAsRTC: TRtcArray;
 
   protected
     // Implement if you are linking to any other TRtcPModule. Usage:
@@ -751,7 +753,7 @@ begin
             if data.asString['s'] = 'BKM' then
             begin
               if IsService then
-                SendIOToHelperByIPC(QT_SENDBKM, 0, 0, 0, 0, 0, 0, 0, '');
+                SendIOToHelperByIPC(QT_SENDBKM, 0, 0, 0, 0, 1, 0, 0, '');
 //              else
 //                SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 0, 0);
             end
@@ -764,34 +766,34 @@ begin
 //                SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 1, 0);
             end
             else
-            {if data.asString['s'] = 'OFFMON' then
+            if data.asString['s'] = 'OFFMON' then
             begin
               if IsService then
                 SendIOToHelperByIPC(QT_SENDOFFMON, 0, 0, 0, 0, 0, 0, 0, '')
-              else
-              begin
+//              else
+//              begin
           //    SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 0, 0);
           //    SendMessage(MainFormHandle, WM_DRAG_FULL_WINDOWS_MESSAGE, 0, 0);
           //    SetBlankMonitor(True);
                 //BlankOutScreen(False);
-                TLockWindow.Show();
-              end;
+//                TLockWindow.Show();
+//              end;
             end
             else
             if data.asString['s'] = 'ONMON' then
             begin
               if IsService then
                 SendIOToHelperByIPC(QT_SENDONMON, 0, 0, 0, 0, 0, 0, 0, '')
-              else
-              begin
+//              else
+//              begin
           //    SetBlankMonitor(False);
           //    SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 1, 0);
           //    SendMessage(MainFormHandle, WM_DRAG_FULL_WINDOWS_MESSAGE, 1, 0);
                 //RestoreScreen;
-                TLockWindow.Close();
-              end;
+//                TLockWindow.Close();
+//              end;
             end
-            else}
+            else
             if data.asString['s'] = 'OFFSYS' then
               PowerOffSystem
             else
@@ -985,6 +987,21 @@ begin
   else if (data.FunctionName = 'restart_desk') then
   begin
     Restart;
+  end
+  else if (data.FunctionName = 'get_monitorresolutions') then
+  begin
+    { TODO : handle result }
+    r := TRtcFunctionInfo.Create;
+    r.FunctionName := 'monitorresolutions';
+    r.asArray['data'] := GetMonitorResolutinsAsRTC();
+    Client.SendToUser(Sender, uname, r);
+  end
+  else if (data.FunctionName = 'set_monitorresolution') then
+  begin
+    { TODO : handle result }
+    SetMonitorResolution(data.asString['device_name'],
+      data.asInteger['width'], data.asInteger['height'],
+      data.asBoolean['persist']);
   end;
   //+sstuman
 //  else if Data.FunctionName = 'files_to_copy_list' then
@@ -1481,6 +1498,30 @@ begin
       Client.ParamSet(nil, 'CompressImage', TRtcBooleanValue.Create(Value));
     FCompressImage := Value;
   end;
+end;
+
+function TRtcPDesktopHost.GetMonitorResolutinsAsRTC: TRtcArray;
+var
+  i: Integer;
+  infos: TMonitorInfoList;
+  rec, recnext: TRtcRecord;
+  a: TArray<Byte>;
+begin
+  Result := TRtcArray.Create;
+  infos := GetMonitorListEx();
+  for I := 0 to Length(infos)-1 do
+    begin
+        rec := TRtcRecord.Create;
+        rec.asString['DeviceName'] := infos[i].DeviceName;
+        rec.asString['MonitorName'] := infos[i].MonitorName;
+        rec.asString['AdapterName'] := infos[i].AdapterName;
+        rec.asBoolean['IsPrimary'] := infos[i].IsPrimary;
+        rec.asInteger['CurrentResolution'] := infos[i].CurrentResolution;
+        SetLength(a, Length(infos[i].Resolutions) * SizeOf(TMonitorResolution));
+        Move(infos[i].Resolutions[0], a[0], Length(a));
+        rec.asByteArray['Resolutions'] := RtcByteArray(a);
+        Result.asRecord[i] := rec;
+    end;
 end;
 
 function TRtcPDesktopHost.GetColorReducePercent: integer;

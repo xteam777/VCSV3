@@ -47,6 +47,8 @@ type
 
     procedure Call_Data(Sender: TObject;
       const ScreenData, CursorData: RtcString); virtual; abstract;
+    procedure EventGetMonitorsResolution(Sender: TObject;
+      const Data: TRtcArray); virtual; abstract;
 
     procedure NotifyUI(const msg: integer; Sender: TObject = nil);
       virtual; abstract;
@@ -133,6 +135,8 @@ type
 
     procedure Event_DesktopData(Sender: TObject; const user: String;
       const ScreenData, CursorData: RtcString);
+    procedure Event_Monitors(Sender: TObject; const user: String;
+      const Data: TRtcArray);
 
     procedure CallDesktopEvent(Sender: TObject; Event: TRtcCustomDataEvent;
       const user: String; const ScreenData, CursorData: RtcString); overload;
@@ -571,7 +575,25 @@ begin
       ucur := data.asString['s'];
       setClipboard(uname, ucur);
     end;
+  end
+  else if data.FunctionName = 'monitorresolutions' then
+  begin
+    Event_Monitors(Sender, uname, data.asArray['data']);
   end;
+end;
+
+procedure TRtcPDesktopControl.Event_Monitors(Sender: TObject;
+  const user: String; const Data: TRtcArray);
+var
+  UI: TRtcAbsPDesktopControlUI;
+begin
+  UI := LockUI(user);
+  if assigned(UI) then
+    try
+      UI.EventGetMonitorsResolution(Sender, Data);
+    finally
+      UnlockUI(UI);
+    end;
 end;
 
 procedure TRtcPDesktopControl.CallDesktopEvent(Sender: TObject;

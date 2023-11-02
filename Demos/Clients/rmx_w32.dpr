@@ -2040,7 +2040,7 @@ var
   hToken, hProcess: THandle;
   pS: PSID;
   res: Boolean;
-  fIsLWVisible{, fRCADTemp}: Boolean;
+  fIsLWActive{, fRCADTemp}: Boolean;
 begin
   Result := 'Default';
 //  CS.Acquire;
@@ -2063,8 +2063,8 @@ begin
 
     if (InputDesktop <> 0) and (GetUserObjectName(InputDesktop) <> GetUserObjectName(CurDesktop)) then
     begin
-      fIsLWVisible := TLockWindow.IsVisible;
-      if fIsLWVisible then
+      fIsLWActive := TLockWindow.IsVisible;
+      if fIsLWActive then
         TLockWindow.Close;
 
       res := SetThreadDesktop(InputDesktop);
@@ -2077,9 +2077,9 @@ begin
 //        CS_CAD.Release;
 //      end;
 
-      if fIsLWVisible
+      if fIsLWActive
         {and (not fRCADTemp)} then
-        TLockWindow.Show;
+        TLockWindow.Show(not LockWindow.Visible);
 
 //      CS_CAD.Acquire;
 //      try
@@ -2580,23 +2580,21 @@ begin
   begin
     // Block Keyboard and Mouse
 //    SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 0, 0);
-    if LockWindow <> nil then
-      LockWindow.DisableInput(True);
+    TLockWindow.Close();
   end
   else
   if Request.Data.ReadInteger('QueryType') = QT_SENDUBKM then
   begin
     // UnBlock Keyboard and Mouse
 //    SendMessage(MainFormHandle, WM_BLOCK_INPUT_MESSAGE, 1, 0);
-    if LockWindow <> nil then
-      LockWindow.DisableInput(False);
+    LockWindow := TLockWindow.Show(True);
   end
   else
   if Request.Data.ReadInteger('QueryType') = QT_SENDOFFMON then
   begin
     // Power Off Monitor
 //    SetBlankMonitor(True);
-    LockWindow := TLockWindow.Show();
+    LockWindow := TLockWindow.Show(False);
   end
   else
   if Request.Data.ReadInteger('QueryType') = QT_SENDONMON then

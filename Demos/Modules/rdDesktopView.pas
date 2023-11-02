@@ -281,6 +281,9 @@ type
     function FreeUIDataModule(AUserName: String; AThreadID: Cardinal): Integer;
     function GetActiveUIModulesCount: Integer;
     procedure DoReconnectToPartnerStart(user, username, pass, action: String);
+    procedure FillMonitorsActionBar;
+    procedure MonitorItemExecute(Sender: TObject);
+    procedure MonitorResolutionItemExecute(Sender: TObject);
   end;
 
 
@@ -306,6 +309,79 @@ implementation
 {$R *.dfm}
 
 { TrdDesktopViewer }
+
+procedure TrdDesktopViewer.FillMonitorsActionBar;
+var
+  i, cur: Integer;
+  mAction: TAction;
+  mACItem: TActionClientItem;
+begin
+  if ActiveUIModule = nil then
+    Exit;
+
+  cur := -1;
+  ActionManagerTop.ActionBars.BeginUpdate;
+  try
+    //Clear
+    i := ActionManagerTop.ActionBars[2].Items[2].Items.Count - 1;
+    while i >= 0 do
+    begin
+      FreeAndNil(ActionManagerTop.ActionBars[2].Items[2].Items[i].Action);
+      FreeAndNil(ActionManagerTop.ActionBars[2].Items[2].Items[i]);
+
+      i := i - 1;
+    end;
+
+    //Add
+    for i := 0 to Length(ActiveUIModule.FMonitorList) - 1 do
+    begin
+      mAction := TAction.Create(Self);
+      mAction.Caption := ActiveUIModule.FMonitorList[i].MonitorName;
+      mAction.OnExecute := MonitorItemExecute;
+      mACItem := ActionManagerTop.ActionBars[2].Items[2].Items.Add;
+      mACItem.Action := mAction;
+      mAction.Checked := ActiveUIModule.FMonitorList[i].IsPrimary; //Доделать
+    end;
+  finally
+    ActionManagerTop.ActionBars.EndUpdate;
+  end;
+//  cbxMonitors.ItemIndex := cur;
+end;
+
+procedure TrdDesktopViewer.MonitorItemExecute(Sender: TObject);
+begin
+
+end;
+
+procedure TrdDesktopViewer.MonitorResolutionItemExecute(Sender: TObject);
+//var
+//  resolutions: TMonitorResolutionList;
+//  list: TStrings;
+//  cur, i: Integer;
+begin
+//  cur := -1;
+//  if cbxMonitors.ItemIndex = -1 then
+//    begin
+//      cbxResolutions.Items.Clear;
+//      cbxResolutions.ItemIndex := -1;
+//      cbxResolutions.Tag := -1;
+//      exit;
+//    end;
+//  list :=cbxResolutions.Items;
+//  list.BeginUpdate;
+//  try
+//    list.Clear;
+//    resolutions := FMonitorList[cbxMonitors.ItemIndex].Resolutions;
+//    for I := 0 to Length(resolutions)-1 do
+//      begin
+//        list.Add(Format('%dx%d', [resolutions[i].width, resolutions[i].height]))
+//      end;
+//  finally
+//    list.EndUpdate;
+//  end;
+//  cbxResolutions.ItemIndex := FMonitorList[cbxMonitors.ItemIndex].CurrentResolution;
+//  cbxResolutions.Tag := cbxResolutions.ItemIndex;
+end;
 
 procedure TrdDesktopViewer.WMCloseUI(var Message: TMessage);
 begin

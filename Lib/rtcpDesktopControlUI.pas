@@ -18,7 +18,7 @@ uses
 {$IFDEF DEBUG}
     System.Math,
 {$ENDIF}
-  rtcpDesktopConst;
+  rtcpDesktopConst, DisplaySettingsEx;
 
 const
   RTCPDESKTOP_SmoothScale_Off = 0;
@@ -162,6 +162,9 @@ type
 
     FMarkRemoteCursor: TRtcRemoteCursorMark;
 
+    FEventMonitor: THandle;
+    FMonitorsData: TMonitorInfoList;
+
     procedure SetExactCursor(const Value: boolean);
 
     //+sstuman
@@ -198,6 +201,8 @@ type
 
     procedure Call_Data(Sender: TObject;
       const ScreenData, CursorData: RtcString); override;
+    procedure EventGetMonitorsResolution(Sender: TObject;
+      const Data: TRtcArray); override;
 
     procedure StoreScreenState;
     procedure RestoreScreenState;
@@ -301,6 +306,10 @@ type
     procedure Send_CtrlAltTAB(Sender: TObject = nil);
     procedure Send_ShiftCtrlAltTAB(Sender: TObject = nil);
 
+    procedure Send_MonitorResolution(const DeviceName: string;
+      Width, Height: Integer; Persist: Boolean; Sender: TObject = nil);
+    procedure Get_MonitorResolutions(var Infos: TMonitorInfoList; Sender: TObject = nil);
+
     { Desktop Properties }
 
     property ScreenChanged: boolean read FScreenChanged;
@@ -385,6 +394,98 @@ implementation
 
 var
   myCursorLoaded: boolean = False;
+
+procedure TRtcPDesktopControlUI.EventGetMonitorsResolution(Sender: TObject;
+  const Data: TRtcArray);
+var
+  rec: TRtcRecord;
+  i: Integer;
+  infos: TMonitorInfoList;
+  a: TArray<Byte>;
+begin
+  if (FEventMonitor <> 0)then
+    try
+     SetLength(infos, Data.Count);
+     for I := 0 to Data.Count-1 do
+      begin
+        rec := Data.asRecord[i];
+        infos[i].DeviceName                := rec.asString['DeviceName'];
+        infos[i].MonitorName               := rec.asString['MonitorName'];
+        infos[i].AdapterName               := rec.asString['AdapterName'];
+        infos[i].IsPrimary                 := rec.asBoolean['IsPrimary'];
+        infos[i].CurrentResolution         := rec.asInteger['CurrentResolution'];
+        RtcByteArray(a)                    := rec.asByteArray['Resolutions'];
+        SetLength(infos[i].Resolutions, Length(a) div SizeOf(TMonitorResolution));
+        Move(a[0], infos[i].Resolutions[0], Length(a));
+      end;
+      FMonitorsData := infos;
+    finally
+      SetEvent(FEventMonitor);
+    end;
+end;
+
+procedure TRtcPDesktopControlUI.Get_MonitorResolutions(var Infos: TMonitorInfoList;
+  Sender: TObject);
+const
+  TIME_OUT_WAIT = 5000;
+var
+  f: TRtcFunctionInfo;
+  Wait: Cardinal;
+  t: Cardinal;
+begin
+  if not Assigned(Module) or not Assigned(Module.Client) then exit;
+  FEventMonitor := CreateEvent(nil, false, false, nil);
+  try
+    Win32Check(FEventMonitor <> 0);
+    f := TRtcFunctionInfo.Create;
+    f.FunctionName := 'get_monitorresolutions';
+    Module.Client.SendToUser(Sender, UserName, f);
+    t := GetTickCount;
+    repeat
+      Wait := MsgWaitForMultipleObjects(1, FEventMonitor, false, TIME_OUT_WAIT, QS_ALLEVENTS);
+      case Wait of
+        WAIT_OBJECT_0:
+          begin
+            Infos := FMonitorsData;
+            FMonitorsData := nil;
+            break;
+          end;
+        WAIT_OBJECT_0+1:
+          begin
+            Application.ProcessMessages;
+            if GetTickCount - t > TIME_OUT_WAIT then
+              raise Exception.CreateFmt('Timeout (%D) while Get_MonitorResolution', [TIME_OUT_WAIT]);
+          end;
+        WAIT_TIMEOUT:
+          raise Exception.CreateFmt('Timeout (%D) while Get_MonitorResolution', [TIME_OUT_WAIT]);
+      else
+        begin
+          raise Exception.Create('Error occured while Get_MonitorResolution');
+        end;
+      end;
+    until Wait <> WAIT_OBJECT_0 + 1;
+  finally
+    CloseHandle(FEventMonitor);
+    FEventMonitor := 0;
+  end;
+end;
+
+procedure TRtcPDesktopControlUI.Send_MonitorResolution(const DeviceName: string;
+  Width, Height: Integer;  Persist: Boolean; Sender: TObject);
+var
+  f: TRtcFunctionInfo;
+begin
+  if Assigned(Module) and Assigned(Module.Client) then
+    begin
+      f := TRtcFunctionInfo.Create;
+      f.FunctionName := 'set_monitorresolution';
+      f.asString['device_name'] := DeviceName;
+      f.asInteger['width'] := Width;
+      f.asInteger['height'] := Height;
+      f.asBoolean['persist'] := Persist;
+      Module.Client.SendToUser(Sender, UserName, f);
+    end;
+end;
 
 function TRtcPDesktopControlUI.GetScreenInfoChanged: Boolean;
 begin

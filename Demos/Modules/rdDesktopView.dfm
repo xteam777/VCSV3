@@ -4365,6 +4365,31 @@ object rdDesktopViewer: TrdDesktopViewer
                 CommandProperties.ParentFont = False
               end
               item
+                Caption = #1042#1099#1073#1086#1088' '#1084#1086#1085#1080#1090#1086#1088#1072
+                CommandStyle = csMenu
+                CommandProperties.Width = -1
+                CommandProperties.Font.Charset = DEFAULT_CHARSET
+                CommandProperties.Font.Color = clWindowText
+                CommandProperties.Font.Height = -12
+                CommandProperties.Font.Name = 'Segoe UI'
+                CommandProperties.Font.Style = []
+                CommandProperties.Height = 0
+              end
+              item
+                Caption = #1056#1072#1079#1088#1077#1096#1077#1085#1080#1077' '#1101#1082#1088#1072#1085#1072
+                CommandStyle = csMenu
+                CommandProperties.Width = -1
+                CommandProperties.Font.Charset = DEFAULT_CHARSET
+                CommandProperties.Font.Color = clWindowText
+                CommandProperties.Font.Height = -12
+                CommandProperties.Font.Name = 'Segoe UI'
+                CommandProperties.Font.Style = []
+                CommandProperties.Height = 0
+              end
+              item
+                Caption = '-'
+              end
+              item
                 Action = aOptimizeQuality
                 CommandStyle = csRadioButton
                 CommandProperties.Width = -1

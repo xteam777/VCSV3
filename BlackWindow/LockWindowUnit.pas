@@ -17,6 +17,8 @@ const
 
   WM_SEND_INPUT   = WM_USER + 1;
   WM_CLOSE_WND    = WM_USER + 2;
+  WM_HIDE_LOCKWINDOW = WM_USER + 3;
+  WM_SHOW_LOCKWINDOW = WM_USER + 4;
 
   TIMER_ID_DATE = 1;
 
@@ -69,10 +71,14 @@ type
     FTimeFont: TFont;
     FSkipOrder: Boolean;
     FDestroing: Boolean;
+    FWindowHiden: Boolean;
+    FVisible: Boolean;
+
     procedure CreateWindow();
     procedure DestroyWindow();
     procedure DisableWindowForRecord(Disable: Boolean);
     procedure ApplyLayeredWindow(Percent: Byte);
+    procedure DisableInput(Disable: Boolean);
 
 
     /// class var, alias global
@@ -80,6 +86,7 @@ type
       MonitorsRect: TMonitorInfoRectList;
       Instance: TLockWindow;
       LockCookie: Integer;
+      OnHotKey: TNotifyEvent;
 
 
     class procedure UpdateMonitors();
@@ -94,6 +101,7 @@ type
     class procedure HandleException(E: Exception);
 
 
+
     /// instance methods
     procedure EraseBackground(DC: HDC);
     procedure Paint();
@@ -103,6 +111,8 @@ type
     procedure Invalidate(bErase: Boolean = false);
     procedure LockCanvas(DC: HDC);
     procedure UnlockCanvas();
+    procedure ShowLockWindow;
+    procedure HideLockWindow;
 
     // Handlers Window Message
     procedure WmEraseBackground(var Msg: TMessage); message WM_ERASEBKGND;
@@ -112,20 +122,24 @@ type
     procedure WmDisplayChange(var Msg: TMessage); message WM_DISPLAYCHANGE;
     procedure WmDestroy(var Msg: TMessageLW); message WM_DESTROY;
     procedure WmSendInput(var Msg: TMessageInput); message WM_SEND_INPUT;
+    procedure WmHotKey(var Msg: TMessage); message WM_HOTKEY;
+    procedure SetVisible(const Value: Boolean);
 
   public
-    procedure DisableInput(Disable: Boolean);
     procedure DefaultHandler(var Message); override;
 
-    constructor Create;
+    constructor Create(Hidden: Boolean = false);
     destructor Destroy; override;
+
 
     // Use these methods to manipulate the window <- thread safe
     // But you can also use Create, Free. <- not! thread safe. User is responsible
-    class function Show(): TLockWindow;
+    class function Show(Hidden: Boolean): TLockWindow;
     class procedure Close();
     class function SendInput(cInputs: UINT; var pInputs: TInput; cbSize: Integer): UINT;
     class function IsVisible(): Boolean;
+    class function IsHandleAllocated(): Boolean;
+    class property OnCtrAltInsPress: TNotifyEvent read OnHotKey write OnHotKey;
 
     // User settings
     property DateLable: string read FDateLable write FDateLable;
@@ -133,6 +147,7 @@ type
     property UserMessage: string read FUserMessage write FUserMessage;
     property AlphaPecent: Byte read FAlphaPecent write SetAlphaPecent;
     property Color: TColor read FColor write SetColor;
+    property Visible: Boolean read FVisible write SetVisible;
   end;
 
 
@@ -203,6 +218,7 @@ begin
 	if OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, Token) then
   begin
     Result := GetTokenInformation(Token, TokenUIAccess, @UIAccess, SizeOf(UIAccess), dwRetLen) and (UIAccess <> 0);
+    CloseHandle(Token);
   end;
 
 end;
@@ -247,10 +263,10 @@ begin
     end;
 end;
 
-class function TLockWindow.Show: TLockWindow;
+class function TLockWindow.Show(Hidden: Boolean): TLockWindow;
 begin
   Result := nil;
-  if Assigned(Instance) then exit;
+  //if Assigned(Instance) then exit;
 
   while InterlockedExchange(LockCookie, 1) <> 0 do
     begin
@@ -258,12 +274,27 @@ begin
     end;
   try
     // double check after entry into block
-    if not Assigned(Instance) then
-      Instance := TLockWindow.Create;
+    if not IsHandleAllocated then
+      Instance := TLockWindow.Create(Hidden)
+    else
+    if not Instance.Visible then
+      Instance.Visible := not Hidden;
     Result := Instance;
   finally
     InterlockedExchange(LockCookie, 0);
   end;
+end;
+
+procedure TLockWindow.ShowLockWindow;
+begin
+  if FWindow = 0 then exit;
+  UpdateDateTime();
+
+  ShowWindow(FWindow, SW_SHOWNORMAL);
+  UpdateWindow(FWindow);
+
+  if SetTimer(FWindow, TIMER_ID_DATE, 1000, nil) = 0 then
+      raise EOutOfResources.Create(SNoTimers);
 end;
 
 class function TLockWindow.SendInput(cInputs: UINT; var pInputs: TInput;
@@ -290,9 +321,14 @@ begin
 
 end;
 
+class function TLockWindow.IsHandleAllocated: Boolean;
+begin
+  Result := Assigned(Instance) and (Instance.FWindow <> 0);
+end;
+
 class function TLockWindow.IsVisible: Boolean;
 begin
-  Result := Assigned(Instance);
+  Result := Assigned(Instance) and Instance.Visible;
 end;
 
 
@@ -307,11 +343,12 @@ begin
     Win32Check(SetLayeredWindowAttributes(FWindow, 0, (255 * Percent) div 100, LWA_ALPHA));
 end;
 
-constructor TLockWindow.Create;
+constructor TLockWindow.Create(Hidden: Boolean);
 var
   t: THandle;
 begin
   inherited Create;
+  FVisible := not Hidden;
   case Lo(GetUserDefaultUILanguage) of
     LANG_RUSSIAN:   FUserMessage := rsUserMessageRU;
     LANG_ENGLISH:   FUserMessage := rsUserMessageEN;
@@ -386,12 +423,16 @@ begin
   DisableWindowForRecord(true);
   DisableInput(true);
 
-  ShowWindow(FWindow, SW_SHOWNORMAL);
-  UpdateWindow(FWindow);
+  if FVisible then
+    begin
+      ShowWindow(FWindow, SW_SHOWNORMAL);
+      UpdateWindow(FWindow);
 
-  if SetTimer(FWindow, TIMER_ID_DATE, 1000, nil) = 0 then
-      raise EOutOfResources.Create(SNoTimers);
-
+      if SetTimer(FWindow, TIMER_ID_DATE, 1000, nil) = 0 then
+          raise EOutOfResources.Create(SNoTimers);
+    end;
+  if not RegisterHotkey(FWindow, 1, MOD_ALT or MOD_CONTROL, VK_INSERT) then
+    RaiseLastOSError;
 end;
 
 
@@ -424,21 +465,18 @@ procedure TLockWindow.DestroyWindow;
 begin
   if FWindow = 0 then exit;
   FDestroing := true;
-  Win32Check(KillTimer(FWindow, TIMER_ID_DATE));
+  if FVisible then
+    Win32Check(KillTimer(FWindow, TIMER_ID_DATE));
+  UnregisterHotKey(FWindow, 1);
   SendMessage(FWindow, WM_CLOSE, 0, 0);
 end;
 
 procedure TLockWindow.DisableInput(Disable: Boolean);
 begin
   {$IFDEF BLOCK_INPUT_ENABLED}
-    { TODO 1 -cWARN : Check Error - BlockInput. }
-//    BlockInput(Disable);
-    //Win32Check(BlockInput(Disable));
-
+    {  BlockInput. required Admin }
+    Win32Check(BlockInput(Disable));
   {$ENDIF}
-    var r: Boolean := false;
-    var s: string := Format('TID: %x, BlockInput(%s): %s', [GetCurrentThreadId, BoolToStr(Disable, true), BoolToStr(r, true)]);
-    OutputDebugString(PChar(s));
 
 end;
 
@@ -536,7 +574,7 @@ begin
       for I := 0 to Length(MonitorsRect)-1 do
         begin
 
-          Rect := MonitorsRect[i].BoundsRect; //FCanvas.ClipRect;
+          Rect := MonitorsRect[i].BoundsRect;
 
           // Draw UserMessage
           FCanvas.Font := FUserMessageFont;
@@ -591,6 +629,17 @@ begin
     end;
 end;
 
+procedure TLockWindow.SetVisible(const Value: Boolean);
+begin
+  if FVisible <> Value then
+    begin
+      if not Value then
+        HideLockWindow else
+        ShowLockWindow;
+      FVisible := Value;
+    end;
+end;
+
 procedure TLockWindow.UnlockCanvas;
 begin
   FCanvas.Handle := 0;
@@ -624,6 +673,7 @@ begin
   UpdateMonitors;
   Wnd := FWindow;
   KillTimer(wnd, TIMER_ID_DATE);
+  UnregisterHotKey(Wnd, 1);
   CreateWindow();
   SendMessage(wnd, WM_CLOSE, 0, 0);
 end;
@@ -631,6 +681,12 @@ end;
 procedure TLockWindow.WmEraseBackground(var Msg: TMessage);
 begin
   Msg.Result := 0;
+end;
+
+procedure TLockWindow.WmHotKey(var Msg: TMessage);
+begin
+  if Assigned(OnHotKey) then
+    OnHotKey(Self);
 end;
 
 procedure TLockWindow.WmPaint(var Msg: TMessage);
@@ -807,16 +863,15 @@ begin
     OutputDebugString(Buffer);
   {$ENDIF}
 
-
-//lines below can be deleted
-
-//  TThread.Current.Synchronize(procedure()
-//  begin
-//
-//  end
-//  );
 end;
 
+
+procedure TLockWindow.HideLockWindow;
+begin
+  if FWindow = 0 then exit;
+  ShowWindow(FWindow, SW_HIDE);
+  Win32Check(KillTimer(FWindow, TIMER_ID_DATE));
+end;
 
 { **************************************************************************** }
 {                               TMessageLW                                     }

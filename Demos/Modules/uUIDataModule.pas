@@ -5,7 +5,7 @@ interface
 uses
   Messages, System.SysUtils, System.Classes, Vcl.Controls, Vcl.StdCtrls, Vcl.Graphics, rtcpFileTrans, rtcpFileTransUI,
   rtcpDesktopControl, rtcpDesktopControlUI, ChromeTabsClasses, rtcPortalMod, Vcl.ComCtrls, Vcl.Forms,
-  Vcl.ExtCtrls, uVircessTypes, VideoRecorder, rmxVideoStorage, CommonData, ProgressDialog;
+  Vcl.ExtCtrls, uVircessTypes, VideoRecorder, rmxVideoStorage, CommonData, ProgressDialog, DisplaySettingsEx;
 
 type
   PImage = ^TImage;
@@ -48,6 +48,8 @@ type
     FVideoImage: TBitmap;
     FLockVideoImage: Integer;
     FFirstImageArrived: Boolean;
+    FMonitorList: TMonitorInfoList;
+    FActiveMonitorIndex: Integer;
     PartnerLockedState: Integer;
     PartnerServiceStarted: Boolean;
     ReconnectToPartnerStart: TReconnectToPartnerStart;

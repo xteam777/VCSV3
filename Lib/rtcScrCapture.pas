@@ -1560,8 +1560,8 @@ begin
       SendIOToHelperByIPC(QT_SENDSDESK, 0, 0, 0, 0, 0, 0, 0, '')
     else
       Show_Wallpaper;
-  end
-  else if AKey = 'BKM' then
+  end;
+  {else if AKey = 'BKM' then
   begin
     // Block Keyboard and Mouse
     if IsService then
@@ -1704,7 +1704,7 @@ begin
   begin
     // Restart
     RestartSystem;
-  end;
+  end;}
 end;
 
 //function BlockInputProc_Keyboard(CODE: DWORD; WParam: WPARAM; LParam: LPARAM): LRESULT; stdcall;
