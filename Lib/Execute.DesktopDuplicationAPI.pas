@@ -11,7 +11,8 @@ uses
   Vcl.Graphics,
   Math,
   SysUtils,
-  rtcDebug;
+  rtcDebug,
+  SyncObjs;
 
 const TempBuffLen = 100000;
 
@@ -80,6 +81,9 @@ type
 const
   ERROR_WAIT_TIMEOUT = -2005270489;
 
+var
+  DDExists_CS: TCriticalSection;
+
 implementation
 
 { TDesktopDuplicationWrapper }
@@ -89,7 +93,12 @@ begin
   if FAdapterName <> AdapterName then
   begin
     FAdapterName := AdapterName;
-    DDExists := False;
+    DDExists_CS.Acquire;
+    try
+      DDExists := False;
+    finally
+      DDExists_CS.Release;
+    end;
   end;
 end;
 
@@ -121,7 +130,13 @@ var
   O1: IDXGIOutput1;
 begin
   Result := False;
-  DDExists := False;
+
+  DDExists_CS.Acquire;
+  try
+    DDExists := False;
+  finally
+    DDExists_CS.Release;
+  end;
 
   //!!!!!!!!!!!!!!fTexture := NIL;
 
@@ -242,13 +257,25 @@ begin
   // DXGI_ERROR_NOT_CURRENTLY_AVAILABLE
    // E_ACCESSDENIED
   Debug.Log('DesktopDupilcation object created');
-  DDExists := True;
+
+  DDExists_CS.Acquire;
+  try
+    DDExists := True;
+  finally
+    DDExists_CS.Release;
+  end;
+
   Result := True;
 end;
 
 procedure TDesktopDuplicationWrapper.DestroyDD;
 begin
-  DDExists := False;
+  DDExists_CS.Acquire;
+  try
+    DDExists := False;
+  finally
+    DDExists_CS.Release;
+  end;
 
   if (FContext <> nil) and (FTexture <> nil) then
     FContext.Unmap(FTexture, 0);
@@ -288,6 +315,7 @@ var
   ResourceDesc: TDXGI_OUTDUPL_DESC;
   time: DWORD;
   desk_dc: HDC;
+  mDDExists: Boolean;
  // BufLen : Integer;
   label CaptureStart, ErrorInCapture, FailedCapture, AttemptFinish;
 begin
@@ -303,7 +331,13 @@ begin
   //  Result := False;
   //end;
  //fNeedRecreate := False;
-  if not DDExists then
+  DDExists_CS.Acquire;
+  try
+    mDDExists := DDExists;
+  finally
+    DDExists_CS.Release;
+  end;
+  if not mDDExists then
   begin
     Debug.Log('DD is not exists');
 
@@ -736,5 +770,11 @@ end;
 //    PRect(pClipRect)^ := Rect;
 //  end;
 //end;
+
+initialization
+  DDExists_CS := TCriticalSection.Create;
+
+finalization
+  DDExists_CS.Free;
 
 end.
