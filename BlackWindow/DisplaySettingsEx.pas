@@ -90,27 +90,27 @@ var
 begin
   current := -1;
   dup.Init;
-  if not EnumDisplaySettings(PChar(DeviceName),
-    ENUM_CURRENT_SETTINGS, cur_mode) then  exit;
+  if not EnumDisplaySettings(PChar(DeviceName), ENUM_CURRENT_SETTINGS, cur_mode) then
+    Exit;
 
   FillChar(dev_mode, SizeOf(dev_mode), 0);
   dev_mode.dmSize := SizeOf(dev_mode);
   mNum := 0;
 
+  while EnumDisplaySettings(PChar(DeviceName), mNum, dev_mode) do
+  begin
+    if (dev_mode.dmDisplayFrequency = cur_mode.dmDisplayFrequency) and
+      (dev_mode.dmFields and (DM_PELSWIDTH or DM_PELSHEIGHT) <> 0) then
+    begin
+      i := dup.AddIfNotExists(dev_mode.dmPelsWidth, dev_mode.dmPelsHeight);
+      if (dev_mode.dmPelsWidth  = cur_mode.dmPelsWidth) and
+         (dev_mode.dmPelsHeight = cur_mode.dmPelsHeight) then
+          current := i;
+    end;
 
-        while EnumDisplaySettings(PChar(DeviceName), mNum, dev_mode) do
-          begin
-            if
-              (dev_mode.dmDisplayFrequency = cur_mode.dmDisplayFrequency) and
-              (dev_mode.dmFields and (DM_PELSWIDTH or DM_PELSHEIGHT) <> 0) then
-              begin
-                i := dup.AddIfNotExists(dev_mode.dmPelsWidth, dev_mode.dmPelsHeight);
-                if (dev_mode.dmPelsWidth  = cur_mode.dmPelsWidth) and
-                   (dev_mode.dmPelsHeight = cur_mode.dmPelsHeight) then
-                    current := i;
-              end;
-            Inc(mNum);
-          end;
+    Inc(mNum);
+  end;
+
   Result := dup.buf;
   SetLength(Result, dup.Count);
 end;
@@ -199,7 +199,11 @@ begin
     if Int64(Buf[i]) = Int64(value) then exit;
   if Count = Length(Buf) then
     SetLength(Buf, GrowCollection(Count, Count + 1));
-  buf[Count] := value;
+
+  for i := 0 to Length(Buf) - 2 do
+    buf[i + 1] := buf[i];
+
+  buf[0] := value;
   Result := Count;
   Inc(Count);
 end;

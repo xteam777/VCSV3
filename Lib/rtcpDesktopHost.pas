@@ -1509,8 +1509,7 @@ var
 begin
   Result := TRtcArray.Create;
   infos := GetMonitorListEx();
-  i := Length(infos) - 1;
-  while i >= 0 do
+  for i := 0 to Length(infos) - 1 do
   begin
     rec := TRtcRecord.Create;
     rec.asString['DeviceName'] := infos[i].DeviceName;
@@ -1522,8 +1521,6 @@ begin
     Move(infos[i].Resolutions[0], a[0], Length(a));
     rec.asByteArray['Resolutions'] := RtcByteArray(a);
     Result.asRecord[i] := rec;
-
-    i := i -1;
   end;
 end;
 
