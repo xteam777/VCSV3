@@ -326,8 +326,8 @@ begin
     i := ActionManagerTop.ActionBars[0].Items[2].Items[2].Items.Count - 1;
     while i >= 0 do
     begin
-      FreeAndNil(ActionManagerTop.ActionBars[0].Items[2].Items[2].Items[i].Action);
-      FreeAndNil(ActionManagerTop.ActionBars[0].Items[2].Items[2].Items[i]);
+//      FreeAndNil(ActionManagerTop.ActionBars[0].Items[2].Items[2].Items[i].Action);
+      ActionManagerTop.ActionBars[0].Items[2].Items[2].Items.Delete(i);
 
       i := i - 1;
     end;
@@ -359,7 +359,14 @@ begin
     Exit;
 
   if Sender <> nil then
+  begin
+  if ActiveUIModule.FActiveMonitor = TAction(Sender).Tag then
+    Exit;
+
     ActiveUIModule.FActiveMonitor := TAction(Sender).Tag;
+
+    ActiveUIModule.UI.Send_Monitor(ActiveUIModule.UI.MonitorsData[ActiveUIModule.FActiveMonitor].AdapterName);
+  end;
 
   ActionManagerTop.ActionBars.BeginUpdate;
   try
@@ -367,8 +374,8 @@ begin
     i := ActionManagerTop.ActionBars[0].Items[2].Items[3].Items.Count - 1;
     while i >= 0 do
     begin
-      FreeAndNil(ActionManagerTop.ActionBars[0].Items[2].Items[3].Items[i].Action);
-      FreeAndNil(ActionManagerTop.ActionBars[0].Items[2].Items[3].Items[i]);
+//      FreeAndNil(ActionManagerTop.ActionBars[0].Items[2].Items[3].Items[i].Action);
+      ActionManagerTop.ActionBars[0].Items[2].Items[3].Items.Delete(i);
 
       i := i - 1;
     end;
@@ -398,20 +405,20 @@ begin
   if ActiveUIModule = nil then
     Exit;
 
-  if TAction(Sender).Tag <> ActiveUIModule.FActiveMonitorResolution then
-  begin
-    ActiveUIModule.FActiveMonitorResolution := TAction(Sender).Tag;
+  if TAction(Sender).Tag = ActiveUIModule.FActiveMonitorResolution then
+    Exit;
 
-    for i := 0 to Length(ActiveUIModule.UI.MonitorsData[ActiveUIModule.FActiveMonitor].Resolutions) - 1 do
-      ActionManagerTop.ActionBars[0].Items[2].Items[3].Items[i].Action.Checked := (i = ActiveUIModule.FActiveMonitorResolution);
+  ActiveUIModule.FActiveMonitorResolution := TAction(Sender).Tag;
 
-    ActiveUIModule.UI.Send_MonitorResolution(
-      ActiveUIModule.UI.MonitorsData[ActiveUIModule.FActiveMonitor].DeviceName,
-      ActiveUIModule.UI.MonitorsData[ActiveUIModule.FActiveMonitor].Resolutions[ActiveUIModule.FActiveMonitorResolution].width,
-      ActiveUIModule.UI.MonitorsData[ActiveUIModule.FActiveMonitor].Resolutions[ActiveUIModule.FActiveMonitorResolution].height,
-      True
-    );
-  end;
+  for i := 0 to Length(ActiveUIModule.UI.MonitorsData[ActiveUIModule.FActiveMonitor].Resolutions) - 1 do
+    ActionManagerTop.ActionBars[0].Items[2].Items[3].Items[i].Action.Checked := (i = ActiveUIModule.FActiveMonitorResolution);
+
+  ActiveUIModule.UI.Send_MonitorResolution(
+    ActiveUIModule.UI.MonitorsData[ActiveUIModule.FActiveMonitor].DeviceName,
+    ActiveUIModule.UI.MonitorsData[ActiveUIModule.FActiveMonitor].Resolutions[ActiveUIModule.FActiveMonitorResolution].width,
+    ActiveUIModule.UI.MonitorsData[ActiveUIModule.FActiveMonitor].Resolutions[ActiveUIModule.FActiveMonitorResolution].height,
+    True
+  );
 end;
 
 procedure TrdDesktopViewer.WMCloseUI(var Message: TMessage);
@@ -1181,6 +1188,8 @@ begin
         aRecordStart.Enabled := not Assigned(TUIDataModule(UIModulesList[i]).FVideoWriter);
         aRecordStop.Enabled := Assigned(TUIDataModule(UIModulesList[i]).FVideoWriter);
         aRecordCancel.Enabled := Assigned(TUIDataModule(UIModulesList[i]).FVideoWriter);
+
+        ActiveUIModule.UI.Get_MonitorResolutions;
       end
       else
       begin
@@ -1951,8 +1960,8 @@ begin
 
 //    UpdateQuality;
 
-  if ActiveUIModule <> nil then
-    ActiveUIModule.UI.Get_MonitorResolutions;
+//  if ActiveUIModule <> nil then
+//    ActiveUIModule.UI.Get_MonitorResolutions;
 
   DoResizeImage;
 end;

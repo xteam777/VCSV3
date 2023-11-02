@@ -45,6 +45,7 @@ type
 
     TempBuff : array [0..TempBuffLen] of Byte;
 
+    FAdapterName: String;
 
     light_black: Boolean;
     desk_pixel_color: Cardinal;
@@ -64,6 +65,7 @@ type
     procedure DestroyDD;
 
     function InvertColor(clr: TColor): TColor;
+    procedure SetAdapter(AdapterName: String);
 
     property Error: HRESULT read FError;
     property MouseFlags : Integer read FMouseFlags;
@@ -81,6 +83,15 @@ const
 implementation
 
 { TDesktopDuplicationWrapper }
+
+procedure TDesktopDuplicationWrapper.SetAdapter(AdapterName: String);
+begin
+  if FAdapterName <> AdapterName then
+  begin
+    FAdapterName := AdapterName;
+    DDExists := False;
+  end;
+end;
 
 constructor TDesktopDuplicationWrapper.Create;
 begin
@@ -100,9 +111,10 @@ end;
 
 function TDesktopDuplicationWrapper.CreateDD : Boolean;
 var
-//  Factory: IDXGIFactory1;
-//  Adapter: IDXGIAdapter1;
-//  AdapterIndex: UINT;
+  Factory: IDXGIFactory;
+  Adapter: IDXGIAdapter;
+  AdapterIndex: UINT;
+  AdapterDesc: TDXGI_ADAPTER_DESC;
   GI: IDXGIDevice;
   GA: IDXGIAdapter;
   GO: IDXGIOutput;
@@ -119,29 +131,36 @@ begin
   FDuplicate := nil;
   FContext := nil;
   FDevice := nil;
+  Adapter := nil;
 
-//  // Создаем экземпляр IDXGIFactory1 для доступа к адаптерам
-//  if Succeeded(CreateDXGIFactory1(IID_IDXGIFactory1, Factory)) then
-//  begin
-//    // Перечисляем доступные адаптеры
-//    AdapterIndex := 0;
-//    while Factory.EnumAdapters1(AdapterIndex, Adapter) = S_OK do
-//    begin
-//      // В этой части можно получать информацию о каждом адаптере, если необходимо
-//      Break;
-//      Inc(AdapterIndex);
-//    end;
-//  end
-//  else
-//  begin
-//    Debug.Log('Ошибка создания IDXGIFactory1');
-//    Exit;
-//  end;
+  if FAdapterName <> '' then
+  begin
+    // Создаем экземпляр IDXGIFactory1 для доступа к адаптерам
+    if Succeeded(CreateDXGIFactory(IID_IDXGIFactory, Factory)) then
+    begin
+      // Перечисляем доступные адаптеры
+      AdapterIndex := 0;
+      while Factory.EnumAdapters(AdapterIndex, Adapter) = S_OK do
+      begin
+        // В этой части можно получать информацию о каждом адаптере, если необходимо
+        Adapter.GetDesc(AdapterDesc);
+        if AdapterDesc.Description = FAdapterName then
+          Break;
+
+        Inc(AdapterIndex);
+      end;
+    end
+    else
+    begin
+      Debug.Log('Error creating IDXGIFactory');
+      Exit;
+    end;
+  end;
 
   //DXGI_ERROR_SESSION_DISCONNECTED
 //  Sleep(10000);
   FError := D3D11CreateDevice(
-    nil {Adapter}, // Адаптер, nil для использования "первого" адаптера
+    Adapter, // Адаптер, nil для использования "первого" адаптера
     D3D_DRIVER_TYPE_HARDWARE, // Тип драйвера (или D3D_DRIVER_TYPE_WARP для WARP-устройства)
     0, // Software Rasterizer, 0 или D3D11_CREATE_DEVICE_SOFTWARE_ADAPTER
     Ord(D3D11_CREATE_DEVICE_SINGLETHREADED), //D3D11_CREATE_DEVICE_DEBUG // Флаги создания

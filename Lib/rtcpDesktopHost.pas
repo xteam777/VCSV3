@@ -996,6 +996,11 @@ begin
     r.asArray['data'] := GetMonitorResolutinsAsRTC();
     Client.SendToUser(Sender, uname, r);
   end
+  else if (data.FunctionName = 'set_monitor') then
+  begin
+    { TODO : handle result }
+    Scr.SetAdapter(data.asString['adapter_name']);
+  end
   else if (data.FunctionName = 'set_monitorresolution') then
   begin
     { TODO : handle result }

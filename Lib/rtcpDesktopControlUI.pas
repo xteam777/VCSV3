@@ -307,6 +307,7 @@ type
     procedure Send_CtrlAltTAB(Sender: TObject = nil);
     procedure Send_ShiftCtrlAltTAB(Sender: TObject = nil);
 
+    procedure Send_Monitor(const AdapterName: string; Sender: TObject = nil);
     procedure Send_MonitorResolution(const DeviceName: string;
       Width, Height: Integer; Persist: Boolean; Sender: TObject = nil);
     procedure Get_MonitorResolutions(Sender: TObject = nil);
@@ -474,6 +475,19 @@ begin
 //    CloseHandle(FEventMonitor);
 //    FEventMonitor := 0;
 //  end;
+end;
+
+procedure TRtcPDesktopControlUI.Send_Monitor(const AdapterName: string; Sender: TObject);
+var
+  f: TRtcFunctionInfo;
+begin
+  if Assigned(Module) and Assigned(Module.Client) then
+    begin
+      f := TRtcFunctionInfo.Create;
+      f.FunctionName := 'set_monitor';
+      f.asString['adapter_name'] := AdapterName;
+      Module.Client.SendToUser(Sender, UserName, f);
+    end;
 end;
 
 procedure TRtcPDesktopControlUI.Send_MonitorResolution(const DeviceName: string;

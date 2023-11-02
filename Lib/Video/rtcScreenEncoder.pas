@@ -87,6 +87,7 @@ type
   //  function GetFrame(NeedFullCapture : Boolean): Boolean;
 
     procedure GrabScreen(ScrDelta : PString; ScrFull : PString = NIL);
+    procedure SetAdapter(AdapterName: String);
 
     property ScreenWidth: Integer read GetScreenWidth;
     property ScreenHeight: Integer read GetScreenHeight;
@@ -682,6 +683,11 @@ begin
   end;
 end;
 
+procedure TRtcScreenEncoder.SetAdapter(AdapterName: String);
+begin
+  FDesktopDuplicator.SetAdapter(AdapterName);
+end;
+
 procedure TRtcScreenEncoder.GrabScreen(ScrDelta : PString; ScrFull : PString = NIL);
 var
   Rec : TRtcRecord;
@@ -691,7 +697,7 @@ var
   F : TextFile;
   CurTick, CapLat, EncLat : UInt64;
   IniF: TIniFile;
-  time: DWORD;
+//  time: DWORD;
 begin
 //  DataCS.Enter;
 
@@ -702,7 +708,7 @@ begin
     // —брасываем информацию о экране
   end;
 
-time := GetTickCount;
+//time := GetTickCount;
 
   //ShowMessage('GrabScreen');
   {$IFDEF DEBUG}
@@ -941,8 +947,8 @@ time := GetTickCount;
 
   DataCS.Leave;
 
-  time := GetTickCount - time;
-  Debug.Log('grab: ' + IntToStr(time));
+//  time := GetTickCount - time;
+//  Debug.Log('grab: ' + IntToStr(time));
 
  //FDuplicate.ReleaseFrame;
 end;

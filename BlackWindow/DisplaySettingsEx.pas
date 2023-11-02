@@ -198,10 +198,9 @@ begin
   mode.dmFields := DM_PELSWIDTH or DM_PELSHEIGHT;
   Result := ChangeDisplaySettingsEx(PChar(DeviceName), mode, 0, CDS_TEST, nil);
   if Result = DISP_CHANGE_SUCCESSFUL then
-    begin
-      Result := ChangeDisplaySettingsEx(PChar(DeviceName), mode, 0, CDS_MODE[Persist], nil);
-    end;
-
+  begin
+    Result := ChangeDisplaySettingsEx(PChar(DeviceName), mode, 0, CDS_MODE[Persist], nil);
+  end;
 end;
 
 { **************************************************************************** }

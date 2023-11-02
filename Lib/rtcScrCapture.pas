@@ -156,6 +156,8 @@ type
 
     procedure ReleaseAllKeys;
 
+    procedure SetAdapter(AdapterName: String);
+
     property ClipRect : TRect write SetClipRect;
     property BPPLimit: integer read GetBPPLimit write SetBPPLimit default 4;
     property MaxTotalSize: integer read GetMaxTotalSize write SetMaxTotalSize
@@ -1784,6 +1786,11 @@ end;
 //      xLog(Format('Enable CAD. Error: %s', [SysErrorMessage(err)]));
 //  end;
 //end;
+
+procedure TRtcScreenCapture.SetAdapter(AdapterName: String);
+begin
+  ScrEnc.SetAdapter(AdapterName);
+end;
 
 procedure TRtcScreenCapture.ReleaseAllKeys;
 begin
