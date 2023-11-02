@@ -107,6 +107,7 @@ type
 
     FHaveScreen: boolean;
     FOnHaveScreenChanged: TNotifyEvent;
+    FOnGetMonitorsResolution: TNotifyEvent;
 
     FCurPaint: boolean;
     FCurPaintX, FCurPaintY, FCurPaintW, FCurPaintH: Integer;
@@ -162,7 +163,7 @@ type
 
     FMarkRemoteCursor: TRtcRemoteCursorMark;
 
-    FEventMonitor: THandle;
+//    FEventMonitor: THandle;
     FMonitorsData: TMonitorInfoList;
 
     procedure SetExactCursor(const Value: boolean);
@@ -381,6 +382,7 @@ type
 
     property HaveScreen: Boolean read GetHaveScreen write SetHaveScreen;
     property OnHaveScreeenChanged: TNotifyEvent read FOnHaveScreenChanged write FOnHaveScreenChanged;
+    property OnGetMonitorsResolution: TNotifyEvent read FOnGetMonitorsResolution write FOnGetMonitorsResolution;
 
     property ScreenInfoChanged: Boolean read GetScreenInfoChanged;
   end;
@@ -403,8 +405,8 @@ var
   infos: TMonitorInfoList;
   a: TArray<Byte>;
 begin
-  if (FEventMonitor <> 0)then
-    try
+//  if (FEventMonitor <> 0)then
+//    try
      SetLength(infos, Data.Count);
      for I := 0 to Data.Count-1 do
       begin
@@ -419,55 +421,59 @@ begin
         Move(a[0], infos[i].Resolutions[0], Length(a));
       end;
       FMonitorsData := infos;
-    finally
-      SetEvent(FEventMonitor);
-    end;
+//    finally
+//      SetEvent(FEventMonitor);
+//    end;
+
+      if Assigned(FOnGetMonitorsResolution) then
+        FOnGetMonitorsResolution(Self);
 end;
 
 procedure TRtcPDesktopControlUI.Get_MonitorResolutions(var Infos: TMonitorInfoList;
   Sender: TObject);
-const
-  TIME_OUT_WAIT = 5000;
+//const
+//  TIME_OUT_WAIT = 5000;
 var
   f: TRtcFunctionInfo;
-  Wait: Cardinal;
-  t: Cardinal;
+//  Wait: Cardinal;
+//  t: Cardinal;
 begin
-  if not Assigned(Module) or not Assigned(Module.Client) then exit;
-  FEventMonitor := CreateEvent(nil, false, false, nil);
-  try
-    Win32Check(FEventMonitor <> 0);
+  if not Assigned(Module) or not Assigned(Module.Client) then
+    Exit;
+//  FEventMonitor := CreateEvent(nil, false, false, nil);
+//  try
+//    Win32Check(FEventMonitor <> 0);
     f := TRtcFunctionInfo.Create;
     f.FunctionName := 'get_monitorresolutions';
     Module.Client.SendToUser(Sender, UserName, f);
-    t := GetTickCount;
-    repeat
-      Wait := MsgWaitForMultipleObjects(1, FEventMonitor, false, TIME_OUT_WAIT, QS_ALLEVENTS);
-      case Wait of
-        WAIT_OBJECT_0:
-          begin
-            Infos := FMonitorsData;
-            FMonitorsData := nil;
-            break;
-          end;
-        WAIT_OBJECT_0+1:
-          begin
-            Application.ProcessMessages;
-            if GetTickCount - t > TIME_OUT_WAIT then
-              raise Exception.CreateFmt('Timeout (%D) while Get_MonitorResolution', [TIME_OUT_WAIT]);
-          end;
-        WAIT_TIMEOUT:
-          raise Exception.CreateFmt('Timeout (%D) while Get_MonitorResolution', [TIME_OUT_WAIT]);
-      else
-        begin
-          raise Exception.Create('Error occured while Get_MonitorResolution');
-        end;
-      end;
-    until Wait <> WAIT_OBJECT_0 + 1;
-  finally
-    CloseHandle(FEventMonitor);
-    FEventMonitor := 0;
-  end;
+//    t := GetTickCount;
+//    repeat
+//      Wait := MsgWaitForMultipleObjects(1, FEventMonitor, false, TIME_OUT_WAIT, QS_ALLEVENTS);
+//      case Wait of
+//        WAIT_OBJECT_0:
+//          begin
+//            Infos := FMonitorsData;
+//            FMonitorsData := nil;
+//            break;
+//          end;
+//        WAIT_OBJECT_0+1:
+//          begin
+//            Application.ProcessMessages;
+//            if GetTickCount - t > TIME_OUT_WAIT then
+//              raise Exception.CreateFmt('Timeout (%D) while Get_MonitorResolution', [TIME_OUT_WAIT]);
+//          end;
+//        WAIT_TIMEOUT:
+//          raise Exception.CreateFmt('Timeout (%D) while Get_MonitorResolution', [TIME_OUT_WAIT]);
+//      else
+//        begin
+//          raise Exception.Create('Error occured while Get_MonitorResolution');
+//        end;
+//      end;
+//    until Wait <> WAIT_OBJECT_0 + 1;
+//  finally
+//    CloseHandle(FEventMonitor);
+//    FEventMonitor := 0;
+//  end;
 end;
 
 procedure TRtcPDesktopControlUI.Send_MonitorResolution(const DeviceName: string;

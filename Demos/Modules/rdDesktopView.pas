@@ -120,6 +120,7 @@ type
     procedure myUIError(Sender: TRtcPDesktopControlUI);
     procedure myUIData(Sender: TRtcPDesktopControlUI);
     procedure myUILogOut(Sender: TRtcPDesktopControlUI);
+    procedure myUIGetMonitorResolution(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure pImageMouseMove(Sender: TObject; Shift: TShiftState; X,Y: Integer);
     procedure btnSettingsClick(Sender: TObject);
@@ -897,6 +898,7 @@ begin
     pUIItem.UI.OnError := myUIError;
     pUIItem.UI.OnLogout := myUILogout;
     pUIItem.UI.OnClose := myUIClose;
+    pUIItem.UI.OnGetMonitorsResolution := myUIGetMonitorResolution;
     pUIItem.UI.ControlMode := rtcpFullControl;
     pUIItem.UI.UserName := pTab.UserName;
     pUIItem.UI.UserDesc := pTab.UserDesc;
@@ -1919,7 +1921,16 @@ begin
 
 //    UpdateQuality;
 
+  if ActiveUIModule <> nil then
+    ActiveUIModule.UI.Get_MonitorResolutions(ActiveUIModule.FMonitorList);
+
   DoResizeImage;
+end;
+
+procedure TrdDesktopViewer.myUIGetMonitorResolution(Sender: TObject);
+begin
+  FillMonitorsActionBar;
+  MonitorResolutionItemExecute(nil);
 end;
 
 procedure TrdDesktopViewer.myUIClose(Sender: TRtcPDesktopControlUI);
