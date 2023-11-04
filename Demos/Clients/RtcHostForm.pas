@@ -7425,7 +7425,7 @@ begin
   if FUpdateAvailable then
     bGetUpdate.Color := clWhite
   else
-    bGetUpdate.Color := $00615EF1;
+    bGetUpdate.Color := $fff3e5;
 end;
 
 procedure TMainForm.bGetUpdateMouseLeave(Sender: TObject);

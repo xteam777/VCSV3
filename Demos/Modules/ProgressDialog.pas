@@ -171,7 +171,7 @@ Begin
   begin
     try
       try
-        if fOwner.iiProgressDialog = nil then 
+        if not Assigned(fOwner.iiProgressDialog) then
           mHasUserCancelled := 1
         else
           mHasUserCancelled := fOwner.iiProgressDialog.HasUserCancelled;
