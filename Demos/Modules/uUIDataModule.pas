@@ -203,8 +203,8 @@ begin
   begin
     if PProgressDialogData(FProgressDialogsList[i])^.taskId = ATaskId then
     begin
-//      PostMessage(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^.fHwndParent, WM_KEYDOWN, VK_F5, 0);
-//      PostMessage(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^.fHwndParent, WM_KEYUP, VK_F5, 1 shl 31);
+      PostMessage(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^.fHwndParent, WM_KEYDOWN, VK_F5, 0);
+      PostMessage(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^.fHwndParent, WM_KEYUP, VK_F5, 1 shl 31);
       SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_FLUSHNOWAIT, nil, nil);
 
       FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
@@ -227,8 +227,8 @@ begin
   begin
     if PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog = AProgressDialog then
     begin
-//      PostMessage(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^.fHwndParent, WM_KEYDOWN, VK_F5, 0);
-//      PostMessage(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^.fHwndParent, WM_KEYUP, VK_F5, 1 shl 31);
+      PostMessage(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^.fHwndParent, WM_KEYDOWN, VK_F5, 0);
+      PostMessage(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^.fHwndParent, WM_KEYUP, VK_F5, 1 shl 31);
       SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_FLUSHNOWAIT, nil, nil);
 
       FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
@@ -251,8 +251,8 @@ begin
   begin
     if PProgressDialogData(FProgressDialogsList[i])^.UserName = AUserName then
     begin
-//      PostMessage(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^.fHwndParent, WM_KEYDOWN, VK_F5, 0);
-//      PostMessage(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^.fHwndParent, WM_KEYUP, VK_F5, 1 shl 31);
+      PostMessage(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^.fHwndParent, WM_KEYDOWN, VK_F5, 0);
+      PostMessage(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^.fHwndParent, WM_KEYUP, VK_F5, 1 shl 31);
       SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_FLUSHNOWAIT, nil, nil);
 
       FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
