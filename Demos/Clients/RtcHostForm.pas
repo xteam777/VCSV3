@@ -1024,10 +1024,10 @@ var
   data: TClipBrdFileData;
 begin
   data := TClipBrdFileData(Message.LParam);
-  OleInitialize(nil);
+//  OleInitialize(nil);
   CB_DataObject := TDataObject.Create(data.FUserName, data.files, data.FFilePaths, OnGetCbrdFilesData);
   OleCheck(OleSetClipboard(CB_DataObject));
-  OleUninitialize;
+//  OleUninitialize;
 end;
 
 {function TMainForm.GetHostGatewayClientActive: Boolean;
@@ -1239,7 +1239,7 @@ constructor TPortalHostThread.Create(CreateSuspended: Boolean; AUserName, AGatew
 begin
   inherited Create(CreateSuspended);
 
-  OleInitialize(nil);
+//  OleInitialize(nil);
 
   FCS := TCriticalSection.Create;
 
@@ -1436,7 +1436,7 @@ begin
 
   TSendDestroyClientToGatewayThread.Create(False, Gateway, FUserName, False, MainForm.hcAccounts.UseProxy, MainForm.hcAccounts.UserLogin.ProxyAddr, MainForm.hcAccounts.UserLogin.ProxyUserName, MainForm.hcAccounts.UserLogin.ProxyPassword, False);
 
-  OleUninitialize;
+//  OleUninitialize;
 
   TerminateThread(ThreadID, ExitCode);
 end;

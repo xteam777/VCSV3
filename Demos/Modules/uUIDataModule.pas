@@ -3,8 +3,8 @@ unit uUIDataModule;
 interface
 
 uses
-  Messages, System.SysUtils, System.Classes, Vcl.Controls, Vcl.StdCtrls, Vcl.Graphics, rtcpFileTrans, rtcpFileTransUI,
-  rtcpDesktopControl, rtcpDesktopControlUI, ChromeTabsClasses, rtcPortalMod, Vcl.ComCtrls, Vcl.Forms,
+  Winapi.Windows, Messages, System.SysUtils, System.Classes, Vcl.Controls, Vcl.StdCtrls, Vcl.Graphics, rtcpFileTrans, rtcpFileTransUI,
+  rtcpDesktopControl, rtcpDesktopControlUI, ChromeTabsClasses, rtcPortalMod, Vcl.ComCtrls, Vcl.Forms, ShlObj,
   Vcl.ExtCtrls, uVircessTypes, VideoRecorder, rmxVideoStorage, CommonData, ProgressDialog, DisplaySettingsEx;
 
 type
@@ -203,6 +203,10 @@ begin
   begin
     if PProgressDialogData(FProgressDialogsList[i])^.taskId = ATaskId then
     begin
+//      PostMessage(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^.fHwndParent, WM_KEYDOWN, VK_F5, 0);
+//      PostMessage(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^.fHwndParent, WM_KEYUP, VK_F5, 1 shl 31);
+      SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_FLUSHNOWAIT, nil, nil);
+
       FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
       Dispose(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog);
       Dispose(FProgressDialogsList[i]);
@@ -223,6 +227,10 @@ begin
   begin
     if PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog = AProgressDialog then
     begin
+//      PostMessage(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^.fHwndParent, WM_KEYDOWN, VK_F5, 0);
+//      PostMessage(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^.fHwndParent, WM_KEYUP, VK_F5, 1 shl 31);
+      SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_FLUSHNOWAIT, nil, nil);
+
       FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
       Dispose(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog);
       Dispose(FProgressDialogsList[i]);
@@ -243,6 +251,10 @@ begin
   begin
     if PProgressDialogData(FProgressDialogsList[i])^.UserName = AUserName then
     begin
+//      PostMessage(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^.fHwndParent, WM_KEYDOWN, VK_F5, 0);
+//      PostMessage(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^.fHwndParent, WM_KEYUP, VK_F5, 1 shl 31);
+      SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_FLUSHNOWAIT, nil, nil);
+
       FreeAndNil(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog^);
       Dispose(PProgressDialogData(FProgressDialogsList[i])^.ProgressDialog);
       Dispose(FProgressDialogsList[i]);
