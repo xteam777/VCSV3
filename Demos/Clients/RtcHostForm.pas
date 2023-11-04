@@ -984,7 +984,7 @@ begin
     if GetForegroundWindow = WB.HWND then
     begin
       //Получаем адресную локацию,т.е путь к каталогу
-      ADir := WB.LocationUrl;
+      ADir := System.Net.URLClient.TURI.URLDecode(WB.LocationUrl);
       //Замена левосторонних слешев в пути на классич. правосторонний разделитель
       ADir := StringReplace(ADir, '/','\', [rfReplaceAll]);
       //Удаляем 1-ые лишнии 8 символов (http:///)
