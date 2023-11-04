@@ -990,7 +990,7 @@ begin
       //Удаляем 1-ые лишнии 8 символов (http:///)
       Delete(ADir, 1, 8);
       //Замена URL-представления пробела %20 на нормальный символ #32
-      ADir := IncludeTrailingPathDelimiter(StringReplace(ADir, '%20', ' ', [rfReplaceAll]));
+      ADir := IncludeTrailingPathDelimiter(ADir);
 
       AHandle := WB.HWND;
       Result := True;
