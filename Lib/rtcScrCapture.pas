@@ -66,14 +66,16 @@ type
     FLowReduceType: integer;
     FLowReduceColorPercent: integer;
 
-   // FCaptureWidth, FCaptureHeight, FCaptureLeft, FCaptureTop, FScreenWidth,
+    // FCaptureWidth, FCaptureHeight, FCaptureLeft, FCaptureTop, FScreenWidth,
     //  FScreenHeight, FScreenLeft, FScreenTop: longint;
 
     FMultiMon: boolean;
 
     //FPDesktopHost: TRtcPDesktopHost;
 
-   // procedure Init;
+    // procedure Init;
+
+    FServerCursor: TCursor;
 
     function GetBPPLimit: integer;
     procedure SetBPPLimit(const Value: integer);
@@ -669,6 +671,15 @@ begin
   begin
     if ci.flags = CURSOR_SHOWING then
     begin
+      for i := Low(TCursor) to High(TCursor) do
+      begin
+        if Screen.Cursors[i] = ci.hCursor then
+        begin
+          FServerCursor := i;
+          Break;
+        end;
+      end;
+
       FMouseVisible := True;
       if FMouseInit or (ci.ptScreenPos.X <> FMouseX) or
         (ci.ptScreenPos.Y <> FMouseY) then
@@ -795,6 +806,7 @@ begin
             FMouseIconMask.SaveToStream(rec.newByteStream('M'));
         end;
       end;
+      rec.asInteger['cr'] := FServerCursor;
       Result := rec.toCode;
     finally
       rec.Free;

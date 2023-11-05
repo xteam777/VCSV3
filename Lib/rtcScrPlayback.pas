@@ -18,6 +18,7 @@ uses
   rtcSystem,
   rtcInfo,
   rtcZLib,
+  System.UITypes,
 
   IniFiles, System.SyncObjs,
   rtcCompress, Vcl.Imaging.JPEG, Vcl.Imaging.PNGImage, //RtcWebPCodec,
@@ -103,6 +104,7 @@ type
     FCapLat, FEncLat, FDecLat : Int64;
     {$ENDIF}
 
+    FCursorSever: TCursor;
     function GetScreen: TBitmap;
 
   public
@@ -130,6 +132,7 @@ type
     property CursorShape: integer read FCursorShape;
     property CursorStd: boolean read FCursorStd;
     property CursorUser: String read FCursorUser;
+    property CursorSever: TCursor read FCursorSever write FCursorSever;
 
    {$IFDEF DEBUG}
     property CapLat : Int64 read FCapLat; // Desktop Duplication Latency
@@ -841,6 +844,10 @@ begin
         FCursorMask.LoadFromStream(rec.asByteStream['M']);
       end;
     end;
+    if rec.isType['cr'] = rtc_Integer then
+      FCursorSever := rec.asInteger['cr']
+    else
+      FCursorSever := crDefault;
   finally
     rec.Free;
   end;
