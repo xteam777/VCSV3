@@ -1097,6 +1097,9 @@ begin
 
   CS.Acquire;
   try
+    if not RemoteCursor then
+      Screen.Cursor := scr.CursorSever;
+
     // By restoring screen state as it was with last data received,
     // we can ensure that this method can be used any number of times with the same results.
     // The last to call this function will set values for the next run.
@@ -1244,6 +1247,9 @@ begin
         StretchBlt(Image.Handle, Round((ImageWidth - Scale * Scr.Image.Width) / 2), Round((ImageHeight - Scale * Scr.Image.Height) / 2), round(Scr.Image.Width * Scale),
           round(Scr.Image.Height * Scale), Scr.Image.Canvas.Handle, 0, 0,
           Scr.Image.Width, Scr.Image.Height, SRCCOPY);
+
+        if RemoteCursor then
+          PaintCursor;
 
         if FSmoothScale then
           SetStretchBltMode(Image.Handle, COLORONCOLOR);
