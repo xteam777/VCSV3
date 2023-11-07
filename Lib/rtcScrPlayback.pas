@@ -19,6 +19,7 @@ uses
   rtcInfo,
   rtcZLib,
   System.UITypes,
+  rmxImageCODEC,
 
   IniFiles, System.SyncObjs,
   rtcCompress, Vcl.Imaging.JPEG, Vcl.Imaging.PNGImage, //RtcWebPCodec,
@@ -144,7 +145,7 @@ type
 implementation
 
 {$IFDEF DEBUG}
-uses rtcDebug, rmxImageCODEC;
+uses rtcDebug{, rmxImageCODEC};
 {$ENDIF}
 
 

@@ -419,8 +419,11 @@ begin
         infos[i].IsPrimary                 := rec.asBoolean['IsPrimary'];
         infos[i].CurrentResolution         := rec.asInteger['CurrentResolution'];
         RtcByteArray(a)                    := rec.asByteArray['Resolutions'];
-        SetLength(infos[i].Resolutions, Length(a) div SizeOf(TMonitorResolution));
-        Move(a[0], infos[i].Resolutions[0], Length(a));
+        if Length(a) > 0 then
+        begin
+          SetLength(infos[i].Resolutions, Length(a) div SizeOf(TMonitorResolution));
+          Move(a[0], infos[i].Resolutions[0], Length(a));
+        end;
       end;
       FMonitorsData := infos;
 //    finally

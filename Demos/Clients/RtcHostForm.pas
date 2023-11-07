@@ -9117,7 +9117,7 @@ begin
         MinBuildVersion := asInteger['MinBuild'];
         LastBuildVersion := asInteger['LastBuild'];
         CurBuildVersion := FileBuildVersion(ParamStr(0));
-        if CurBuildVersion < MinBuildVersion then
+        {if CurBuildVersion < MinBuildVersion then
         begin
           FUpdateAvailable := True;
           SetStatusStringDelayed('Текущая версия устарела. Требуется обновление');
@@ -9138,7 +9138,7 @@ begin
           SetStatus(STATUS_OLD_VERSION);
           Exit;
         end
-        else //Версия последняя
+        else //Версия последняя}
         begin
           FUpdateAvailable := False;
           bGetUpdate.Caption := 'Последняя версия';

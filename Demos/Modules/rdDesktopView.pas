@@ -365,6 +365,9 @@ begin
 
     ActiveUIModule.FActiveMonitor := TAction(Sender).Tag;
 
+    for i := 0 to Length(ActiveUIModule.UI.MonitorsData[ActiveUIModule.FActiveMonitor].Resolutions) - 1 do
+      ActionManagerTop.ActionBars[0].Items[2].Items[2].Items[i].Action.Checked := (i = ActiveUIModule.FActiveMonitor);
+
     ActiveUIModule.UI.Send_Monitor(ActiveUIModule.UI.MonitorsData[ActiveUIModule.FActiveMonitor].AdapterName);
   end;
 

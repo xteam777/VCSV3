@@ -240,6 +240,7 @@
         <DCCReference Include="..\..\rmxVideo\rmxConverter\converters\rmxConverterUtils.pas"/>
         <DCCReference Include="..\..\rmxVideo\rmxConverter\CmdLineParams.pas"/>
         <DCCReference Include="..\..\rmxVideo\rmxConverter\VideoRecorder.pas"/>
+        <DCCReference Include="..\..\rmxImageCODEC\rmxImageCODEC.pas"/>
         <RcItem Include="rmx_w32.exe">
             <ContainerId>ResourceItem</ContainerId>
             <ResourceType>RCDATA</ResourceType>
@@ -319,10 +320,9 @@
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployFile LocalName="Remox.rsm" Configuration="Debug" Class="DebugSymbols"/>
-                <DeployFile LocalName="Remox.rsm" Configuration="Debug" Class="DebugSymbols">
+                <DeployFile LocalName="Remox.exe" Configuration="Release" Class="ProjectOutput">
                     <Platform Name="Win32">
-                        <RemoteName>Remox.rsm</RemoteName>
+                        <RemoteName>Remox.exe</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
@@ -332,8 +332,20 @@
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
+                <DeployFile LocalName="fast-lzma2.dll" Configuration="Release" Class="ProjectFile">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="rmx_w32.exe" Configuration="Debug" Class="ProjectFile"/>
                 <DeployFile LocalName="rmx_w32.exe" Configuration="Debug" Class="ProjectFile">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="rmx_w32.exe" Configuration="Release" Class="ProjectFile">
                     <Platform Name="Win32">
                         <RemoteDir>.\</RemoteDir>
                         <Overwrite>true</Overwrite>

@@ -6,8 +6,8 @@ object rdDesktopViewer: TrdDesktopViewer
   VertScrollBar.Tracking = True
   VertScrollBar.Visible = False
   Caption = #1059#1087#1088#1072#1074#1083#1077#1085#1080#1077
-  ClientHeight = 661
-  ClientWidth = 1058
+  ClientHeight = 660
+  ClientWidth = 1054
   Color = 1381653
   DoubleBuffered = True
   Font.Charset = DEFAULT_CHARSET
@@ -34,8 +34,8 @@ object rdDesktopViewer: TrdDesktopViewer
   object pMain: TPanel
     Left = 0
     Top = 61
-    Width = 1058
-    Height = 600
+    Width = 1054
+    Height = 599
     Align = alClient
     BevelOuter = bvNone
     Color = 10720035
@@ -48,11 +48,13 @@ object rdDesktopViewer: TrdDesktopViewer
     ParentFont = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
+    ExplicitWidth = 1058
+    ExplicitHeight = 600
     object iScreenLocked: TImage
       Left = 0
       Top = 0
-      Width = 1066
-      Height = 601
+      Width = 1062
+      Height = 600
       Align = alClient
       Center = True
       Picture.Data = {
@@ -1990,8 +1992,8 @@ object rdDesktopViewer: TrdDesktopViewer
     object iPrepare: TImage
       Left = 0
       Top = 0
-      Width = 1066
-      Height = 601
+      Width = 1062
+      Height = 600
       Align = alClient
       Center = True
       Picture.Data = {
@@ -2945,7 +2947,6 @@ object rdDesktopViewer: TrdDesktopViewer
         0000B068FE7F60ED4DA4715B3B440000000049454E44AE426082}
       Transparent = True
       ExplicitTop = 32
-      ExplicitWidth = 1062
       ExplicitHeight = 603
     end
     object lState: TLabel
@@ -2968,8 +2969,8 @@ object rdDesktopViewer: TrdDesktopViewer
     object Scroll: TScrollBox
       Left = 0
       Top = 0
-      Width = 1066
-      Height = 601
+      Width = 1062
+      Height = 600
       HorzScrollBar.Tracking = True
       HorzScrollBar.Visible = False
       VertScrollBar.Tracking = True
@@ -2982,7 +2983,6 @@ object rdDesktopViewer: TrdDesktopViewer
       StyleElements = [seFont, seBorder]
       OnMouseMove = ScrollMouseMove
       ExplicitWidth = 1058
-      ExplicitHeight = 600
       object iMiniPanelShow: TImage
         Left = 32
         Top = 304
@@ -3889,7 +3889,7 @@ object rdDesktopViewer: TrdDesktopViewer
   object MainChromeTabs: TChromeTabs
     Left = 0
     Top = 0
-    Width = 1058
+    Width = 1054
     Height = 27
     OnChange = MainChromeTabsChange
     OnActiveTabChanged = MainChromeTabsActiveTabChanged
@@ -4215,11 +4215,12 @@ object rdDesktopViewer: TrdDesktopViewer
     LookAndFeel.ScrollButtons.Arrow.Disabled.OutlineAlpha = 200
     Align = alTop
     TabOrder = 1
+    ExplicitWidth = 1058
   end
   object panOptions: TPanel
     Left = 0
     Top = 27
-    Width = 1058
+    Width = 1054
     Height = 34
     Align = alTop
     BevelOuter = bvNone

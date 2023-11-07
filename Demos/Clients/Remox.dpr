@@ -79,7 +79,8 @@ uses
   RMXConverterBase in '..\..\rmxVideo\rmxConverter\converters\RMXConverterBase.pas',
   rmxConverterUtils in '..\..\rmxVideo\rmxConverter\converters\rmxConverterUtils.pas',
   CmdLineParams in '..\..\rmxVideo\rmxConverter\CmdLineParams.pas',
-  VideoRecorder in '..\..\rmxVideo\rmxConverter\VideoRecorder.pas';
+  VideoRecorder in '..\..\rmxVideo\rmxConverter\VideoRecorder.pas',
+  rmxImageCODEC in '..\..\rmxImageCODEC\rmxImageCODEC.pas';
 
 {$R *.res}
 
