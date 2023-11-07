@@ -329,6 +329,9 @@ begin
 
   New(pImage);
 
+  FActiveMonitor := -1;
+  FActiveMonitorResolution := -1;
+
   TimerReconnect.Enabled := False;
   FProgressDialogsList := TList.Create;
 end;

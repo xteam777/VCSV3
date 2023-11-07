@@ -341,7 +341,7 @@ begin
       mAction.Tag := i;
       mACItem := ActionManagerTop.ActionBars[0].Items[2].Items[2].Items.Add;
       mACItem.Action := mAction;
-      mAction.Checked := (i = ActiveUIModule.FActiveMonitor); //ActiveUIModule.UI.MonitorsData[i].IsPrimary
+      mAction.Checked := ActiveUIModule.UI.MonitorsData[i].IsPrimary or (i = ActiveUIModule.FActiveMonitor);
     end;
   finally
     ActionManagerTop.ActionBars.EndUpdate;
