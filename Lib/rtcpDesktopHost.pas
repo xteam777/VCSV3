@@ -1522,8 +1522,11 @@ begin
     rec.asString['AdapterName'] := infos[i].AdapterName;
     rec.asBoolean['IsPrimary'] := infos[i].IsPrimary;
     rec.asInteger['CurrentResolution'] := infos[i].CurrentResolution;
-    SetLength(a, Length(infos[i].Resolutions) * SizeOf(TMonitorResolution));
-    Move(infos[i].Resolutions[0], a[0], Length(a));
+    if Length(infos[i].Resolutions) > 0 then
+    begin
+      SetLength(a, Length(infos[i].Resolutions) * SizeOf(TMonitorResolution));
+      Move(infos[i].Resolutions[0], a[0], Length(a));
+    end;
     rec.asByteArray['Resolutions'] := RtcByteArray(a);
     Result.asRecord[i] := rec;
   end;

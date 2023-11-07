@@ -48,7 +48,7 @@ implementation
 procedure TfIdentification.ApplicationEvents1Message(var Msg: tagMSG;
   var Handled: Boolean);
 begin
-  if Msg.message = WM_KEYUP then
+{  if Msg.message = WM_KEYUP then
     case Msg.wParam of
       VK_RETURN:
         begin
@@ -62,7 +62,7 @@ begin
         end;
       15:
         Handled := True;
-    end;
+    end;}
 end;
 
 procedure TfIdentification.bCloseClick(Sender: TObject);

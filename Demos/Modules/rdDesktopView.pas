@@ -341,7 +341,14 @@ begin
       mAction.Tag := i;
       mACItem := ActionManagerTop.ActionBars[0].Items[2].Items[2].Items.Add;
       mACItem.Action := mAction;
-      mAction.Checked := ActiveUIModule.UI.MonitorsData[i].IsPrimary or (i = ActiveUIModule.FActiveMonitor);
+
+      if ActiveUIModule.FActiveMonitor = -1 then
+      begin
+        mAction.Checked := ActiveUIModule.UI.MonitorsData[i].IsPrimary;
+        ActiveUIModule.FActiveMonitor := i;
+      end
+      else
+        mAction.Checked := (i = ActiveUIModule.FActiveMonitor);
     end;
   finally
     ActionManagerTop.ActionBars.EndUpdate;
@@ -365,7 +372,7 @@ begin
 
     ActiveUIModule.FActiveMonitor := TAction(Sender).Tag;
 
-    for i := 0 to Length(ActiveUIModule.UI.MonitorsData[ActiveUIModule.FActiveMonitor].Resolutions) - 1 do
+    for i := 0 to Length(ActiveUIModule.UI.MonitorsData) - 1 do
       ActionManagerTop.ActionBars[0].Items[2].Items[2].Items[i].Action.Checked := (i = ActiveUIModule.FActiveMonitor);
 
     ActiveUIModule.UI.Send_Monitor(ActiveUIModule.UI.MonitorsData[ActiveUIModule.FActiveMonitor].AdapterName);

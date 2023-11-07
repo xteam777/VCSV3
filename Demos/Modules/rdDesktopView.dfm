@@ -48,13 +48,11 @@ object rdDesktopViewer: TrdDesktopViewer
     ParentFont = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
-    ExplicitWidth = 1058
-    ExplicitHeight = 600
     object iScreenLocked: TImage
       Left = 0
       Top = 0
-      Width = 1062
-      Height = 600
+      Width = 1054
+      Height = 599
       Align = alClient
       Center = True
       Picture.Data = {
@@ -1992,8 +1990,8 @@ object rdDesktopViewer: TrdDesktopViewer
     object iPrepare: TImage
       Left = 0
       Top = 0
-      Width = 1062
-      Height = 600
+      Width = 1054
+      Height = 599
       Align = alClient
       Center = True
       Picture.Data = {
@@ -2947,6 +2945,7 @@ object rdDesktopViewer: TrdDesktopViewer
         0000B068FE7F60ED4DA4715B3B440000000049454E44AE426082}
       Transparent = True
       ExplicitTop = 32
+      ExplicitWidth = 1062
       ExplicitHeight = 603
     end
     object lState: TLabel
@@ -2969,8 +2968,8 @@ object rdDesktopViewer: TrdDesktopViewer
     object Scroll: TScrollBox
       Left = 0
       Top = 0
-      Width = 1062
-      Height = 600
+      Width = 1054
+      Height = 599
       HorzScrollBar.Tracking = True
       HorzScrollBar.Visible = False
       VertScrollBar.Tracking = True
@@ -2982,7 +2981,6 @@ object rdDesktopViewer: TrdDesktopViewer
       TabOrder = 0
       StyleElements = [seFont, seBorder]
       OnMouseMove = ScrollMouseMove
-      ExplicitWidth = 1058
       object iMiniPanelShow: TImage
         Left = 32
         Top = 304
@@ -4235,7 +4233,6 @@ object rdDesktopViewer: TrdDesktopViewer
       Top = 0
       Width = 350
       Height = 34
-      UseSystemFont = False
       ActionManager = ActionManagerTop
       Align = alNone
       Color = clMenuBar
@@ -4245,7 +4242,7 @@ object rdDesktopViewer: TrdDesktopViewer
       ColorMap.SelectedFontColor = clWhite
       ColorMap.UnusedColor = clWhite
       Font.Charset = DEFAULT_CHARSET
-      Font.Color = clBlack
+      Font.Color = clWindowText
       Font.Height = -12
       Font.Name = 'Segoe UI'
       Font.Style = []
