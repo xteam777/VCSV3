@@ -600,13 +600,43 @@ begin
 end;
 
 procedure TrdFileTransfer.FilesRemoteDirectoryChange(Sender: TObject; const FileName: String);
+const
+  ID_NETWORK = '::{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}';
+var
+  s, s1: string;
+  p: PChar;
+  i: Integer;
 begin
   FRemoteRecent.Push(FileName);
+
+  // fix GUID path
+  s := FileName;
+  i := s.IndexOf('}');
+  if (i <> -1) and s.StartsWith(ID_NETWORK, false) then
+    begin
+      s1 := s.Substring(i+1, Length(s));
+      p := PChar(s1);
+      i := 0;
+      while (p^ <> #0) and (P^ = PathDelim) do
+        begin
+          Inc(p);
+          Inc(i);
+        end;
+      if i < Length(s1) then
+        begin
+          while (P^ <> #0) and (P^ <> PathDelim) do
+            begin
+              Inc(p);
+              Inc(i);
+            end;
+          if i + 1 < Length(s1) then
+            s := s1.Substring(i+1, Length(s1));
+        end;
+    end;
   if assigned(myUI) then
-    myUI.GetFileList(FileName,'');
+    myUI.GetFileList(s, '');
 
   FilesRemoteClick(nil);
-
 end;
 
 procedure TrdFileTransfer.btnRemoteBackClick(Sender: TObject);
@@ -674,7 +704,7 @@ begin
       //FilesLocal.onPath('', '');
       data := TRtcDataSet.Create;
       try
-        GetFilesList('', '*.*', data);
+        rtcpFileUtils.GetFilesList('', '*.*', data);
         FilesLocal.UpdateFileList('', data);
       finally
         data.Free;
@@ -688,8 +718,6 @@ begin
         FilesLocal.Items[i].Caption,
         FilesLocal.Items[i].ImageIndex, -1, -1, 0, nil);
     end;
-
-
 end;
 
 procedure TrdFileTransfer.FormCloseQuery(Sender: TObject; var CanClose: Boolean);

@@ -149,53 +149,55 @@ begin
   FDevice := nil;
   Adapter := nil;
 
-  if FAdapterName <> '' then
-  begin
-    DriverType := D3D_DRIVER_TYPE_HARDWARE;
-
-    // Создаем экземпляр IDXGIFactory1 для доступа к адаптерам
-    if Succeeded(CreateDXGIFactory(IID_IDXGIFactory, Factory)) then
-    begin
-      // Перечисляем доступные адаптеры
-      AdapterIndex := 0;
-      while Factory.EnumAdapters(AdapterIndex, Adapter) = S_OK do
-      begin
-        // В этой части можно получать информацию о каждом адаптере, если необходимо
-        Adapter.GetDesc(AdapterDesc);
-        if WideCompareText(AdapterDesc.Description, FAdapterName) = 0 then
-        begin
-          {$R-}
-          Debug.Log('Set adapter: ' + FAdapterName);
-          {$R+}
-          Break;
-        end;
-
-        Inc(AdapterIndex);
-      end;
-    end
-    else
-    begin
-      {$R-}
-      Debug.Log('Error creating IDXGIFactory');
-      {$R+}
-
-      Exit;
-    end;
-  end
-  else
-  begin
-    Adapter := nil;
-    DriverType := D3D_DRIVER_TYPE_HARDWARE;
-
-    {$R-}
-    Debug.Log('Set adapter: Default');
-    {$R+}
-  end;
+//  if FAdapterName <> '' then
+//  begin
+//    DriverType := D3D_DRIVER_TYPE_HARDWARE;
+//
+//    // Создаем экземпляр IDXGIFactory1 для доступа к адаптерам
+//    if Succeeded(CreateDXGIFactory(IID_IDXGIFactory, Factory)) then
+//    begin
+//      // Перечисляем доступные адаптеры
+//      AdapterIndex := 0;
+//      while Factory.EnumAdapters(AdapterIndex, Adapter) = S_OK do
+//      begin
+//        // В этой части можно получать информацию о каждом адаптере, если необходимо
+//        Adapter.GetDesc(AdapterDesc);
+//        if WideCompareText(AdapterDesc.Description, FAdapterName) = 0 then
+//        begin
+//          {$R-}
+//          Debug.Log('Set adapter: ' + FAdapterName);
+//          {$R+}
+//          Break;
+//        end;
+//
+//        Inc(AdapterIndex);
+//      end;
+//    end
+//    else
+//    begin
+//      {$R-}
+//      Debug.Log('Error creating IDXGIFactory');
+//      {$R+}
+//
+//      Exit;
+//    end;
+//  end
+//  else
+//  begin
+//    Adapter := nil;
+//    DriverType := D3D_DRIVER_TYPE_HARDWARE;
+//
+//    {$R-}
+//    Debug.Log('Set adapter: Default');
+//    {$R+}
+//  end;
+  Adapter := nil;
+  DriverType := D3D_DRIVER_TYPE_UNKNOWN;
 
   //DXGI_ERROR_SESSION_DISCONNECTED
 //  Sleep(10000);
   FError := D3D11CreateDevice(
-    Adapter, //Adapter, // Адаптер, nil для использования "первого" адаптера
+    Adapter, //nil, // Адаптер, nil для использования "первого" адаптера
     DriverType, //D3D_DRIVER_TYPE_UNKNOWN, //D3D_DRIVER_TYPE_HARDWARE, // Тип драйвера (или D3D_DRIVER_TYPE_WARP для WARP-устройства)
     0, // Software Rasterizer, 0 или D3D11_CREATE_DEVICE_SOFTWARE_ADAPTER
     Ord(D3D11_CREATE_DEVICE_SINGLETHREADED), //D3D11_CREATE_DEVICE_DEBUG // Флаги создания

@@ -37,8 +37,6 @@ type
     FDirectorySize: int64;
     FMyFiles,FMyFiles_: TRtcDataSet;
 
-    iconMap: TStrings;
-
     FSortColumn: integer;
     LImageList, SImageList: TImageList;
     FSelectedFiles: TStringList;
@@ -72,9 +70,9 @@ type
     function GetFileIconIndex(const FileExt: String): integer;
     function GetDriveIconIndex(const MediaType: TRtcPMediaType): integer;
 
+    function AddFileIconEx(const FilePath: string; IconIndex: Integer): Integer;
   protected
-    procedure AddDrives(const FData: TRtcDataSet);
-    procedure AddFiles(const FData: TRtcDataSet);
+    iconMap: TStrings;
 
     procedure Click; override;
     procedure DblClick; override;
@@ -83,6 +81,11 @@ type
 
     function GetMediaTypeStr(MT: TRtcPMediaType): String;
 
+    function GetDirIconIndexEx_Inner(const FData: TRtcDataSet; updir: boolean): integer;
+    function GetDirIconIndexEx(const FData: TRtcDataSet; updir: boolean = False): integer;
+    function GetFileIconEx(const FilePath: string; IconIndex: Integer): Integer;
+    procedure AddDrives(const FData: TRtcDataSet);
+    procedure AddFiles(const FData: TRtcDataSet);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -791,7 +794,7 @@ const
 procedure TRtcPFileExplorer.CompareFiles(Sender: TObject;
   Item1, Item2: TListItem; Data: integer; var Compare: integer);
 var
-  s1, s2, Caption1, Caption2: String;
+  s1, s2, s3, s4, Caption1, Caption2: String;
   date1, date2: Double;
   d1, d2, size1, size2: int64;
   Result: integer;
@@ -961,13 +964,17 @@ begin
   begin
     if FSortDir = sdDescending then
     begin
-      s1 := #254;
-      s2 := #255
+      s1 := #253;
+      s2 := #254;
+      s3 := #255;
+      s4 := #252;
     end
     else
     begin
-      s1 := #1;
-      s2 := #0;
+      s1 := #2;
+      s2 := #1;
+      s3 := #0;
+      s4 := #3;
     end;
     if SameText(Item1.SubItems[5], 'dir') then
     begin
@@ -983,6 +990,24 @@ begin
       else
         Caption2 := s1 + Caption2;
     end;
+
+    if SameText(Item1.SubItems[5], 'drv') then
+    begin
+      Caption1 := s3 + Caption1
+    end;
+    if SameText(Item2.SubItems[5], 'drv') then
+    begin
+       Caption2 := s3 + Caption2
+    end;
+
+    // net
+    s1 := Item1.SubItems[4];
+    s2 := Item2.SubItems[4];
+    if (Length(s1) > 0) and (s1[1] = ':') then
+      Caption1 := s4 + Caption1;
+    if (Length(s2) > 0) and (s2[1] = ':') then
+      Caption2 := s4 + Caption2;
+
     Result := CompareText(Caption1, Caption2);
   end;
 
@@ -1029,33 +1054,95 @@ end;
 procedure TRtcPFileExplorer.AddDrives(const FData: TRtcDataSet);
 var
   i: integer;
-  Drv: String;
 begin
+  //inherited;
   if FData = nil then
     Exit;
-
   FData.First;
   for i := 1 to FData.RowCount do
   begin
-    Drv := FData.asText['drive'];
     with Items.Add do
     begin
-      Caption := FData.asText['label']; // name 0
-      ImageIndex := GetDriveIconIndex(TRtcPMediaType(FData.asInteger['type']));
-      SubItems.Add(GetMediaTypeStr(TRtcPMediaType(FData.asInteger['type'])));
-      // type 1
-      SubItems.Add(FormatFileSize(FData.asLargeInt['size'])); // size 2
-      SubItems.Add(FormatFileSize(FData.asLargeInt['free'])); // free 3
-      SubItems.Add(''); // attr 4
-      SubItems.Add(Drv + '\'); // full path 5
-      SubItems.Add('drv'); // item kind 6
-      SubItems.Add(IntToStr(FData.asLargeInt['size']));
-      // unformatted size (used for sorting) 7
-      SubItems.Add(IntToStr(FData.asLargeInt['free']));
-      // unformatted size (used for sorting) 8
+      Caption := FData.asText['label'];
+      if not FData.isNull['file'] then
+        begin
+          ImageIndex := -1;
+          if not FData.isNull['icon_index'] then
+             ImageIndex := GetFileIconEx(FData.asText['icon_path'], FData.asInteger['icon_index']);
+          if ImageIndex = -1 then
+            ImageIndex := GetDirIconIndex;
+          if FData.asBoolean['tsclient'] then
+            SubItems.Add('SHARED')
+          else if FData.asBoolean['network'] then
+            SubItems.Add('NETWORK') else
+            SubItems.Add('');
+          SubItems.Add('');
+          SubItems.Add('');
+          SubItems.Add('');       // ATTR
+          SubItems.Add(FData.asText['file']);
+          if FData.asBoolean['tsclient'] then
+            SubItems.Add('drv') else
+            SubItems.Add('dir');
+          SubItems.Add('');
+          SubItems.Add('');
+        end
+      else
+        begin
+          ImageIndex := GetDriveIconIndex(TRtcPMediaType(FData.asInteger['type']));
+          SubItems.Add(GetMediaTypeStr(TRtcPMediaType(FData.asInteger['type'])));
+          SubItems.Add(FormatFileSize(FData.asLargeInt['size']));
+          SubItems.Add(FormatFileSize(FData.asLargeInt['free']));
+          SubItems.Add('');
+          SubItems.Add(FData.asText['drive']);
+          SubItems.Add('drv');
+          SubItems.Add(IntToStr(FData.asLargeInt['size']));
+          SubItems.Add(IntToStr(FData.asLargeInt['free']));
+        end;
     end;
     FData.Next;
   end;
+end;
+
+function TRtcPFileExplorer.AddFileIconEx(const FilePath: string; IconIndex: Integer): Integer;
+var
+  LargeIcon, SmallIcon: HICON;
+  LImgs, SImgs: HIMAGELIST;
+begin
+  Result := -1;
+  SImgs := SmallImages.Handle;
+  LImgs := LargeImages.Handle;
+  if ExtractIconEx(PChar(FilePath), IconIndex, LargeIcon, SmallIcon, 1) = INVALID_HANDLE_VALUE then
+    exit;//RaiseLastOSError(GetLastError, SErrorExtractIcon);
+  ImageList_AddIcon(SImgs, SmallIcon);
+  ImageList_AddIcon(LImgs, LargeIcon);
+  DestroyIcon(SmallIcon);
+  DestroyIcon(LargeIcon);
+  Result := iconMap.Add(FilePath + IconIndex.ToString);
+end;
+
+function TRtcPFileExplorer.GetDirIconIndexEx_Inner(const FData: TRtcDataSet; updir: boolean): integer;
+begin
+  Result := GetDirIconIndex(updir);
+end;
+
+function TRtcPFileExplorer.GetDirIconIndexEx(const FData: TRtcDataSet;
+  updir: boolean): integer;
+var
+  r: TRtcArray;
+begin
+  r := FData.RowData;
+  if not FData.isNull['icon_index'] then
+    Result := GetFileIconEx(FData.asText['icon_path'], FData.asInteger['icon_index']) else
+    Result := GetDirIconIndexEx_Inner(FData, updir);
+end;
+
+function TRtcPFileExplorer.GetFileIconEx(const FilePath: string; IconIndex: Integer): Integer;
+begin
+  Result := 0;
+  if (Name <> '') then
+    Result := iconMap.IndexOf(FilePath + IconIndex.ToString);
+  if Result = -1 then
+    Result := AddFileIconEx(FilePath, IconIndex);
 end;
 
 procedure TRtcPFileExplorer.AddFiles(const FData: TRtcDataSet);
