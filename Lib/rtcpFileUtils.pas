@@ -9,7 +9,7 @@ interface
 {$INCLUDE rtcDefs.inc}
 
 uses
-  Windows, SysUtils, Classes, Math, ShellAPI, rtcInfo, rtcSystem, Winapi.ShlObj, Winapi.ActiveX;
+  Winapi.Windows, System.SysUtils, System.Classes, Math, ShellAPI, rtcInfo, rtcSystem, Winapi.ShlObj, Winapi.ActiveX, Vcl.Forms, System.UITypes;
 
 type
   TRtcPMediaType = (dtUnknown, dtNotExists, dtRemovable, dtFixed, dtRemote,
@@ -33,6 +33,7 @@ Function DelFolderTree(DirName: String): Boolean;
 function FileTimeToDateTime(FT: FILETIME): TDateTime;
 
 procedure GetFilesList(const FolderName, FileMask: String; Folder: TRtcDataSet);
+function HandleNetworkFile(const FileName: string): string;
 
 implementation
 
@@ -42,6 +43,9 @@ const
   FILE_SUPPORTS_REPARSE_POINTS = 128;
   FILE_SUPPORTS_SPARSE_FILES = 256;
   FILE_VOLUME_QUOTAS = 512;
+
+  ID_MYCOMPUTER = '::{20D04FE0-3AEA-1069-A2D8-08002B30309D}';
+  ID_NETWORK    = '::{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}';
 
 type
   TDiskSign = String;
@@ -53,6 +57,58 @@ type
     Capacity, FreeSpace: int64;
     VolumeLabel, SerialNumber, FileSystem: String;
   end;
+
+//==============================================================================
+//  Background request
+//
+type
+  PProcParam = ^TProcParam;
+  TProcParam = record
+    event: THandle;
+    Folder: TRtcDataSet;
+    FolderName, FileMask: String
+  end;
+
+function GetFilesListBackThreadProc(p: PProcParam): Integer;
+begin
+  try
+    GetFilesList(p.FolderName, p.FileMask, p.Folder);
+    Result := 0;
+  except
+    Result := -1
+  end;
+  SetEvent(p.event);
+end;
+
+procedure GetFilesListBackGround(const FolderName, FileMask: String; Folder: TRtcDataSet);
+var
+  t: THandle;
+  p: TProcParam;
+  Wait: Cardinal;
+begin
+  p.event := CreateEvent(nil, false, false, '');
+  Win32Check(p.event <> 0);
+  Screen.Cursor := crHourGlass;
+  try
+    p.FolderName := FolderName;
+    p.FileMask   := FileMask;
+    p.Folder     := Folder;
+    t := BeginThread(nil, 0, @GetFilesListBackThreadProc, @p, 0, PCardinal(nil)^);
+    Win32Check(t <> 0);
+    CloseHandle(t);
+      repeat
+        Wait := MsgWaitForMultipleObjects(1, p.event, false, INFINITE, QS_ALLEVENTS);
+        case Wait of
+          WAIT_OBJECT_0    : break;
+          WAIT_OBJECT_0 + 1: Application.ProcessMessages;
+        end;
+      until Wait <> WAIT_OBJECT_0 + 1;
+  finally
+    CloseHandle(p.event);
+    Screen.Cursor := crDefault;
+  end;
+
+end;
 
 function FormatFileSize(const Number: int64): String;
 begin
@@ -118,7 +174,7 @@ begin
     Result := GetLastError
   else
   begin
-    Result := SysUtils.FileSetDate(f, Age);
+    Result := System.SysUtils.FileSetDate(f, Age);
     FileClose(f);
   end;
 end;
@@ -315,7 +371,7 @@ begin
             New(TF);
             try
               try
-                SysUtils.GetDiskFreeSpaceEx(bufRoot, f, T, TF);
+                System.SysUtils.GetDiskFreeSpaceEx(bufRoot, f, T, TF);
                 Capacity := T;
                 FreeSpace := f;
               except
@@ -537,9 +593,6 @@ begin
 end;
 
 procedure GetFilesListStart(Folder: TRtcDataSet);
-const
-  ID_MYCOMPUTER = '::{20D04FE0-3AEA-1069-A2D8-08002B30309D}';
-  ID_NETWORK = '::{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}';
 var
   desk: IShellFolder;
   pidl: PItemIDList;
@@ -550,16 +603,19 @@ var
   s: string;
   ImgIndex: Integer;
 begin
+
   SHGetMalloc(MAlloc);
   hr := SHGetDesktopFolder(desk);
   if not Succeeded(hr) then exit;
   GetNestedFolders(ID_MYCOMPUTER, Folder);
   // network
+
   hr := desk.ParseDisplayName(0, nil, PChar(ID_NETWORK), sz, pidl, sz);
   if not Succeeded(hr) then exit;
   Folder.Append;
   if SUCCEEDED(desk.GetDisplayNameOf(PiDL, SHGDN_NORMAL, strt)) then
     Folder.asText['label'] := StrRetToStr(STRT, pidl, malloc);
+
   if SUCCEEDED(desk.GetDisplayNameOf(PiDL, SHGDN_FORPARSING, STRT)) then
     begin
       s := StrRetToStr(STRT, pidl, malloc);
@@ -574,6 +630,7 @@ begin
       Folder.asInteger['icon_index'] := ImgIndex;
       Folder.asText['icon_path'] := s;
     end;
+
   Malloc.Free(pidl);
 end;
 
@@ -588,8 +645,16 @@ begin
         s := '' else
         s := ExcludeTrailingBackslash(s);
       if MainThreadID <> GetCurrentThreadId then
-         if FAILED(CoInitializeEx(nil, COINIT_APARTMENTTHREADED)) then
-          raise Exception.Create('CoInitializeEx FAILED');
+        begin
+           if FAILED(CoInitializeEx(nil, COINIT_APARTMENTTHREADED)) then
+            raise Exception.Create('CoInitializeEx FAILED');
+        end
+      else if s.StartsWith(ID_NETWORK) then
+        begin
+          GetFilesListBackGround(FolderName, FileMask, Folder);
+          exit;
+        end;
+
       try
         if (s = '') then
           GetFilesListStart(Folder) else
@@ -601,6 +666,43 @@ begin
     end
   else
     GetFilesList_Inner(FolderName, FileMask, Folder);
+end;
+
+//==============================================================================
+// process network paths
+//
+function HandleNetworkFile(const FileName: string): string;
+var
+  s, s1: string;
+  p: PChar;
+  i: Integer;
+begin
+  // fix GUID path
+  s := FileName;
+  i := s.IndexOf('}');
+  if (i <> -1) and s.StartsWith(ID_NETWORK, false) then
+    begin
+      s1 := s.Substring(i+1, Length(s));
+      p := PChar(s1);
+      i := 0;
+      while (p^ <> #0) and (P^ = PathDelim) do
+        begin
+          Inc(p);
+          Inc(i);
+        end;
+      if i < Length(s1) then
+        begin
+          while (P^ <> #0) and (P^ <> PathDelim) do
+            begin
+              Inc(p);
+              Inc(i);
+            end;
+          if i + 1 < Length(s1) then
+            s := s1.Substring(i+1, Length(s1));
+        end;
+    end;
+
+  Result := s;
 end;
 
 end.

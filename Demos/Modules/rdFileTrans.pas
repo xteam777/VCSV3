@@ -603,36 +603,11 @@ procedure TrdFileTransfer.FilesRemoteDirectoryChange(Sender: TObject; const File
 const
   ID_NETWORK = '::{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}';
 var
-  s, s1: string;
-  p: PChar;
-  i: Integer;
+  s: string;
 begin
   FRemoteRecent.Push(FileName);
+  s := HandleNetworkFile(FileName);
 
-  // fix GUID path
-  s := FileName;
-  i := s.IndexOf('}');
-  if (i <> -1) and s.StartsWith(ID_NETWORK, false) then
-    begin
-      s1 := s.Substring(i+1, Length(s));
-      p := PChar(s1);
-      i := 0;
-      while (p^ <> #0) and (P^ = PathDelim) do
-        begin
-          Inc(p);
-          Inc(i);
-        end;
-      if i < Length(s1) then
-        begin
-          while (P^ <> #0) and (P^ <> PathDelim) do
-            begin
-              Inc(p);
-              Inc(i);
-            end;
-          if i + 1 < Length(s1) then
-            s := s1.Substring(i+1, Length(s1));
-        end;
-    end;
   if assigned(myUI) then
     myUI.GetFileList(s, '');
 

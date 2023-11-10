@@ -799,6 +799,7 @@ var
   d1, d2, size1, size2: int64;
   Result: integer;
 begin
+
   if FSortColumn <= 0 then // name
   begin
     if FDirectory = '' then
@@ -962,42 +963,43 @@ begin
   end
   else // name, type, attr
   begin
-    if FSortDir = sdDescending then
+//    if FSortDir = sdDescending then
+//    begin
+//      // always disk on top
+//      s1 := #255;
+//      s2 := #254;
+//      s3 := #253;
+//      s4 := #252;
+//    end
+//    else
     begin
-      s1 := #253;
-      s2 := #254;
-      s3 := #255;
-      s4 := #252;
-    end
-    else
-    begin
-      s1 := #2;
-      s2 := #1;
-      s3 := #0;
-      s4 := #3;
+      s1 := #1;
+      s2 := #2;
+      s3 := #3;
+      s4 := #4;
     end;
     if SameText(Item1.SubItems[5], 'dir') then
     begin
       if SameText(Item1.Caption, '..') then
         Caption1 := s2 + Caption1
       else
-        Caption1 := s1 + Caption1;
+        Caption1 := s3 + Caption1;
     end;
     if SameText(Item2.SubItems[5], 'dir') then
     begin
       if SameText(Item2.Caption, '..') then
         Caption2 := s2 + Caption2
       else
-        Caption2 := s1 + Caption2;
+        Caption2 := s3 + Caption2;
     end;
 
     if SameText(Item1.SubItems[5], 'drv') then
     begin
-      Caption1 := s3 + Caption1
+      Caption1 := s1 + Caption1
     end;
     if SameText(Item2.SubItems[5], 'drv') then
     begin
-       Caption2 := s3 + Caption2
+       Caption2 := s1 + Caption2
     end;
 
     // net
@@ -1008,7 +1010,9 @@ begin
     if (Length(s2) > 0) and (s2[1] = ':') then
       Caption2 := s4 + Caption2;
 
+
     Result := CompareText(Caption1, Caption2);
+
   end;
 
   if FSortDir = sdDescending then
@@ -1262,6 +1266,7 @@ begin
   begin
     fld := TRtcDataSet.Create;
     try
+      NewDir := HandleNetworkFile(NewDir);
       GetFilesList(NewDir, '*.*', fld);
       UpdateFileList(NewDir, fld);
 
@@ -1307,6 +1312,7 @@ begin
       begin
         fld := TRtcDataSet.Create;
         try
+          NewDir := HandleNetworkFile(NewDir);
           GetFilesList(NewDir, '*.*', fld);
           UpdateFileList(NewDir, fld);
 //          Selected:=     items[0];
