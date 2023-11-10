@@ -48,6 +48,8 @@ object rdDesktopViewer: TrdDesktopViewer
     ParentFont = False
     TabOrder = 0
     StyleElements = [seFont, seBorder]
+    ExplicitWidth = 1050
+    ExplicitHeight = 598
     object iScreenLocked: TImage
       Left = 0
       Top = 0
@@ -2981,6 +2983,8 @@ object rdDesktopViewer: TrdDesktopViewer
       TabOrder = 0
       StyleElements = [seFont, seBorder]
       OnMouseMove = ScrollMouseMove
+      ExplicitWidth = 1050
+      ExplicitHeight = 598
       object iMiniPanelShow: TImage
         Left = 32
         Top = 304
@@ -4213,7 +4217,7 @@ object rdDesktopViewer: TrdDesktopViewer
     LookAndFeel.ScrollButtons.Arrow.Disabled.OutlineAlpha = 200
     Align = alTop
     TabOrder = 1
-    ExplicitWidth = 1058
+    ExplicitWidth = 1050
   end
   object panOptions: TPanel
     Left = 0
@@ -4228,11 +4232,13 @@ object rdDesktopViewer: TrdDesktopViewer
     ShowHint = False
     TabOrder = 2
     OnMouseLeave = panOptionsMouseLeave
+    ExplicitWidth = 1050
     object ammbActions: TActionMainMenuBar
       Left = 352
       Top = 0
       Width = 350
       Height = 34
+      UseSystemFont = False
       ActionManager = ActionManagerTop
       Align = alNone
       Color = clMenuBar
@@ -4242,7 +4248,7 @@ object rdDesktopViewer: TrdDesktopViewer
       ColorMap.SelectedFontColor = clWhite
       ColorMap.UnusedColor = clWhite
       Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
+      Font.Color = clBlack
       Font.Height = -12
       Font.Name = 'Segoe UI'
       Font.Style = []

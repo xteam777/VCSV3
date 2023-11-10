@@ -708,8 +708,9 @@ procedure TrdDesktopViewer.Button1Click(Sender: TObject);
 //  i: Integer;
 //  v: String;
 begin
-//  GlassFrame.Enabled := not GlassFrame.Enabled;
-//  MainChromeTabs.Visible := GlassFrame.Enabled;
+  GlassFrame.Enabled := not GlassFrame.Enabled;
+  MainChromeTabs.Visible := GlassFrame.Enabled;
+
 //  WindowState := TWindowState.wsNormal;
 //  BorderStyle := bsSizeable;
 //  Position := poDefault;

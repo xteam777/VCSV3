@@ -192,12 +192,12 @@ begin
 //    {$R+}
 //  end;
   Adapter := nil;
-  DriverType := D3D_DRIVER_TYPE_UNKNOWN;
+  DriverType := D3D_DRIVER_TYPE_HARDWARE;
 
   //DXGI_ERROR_SESSION_DISCONNECTED
 //  Sleep(10000);
   FError := D3D11CreateDevice(
-    Adapter, //nil, // Адаптер, nil для использования "первого" адаптера
+    nil, //nil, // Адаптер, nil для использования "первого" адаптера
     DriverType, //D3D_DRIVER_TYPE_UNKNOWN, //D3D_DRIVER_TYPE_HARDWARE, // Тип драйвера (или D3D_DRIVER_TYPE_WARP для WARP-устройства)
     0, // Software Rasterizer, 0 или D3D11_CREATE_DEVICE_SOFTWARE_ADAPTER
     Ord(D3D11_CREATE_DEVICE_SINGLETHREADED), //D3D11_CREATE_DEVICE_DEBUG // Флаги создания
