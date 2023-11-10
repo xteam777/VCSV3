@@ -1,4 +1,4 @@
-unit Execute.DesktopDuplicationAPI;
+п»їunit Execute.DesktopDuplicationAPI;
 {$INLINE AUTO}
 interface
 
@@ -151,24 +151,25 @@ begin
 
 //  if FAdapterName <> '' then
 //  begin
-//    DriverType := D3D_DRIVER_TYPE_HARDWARE;
+//    DriverType := D3D_DRIVER_TYPE_UNKNOWN;
 //
-//    // Создаем экземпляр IDXGIFactory1 для доступа к адаптерам
+//    // РЎРѕР·РґР°РµРј СЌРєР·РµРјРїР»СЏСЂ IDXGIFactory1 РґР»СЏ РґРѕСЃС‚СѓРїР° Рє Р°РґР°РїС‚РµСЂР°Рј
 //    if Succeeded(CreateDXGIFactory(IID_IDXGIFactory, Factory)) then
 //    begin
-//      // Перечисляем доступные адаптеры
+//      // РџРµСЂРµС‡РёСЃР»СЏРµРј РґРѕСЃС‚СѓРїРЅС‹Рµ Р°РґР°РїС‚РµСЂС‹
 //      AdapterIndex := 0;
 //      while Factory.EnumAdapters(AdapterIndex, Adapter) = S_OK do
 //      begin
-//        // В этой части можно получать информацию о каждом адаптере, если необходимо
+//        // Р’ СЌС‚РѕР№ С‡Р°СЃС‚Рё РјРѕР¶РЅРѕ РїРѕР»СѓС‡Р°С‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РєР°Р¶РґРѕРј Р°РґР°РїС‚РµСЂРµ, РµСЃР»Рё РЅРµРѕР±С…РѕРґРёРјРѕ
 //        Adapter.GetDesc(AdapterDesc);
-//        if WideCompareText(AdapterDesc.Description, FAdapterName) = 0 then
-//        begin
-//          {$R-}
-//          Debug.Log('Set adapter: ' + FAdapterName);
-//          {$R+}
+////        if WideCompareText(AdapterDesc.Description, FAdapterName) = 0 then
+////        begin
+////          {$R-}
+////          Debug.Log('Set adapter: ' + FAdapterName);
+////          {$R+}
+//if AdapterIndex = 0 then
 //          Break;
-//        end;
+////        end;
 //
 //        Inc(AdapterIndex);
 //      end;
@@ -197,16 +198,16 @@ begin
   //DXGI_ERROR_SESSION_DISCONNECTED
 //  Sleep(10000);
   FError := D3D11CreateDevice(
-    nil, //nil, // Адаптер, nil для использования "первого" адаптера
-    DriverType, //D3D_DRIVER_TYPE_UNKNOWN, //D3D_DRIVER_TYPE_HARDWARE, // Тип драйвера (или D3D_DRIVER_TYPE_WARP для WARP-устройства)
-    0, // Software Rasterizer, 0 или D3D11_CREATE_DEVICE_SOFTWARE_ADAPTER
-    Ord(D3D11_CREATE_DEVICE_SINGLETHREADED), //D3D11_CREATE_DEVICE_DEBUG // Флаги создания
-    nil, // Массив поддерживаемых версий
-    0, // Количество элементов в массиве поддерживаемых версий
-    D3D11_SDK_VERSION, // Версия SDK
-    FDevice, // Указатель на созданное устройство
-    FFeatureLevel, // Поддерживаемый уровень функций
-    FContext // Указатель на контекст устройства
+    Adapter, //nil, // РђРґР°РїС‚РµСЂ, nil РґР»СЏ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ "РїРµСЂРІРѕРіРѕ" Р°РґР°РїС‚РµСЂР°
+    DriverType, //D3D_DRIVER_TYPE_UNKNOWN, //D3D_DRIVER_TYPE_HARDWARE, // РўРёРї РґСЂР°Р№РІРµСЂР° (РёР»Рё D3D_DRIVER_TYPE_WARP РґР»СЏ WARP-СѓСЃС‚СЂРѕР№СЃС‚РІР°)
+    0, // Software Rasterizer, 0 РёР»Рё D3D11_CREATE_DEVICE_SOFTWARE_ADAPTER
+    Ord(D3D11_CREATE_DEVICE_SINGLETHREADED), //D3D11_CREATE_DEVICE_DEBUG // Р¤Р»Р°РіРё СЃРѕР·РґР°РЅРёСЏ
+    nil, // РњР°СЃСЃРёРІ РїРѕРґРґРµСЂР¶РёРІР°РµРјС‹С… РІРµСЂСЃРёР№
+    0, // РљРѕР»РёС‡РµСЃС‚РІРѕ СЌР»РµРјРµРЅС‚РѕРІ РІ РјР°СЃСЃРёРІРµ РїРѕРґРґРµСЂР¶РёРІР°РµРјС‹С… РІРµСЂСЃРёР№
+    D3D11_SDK_VERSION, // Р’РµСЂСЃРёСЏ SDK
+    FDevice, // РЈРєР°Р·Р°С‚РµР»СЊ РЅР° СЃРѕР·РґР°РЅРЅРѕРµ СѓСЃС‚СЂРѕР№СЃС‚РІРѕ
+    FFeatureLevel, // РџРѕРґРґРµСЂР¶РёРІР°РµРјС‹Р№ СѓСЂРѕРІРµРЅСЊ С„СѓРЅРєС†РёР№
+    FContext // РЈРєР°Р·Р°С‚РµР»СЊ РЅР° РєРѕРЅС‚РµРєСЃС‚ СѓСЃС‚СЂРѕР№СЃС‚РІР°
   );
 
   if Failed(FError) then
@@ -308,7 +309,7 @@ begin
 
 //  if Assigned(FTexture) then
 //  begin
-//    FContext.Unmap(FTexture, 0); //Это нужно?
+//    FContext.Unmap(FTexture, 0); //Р­С‚Рѕ РЅСѓР¶РЅРѕ?
 //    FTexture := NIL;
 //  end;
   if Assigned(FDuplicate) then
@@ -379,7 +380,7 @@ begin
   FDuplicate.ReleaseFrame;
 //  Sleep(1);
   FError := FDuplicate.AcquireNextFrame(10, FrameInfo, DesktopResource);
-  if FError = ERROR_WAIT_TIMEOUT then //Изменений нет
+  if FError = ERROR_WAIT_TIMEOUT then //РР·РјРµРЅРµРЅРёР№ РЅРµС‚
   begin
 //    if not CreateDD then
 //    begin
@@ -438,7 +439,7 @@ begin
   Desc.CPUAccessFlags := Ord(D3D11_CPU_ACCESS_READ) or Ord(D3D11_CPU_ACCESS_WRITE);
   Desc.MiscFlags := 0;
 
-//  desk_dc := GetDC(0); //рисую пиксель в левом нижнем углу экрана
+//  desk_dc := GetDC(0); //СЂРёСЃСѓСЋ РїРёРєСЃРµР»СЊ РІ Р»РµРІРѕРј РЅРёР¶РЅРµРј СѓРіР»Сѓ СЌРєСЂР°РЅР°
 //  desk_pixel_color := InvertColor(desk_pixel_color);
 //  SetPixel(desk_dc, 0, Desc.Height, desk_pixel_color);
 //  ReleaseDC(0, desk_dc);
@@ -564,7 +565,7 @@ begin
     Exit;
   end;}
 
-  // Получаем MoveRects и зансоим их в FChangeRects
+  // РџРѕР»СѓС‡Р°РµРј MoveRects Рё Р·Р°РЅСЃРѕРёРј РёС… РІ FChangeRects
   FError := FDuplicate.GetFrameMoveRects(TempBuffLen,
         PDXGI_OUTDUPL_MOVE_RECT(@TempBuff[0]), BytesRecieved);
   if Failed(FError) then
@@ -596,7 +597,7 @@ begin
   end;
 
 
-  // Получаем DirtyRects и зансоим их в FChangeRects
+  // РџРѕР»СѓС‡Р°РµРј DirtyRects Рё Р·Р°РЅСЃРѕРёРј РёС… РІ FChangeRects
   FDuplicate.GetFrameDirtyRects(TempBuffLen, PRECT(@TempBuff[0]), BytesRecieved);
   if Failed(FError) then
   begin
@@ -620,7 +621,7 @@ begin
     end;
   end;
 
-  // Отсекаем части прямоугольников из DirtyRecs, выходящие за ClipRect
+  // РћС‚СЃРµРєР°РµРј С‡Р°СЃС‚Рё РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРѕРІ РёР· DirtyRecs, РІС‹С…РѕРґСЏС‰РёРµ Р·Р° ClipRect
   if (PRect(pClipRect)^.Width <> 0) and (PRect(pClipRect)^.Height <> 0) then
     for i := 0 to FDirtyRCnt - 1 do
       DirtyR[i] := TRect.Intersect(DirtyR[i], PRect(pClipRect)^);
@@ -629,19 +630,19 @@ begin
   Debug.Log('enc time: ' + IntToStr(time));
 
   Exit;//!!!!!!!!!!!!!!!!!!!!!!!!
-  // Если при перемещении областей MoveR часть окна попала из невидимой
-  // зоны в видимую то эту часть нужно добавить в DirtyR
-  // Если движение было по диагонали добавляем 3 прямоуголника, иначе 1
+  // Р•СЃР»Рё РїСЂРё РїРµСЂРµРјРµС‰РµРЅРёРё РѕР±Р»Р°СЃС‚РµР№ MoveR С‡Р°СЃС‚СЊ РѕРєРЅР° РїРѕРїР°Р»Р° РёР· РЅРµРІРёРґРёРјРѕР№
+  // Р·РѕРЅС‹ РІ РІРёРґРёРјСѓСЋ С‚Рѕ СЌС‚Сѓ С‡Р°СЃС‚СЊ РЅСѓР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ РІ DirtyR
+  // Р•СЃР»Рё РґРІРёР¶РµРЅРёРµ Р±С‹Р»Рѕ РїРѕ РґРёР°РіРѕРЅР°Р»Рё РґРѕР±Р°РІР»СЏРµРј 3 РїСЂСЏРјРѕСѓРіРѕР»РЅРёРєР°, РёРЅР°С‡Рµ 1
 
   for i := 0 to FMovedRCnt - 1 do
     with MovedR[i], MovedRP[i] do
     begin
-      CLeft := (X < Left) and (X < PRect(pClipRect)^.Left); // нужно перерисовать область слева от окна
-      CTop := (Y < Top) and (Y < PRect(pClipRect)^.Top); // сверху
-      CRight := (X >= Left) and (X + Width >= PRect(pClipRect)^.Right); // справа
-      CBottom := (Y >= Bottom) and (Y + Height >= PRect(pClipRect)^.Bottom); // снизу
+      CLeft := (X < Left) and (X < PRect(pClipRect)^.Left); // РЅСѓР¶РЅРѕ РїРµСЂРµСЂРёСЃРѕРІР°С‚СЊ РѕР±Р»Р°СЃС‚СЊ СЃР»РµРІР° РѕС‚ РѕРєРЅР°
+      CTop := (Y < Top) and (Y < PRect(pClipRect)^.Top); // СЃРІРµСЂС…Сѓ
+      CRight := (X >= Left) and (X + Width >= PRect(pClipRect)^.Right); // СЃРїСЂР°РІР°
+      CBottom := (Y >= Bottom) and (Y + Height >= PRect(pClipRect)^.Bottom); // СЃРЅРёР·Сѓ
 
-      // Горизонтальные или вертикальные области по боковым граням окна
+      // Р“РѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅС‹Рµ РёР»Рё РІРµСЂС‚РёРєР°Р»СЊРЅС‹Рµ РѕР±Р»Р°СЃС‚Рё РїРѕ Р±РѕРєРѕРІС‹Рј РіСЂР°РЅСЏРј РѕРєРЅР°
       if CLeft then
       begin
         DirtyR[FDirtyRCnt] := TRect.Create(PRect(pClipRect)^.Left, Top,
@@ -667,8 +668,8 @@ begin
         Inc(FDirtyRCnt);
       end;
 
-      // Пересечение горизонтальных и вертикальных областей
-      // нужно если перемещение было по обоим осям сразу
+      // РџРµСЂРµСЃРµС‡РµРЅРёРµ РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅС‹С… Рё РІРµСЂС‚РёРєР°Р»СЊРЅС‹С… РѕР±Р»Р°СЃС‚РµР№
+      // РЅСѓР¶РЅРѕ РµСЃР»Рё РїРµСЂРµРјРµС‰РµРЅРёРµ Р±С‹Р»Рѕ РїРѕ РѕР±РѕРёРј РѕСЃСЏРј СЃСЂР°Р·Сѓ
       if CLeft and CTop then
       begin
         DirtyR[FDirtyRCnt] := TRect.Create(PRect(pClipRect)^.Left, PRect(pClipRect)^.Top,
@@ -695,7 +696,7 @@ begin
         Inc(FDirtyRCnt);
       end;
 
-      // Корректируем MoveR и MoveRP чтобы они не выходили за ClipRect
+      // РљРѕСЂСЂРµРєС‚РёСЂСѓРµРј MoveR Рё MoveRP С‡С‚РѕР±С‹ РѕРЅРё РЅРµ РІС‹С…РѕРґРёР»Рё Р·Р° ClipRect
       if CLeft then begin Left := PRect(pClipRect)^.Left + Left - X; X := PRect(pClipRect)^.Left; end;
       if CTop then begin Top := PRect(pClipRect)^.Top + Top - Y; Y := PRect(pClipRect)^.Top; end;
       if CRight then begin Right := PRect(pClipRect)^.Right - (X - Left); X := PRect(pClipRect)^.Left + (X - Left); end;
@@ -703,7 +704,7 @@ begin
     end;
 
 
-  // Обьеденяем прямоугольники из ChangedRects если их площадь пересечения велика
+  // РћР±СЊРµРґРµРЅСЏРµРј РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРё РёР· ChangedRects РµСЃР»Рё РёС… РїР»РѕС‰Р°РґСЊ РїРµСЂРµСЃРµС‡РµРЅРёСЏ РІРµР»РёРєР°
  { for i := 0 to ChangedRectsCnt - 1 do
   begin
     j := i + 1;
@@ -719,11 +720,11 @@ begin
       if SU - (S1 + S2) > SI then
       begin
         Inc(j);
-        continue; // Площадь пересечения двух прямоугольников мала
+        continue; // РџР»РѕС‰Р°РґСЊ РїРµСЂРµСЃРµС‡РµРЅРёСЏ РґРІСѓС… РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРѕРІ РјР°Р»Р°
       end;
-          // Площадь пересечения двух прямоугольников велика
-          // Заносим в i-ый прямоугольник прямоугольник обьединения i и j
-          // j-ый прямоугольник удаляем
+          // РџР»РѕС‰Р°РґСЊ РїРµСЂРµСЃРµС‡РµРЅРёСЏ РґРІСѓС… РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРєРѕРІ РІРµР»РёРєР°
+          // Р—Р°РЅРѕСЃРёРј РІ i-С‹Р№ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє РѕР±СЊРµРґРёРЅРµРЅРёСЏ i Рё j
+          // j-С‹Р№ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРёРє СѓРґР°Р»СЏРµРј
       ChangedRects[i] := RctU;
 
       Move(ChangedRects[j + 1], ChangedRects[j],
