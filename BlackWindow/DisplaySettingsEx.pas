@@ -116,7 +116,7 @@ begin
 end;
 
 
-procedure InvertResolutionArray(var Info: TMonitorResolutionList);
+{procedure InvertResolutionArray(var Info: TMonitorResolutionList);
 var
   i, j: Integer;
   temp: TMonitorResolution;
@@ -135,7 +135,7 @@ begin
     Inc(i);
     Dec(j);
   end;
-end;
+end;}
 
 function GetMonitorListEx: TMonitorInfoList;
 var
@@ -160,7 +160,7 @@ begin
           Result[monitor_idx].MonitorName := dc.DeviceString;
           Result[monitor_idx].AdapterName := adapter;
           Result[monitor_idx].Resolutions := GetMonitorResolutions(device, Result[monitor_idx].CurrentResolution);
-          InvertResolutionArray(Result[monitor_idx].Resolutions);
+//          InvertResolutionArray(Result[monitor_idx].Resolutions);
           Result[monitor_idx].CurrentResolution := Length(Result[monitor_idx].Resolutions) - 1 - Result[monitor_idx].CurrentResolution;
           Result[monitor_idx].IsPrimary   := is_primary;
           Inc(monitor_idx);
@@ -173,7 +173,7 @@ begin
           Result[monitor_idx].MonitorName := 'Device: '+ device + ' Adapter: ' + adapter;
           Result[monitor_idx].AdapterName := adapter;
           Result[monitor_idx].Resolutions := GetMonitorResolutions(device, Result[monitor_idx].CurrentResolution);
-          InvertResolutionArray(Result[monitor_idx].Resolutions);
+//          InvertResolutionArray(Result[monitor_idx].Resolutions);
           Result[monitor_idx].CurrentResolution := Length(Result[monitor_idx].Resolutions) - 1 - Result[monitor_idx].CurrentResolution;
           Result[monitor_idx].IsPrimary   := is_primary;
           Inc(monitor_idx);
@@ -207,7 +207,7 @@ end;
 {                               TDupValues                                     }
 { **************************************************************************** }
 
-function TDupValues.AddIfNotExists(w, h: Integer): Integer;
+{function TDupValues.AddIfNotExists(w, h: Integer): Integer;
 var
   i: Integer;
   value: TMonitorResolution;
@@ -222,6 +222,31 @@ begin
     SetLength(Buf, GrowCollection(Count, Count + 1));
   buf[Count] := value;
   Result := Count;
+  Inc(Count);
+end;}
+
+function TDupValues.AddIfNotExists(w, h: Integer): Integer;
+var
+  i: Integer;
+  value: TMonitorResolution;
+begin
+  Result := -1;
+  value.width := w;
+  value.height := h;
+
+  for I := 0 to Count-1 do
+    if (Buf[i].width = w) and (Buf[i].height = h) then Exit;
+
+  if Count = Length(Buf) then
+    SetLength(Buf, GrowCollection(Count, Count + 1));
+
+  // Сдвигаем существующие элементы на одну позицию вправо
+  for i := Count - 1 downto 0 do
+    Buf[i + 1] := Buf[i];
+
+  // Вставляем новый элемент в начало
+  Buf[0] := value;
+  Result := 0;
   Inc(Count);
 end;
 
