@@ -152,6 +152,13 @@ begin
       device  := dc.DeviceName;
       adapter := dc.DeviceString;
       is_primary := dc.StateFlags and DISPLAY_DEVICE_PRIMARY_DEVICE <> 0;
+
+      if not is_primary then
+      begin
+        Inc(Num);
+        Continue;
+      end;
+
       if EnumDisplayDevices(PChar(device),  0, dc, 0) then
         begin
           if Length(Result) = monitor_idx then
